@@ -1,0 +1,19 @@
+import Navbar from "@/components/Navbar";
+import PairDetail from "@/components/PairDetail";
+
+interface PairPageProps {
+  params: Promise<{ pair: string }>;
+}
+
+export default async function PairPage({ params }: PairPageProps) {
+  const { pair } = await params;
+
+  return (
+    <div className="flex flex-col min-h-screen">
+      <Navbar />
+      <div className="flex-1 p-6 max-w-[1200px] mx-auto w-full">
+        <PairDetail pairSlug={pair} />
+      </div>
+    </div>
+  );
+}

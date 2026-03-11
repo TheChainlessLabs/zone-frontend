@@ -1,0 +1,43 @@
+---
+import { Zap, Shield, TrendingUp, ArrowRightLeft } from "lucide-astro";
+
+const features = [
+  {
+    icon: Zap,
+    title: "Sub-second matching",
+    description: "Orders matched in under 100ms inside a TEE enclave. Latency you can trade on.",
+  },
+  {
+    icon: Shield,
+    title: "ZK-proven fills",
+    description: "Every execution generates a succinct proof. Verify on-chain without revealing strategy.",
+  },
+  {
+    icon: TrendingUp,
+    title: "Institutional-grade liquidity",
+    description: "Deep order books across major FX pairs. Built for size, not just retail flow.",
+  },
+  {
+    icon: ArrowRightLeft,
+    title: "Cross-chain settlement",
+    description: "Settle across L1s and rollups. One matching engine, many settlement layers.",
+  },
+];
+---
+
+<section class="py-24 px-6 bg-bg-surface">
+  <div class="max-w-5xl mx-auto">
+    <p class="text-label-uppercase text-accent mb-4">Features</p>
+    <h2 class="text-h2 font-semibold mb-12">Why Omega</h2>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {features.map(({ icon: Icon, title, description }) => (
+        <div class="p-6">
+          <Icon size={24} class="text-accent mb-3" />
+          <h3 class="text-h3 font-medium mb-2">{title}</h3>
+          <p class="text-body-sm text-text-secondary">{description}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

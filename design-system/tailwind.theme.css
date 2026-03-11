@@ -1,0 +1,159 @@
+/* ==========================================================================
+   Omega Markets — Tailwind CSS v4 Theme
+   Entry point: import this file in your app's CSS.
+   ========================================================================== */
+
+@import "./variables.css";
+
+/* ── Map CSS custom properties into Tailwind's utility namespace ── */
+@theme inline {
+  /* 4px base spacing: p-1 = 4px, p-6 = 24px, p-16 = 64px */
+  --spacing: 0.25rem;
+
+  /* ── Colors ── */
+  --color-accent: var(--color-accent);
+  --color-accent-hover: var(--color-accent-hover);
+  --color-accent-active: var(--color-accent-active);
+  --color-accent-muted: var(--color-accent-muted);
+  --color-accent-subtle: var(--color-accent-subtle);
+
+  --color-text-primary: var(--color-text-primary);
+  --color-text-secondary: var(--color-text-secondary);
+  --color-text-muted: var(--color-text-muted);
+  --color-text-inverse: var(--color-text-inverse);
+
+  --color-bg-base: var(--color-bg-base);
+  --color-bg-surface: var(--color-bg-surface);
+  --color-bg-elevated: var(--color-bg-elevated);
+  --color-bg-overlay: var(--color-bg-overlay);
+
+  --color-border: var(--color-border);
+  --color-border-subtle: var(--color-border-subtle);
+  --color-border-focus: var(--color-border-focus);
+
+  --color-success: var(--color-success);
+  --color-success-hover: var(--color-success-hover);
+  --color-success-active: var(--color-success-active);
+  --color-success-subtle: var(--color-success-subtle);
+
+  --color-error: var(--color-error);
+  --color-error-hover: var(--color-error-hover);
+  --color-error-active: var(--color-error-active);
+  --color-error-subtle: var(--color-error-subtle);
+
+  --color-warning: var(--color-warning);
+  --color-warning-hover: var(--color-warning-hover);
+  --color-warning-active: var(--color-warning-active);
+  --color-warning-subtle: var(--color-warning-subtle);
+
+  --color-info: var(--color-info);
+  --color-info-hover: var(--color-info-hover);
+  --color-info-active: var(--color-info-active);
+  --color-info-subtle: var(--color-info-subtle);
+
+  /* ── Font families ── */
+  --font-display: var(--font-display);
+  --font-mono: var(--font-mono);
+
+  /* ── Font sizes with line-height companions ── */
+  --text-display: var(--text-display);
+  --text-display--line-height: var(--text-display--line-height);
+
+  --text-h1: var(--text-h1);
+  --text-h1--line-height: var(--text-h1--line-height);
+
+  --text-h2: var(--text-h2);
+  --text-h2--line-height: var(--text-h2--line-height);
+
+  --text-h3: var(--text-h3);
+  --text-h3--line-height: var(--text-h3--line-height);
+
+  --text-body: var(--text-body);
+  --text-body--line-height: var(--text-body--line-height);
+
+  --text-body-sm: var(--text-body-sm);
+  --text-body-sm--line-height: var(--text-body-sm--line-height);
+
+  --text-label: var(--text-label);
+  --text-label--line-height: var(--text-label--line-height);
+
+  --text-mono-lg: var(--text-mono-lg);
+  --text-mono-lg--line-height: var(--text-mono-lg--line-height);
+
+  --text-mono: var(--text-mono);
+  --text-mono--line-height: var(--text-mono--line-height);
+
+  /* ── Border radii ── */
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-full: var(--radius-full);
+
+  /* ── Shadows ── */
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+  --shadow-focus-ring: var(--shadow-focus-ring);
+}
+
+/* ── Custom utility layer ── */
+@layer utilities {
+  /* Tabular numerals — always use with JetBrains Mono */
+  .font-tabular {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
+  }
+
+  /* Uppercase label preset */
+  .text-label-uppercase {
+    font-size: var(--text-label);
+    line-height: var(--text-label--line-height);
+    font-weight: var(--text-label--font-weight);
+    letter-spacing: var(--text-label--letter-spacing);
+    text-transform: uppercase;
+  }
+
+  /* Mono price display — large */
+  .text-mono-price {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
+  }
+
+  /* Focus ring utility */
+  .ring-focus {
+    outline: none;
+    box-shadow: var(--shadow-focus-ring);
+    border-color: var(--color-border-focus);
+  }
+
+  /* Transition presets */
+  .transition-fast {
+    transition-duration: var(--duration-fast);
+    transition-timing-function: var(--easing-default);
+  }
+
+  .transition-normal {
+    transition-duration: var(--duration-normal);
+    transition-timing-function: var(--easing-default);
+  }
+}
+
+/* ── Base layer: global defaults ── */
+@layer base {
+  *,
+  *::before,
+  *::after {
+    border-color: var(--color-border);
+  }
+
+  body {
+    font-family: var(--font-display);
+    font-size: var(--text-body);
+    line-height: var(--text-body--line-height);
+    color: var(--color-text-primary);
+    background-color: var(--color-bg-base);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}

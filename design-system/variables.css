@@ -1,0 +1,157 @@
+/* ==========================================================================
+   Omega Markets — CSS Custom Properties
+   Runtime source of truth. All components consume these variables.
+   Dark theme is the default; optional light override included.
+   ========================================================================== */
+
+:root {
+  /* ── Accent ── */
+  --color-accent: #3467A1;
+  --color-accent-hover: #3D78B8;
+  --color-accent-active: #2D5A8E;
+  --color-accent-muted: #4A8BC7;
+  --color-accent-subtle: #4A8BC71F;
+
+  /* ── Text ── */
+  --color-text-primary: #F5F5F5;
+  --color-text-secondary: #A0A0A0;
+  --color-text-muted: #666666;
+  --color-text-inverse: #0D0D0D;
+
+  /* ── Backgrounds ── */
+  --color-bg-base: #0D0D0D;
+  --color-bg-surface: #1A1A1A;
+  --color-bg-elevated: #262626;
+  --color-bg-overlay: #333333;
+
+  /* ── Borders ── */
+  --color-border: #333333;
+  --color-border-subtle: #1A1A1A;
+  --color-border-focus: #4A8BC7;
+  --color-border-focus-ring: #4A8BC726;
+
+  /* ── Semantic: Success ── */
+  --color-success: #22C55E;
+  --color-success-hover: #2DD96B;
+  --color-success-active: #1EA750;
+  --color-success-subtle: #22C55E1F;
+
+  /* ── Semantic: Error ── */
+  --color-error: #EF4444;
+  --color-error-hover: #F25D5D;
+  --color-error-active: #D93B3B;
+  --color-error-subtle: #EF44441F;
+
+  /* ── Semantic: Warning ── */
+  --color-warning: #F59E0B;
+  --color-warning-hover: #F7AE2E;
+  --color-warning-active: #D98B09;
+  --color-warning-subtle: #F59E0B1F;
+
+  /* ── Semantic: Info ── */
+  --color-info: #3467A1;
+  --color-info-hover: #3D78B8;
+  --color-info-active: #2D5A8E;
+  --color-info-subtle: #3467A11F;
+
+  /* ── Typography ── */
+  --font-display: 'Space Grotesk', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  --text-display: 64px;
+  --text-display--line-height: 70px;
+  --text-display--letter-spacing: -0.04em;
+  --text-display--font-weight: 700;
+
+  --text-h1: 32px;
+  --text-h1--line-height: 38px;
+  --text-h1--letter-spacing: -0.02em;
+  --text-h1--font-weight: 700;
+
+  --text-h2: 24px;
+  --text-h2--line-height: 30px;
+  --text-h2--letter-spacing: -0.02em;
+  --text-h2--font-weight: 600;
+
+  --text-h3: 18px;
+  --text-h3--line-height: 22px;
+  --text-h3--letter-spacing: 0;
+  --text-h3--font-weight: 500;
+
+  --text-body: 16px;
+  --text-body--line-height: 24px;
+  --text-body--letter-spacing: 0;
+  --text-body--font-weight: 400;
+
+  --text-body-sm: 14px;
+  --text-body-sm--line-height: 21px;
+  --text-body-sm--letter-spacing: 0;
+  --text-body-sm--font-weight: 400;
+
+  --text-label: 11px;
+  --text-label--line-height: 14px;
+  --text-label--letter-spacing: 0.08em;
+  --text-label--font-weight: 500;
+
+  --text-mono-lg: 28px;
+  --text-mono-lg--line-height: 34px;
+  --text-mono-lg--font-weight: 600;
+
+  --text-mono: 14px;
+  --text-mono--line-height: 21px;
+  --text-mono--font-weight: 400;
+
+  /* ── Spacing ── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-24: 96px;
+
+  /* ── Radii ── */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 9999px;
+
+  /* ── Shadows ── */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --shadow-focus-ring: 0 0 0 3px var(--color-border-focus-ring);
+
+  /* ── Component Heights ── */
+  --height-sm: 32px;
+  --height-md: 40px;
+  --height-lg: 48px;
+
+  /* ── Transitions ── */
+  --duration-fast: 100ms;
+  --duration-normal: 150ms;
+  --duration-slow: 300ms;
+  --easing-default: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── Optional Light Theme Override ── */
+[data-theme="light"] {
+  --color-text-primary: #0D0D0D;
+  --color-text-secondary: #666666;
+  --color-text-muted: #A0A0A0;
+  --color-text-inverse: #F5F5F5;
+
+  --color-bg-base: #F5F5F5;
+  --color-bg-surface: #FAFAFA;
+  --color-bg-elevated: #EBEBEB;
+  --color-bg-overlay: #D4D4D4;
+
+  --color-border: #D4D4D4;
+  --color-border-subtle: #EBEBEB;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+}

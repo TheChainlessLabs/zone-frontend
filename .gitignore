@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.next/
+.astro/
+.output/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example

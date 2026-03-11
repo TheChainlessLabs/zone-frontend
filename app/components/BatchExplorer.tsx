@@ -1,0 +1,90 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import { mockBatches } from "@/lib/mockData";
+import type { BatchStatus } from "@/lib/types";
+
+const statusColors: Record<BatchStatus, string> = {
+  processing: "bg-warning/20 text-warning",
+  proposed: "bg-warning/20 text-warning",
+  proved: "bg-info/20 text-info",
+  settled: "bg-success/20 text-success",
+  finalized: "bg-accent/20 text-accent",
+};
+
+const PAGE_SIZE = 6;
+
+export default function BatchExplorer() {
+  const [page, setPage] = useState(0);
+  const totalBatches = 1247;
+  const totalPages = Math.ceil(mockBatches.length / PAGE_SIZE);
+  const displayed = mockBatches.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+
+  return (
+    <div className="bg-bg-surface border border-border rounded-lg">
+      {/* Header */}
+      <div className="flex h-[33px] items-center px-4 text-label-uppercase text-text-muted">
+        <span className="w-[20%]">Batch ID</span>
+        <span className="w-[15%] text-right">Tx Count</span>
+        <span className="w-[18%] text-right">Status</span>
+        <span className="w-[27%] text-right">Timestamp</span>
+        <span className="w-[20%] text-right">Proof</span>
+      </div>
+
+      {/* Rows */}
+      {displayed.map((batch) => (
+        <Link
+          key={batch.id}
+          href={`/explorer/batch/${batch.id}`}
+          className="flex h-[40px] items-center px-4 text-body-sm hover:bg-bg-elevated transition-fast"
+        >
+          <span className="w-[20%] text-accent hover:text-accent-hover transition-fast">
+            {batch.id}
+          </span>
+          <span className="w-[15%] text-right font-mono font-tabular text-text-secondary">
+            {batch.txCount}
+          </span>
+          <span className="w-[18%] flex justify-end">
+            <span className={`text-label-uppercase px-2 py-0.5 rounded-sm ${statusColors[batch.status]}`}>
+              {batch.status}
+            </span>
+          </span>
+          <span className="w-[27%] text-right font-mono font-tabular text-text-secondary">
+            {batch.timestamp}
+          </span>
+          <span className="w-[20%] text-right">
+            {batch.proofLink ? (
+              <span className="text-accent text-body-sm">View</span>
+            ) : (
+              <span className="text-text-muted">—</span>
+            )}
+          </span>
+        </Link>
+      ))}
+
+      {/* Pagination */}
+      <div className="flex items-center justify-between px-4 h-[44px] border-t border-border text-body-sm">
+        <span className="text-text-muted">
+          Showing {page * PAGE_SIZE + 1}-{Math.min((page + 1) * PAGE_SIZE, mockBatches.length)} of {totalBatches.toLocaleString()} batches
+        </span>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setPage(Math.max(0, page - 1))}
+            disabled={page === 0}
+            className="px-3 h-[28px] border border-border rounded-md text-text-secondary hover:bg-bg-elevated transition-fast disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Previous
+          </button>
+          <button
+            onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
+            disabled={page >= totalPages - 1}
+            className="px-3 h-[28px] border border-border rounded-md text-text-secondary hover:bg-bg-elevated transition-fast disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Next
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

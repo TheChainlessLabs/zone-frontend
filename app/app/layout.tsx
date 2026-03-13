@@ -3,6 +3,7 @@ import { Space_Grotesk, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { ToastProvider } from "@/lib/useToast";
 import Toast from "@/components/Toast";
+import MobileTabBar from "@/components/MobileTabBar";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -27,10 +28,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${spaceGrotesk.variable} ${jetbrainsMono.variable}`}>
-      <body className="bg-bg-base text-text-primary font-display min-h-screen antialiased">
+      <body className="bg-bg-base text-text-primary font-display min-h-screen antialiased pb-[60px] lg:pb-0">
         <ToastProvider>
           {children}
           <Toast />
+          <MobileTabBar />
         </ToastProvider>
       </body>
     </html>

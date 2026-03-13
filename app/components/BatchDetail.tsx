@@ -2,10 +2,18 @@
 
 import { mockBatches, mockBatchTransactions } from "@/lib/mockData";
 import type { BatchStatus } from "@/lib/types";
-import { Check } from "lucide-react";
+import { Check, Shield } from "lucide-react";
 import Link from "next/link";
 
 const statusOrder: BatchStatus[] = ["processing", "proposed", "proved", "settled", "finalized"];
+
+const statusColors: Record<BatchStatus, string> = {
+  processing: "bg-warning/20 text-warning",
+  proposed: "bg-warning/20 text-warning",
+  proved: "bg-info/20 text-info",
+  settled: "bg-success/20 text-success",
+  finalized: "bg-accent/20 text-accent",
+};
 
 const timelineSteps: { key: BatchStatus; label: string }[] = [
   { key: "proposed", label: "Proposed" },
@@ -31,22 +39,26 @@ export default function BatchDetail({ batchId }: BatchDetailProps) {
   const currentIdx = statusOrder.indexOf(batch.status);
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4 md:gap-6">
       <Link
         href="/explorer"
         className="text-accent text-body-sm hover:text-accent-hover transition-fast w-fit"
       >
-        &lt; Back to Explorer
+        &larr; Back to Explorer
       </Link>
 
-      <h2 className="text-h2 font-semibold">{batch.id}</h2>
+      <div className="flex items-center gap-3">
+        <h2 className="text-h3 md:text-h2 font-semibold">{batch.id}</h2>
+        <span className={`text-label-uppercase px-2 py-0.5 rounded-sm ${statusColors[batch.status]}`}>
+          {batch.status}
+        </span>
+      </div>
 
-      {/* Side-by-side: Timeline + Info | Transactions */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="flex flex-col gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+        <div className="flex flex-col gap-4 md:gap-6">
           {/* Status Timeline */}
-          <div className="bg-bg-surface border border-border rounded-lg p-6">
-            <h3 className="text-label-uppercase text-text-muted mb-4">Status</h3>
+          <div className="bg-bg-surface border border-border rounded-lg p-4 md:p-6">
+            <h3 className="text-label-uppercase text-text-muted mb-4">Timeline</h3>
             <div className="flex flex-col gap-0">
               {timelineSteps.map((step, i) => {
                 const stepIdx = statusOrder.indexOf(step.key);
@@ -57,25 +69,35 @@ export default function BatchDetail({ batchId }: BatchDetailProps) {
                   <div key={step.key} className="flex items-start gap-3">
                     <div className="flex flex-col items-center">
                       <div
-                        className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${
+                        className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${
                           isCompleted
                             ? "bg-success text-text-inverse"
                             : "bg-bg-elevated text-text-muted"
                         }`}
                       >
-                        {isCompleted ? <Check size={12} /> : (i + 1)}
+                        {isCompleted ? <Check size={10} /> : null}
                       </div>
                       {i < timelineSteps.length - 1 && (
                         <div className={`w-px h-6 ${isCompleted ? "bg-success" : "bg-bg-elevated"}`} />
                       )}
                     </div>
-                    <span
-                      className={`text-body-sm pt-0.5 ${
-                        isCurrent ? "text-text-primary font-medium" : "text-text-muted"
-                      }`}
-                    >
-                      {step.label}
-                    </span>
+                    <div className="flex flex-col -mt-0.5">
+                      <span
+                        className={`text-body-sm ${
+                          isCurrent ? "text-text-primary font-medium" : isCompleted ? "text-success" : "text-text-muted"
+                        }`}
+                      >
+                        {step.label}
+                      </span>
+                      {isCompleted && (
+                        <span className="text-[11px] text-text-muted font-mono font-tabular">
+                          {batch.timestamp}
+                        </span>
+                      )}
+                      {isCurrent && !isCompleted && (
+                        <span className="text-[11px] text-text-muted">In progress...</span>
+                      )}
+                    </div>
                   </div>
                 );
               })}
@@ -83,23 +105,21 @@ export default function BatchDetail({ batchId }: BatchDetailProps) {
           </div>
 
           {/* Batch info */}
-          <div className="bg-bg-surface border border-border rounded-lg p-6">
+          <div className="bg-bg-surface border border-border rounded-lg p-4 md:p-6">
             <h3 className="text-label-uppercase text-text-muted mb-4">Batch Info</h3>
             <div className="flex flex-col gap-3">
-              <Row label="Batch ID" value={batch.id} mono />
-              <Row label="Transaction Count" value={String(batch.txCount)} mono />
-              <Row label="Settlement Chain" value="Ethereum" />
-              <Row label="Timestamp" value={batch.timestamp} mono />
+              <Row label="Transactions" value={String(batch.txCount)} mono />
+              <Row label="Volume" value="$4.2M" mono />
               {batch.proofLink && (
                 <div className="flex justify-between text-body-sm">
-                  <span className="text-text-muted">Proof</span>
+                  <span className="text-text-muted">Proof hash</span>
                   <a
                     href={batch.proofLink}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-accent hover:text-accent-hover transition-fast"
+                    className="text-accent hover:text-accent-hover transition-fast font-mono font-tabular text-[12px]"
                   >
-                    View on Etherscan
+                    0x7a3f...c8d2
                   </a>
                 </div>
               )}
@@ -108,41 +128,67 @@ export default function BatchDetail({ batchId }: BatchDetailProps) {
         </div>
 
         {/* Transactions */}
-        <div className="bg-bg-surface border border-border rounded-lg overflow-hidden h-fit">
-          <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+        <div className="flex flex-col gap-0">
+          <div className="flex items-center justify-between mb-3">
             <h3 className="text-body-sm font-semibold">Transactions</h3>
-            <span className="text-body-sm text-text-muted">{txs.length} txs</span>
+            <button className="flex items-center gap-1.5 h-[28px] px-3 text-[11px] font-medium rounded-md border border-accent text-accent hover:bg-accent/10 transition-fast">
+              <Shield size={12} />
+              Decrypt Mine
+            </button>
           </div>
-          {txs.length > 0 ? (
-            <>
-              <div className="flex items-center h-[33px] px-4 text-label-uppercase text-text-muted">
-                <span className="w-[25%]">Tx ID</span>
-                <span className="w-[15%]">Pair</span>
-                <span className="w-[12%]">Side</span>
-                <span className="w-[22%] text-right">Amount</span>
-                <span className="w-[26%] text-right">Price</span>
-              </div>
-              {txs.map((tx) => (
-                <Link
-                  key={tx.id}
-                  href={`/explorer/tx/${tx.id}`}
-                  className="flex items-center px-4 h-[40px] text-body-sm font-mono font-tabular hover:bg-bg-elevated transition-fast"
-                >
-                  <span className="w-[25%] font-display text-accent">{tx.id}</span>
-                  <span className="w-[15%] font-display text-text-primary">{tx.pair}</span>
-                  <span className={`w-[12%] font-display capitalize ${tx.side === "buy" ? "text-success" : "text-error"}`}>
-                    {tx.side}
-                  </span>
-                  <span className="w-[22%] text-right text-text-primary">{tx.amount.toLocaleString()}</span>
-                  <span className="w-[26%] text-right text-text-primary">{tx.price.toFixed(4)}</span>
-                </Link>
-              ))}
-            </>
-          ) : (
-            <div className="flex items-center justify-center h-[120px]">
-              <span className="text-body-sm text-text-muted">No transactions</span>
+
+          {/* Desktop table */}
+          <div className="hidden md:block bg-bg-surface border border-border rounded-lg overflow-hidden">
+            <div className="flex items-center h-[33px] px-4 text-label-uppercase text-text-muted">
+              <span className="w-[25%]">Tx ID</span>
+              <span className="w-[15%]">Pair</span>
+              <span className="w-[12%]">Side</span>
+              <span className="w-[22%] text-right">Amount</span>
+              <span className="w-[26%] text-right">Price</span>
             </div>
-          )}
+            {txs.map((tx) => (
+              <Link
+                key={tx.id}
+                href={`/explorer/tx/${tx.id}`}
+                className="flex items-center px-4 h-[40px] text-body-sm font-mono font-tabular hover:bg-bg-elevated transition-fast"
+              >
+                <span className="w-[25%] font-display text-accent">{tx.id}</span>
+                <span className="w-[15%] font-display text-text-primary">{tx.pair}</span>
+                <span className={`w-[12%] font-display capitalize ${tx.side === "buy" ? "text-success" : "text-error"}`}>
+                  {tx.side}
+                </span>
+                <span className="w-[22%] text-right text-text-primary">{tx.amount.toLocaleString()}</span>
+                <span className="w-[26%] text-right text-text-primary">{tx.price.toFixed(4)}</span>
+              </Link>
+            ))}
+          </div>
+
+          {/* Mobile tx cards */}
+          <div className="md:hidden">
+            {txs.map((tx) => (
+              <Link
+                key={tx.id}
+                href={`/explorer/tx/${tx.id}`}
+                className="block py-3 border-b border-border-subtle last:border-b-0"
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[14px] font-medium text-text-primary">{tx.pair}</span>
+                    <span className={`text-[13px] font-medium capitalize ${tx.side === "buy" ? "text-success" : "text-error"}`}>
+                      {tx.side}
+                    </span>
+                  </div>
+                  <span className="text-label-uppercase px-2 py-0.5 rounded-sm bg-success/20 text-success">
+                    matched
+                  </span>
+                </div>
+                <div className="flex justify-between text-[12px] text-text-muted font-mono font-tabular">
+                  <span>€{tx.amount.toLocaleString()} @ {tx.price.toFixed(4)}</span>
+                  <span className="truncate ml-2">{tx.id}</span>
+                </div>
+              </Link>
+            ))}
+          </div>
         </div>
       </div>
     </div>

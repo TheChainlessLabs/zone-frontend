@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { mockOrderDetail } from "@/lib/mockData";
 import type { OrderStatus } from "@/lib/types";
+import { Check } from "lucide-react";
 
 const statusColors: Record<OrderStatus, string> = {
   open: "bg-info/20 text-info",
@@ -16,80 +17,114 @@ interface OrderDetailProps {
 }
 
 export default function OrderDetail({ orderId }: OrderDetailProps) {
-  // In a real app, fetch by orderId. Using mock for now.
   const order = { ...mockOrderDetail, id: orderId };
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4 md:gap-6">
       <Link
         href="/account"
         className="text-accent text-body-sm hover:text-accent-hover transition-fast w-fit"
       >
-        &lt; Back to Orders
+        &larr; Back to Orders
       </Link>
 
-      <div className="flex items-center gap-4">
-        <h2 className="text-h2 font-semibold">{order.id}</h2>
-        <span className={`text-label-uppercase px-2 py-0.5 rounded-sm ${statusColors[order.status]}`}>
-          {order.status === "aggregation-locked" ? "Agg Lock" : order.status}
-        </span>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <h2 className="text-h3 md:text-h2 font-semibold">#{order.id}</h2>
+          <span className={`text-label-uppercase px-2 py-0.5 rounded-sm ${statusColors[order.status]}`}>
+            {order.status === "aggregation-locked" ? "Agg Lock" : order.status}
+          </span>
+        </div>
+        {order.status === "open" && (
+          <button className="h-[32px] px-4 text-body-sm font-medium border border-error rounded-md text-error hover:bg-error/10 transition-fast">
+            Cancel
+          </button>
+        )}
       </div>
 
-      {/* Order info */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-bg-surface border border-border rounded-lg p-6">
+      {/* Horizontal Pipeline — mobile */}
+      <div className="md:hidden bg-bg-surface border border-border rounded-lg p-4">
+        <h3 className="text-label-uppercase text-text-muted mb-3">Order Pipeline</h3>
+        <HorizontalPipeline status={order.status} />
+      </div>
+
+      {/* Desktop: side-by-side */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+        {/* Order Details card */}
+        <div className="bg-bg-surface border border-border rounded-lg p-4 md:p-6">
           <h3 className="text-label-uppercase text-text-muted mb-4">Order Details</h3>
           <div className="flex flex-col gap-3">
             <Row label="Pair" value={order.pair} />
             <Row label="Side" value={order.side} className={order.side === "buy" ? "text-success" : "text-error"} />
-            <Row label="Type" value={order.type} />
-            <Row label="Size" value={order.size.toLocaleString()} mono />
-            <Row label="Price" value={order.price.toFixed(4)} mono />
+            <Row label="Type" value={order.type === "midpoint" ? "Midpoint Peg" : order.type} />
+            <Row label="Size" value={`€${order.size.toLocaleString()}.00`} mono />
             <Row label="Midpoint Rate" value={order.midpointRate.toFixed(4)} mono />
             <Row label="Slippage" value={`${order.slippage}%`} mono />
-            <Row label="Filled" value={`${order.filledPercent}%`} mono />
+            <Row label="Filled" value={`${order.filledPercent}%`} mono className={order.filledPercent > 0 ? "text-success" : undefined} />
             <Row label="Submitted" value={order.submittedAt} mono />
           </div>
         </div>
 
-        {/* Pipeline */}
-        <div className="bg-bg-surface border border-border rounded-lg p-6">
+        {/* Pipeline — desktop only */}
+        <div className="hidden md:block bg-bg-surface border border-border rounded-lg p-6">
           <h3 className="text-label-uppercase text-text-muted mb-4">Pipeline</h3>
-          <PipelineTimeline status={order.status} />
+          <VerticalPipeline status={order.status} />
         </div>
       </div>
 
       {/* Fills */}
       {order.fills.length > 0 && (
         <div className="bg-bg-surface border border-border rounded-lg overflow-hidden">
-          <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+          <div className="px-4 py-3 border-b border-border">
             <h3 className="text-body-sm font-semibold">Fills</h3>
-            <span className="text-body-sm text-text-muted">{order.fills.length} fills</span>
           </div>
-          <div className="flex items-center h-[33px] px-4 text-label-uppercase text-text-muted">
-            <span className="w-[25%]">Time</span>
-            <span className="w-[25%] text-right">Price</span>
-            <span className="w-[25%] text-right">Size</span>
-            <span className="w-[25%] text-right">Batch</span>
-          </div>
-          {order.fills.map((fill, i) => (
-            <div
-              key={i}
-              className="flex items-center px-4 h-[40px] text-body-sm font-mono font-tabular hover:bg-bg-elevated transition-fast"
-            >
-              <span className="w-[25%] text-text-secondary">{fill.time}</span>
-              <span className="w-[25%] text-right text-text-primary">{fill.price.toFixed(4)}</span>
-              <span className="w-[25%] text-right text-text-primary">{fill.size.toLocaleString()}</span>
-              <span className="w-[25%] text-right">
-                <Link
-                  href={`/explorer/batch/${fill.batchId}`}
-                  className="text-accent hover:text-accent-hover transition-fast"
-                >
-                  {fill.batchId}
-                </Link>
-              </span>
+
+          {/* Desktop table */}
+          <div className="hidden md:block">
+            <div className="flex items-center h-[33px] px-4 text-label-uppercase text-text-muted">
+              <span className="w-[25%]">Time</span>
+              <span className="w-[25%] text-right">Price</span>
+              <span className="w-[25%] text-right">Size</span>
+              <span className="w-[25%] text-right">Batch</span>
             </div>
-          ))}
+            {order.fills.map((fill, i) => (
+              <div
+                key={i}
+                className="flex items-center px-4 h-[40px] text-body-sm font-mono font-tabular hover:bg-bg-elevated transition-fast"
+              >
+                <span className="w-[25%] text-text-secondary">{fill.time}</span>
+                <span className="w-[25%] text-right text-text-primary">{fill.price.toFixed(4)}</span>
+                <span className="w-[25%] text-right text-text-primary">{fill.size.toLocaleString()}</span>
+                <span className="w-[25%] text-right">
+                  <Link href={`/explorer/batch/${fill.batchId}`} className="text-accent hover:text-accent-hover transition-fast">
+                    {fill.batchId}
+                  </Link>
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {/* Mobile fills */}
+          <div className="md:hidden">
+            {order.fills.map((fill, i) => (
+              <div key={i} className="p-4 border-b border-border-subtle last:border-b-0">
+                <div className="flex justify-between mb-1">
+                  <span className="text-body-sm text-text-secondary font-mono font-tabular">{fill.time}</span>
+                  <Link href={`/explorer/batch/${fill.batchId}`} className="text-body-sm text-accent hover:text-accent-hover transition-fast">
+                    {fill.batchId}
+                  </Link>
+                </div>
+                <span className="text-body-sm font-mono font-tabular text-text-primary">
+                  €{fill.size.toLocaleString()} @ {fill.price.toFixed(4)}
+                </span>
+              </div>
+            ))}
+            {order.filledPercent < 100 && (
+              <div className="px-4 py-3 text-[12px] text-text-muted italic">
+                Remaining €{(order.size * (1 - order.filledPercent / 100)).toLocaleString()} in aggregation queue...
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
@@ -107,7 +142,62 @@ function Row({ label, value, mono, className }: { label: string; value: string; 
   );
 }
 
-function PipelineTimeline({ status }: { status: OrderStatus }) {
+function HorizontalPipeline({ status }: { status: OrderStatus }) {
+  const steps = [
+    { key: "submitted", label: "Submit" },
+    { key: "matched", label: "Match" },
+    { key: "aggregation-locked", label: "Agg Lock" },
+    { key: "batched", label: "Batch" },
+    { key: "settled", label: "Settle" },
+    { key: "proven", label: "Prove" },
+  ];
+
+  const statusMap: Record<OrderStatus, number> = {
+    open: 0,
+    filled: 5,
+    cancelled: -1,
+    "aggregation-locked": 2,
+  };
+
+  const currentIdx = statusMap[status];
+
+  return (
+    <div className="flex items-start">
+      {steps.map((step, i) => {
+        const isCompleted = i <= currentIdx;
+        const isCurrent = i === currentIdx;
+
+        return (
+          <div key={step.key} className="flex items-center flex-1">
+            <div className="flex flex-col items-center flex-1">
+              <div
+                className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${
+                  isCompleted
+                    ? "bg-success text-text-inverse"
+                    : isCurrent
+                      ? "bg-accent text-text-inverse"
+                      : "bg-bg-elevated text-text-muted"
+                }`}
+              >
+                {isCompleted ? <Check size={10} /> : null}
+              </div>
+              <span className={`text-[9px] mt-1 text-center leading-tight ${
+                isCurrent ? "text-accent font-medium" : isCompleted ? "text-success" : "text-text-muted"
+              }`}>
+                {step.label}
+              </span>
+            </div>
+            {i < steps.length - 1 && (
+              <div className={`h-px flex-1 -mt-3 ${isCompleted ? "bg-success" : "bg-bg-elevated"}`} />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function VerticalPipeline({ status }: { status: OrderStatus }) {
   const steps = [
     { key: "submitted", label: "Submitted" },
     { key: "matched", label: "Matched" },
@@ -144,17 +234,13 @@ function PipelineTimeline({ status }: { status: OrderStatus }) {
                       : "bg-bg-elevated text-text-muted"
                 }`}
               >
-                {i + 1}
+                {isCompleted ? <Check size={12} /> : (i + 1)}
               </div>
               {i < steps.length - 1 && (
                 <div className={`w-px h-6 ${isCompleted ? "bg-success" : "bg-bg-elevated"}`} />
               )}
             </div>
-            <span
-              className={`text-body-sm pt-0.5 ${
-                isCurrent ? "text-text-primary font-medium" : "text-text-muted"
-              }`}
-            >
+            <span className={`text-body-sm pt-0.5 ${isCurrent ? "text-text-primary font-medium" : "text-text-muted"}`}>
               {step.label}
             </span>
           </div>

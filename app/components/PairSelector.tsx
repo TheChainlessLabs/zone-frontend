@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Search, Star } from "lucide-react";
 
-const filterTabs = ["All", "Majors", "Minors", "Stablecoins", "★"] as const;
+const filterTabs = ["All", "Majors", "Minors", "Stable", "★"] as const;
 
 interface PairSelectorProps {
   onSearch?: (query: string) => void;

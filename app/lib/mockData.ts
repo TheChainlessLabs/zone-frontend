@@ -25,6 +25,8 @@ export const mockPairs: PairInfo[] = [
   { pair: "USD/JPY", base: "USD", quote: "JPY", price: 149.85, change: 0.31, fullName: "US Dollar / Japanese Yen" },
   { pair: "USD/CHF", base: "USD", quote: "CHF", price: 0.8842, change: -0.05, fullName: "US Dollar / Swiss Franc" },
   { pair: "AUD/USD", base: "AUD", quote: "USD", price: 0.6523, change: 0.67, fullName: "Australian Dollar / US Dollar" },
+  { pair: "NZD/USD", base: "NZD", quote: "USD", price: 0.5912, change: 0.15, fullName: "New Zealand Dollar / US Dollar" },
+  { pair: "USD/CAD", base: "USD", quote: "CAD", price: 1.3567, change: -0.11, fullName: "US Dollar / Canadian Dollar" },
 ];
 
 // ── Recent Trades (with € sizes) ──

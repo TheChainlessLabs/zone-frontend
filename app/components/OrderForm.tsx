@@ -5,14 +5,16 @@ import { Info, Lock } from "lucide-react";
 import type { OrderType, Side } from "@/lib/types";
 
 export default function OrderForm() {
-  const [orderType, setOrderType] = useState<OrderType>("midpoint");
+  const [orderType] = useState<OrderType>("midpoint");
   const [side, setSide] = useState<Side>("buy");
   const [amount, setAmount] = useState("");
   const [price, setPrice] = useState("1.0850");
 
   const midpointRate = 1.0856;
-  const fee = amount ? (parseFloat(amount) * 0.00005).toFixed(2) : "0.00";
+  const parsedAmount = parseFloat(amount) || 0;
+  const fee = parsedAmount ? (parsedAmount * 0.00005).toFixed(2) : "0.00";
   const feePercent = "0.005%";
+  const estReceive = parsedAmount ? (parsedAmount * midpointRate).toFixed(2) : "0.00";
   const savingsPips = "+0.8";
 
   return (
@@ -43,7 +45,7 @@ export default function OrderForm() {
 
       {/* Amount */}
       <div>
-        <label className="text-label-uppercase text-text-muted mb-1.5 block">Amount</label>
+        <label className="text-label-uppercase text-text-muted mb-1.5 block">Amount (EUR)</label>
         <div
           className={`flex items-center h-[44px] bg-bg-base border rounded-md px-4 ${
             side === "sell" ? "border-error/30" : "border-border"
@@ -62,7 +64,7 @@ export default function OrderForm() {
               side === "sell" ? "text-error" : "text-accent"
             }`}
           >
-            USDC
+            EUR
           </span>
         </div>
       </div>
@@ -121,6 +123,18 @@ export default function OrderForm() {
         </div>
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-1.5">
+            <span className="text-text-muted">Est. receive</span>
+            <Info size={12} className="text-accent/50" />
+          </div>
+          <span className="text-text-primary font-mono font-tabular">
+            ${estReceive}
+          </span>
+        </div>
+
+        <div className="h-px bg-border-subtle" />
+
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-1.5">
             <span className="text-text-muted">Est. savings vs Wise</span>
             <Info size={12} className="text-accent/50" />
           </div>
@@ -128,23 +142,6 @@ export default function OrderForm() {
             {savingsPips} pips
           </span>
         </div>
-      </div>
-
-      {/* Order type tabs */}
-      <div className="flex gap-1 bg-bg-base rounded-md p-1">
-        {(["midpoint", "limit", "twap"] as const).map((t) => (
-          <button
-            key={t}
-            onClick={() => setOrderType(t)}
-            className={`flex-1 h-[28px] text-body-sm font-medium rounded-sm transition-fast uppercase ${
-              orderType === t
-                ? "bg-bg-elevated text-text-primary"
-                : "text-text-muted hover:text-text-secondary"
-            }`}
-          >
-            {t}
-          </button>
-        ))}
       </div>
 
       {/* Submit */}

@@ -6,11 +6,11 @@
 
 :root {
   /* ── Accent ── */
-  --color-accent: #3467A1;
-  --color-accent-hover: #3D78B8;
-  --color-accent-active: #2D5A8E;
-  --color-accent-muted: #4A8BC7;
-  --color-accent-subtle: #4A8BC71F;
+  --color-accent: #0EA5E9;
+  --color-accent-hover: #38BDF8;
+  --color-accent-active: #0284C7;
+  --color-accent-muted: #7DD3FC;
+  --color-accent-subtle: #0EA5E91F;
 
   /* ── Text ── */
   --color-text-primary: #F5F5F5;
@@ -27,8 +27,8 @@
   /* ── Borders ── */
   --color-border: #333333;
   --color-border-subtle: #1A1A1A;
-  --color-border-focus: #4A8BC7;
-  --color-border-focus-ring: #4A8BC726;
+  --color-border-focus: #38BDF8;
+  --color-border-focus-ring: #38BDF826;
 
   /* ── Semantic: Success ── */
   --color-success: #22C55E;
@@ -49,10 +49,10 @@
   --color-warning-subtle: #F59E0B1F;
 
   /* ── Semantic: Info ── */
-  --color-info: #3467A1;
-  --color-info-hover: #3D78B8;
-  --color-info-active: #2D5A8E;
-  --color-info-subtle: #3467A11F;
+  --color-info: #0EA5E9;
+  --color-info-hover: #38BDF8;
+  --color-info-active: #0284C7;
+  --color-info-subtle: #0EA5E91F;
 
   /* ── Typography ── */
   --font-display: 'Space Grotesk', system-ui, sans-serif;

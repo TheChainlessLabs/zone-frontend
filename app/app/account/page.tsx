@@ -40,23 +40,23 @@ export default function AccountPage() {
     <div className="flex flex-col min-h-screen">
       <Navbar />
 
-      <div className="flex-1 p-6 max-w-[1200px] mx-auto w-full flex flex-col gap-6">
+      <div className="flex-1 p-4 md:p-6 max-w-[1200px] mx-auto w-full flex flex-col gap-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-4">
             <h1 className="text-h2 font-semibold">Orders</h1>
             <span className="text-body-sm text-text-muted">{openCount} open orders</span>
           </div>
           <button
             onClick={() => setCancelAllOpen(true)}
-            className="h-[32px] px-4 text-body-sm font-medium border border-error rounded-md text-error hover:bg-error/10 transition-fast"
+            className="h-[32px] px-4 text-body-sm font-medium border border-error rounded-md text-error hover:bg-error/10 transition-fast w-fit"
           >
             Cancel All
           </button>
         </div>
 
         {/* Filter bar */}
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <div className="flex gap-1 bg-bg-surface border border-border rounded-md p-1">
             {tabs.map((tab) => (
               <button
@@ -85,8 +85,8 @@ export default function AccountPage() {
           </select>
         </div>
 
-        {/* Orders table */}
-        <div className="bg-bg-surface border border-border rounded-lg overflow-hidden">
+        {/* Orders — Desktop table */}
+        <div className="hidden md:block bg-bg-surface border border-border rounded-lg overflow-hidden">
           <div className="flex items-center h-[33px] px-4 text-label-uppercase text-text-muted">
             <span className="w-[14%]">Pair</span>
             <span className="w-[8%]">Side</span>
@@ -97,7 +97,6 @@ export default function AccountPage() {
             <span className="w-[16%] text-right">Status</span>
             <span className="w-[14%] text-right">Time</span>
           </div>
-
           <div className="max-h-[500px] overflow-y-auto">
             {filtered.map((order) => (
               <Link
@@ -124,8 +123,36 @@ export default function AccountPage() {
           </div>
         </div>
 
+        {/* Orders — Mobile cards */}
+        <div className="md:hidden flex flex-col">
+          {filtered.map((order) => (
+            <Link
+              key={order.id}
+              href={`/account/order/${order.id}`}
+              className="block py-3 border-b border-border-subtle last:border-b-0"
+            >
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-[14px] font-semibold text-text-primary">{order.pair}</span>
+                  <span className={`text-[13px] font-medium capitalize ${order.side === "buy" ? "text-success" : "text-error"}`}>
+                    {order.side}
+                  </span>
+                  <span className="text-[13px] text-text-muted capitalize">{order.type}</span>
+                </div>
+                <span className={`text-label-uppercase px-2 py-0.5 rounded-sm ${statusColors[order.status]}`}>
+                  {order.status === "aggregation-locked" ? "Agg Lock" : order.status}
+                </span>
+              </div>
+              <div className="flex justify-between text-[12px] text-text-muted font-mono font-tabular">
+                <span>{order.amount.toLocaleString()} @ {order.price.toFixed(4)}</span>
+                <span>{order.filledPercent}% filled</span>
+              </div>
+            </Link>
+          ))}
+        </div>
+
         {/* Force withdrawal banner */}
-        <div className="bg-warning/10 border border-warning/30 rounded-lg p-4 flex items-center justify-between">
+        <div className="bg-warning/10 border border-warning/30 rounded-lg p-4 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
           <div>
             <p className="text-body-sm font-medium text-warning">Force Withdrawal Available</p>
             <p className="text-body-sm text-text-muted mt-0.5">

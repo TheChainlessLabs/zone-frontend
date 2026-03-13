@@ -101,19 +101,22 @@ export default function FundingForm({ initialTab = "deposit" }: FundingFormProps
         <div className="flex justify-between mb-1">
           <label className="text-label-uppercase text-text-muted">Amount</label>
           <span className="text-body-sm text-text-muted">
-            Balance: <span className="font-mono font-tabular">{balance.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>
+            Balance: <span className="font-mono font-tabular">{balance.toLocaleString("en-US", { minimumFractionDigits: 2 })} {asset}</span>
           </span>
         </div>
-        <div className="flex items-center h-[44px] bg-bg-base border border-border rounded-md px-4">
+        <div className="flex items-center h-[48px] bg-bg-base border border-border rounded-md px-4">
           <input
             type="text"
             inputMode="decimal"
             placeholder="0.00"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            className="flex-1 bg-transparent text-body-sm font-mono font-tabular outline-none text-text-primary placeholder:text-text-muted"
+            className="flex-1 bg-transparent text-[18px] font-mono font-tabular outline-none text-text-primary placeholder:text-text-muted"
           />
-          <button className="text-label-uppercase text-accent hover:text-accent-hover transition-fast ml-2">
+          <button
+            onClick={() => setAmount(balance.toFixed(2))}
+            className="text-label-uppercase text-accent hover:text-accent-hover transition-fast ml-2"
+          >
             MAX
           </button>
         </div>

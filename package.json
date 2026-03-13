@@ -1,11 +1,23 @@
 {
+  "name": "omega-interface",
   "private": true,
+  "description": "Frontend for the Omega Markets protocol — darkpool FX trading with zero-knowledge proofs",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/omega-markets/omega-interface"
+  },
+  "license": "BUSL-1.1",
   "scripts": {
     "build": "pnpm -r build",
+    "dev:app": "pnpm --filter app dev",
     "dev:landing": "pnpm --filter landing dev",
-    "dev:app": "pnpm --filter app dev"
+    "typecheck": "pnpm --filter app tsc --noEmit"
   },
   "pnpm": {
     "onlyBuiltDependencies": ["esbuild", "sharp"]
+  },
+  "engines": {
+    "node": ">=18",
+    "pnpm": ">=9"
   }
 }

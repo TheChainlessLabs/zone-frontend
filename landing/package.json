@@ -1,5 +1,5 @@
 {
-  "name": "landing",
+  "name": "@omega/landing",
   "type": "module",
   "version": "0.1.0",
   "private": true,

@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Search } from "lucide-react";
+import { Search, Star } from "lucide-react";
 
-const filterTabs = ["All", "Majors", "Exotic", "★"] as const;
+const filterTabs = ["All", "Majors", "Minors", "Stablecoins", "★"] as const;
 
 interface PairSelectorProps {
   onSearch?: (query: string) => void;
@@ -46,7 +46,7 @@ export default function PairSelector({ onSearch, onFilter }: PairSelectorProps) 
                 : "text-text-muted hover:text-text-secondary"
             }`}
           >
-            {tab}
+            {tab === "★" ? <Star size={12} className="mx-auto" /> : tab}
           </button>
         ))}
       </div>

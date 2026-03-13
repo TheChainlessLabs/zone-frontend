@@ -11,12 +11,17 @@ interface ForcedWithdrawalModalProps {
 export default function ForcedWithdrawalModal({ isOpen, onClose }: ForcedWithdrawalModalProps) {
   const [confirmText, setConfirmText] = useState("");
 
+  const handleClose = () => {
+    setConfirmText("");
+    onClose();
+  };
+
   const withdrawable = 28750.50;
   const forfeited = 5100.00;
   const net = withdrawable - forfeited;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Force Withdrawal">
+    <Modal isOpen={isOpen} onClose={handleClose} title="Force Withdrawal">
       <div className="flex flex-col gap-4">
         <p className="text-body-sm text-error font-medium">
           This action cannot be undone.
@@ -62,6 +67,7 @@ export default function ForcedWithdrawalModal({ isOpen, onClose }: ForcedWithdra
         </div>
 
         <button
+          onClick={handleClose}
           disabled={confirmText !== "FORCE WITHDRAW"}
           className="h-[44px] w-full text-body-sm font-semibold rounded-md bg-error text-text-inverse transition-fast disabled:opacity-40 disabled:cursor-not-allowed hover:bg-error-hover"
         >

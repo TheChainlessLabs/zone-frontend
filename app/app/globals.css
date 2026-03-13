@@ -42,3 +42,16 @@
     transform: translateX(0);
   }
 }
+
+@keyframes sheet-enter {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}

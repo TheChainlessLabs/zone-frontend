@@ -4,6 +4,7 @@ import { useState } from "react";
 import Navbar from "@/components/Navbar";
 import ExchangeOverview from "@/components/ExchangeOverview";
 import BatchExplorer from "@/components/BatchExplorer";
+import ProtocolStats from "@/components/ProtocolStats";
 
 const tabs = ["Batches", "Withdrawals", "Order Lookup"] as const;
 
@@ -14,17 +15,17 @@ export default function ExplorerPage() {
     <div className="flex flex-col min-h-screen">
       <Navbar />
 
-      <div className="flex-1 p-6 max-w-[1200px] mx-auto w-full flex flex-col gap-6">
+      <div className="flex-1 p-4 md:p-6 max-w-[1200px] mx-auto w-full flex flex-col gap-6">
         <h1 className="text-h2 font-semibold">Explorer</h1>
         <ExchangeOverview />
 
         {/* Tabs */}
-        <div className="flex gap-1 bg-bg-surface border border-border rounded-md p-1 w-fit">
+        <div className="flex gap-1 bg-bg-surface border border-border rounded-md p-1 w-fit overflow-x-auto">
           {tabs.map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-4 h-[32px] text-body-sm font-medium rounded-sm transition-fast ${
+              className={`px-4 h-[32px] text-body-sm font-medium rounded-sm transition-fast shrink-0 ${
                 activeTab === tab
                   ? "bg-bg-elevated text-text-primary"
                   : "text-text-muted hover:text-text-secondary"
@@ -45,7 +46,7 @@ export default function ExplorerPage() {
         {activeTab === "Order Lookup" && (
           <div className="bg-bg-surface border border-border rounded-lg p-6">
             <label className="text-label-uppercase text-text-muted mb-2 block">Order ID</label>
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-3">
               <input
                 type="text"
                 placeholder="ORD-20260306-0042"
@@ -57,6 +58,9 @@ export default function ExplorerPage() {
             </div>
           </div>
         )}
+
+        {/* Protocol Stats */}
+        <ProtocolStats />
       </div>
     </div>
   );

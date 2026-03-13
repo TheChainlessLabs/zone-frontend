@@ -23,45 +23,67 @@ export default function BatchExplorer() {
 
   return (
     <div className="bg-bg-surface border border-border rounded-lg">
-      {/* Header */}
-      <div className="flex h-[33px] items-center px-4 text-label-uppercase text-text-muted">
-        <span className="w-[20%]">Batch ID</span>
-        <span className="w-[15%] text-right">Tx Count</span>
-        <span className="w-[18%] text-right">Status</span>
-        <span className="w-[27%] text-right">Timestamp</span>
-        <span className="w-[20%] text-right">Proof</span>
+      {/* Desktop table */}
+      <div className="hidden md:block">
+        <div className="flex h-[33px] items-center px-4 text-label-uppercase text-text-muted">
+          <span className="w-[20%]">Batch ID</span>
+          <span className="w-[15%] text-right">Tx Count</span>
+          <span className="w-[18%] text-right">Status</span>
+          <span className="w-[27%] text-right">Timestamp</span>
+          <span className="w-[20%] text-right">Proof</span>
+        </div>
+        {displayed.map((batch) => (
+          <Link
+            key={batch.id}
+            href={`/explorer/batch/${batch.id}`}
+            className="flex h-[40px] items-center px-4 text-body-sm hover:bg-bg-elevated transition-fast"
+          >
+            <span className="w-[20%] text-accent hover:text-accent-hover transition-fast">
+              {batch.id}
+            </span>
+            <span className="w-[15%] text-right font-mono font-tabular text-text-secondary">
+              {batch.txCount}
+            </span>
+            <span className="w-[18%] flex justify-end">
+              <span className={`text-label-uppercase px-2 py-0.5 rounded-sm ${statusColors[batch.status]}`}>
+                {batch.status}
+              </span>
+            </span>
+            <span className="w-[27%] text-right font-mono font-tabular text-text-secondary">
+              {batch.timestamp}
+            </span>
+            <span className="w-[20%] text-right">
+              {batch.proofLink ? (
+                <span className="text-accent text-body-sm">View</span>
+              ) : (
+                <span className="text-text-muted">—</span>
+              )}
+            </span>
+          </Link>
+        ))}
       </div>
 
-      {/* Rows */}
-      {displayed.map((batch) => (
-        <Link
-          key={batch.id}
-          href={`/explorer/batch/${batch.id}`}
-          className="flex h-[40px] items-center px-4 text-body-sm hover:bg-bg-elevated transition-fast"
-        >
-          <span className="w-[20%] text-accent hover:text-accent-hover transition-fast">
-            {batch.id}
-          </span>
-          <span className="w-[15%] text-right font-mono font-tabular text-text-secondary">
-            {batch.txCount}
-          </span>
-          <span className="w-[18%] flex justify-end">
-            <span className={`text-label-uppercase px-2 py-0.5 rounded-sm ${statusColors[batch.status]}`}>
-              {batch.status}
-            </span>
-          </span>
-          <span className="w-[27%] text-right font-mono font-tabular text-text-secondary">
-            {batch.timestamp}
-          </span>
-          <span className="w-[20%] text-right">
-            {batch.proofLink ? (
-              <span className="text-accent text-body-sm">View</span>
-            ) : (
-              <span className="text-text-muted">—</span>
-            )}
-          </span>
-        </Link>
-      ))}
+      {/* Mobile cards */}
+      <div className="md:hidden">
+        {displayed.map((batch) => (
+          <Link
+            key={batch.id}
+            href={`/explorer/batch/${batch.id}`}
+            className="block p-3 border-b border-border-subtle last:border-b-0"
+          >
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-body-sm text-accent font-medium">{batch.id}</span>
+              <span className={`text-label-uppercase px-2 py-0.5 rounded-sm ${statusColors[batch.status]}`}>
+                {batch.status}
+              </span>
+            </div>
+            <div className="flex justify-between text-[12px] text-text-muted font-mono font-tabular">
+              <span>{batch.txCount} txs</span>
+              <span>{batch.timestamp}</span>
+            </div>
+          </Link>
+        ))}
+      </div>
 
       {/* Pagination */}
       <div className="flex items-center justify-between px-4 h-[44px] border-t border-border text-body-sm">

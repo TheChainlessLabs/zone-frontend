@@ -107,6 +107,33 @@ pnpm typecheck        # TypeScript check (app)
 pnpm test             # Run tests (Vitest)
 ```
 
+## Testing
+
+### Stack
+- **Runner**: Vitest with `@vitejs/plugin-react` (config: `app/vitest.config.ts`)
+- **Environment**: jsdom for DOM APIs
+- **Assertions**: `@testing-library/react` for rendering, `@testing-library/jest-dom` for DOM matchers (`.toBeInTheDocument()`, etc.)
+- **Setup file**: `app/vitest.setup.ts` — loads jest-dom matchers globally
+
+### Path Aliases
+The `@/` alias resolves to `app/` root in tests, matching `tsconfig.json` paths. Import components as `@/components/Foo`.
+
+### Adding a New Test
+1. Create `app/components/__tests__/YourComponent.test.tsx` (or co-locate as `YourComponent.test.tsx`)
+2. Import from `@testing-library/react` and `vitest`
+3. Use `afterEach(cleanup)` to prevent DOM leaks between tests
+4. Run with `cd app && pnpm test`
+
+### What Works Out of the Box
+- Pure presentational components (no Next.js internals)
+- Components using React hooks (`useState`, `useEffect`, etc.)
+- `@/` path alias imports
+
+### What Needs Mocks (future tickets)
+- `next/image`, `next/link`, `next/navigation` — require manual mocks or `next/jest`
+- `next/font/google` — mock the font module
+- Components depending on context providers — wrap in the provider during `render()`
+
 ---
 
 ## Backend Integration (omega-markets)

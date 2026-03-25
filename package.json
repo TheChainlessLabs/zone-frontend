@@ -11,7 +11,8 @@
     "build": "pnpm -r build",
     "dev:app": "pnpm --filter app dev",
     "dev:landing": "pnpm --filter landing dev",
-    "typecheck": "pnpm --filter app tsc --noEmit"
+    "typecheck": "pnpm --filter app tsc --noEmit",
+    "test": "pnpm --filter app test"
   },
   "pnpm": {
     "onlyBuiltDependencies": ["esbuild", "sharp"]

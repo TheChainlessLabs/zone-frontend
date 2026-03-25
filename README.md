@@ -35,6 +35,21 @@ pnpm dev:app
 pnpm dev:landing
 ```
 
+The trading app requires `NEXT_PUBLIC_API_URL` to point at a running `omega-api`
+instance. For local development with the backend repo in
+`/Users/brianseong/Developer/Omega/omega-markets`, run the backend on a separate
+port and point the frontend at it:
+
+```bash
+# Backend API from omega-markets
+cd /Users/brianseong/Developer/Omega/omega-markets
+OMEGA_HTTP_BIND="127.0.0.1:3001" cargo run -p omega-api
+
+# Trading app from omega-interface
+cd /Users/brianseong/Developer/Omega/omega-interface-backend-api/app
+NEXT_PUBLIC_API_URL="http://127.0.0.1:3001" pnpm dev
+```
+
 ### Build
 
 ```bash

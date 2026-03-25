@@ -29,7 +29,7 @@ export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
 
         {/* Amount label + input */}
         <div>
-          <Skeleton className="h-[20px] w-[80px] mb-1.5" />
+          <Skeleton className="h-[14px] w-[80px] mb-1.5" />
           <Skeleton className="h-[44px] rounded-md" />
         </div>
 
@@ -40,22 +40,22 @@ export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
           <Skeleton className="flex-1 h-[30px] rounded-md" />
         </div>
 
-        {/* Order details */}
+        {/* Order details — row height matches text-body-sm line-height (21px) */}
         <div className="flex flex-col gap-2.5">
-          <div className="flex justify-between">
+          <div className="flex justify-between items-center h-[21px]">
             <Skeleton className="h-[14px] w-[60px]" />
             <Skeleton className="h-[14px] w-[80px]" />
           </div>
-          <div className="flex justify-between">
+          <div className="flex justify-between items-center h-[21px]">
             <Skeleton className="h-[14px] w-[60px]" />
             <Skeleton className="h-[14px] w-[80px]" />
           </div>
-          <div className="flex justify-between">
+          <div className="flex justify-between items-center h-[21px]">
             <Skeleton className="h-[14px] w-[60px]" />
             <Skeleton className="h-[14px] w-[80px]" />
           </div>
           <div className="h-px bg-border-subtle" />
-          <div className="flex justify-between">
+          <div className="flex justify-between items-center h-[21px]">
             <Skeleton className="h-[14px] w-[60px]" />
             <Skeleton className="h-[14px] w-[80px]" />
           </div>

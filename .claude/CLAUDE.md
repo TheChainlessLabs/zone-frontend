@@ -104,7 +104,7 @@ pnpm dev:app          # Next.js dev server (port 3001)
 pnpm dev:landing      # Astro dev server
 pnpm build            # Build all packages
 pnpm typecheck        # TypeScript check (app)
-pnpm test             # Run tests (Vitest)
+cd app && pnpm test   # Run tests (Vitest)
 ```
 
 ## Testing

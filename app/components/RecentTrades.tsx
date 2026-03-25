@@ -1,4 +1,6 @@
-import { recentTrades } from "@/lib/mockData";
+"use client";
+
+import { useTrades } from "@/lib/hooks/useTrades";
 import { SkeletonRow } from "@/components/Skeleton";
 
 const skeletonColumns = [
@@ -7,7 +9,9 @@ const skeletonColumns = [
   { width: "35%", align: "right" as const },
 ];
 
-export default function RecentTrades({ isLoading }: { isLoading?: boolean }) {
+export default function RecentTrades() {
+  const { trades, isLoading, isError } = useTrades();
+
   return (
     <div className="bg-bg-surface border border-border rounded-lg overflow-hidden">
       <div className="flex items-center justify-between h-[36px] px-3 border-b border-border">
@@ -34,9 +38,17 @@ export default function RecentTrades({ isLoading }: { isLoading?: boolean }) {
             />
           ))}
         </div>
+      ) : isError ? (
+        <div className="flex items-center justify-center h-[80px]">
+          <span className="text-body-sm text-text-muted">Data unavailable</span>
+        </div>
+      ) : trades.length === 0 ? (
+        <div className="flex items-center justify-center h-[80px]">
+          <span className="text-body-sm text-text-muted">No trades yet</span>
+        </div>
       ) : (
         <div className="animate-fadeIn">
-          {recentTrades.map((trade, i) => (
+          {trades.map((trade, i) => (
             <div
               key={i}
               className="flex items-center h-[28px] px-3 text-mono font-mono font-tabular hover:bg-bg-elevated transition-fast"

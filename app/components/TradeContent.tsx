@@ -55,7 +55,7 @@ export default function TradeContent() {
         <div className="w-full lg:w-[380px] border-t lg:border-t-0 lg:border-l border-border overflow-y-auto shrink-0">
           <div className="p-4 flex flex-col gap-4">
             <OrderForm isLoading={isLoading} />
-            <RecentTrades isLoading={isLoading} />
+            <RecentTrades />
           </div>
         </div>
       </div>

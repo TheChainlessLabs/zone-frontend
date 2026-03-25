@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { openPositions, mockOrderHistory, recentTrades } from "@/lib/mockData";
+import { openPositions, mockOrderHistory } from "@/lib/mockData";
 import type { OrderStatus } from "@/lib/types";
 import { SkeletonRow } from "@/components/Skeleton";
+import { useTrades } from "@/lib/hooks/useTrades";
 
 const tabs = ["Positions", "Orders", "Trade History"] as const;
 
@@ -150,7 +151,16 @@ function OrdersTable() {
   );
 }
 
+const tradeSkeletonColumns = [
+  { width: "25%" },
+  { width: "25%", align: "right" as const },
+  { width: "25%", align: "right" as const },
+  { width: "25%", align: "right" as const },
+];
+
 function TradeHistoryTable() {
+  const { trades, isLoading, isError } = useTrades();
+
   return (
     <>
       <div className="flex items-center h-[28px] px-3 text-label-uppercase text-text-muted">
@@ -159,23 +169,39 @@ function TradeHistoryTable() {
         <span className="w-[25%] text-right">Size</span>
         <span className="w-[25%] text-right">Side</span>
       </div>
-      {recentTrades.slice(0, 10).map((trade, i) => (
-        <div
-          key={i}
-          className="flex items-center h-[28px] px-3 text-mono font-mono font-tabular hover:bg-bg-elevated transition-fast"
-        >
-          <span className="w-[25%] text-text-muted">{trade.time}</span>
-          <span className={`w-[25%] text-right ${trade.side === "buy" ? "text-success" : "text-error"}`}>
-            {trade.price.toFixed(4)}
-          </span>
-          <span className="w-[25%] text-right text-text-secondary">
-            {trade.sizeFormatted ?? trade.size.toLocaleString()}
-          </span>
-          <span className={`w-[25%] text-right capitalize ${trade.side === "buy" ? "text-success" : "text-error"}`}>
-            {trade.side}
-          </span>
+      {isLoading ? (
+        <div>
+          {Array.from({ length: 5 }, (_, i) => (
+            <SkeletonRow key={i} height="28px" columns={tradeSkeletonColumns} />
+          ))}
         </div>
-      ))}
+      ) : isError ? (
+        <div className="flex items-center justify-center h-[80px]">
+          <span className="text-body-sm text-text-muted">Data unavailable</span>
+        </div>
+      ) : trades.length === 0 ? (
+        <div className="flex items-center justify-center h-[80px]">
+          <span className="text-body-sm text-text-muted">No trades yet</span>
+        </div>
+      ) : (
+        trades.slice(0, 10).map((trade, i) => (
+          <div
+            key={i}
+            className="flex items-center h-[28px] px-3 text-mono font-mono font-tabular hover:bg-bg-elevated transition-fast"
+          >
+            <span className="w-[25%] text-text-muted">{trade.time}</span>
+            <span className={`w-[25%] text-right ${trade.side === "buy" ? "text-success" : "text-error"}`}>
+              {trade.price.toFixed(4)}
+            </span>
+            <span className="w-[25%] text-right text-text-secondary">
+              {trade.sizeFormatted ?? trade.size.toLocaleString()}
+            </span>
+            <span className={`w-[25%] text-right capitalize ${trade.side === "buy" ? "text-success" : "text-error"}`}>
+              {trade.side}
+            </span>
+          </div>
+        ))
+      )}
     </>
   );
 }

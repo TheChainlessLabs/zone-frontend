@@ -20,6 +20,17 @@ vi.mock("@/components/PriceChart", () => ({
 vi.mock("@/components/StatusBar", () => ({
   default: () => <div data-testid="status-bar" />,
 }));
+vi.mock("@/components/RecentTrades", () => ({
+  default: () => <div data-testid="recent-trades">Recent Fills</div>,
+}));
+vi.mock("@/components/ProtectedPage", () => ({
+  default: ({ children, shellClassName }: { children: React.ReactNode; shellClassName: string }) => (
+    <div className={shellClassName}>{children}</div>
+  ),
+}));
+vi.mock("@/lib/hooks/useTrades", () => ({
+  useTrades: vi.fn().mockReturnValue({ trades: [], isLoading: false, isError: false }),
+}));
 
 afterEach(cleanup);
 
@@ -37,8 +48,8 @@ describe("TradeContent", () => {
     const skeletonRows = container.querySelectorAll(
       "[data-testid='skeleton-row']"
     );
-    // 15 RecentTrades + 3 BottomPanel Positions = 18 skeleton rows
-    expect(skeletonRows.length).toBe(18);
+    // 3 BottomPanel Positions skeleton rows
+    expect(skeletonRows.length).toBe(3);
   });
 
   it("renders OrderForm skeleton blocks in initial loading state", () => {
@@ -46,8 +57,8 @@ describe("TradeContent", () => {
     const pulseElements = container.querySelectorAll(
       "[class*='animate-pulse']"
     );
-    // Skeleton rows (18 rows × inner pulse elements) + OrderForm skeleton blocks
-    expect(pulseElements.length).toBeGreaterThan(18);
+    // Skeleton rows (3 rows × inner pulse elements) + OrderForm skeleton blocks
+    expect(pulseElements.length).toBeGreaterThan(3);
   });
 
   it("does not show Buy/Sell buttons during initial load", () => {
@@ -85,8 +96,8 @@ describe("TradeContent", () => {
     const fadeInElements = container.querySelectorAll(
       "[class*='animate-fadeIn']"
     );
-    // RecentTrades, BottomPanel Positions, and OrderForm all wrap loaded content in animate-fadeIn
-    expect(fadeInElements.length).toBe(3);
+    // BottomPanel Positions and OrderForm wrap loaded content in animate-fadeIn
+    expect(fadeInElements.length).toBe(2);
   });
 
   it("still shows skeletons before 1500ms elapses", () => {
@@ -100,6 +111,6 @@ describe("TradeContent", () => {
     const skeletonRows = container.querySelectorAll(
       "[data-testid='skeleton-row']"
     );
-    expect(skeletonRows.length).toBe(18);
+    expect(skeletonRows.length).toBe(3);
   });
 });

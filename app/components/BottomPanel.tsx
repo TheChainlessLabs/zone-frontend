@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { openPositions, mockOrderHistory, recentTrades } from "@/lib/mockData";
 import type { OrderStatus } from "@/lib/types";
+import { SkeletonRow } from "@/components/Skeleton";
 
 const tabs = ["Positions", "Orders", "Trade History"] as const;
 
@@ -13,7 +14,17 @@ const statusColors: Record<OrderStatus, string> = {
   "aggregation-locked": "bg-warning/20 text-warning",
 };
 
-export default function BottomPanel() {
+const positionSkeletonColumns = [
+  { width: "16%" },
+  { width: "12%" },
+  { width: "18%", align: "right" as const },
+  { width: "16%", align: "right" as const },
+  { width: "16%", align: "right" as const },
+  { width: "12%", align: "right" as const },
+  { width: "10%", align: "right" as const },
+];
+
+export default function BottomPanel({ isLoading }: { isLoading?: boolean }) {
   const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>("Positions");
 
   return (
@@ -37,7 +48,7 @@ export default function BottomPanel() {
 
       {/* Content */}
       <div className="overflow-y-auto flex-1">
-        {activeTab === "Positions" && <PositionsTable />}
+        {activeTab === "Positions" && <PositionsTable isLoading={isLoading} />}
         {activeTab === "Orders" && <OrdersTable />}
         {activeTab === "Trade History" && <TradeHistoryTable />}
       </div>
@@ -45,7 +56,7 @@ export default function BottomPanel() {
   );
 }
 
-function PositionsTable() {
+function PositionsTable({ isLoading }: { isLoading?: boolean }) {
   return (
     <>
       <div className="flex items-center h-[28px] px-3 text-label-uppercase text-text-muted">
@@ -57,31 +68,46 @@ function PositionsTable() {
         <span className="w-[12%] text-right">P&L</span>
         <span className="w-[10%] text-right">P&L%</span>
       </div>
-      {openPositions.length === 0 ? (
-        <div className="flex items-center justify-center h-[80px]">
-          <span className="text-body-sm text-text-muted">No open positions</span>
+      {isLoading ? (
+        <div>
+          {Array.from({ length: 3 }, (_, i) => (
+            <SkeletonRow
+              key={i}
+              data-testid="skeleton-row"
+              height="32px"
+              columns={positionSkeletonColumns}
+            />
+          ))}
         </div>
       ) : (
-        openPositions.map((pos, i) => (
-          <div
-            key={i}
-            className="flex items-center h-[32px] px-3 text-body-sm font-mono font-tabular hover:bg-bg-elevated transition-fast"
-          >
-            <span className="w-[16%] font-display text-text-primary">{pos.pair}</span>
-            <span className={`w-[12%] font-display capitalize ${pos.side === "long" ? "text-success" : "text-error"}`}>
-              {pos.side}
-            </span>
-            <span className="w-[18%] text-right text-text-secondary">{pos.size.toLocaleString()}</span>
-            <span className="w-[16%] text-right text-text-secondary">{pos.entry.toFixed(4)}</span>
-            <span className="w-[16%] text-right text-text-primary">{pos.current.toFixed(4)}</span>
-            <span className={`w-[12%] text-right ${pos.pnl >= 0 ? "text-success" : "text-error"}`}>
-              {pos.pnl >= 0 ? "+" : ""}{pos.pnl.toFixed(2)}
-            </span>
-            <span className={`w-[10%] text-right ${pos.pnlPercent >= 0 ? "text-success" : "text-error"}`}>
-              {pos.pnlPercent >= 0 ? "+" : ""}{pos.pnlPercent.toFixed(2)}%
-            </span>
-          </div>
-        ))
+        <div className="animate-fadeIn">
+          {openPositions.length === 0 ? (
+            <div className="flex items-center justify-center h-[80px]">
+              <span className="text-body-sm text-text-muted">No open positions</span>
+            </div>
+          ) : (
+            openPositions.map((pos, i) => (
+              <div
+                key={i}
+                className="flex items-center h-[32px] px-3 text-body-sm font-mono font-tabular hover:bg-bg-elevated transition-fast"
+              >
+                <span className="w-[16%] font-display text-text-primary">{pos.pair}</span>
+                <span className={`w-[12%] font-display capitalize ${pos.side === "long" ? "text-success" : "text-error"}`}>
+                  {pos.side}
+                </span>
+                <span className="w-[18%] text-right text-text-secondary">{pos.size.toLocaleString()}</span>
+                <span className="w-[16%] text-right text-text-secondary">{pos.entry.toFixed(4)}</span>
+                <span className="w-[16%] text-right text-text-primary">{pos.current.toFixed(4)}</span>
+                <span className={`w-[12%] text-right ${pos.pnl >= 0 ? "text-success" : "text-error"}`}>
+                  {pos.pnl >= 0 ? "+" : ""}{pos.pnl.toFixed(2)}
+                </span>
+                <span className={`w-[10%] text-right ${pos.pnlPercent >= 0 ? "text-success" : "text-error"}`}>
+                  {pos.pnlPercent >= 0 ? "+" : ""}{pos.pnlPercent.toFixed(2)}%
+                </span>
+              </div>
+            ))
+          )}
+        </div>
       )}
     </>
   );

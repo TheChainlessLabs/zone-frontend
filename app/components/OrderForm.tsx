@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { Info, Lock } from "lucide-react";
 import type { OrderType, Side } from "@/lib/types";
+import { Skeleton } from "@/components/Skeleton";
 
-export default function OrderForm() {
+export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
   const [orderType] = useState<OrderType>("midpoint");
   const [side, setSide] = useState<Side>("buy");
   const [amount, setAmount] = useState("");
@@ -17,8 +18,60 @@ export default function OrderForm() {
   const estReceive = parsedAmount ? (parsedAmount * midpointRate).toFixed(2) : "0.00";
   const savingsPips = "+0.8";
 
+  if (isLoading) {
+    return (
+      <div className="flex flex-col gap-4">
+        {/* Buy/Sell toggle */}
+        <div className="flex gap-1">
+          <Skeleton className="flex-1 h-[40px] rounded-md" />
+          <Skeleton className="flex-1 h-[40px] rounded-md" />
+        </div>
+
+        {/* Amount label + input */}
+        <div>
+          <Skeleton className="h-[20px] w-[80px] mb-1.5" />
+          <Skeleton className="h-[44px] rounded-md" />
+        </div>
+
+        {/* Percentage shortcuts */}
+        <div className="flex gap-2">
+          <Skeleton className="flex-1 h-[30px] rounded-md" />
+          <Skeleton className="flex-1 h-[30px] rounded-md" />
+          <Skeleton className="flex-1 h-[30px] rounded-md" />
+        </div>
+
+        {/* Order details */}
+        <div className="flex flex-col gap-2.5">
+          <div className="flex justify-between">
+            <Skeleton className="h-[14px] w-[60px]" />
+            <Skeleton className="h-[14px] w-[80px]" />
+          </div>
+          <div className="flex justify-between">
+            <Skeleton className="h-[14px] w-[60px]" />
+            <Skeleton className="h-[14px] w-[80px]" />
+          </div>
+          <div className="flex justify-between">
+            <Skeleton className="h-[14px] w-[60px]" />
+            <Skeleton className="h-[14px] w-[80px]" />
+          </div>
+          <div className="h-px bg-border-subtle" />
+          <div className="flex justify-between">
+            <Skeleton className="h-[14px] w-[60px]" />
+            <Skeleton className="h-[14px] w-[80px]" />
+          </div>
+        </div>
+
+        {/* Submit button */}
+        <Skeleton className="h-[44px] rounded-md" />
+
+        {/* Privacy notice */}
+        <Skeleton className="h-[14px] w-[250px]" />
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 animate-fadeIn">
       {/* Buy/Sell toggle */}
       <div className="flex gap-1">
         <button

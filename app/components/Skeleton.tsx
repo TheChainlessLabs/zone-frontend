@@ -21,16 +21,14 @@ interface SkeletonRowProps extends HTMLAttributes<HTMLDivElement> {
 export function SkeletonRow({ height, columns, ...props }: SkeletonRowProps) {
   return (
     <div
-      className="flex items-center gap-3 px-3"
+      className="flex items-center px-3"
       style={{ height }}
       {...props}
     >
       {columns.map((col, i) => (
-        <Skeleton
-          key={i}
-          className="h-[14px] rounded-sm"
-          style={{ width: col.width }}
-        />
+        <div key={i} style={{ width: col.width }}>
+          <Skeleton className="h-[14px] rounded-sm" style={{ width: "60%" }} />
+        </div>
       ))}
     </div>
   );

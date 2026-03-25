@@ -53,4 +53,23 @@ describe("SkeletonRow", () => {
     const row = screen.getByTestId("skeleton-row");
     expect(row.style.height).toBe("32px");
   });
+
+  it("applies right alignment to columns with align: right", () => {
+    render(
+      <SkeletonRow
+        data-testid="skeleton-row"
+        height="28px"
+        columns={[
+          { width: "30%" },
+          { width: "35%", align: "right" },
+          { width: "35%", align: "right" },
+        ]}
+      />
+    );
+    const row = screen.getByTestId("skeleton-row");
+    const cells = row.children;
+    expect(cells[0].className).toContain("justify-start");
+    expect(cells[1].className).toContain("justify-end");
+    expect(cells[2].className).toContain("justify-end");
+  });
 });

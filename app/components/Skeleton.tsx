@@ -15,7 +15,7 @@ export function Skeleton({ className = "", ...props }: SkeletonProps) {
 
 interface SkeletonRowProps extends HTMLAttributes<HTMLDivElement> {
   height: string;
-  columns: { width: string }[];
+  columns: { width: string; align?: "left" | "right" }[];
 }
 
 export function SkeletonRow({ height, columns, ...props }: SkeletonRowProps) {
@@ -26,7 +26,11 @@ export function SkeletonRow({ height, columns, ...props }: SkeletonRowProps) {
       {...props}
     >
       {columns.map((col, i) => (
-        <div key={i} style={{ width: col.width }}>
+        <div
+          key={i}
+          className={`flex ${col.align === "right" ? "justify-end" : "justify-start"}`}
+          style={{ width: col.width }}
+        >
           <Skeleton className="h-[14px] rounded-sm" style={{ width: "60%" }} />
         </div>
       ))}

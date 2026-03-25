@@ -1,7 +1,11 @@
 import { recentTrades } from "@/lib/mockData";
 import { SkeletonRow } from "@/components/Skeleton";
 
-const skeletonColumns = [{ width: "30%" }, { width: "35%" }, { width: "35%" }];
+const skeletonColumns = [
+  { width: "30%" },
+  { width: "35%", align: "right" as const },
+  { width: "35%", align: "right" as const },
+];
 
 export default function RecentTrades({ isLoading }: { isLoading?: boolean }) {
   return (

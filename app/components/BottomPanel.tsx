@@ -17,11 +17,11 @@ const statusColors: Record<OrderStatus, string> = {
 const positionSkeletonColumns = [
   { width: "16%" },
   { width: "12%" },
-  { width: "18%" },
-  { width: "16%" },
-  { width: "16%" },
-  { width: "12%" },
-  { width: "10%" },
+  { width: "18%", align: "right" as const },
+  { width: "16%", align: "right" as const },
+  { width: "16%", align: "right" as const },
+  { width: "12%", align: "right" as const },
+  { width: "10%", align: "right" as const },
 ];
 
 export default function BottomPanel({ isLoading }: { isLoading?: boolean }) {

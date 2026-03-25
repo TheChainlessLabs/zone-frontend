@@ -1,13 +1,13 @@
-import Navbar from "@/components/Navbar";
+"use client";
+
 import PortfolioValue from "@/components/PortfolioValue";
 import PortfolioBalances from "@/components/PortfolioBalances";
 import OpenPositions from "@/components/OpenPositions";
+import ProtectedPage from "@/components/ProtectedPage";
 
 export default function PortfolioPage() {
   return (
-    <div className="flex flex-col min-h-screen">
-      <Navbar />
-
+    <ProtectedPage shellClassName="flex flex-col min-h-screen">
       <div className="flex-1 p-4 md:p-6 max-w-[1200px] mx-auto w-full flex flex-col gap-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <h1 className="text-h2 font-semibold">Portfolio</h1>
@@ -34,6 +34,6 @@ export default function PortfolioPage() {
           <OpenPositions />
         </div>
       </div>
-    </div>
+    </ProtectedPage>
   );
 }

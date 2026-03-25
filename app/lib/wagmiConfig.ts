@@ -1,6 +1,11 @@
-import { createConfig, http } from "wagmi";
+import {
+  createConfig,
+  createStorage,
+  cookieStorage,
+  http,
+  injected,
+} from "wagmi";
 import { mainnet, type Chain } from "wagmi/chains";
-import { injected, walletConnect, coinbaseWallet } from "wagmi/connectors";
 
 const anvil: Chain = {
   id: 31337,
@@ -11,17 +16,15 @@ const anvil: Chain = {
   },
 };
 
-const chainId = Number(process.env.NEXT_PUBLIC_CHAIN_ID ?? "31337");
-const chain = chainId === 1 ? mainnet : anvil;
+export const supportedChainId = Number(process.env.NEXT_PUBLIC_CHAIN_ID ?? "31337");
+export const supportedChain = supportedChainId === 1 ? mainnet : anvil;
 
 export const config = createConfig({
-  chains: [chain],
-  connectors: [
-    injected(),
-    walletConnect({ projectId: process.env.NEXT_PUBLIC_WC_PROJECT_ID ?? "" }),
-    coinbaseWallet({ appName: "Omega Markets" }),
-  ],
+  ssr: true,
+  storage: createStorage({ storage: cookieStorage }),
+  chains: [supportedChain],
+  connectors: [injected({ shimDisconnect: true })],
   transports: {
-    [chain.id]: http(),
+    [supportedChain.id]: http(),
   },
 });

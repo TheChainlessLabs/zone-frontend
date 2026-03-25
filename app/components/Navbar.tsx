@@ -4,6 +4,8 @@ import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
+import { useWallet } from "@/lib/wallet";
+import { useToast } from "@/lib/useToast";
 import WalletModal from "./WalletModal";
 import DepositModal from "./DepositModal";
 
@@ -13,14 +15,43 @@ const navLinks = [
   { label: "Explorer", href: "/explorer" },
 ];
 
+function truncateAddress(address: string) {
+  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+}
+
 export default function Navbar() {
   const pathname = usePathname();
+  const { addToast } = useToast();
+  const { address, expectedChainName, isConnected, isSupportedChain } = useWallet();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [walletOpen, setWalletOpen] = useState(false);
   const [depositOpen, setDepositOpen] = useState(false);
-  const [connected, setConnected] = useState(true);
 
-  const walletAddress = "0x7a3f...b2c1";
+  const handleDepositClick = () => {
+    if (!isConnected) {
+      setWalletOpen(true);
+      return;
+    }
+
+    if (!isSupportedChain) {
+      addToast(
+        "error",
+        "Unsupported Network",
+        `Switch to ${expectedChainName} before using wallet-funded actions.`
+      );
+      return;
+    }
+
+    setDepositOpen(true);
+  };
+
+  const walletText = !isConnected
+    ? "Connect Wallet"
+    : !isSupportedChain
+      ? "Wrong network"
+      : address
+        ? truncateAddress(address)
+        : "Wallet";
 
   return (
     <>
@@ -55,21 +86,27 @@ export default function Navbar() {
         <div className="ml-auto flex items-center gap-3">
           {/* Deposit button */}
           <button
-            onClick={() => setDepositOpen(true)}
+            onClick={handleDepositClick}
             className="hidden md:flex items-center h-[30px] px-4 text-body-sm font-medium rounded-md bg-accent text-text-inverse hover:bg-accent-hover transition-fast"
           >
             Deposit
           </button>
 
           {/* Wallet / Connect */}
-          {connected ? (
+          {isConnected && address ? (
             <button
               onClick={() => setWalletOpen(true)}
-              className="hidden md:flex items-center gap-2 h-[30px] px-4 text-body-sm rounded-md border border-border-subtle"
+              className={`hidden md:flex items-center gap-2 h-[30px] px-4 text-body-sm rounded-md border ${
+                isSupportedChain ? "border-border-subtle" : "border-warning/40 bg-warning/10"
+              }`}
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-success" />
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${
+                  isSupportedChain ? "bg-success" : "bg-warning"
+                }`}
+              />
               <span className="font-mono text-[13px] text-text-secondary">
-                {walletAddress}
+                {walletText}
               </span>
             </button>
           ) : (
@@ -114,13 +151,13 @@ export default function Navbar() {
               <button
                 onClick={() => {
                   setMobileOpen(false);
-                  setDepositOpen(true);
+                  handleDepositClick();
                 }}
                 className="w-full h-[40px] text-body-sm font-medium rounded-md bg-accent text-text-inverse"
               >
                 Deposit
               </button>
-              {!connected && (
+              {!isConnected ? (
                 <button
                   onClick={() => {
                     setMobileOpen(false);
@@ -130,7 +167,11 @@ export default function Navbar() {
                 >
                   Connect Wallet
                 </button>
-              )}
+              ) : !isSupportedChain ? (
+                <div className="rounded-md border border-warning/30 bg-warning/10 px-3 py-2 text-body-sm text-warning">
+                  Switch to {expectedChainName} to trade.
+                </div>
+              ) : null}
             </div>
           </div>
         )}

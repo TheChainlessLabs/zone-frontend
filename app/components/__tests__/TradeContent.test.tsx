@@ -25,7 +25,7 @@ vi.mock("@/components/RecentTrades", () => ({
 }));
 vi.mock("@/components/ProtectedPage", () => ({
   default: ({ children, shellClassName }: { children: React.ReactNode; shellClassName: string }) => (
-    <div className={shellClassName}>{children}</div>
+    <div className={shellClassName} data-testid="protected-page">{children}</div>
   ),
 }));
 vi.mock("@/lib/hooks/useTrades", () => ({

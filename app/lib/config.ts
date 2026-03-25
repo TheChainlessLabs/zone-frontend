@@ -1,3 +1,5 @@
+import { getAddress } from "viem";
+
 function requireEnv(name: string): string {
   const value = process.env[name]?.trim();
   if (!value) {
@@ -11,9 +13,7 @@ function normalizeApiBaseUrl(url: string): string {
 }
 
 const chainId = Number(process.env.NEXT_PUBLIC_CHAIN_ID ?? "31337");
-const bridgeAddress =
-  process.env.NEXT_PUBLIC_BRIDGE_ADDRESS ??
-  "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853";
+const bridgeAddress = requireEnv("NEXT_PUBLIC_BRIDGE_ADDRESS");
 
 export const config = {
   apiBaseUrl: normalizeApiBaseUrl(requireEnv("NEXT_PUBLIC_API_URL")),
@@ -29,6 +29,6 @@ export const config = {
     name: "Omega" as const,
     version: "1" as const,
     chainId,
-    verifyingContract: bridgeAddress as `0x${string}`,
+    verifyingContract: getAddress(bridgeAddress),
   },
 } as const;

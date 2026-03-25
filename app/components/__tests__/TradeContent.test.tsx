@@ -20,6 +20,11 @@ vi.mock("@/components/PriceChart", () => ({
 vi.mock("@/components/StatusBar", () => ({
   default: () => <div data-testid="status-bar" />,
 }));
+vi.mock("@/components/ProtectedPage", () => ({
+  default: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="protected-page">{children}</div>
+  ),
+}));
 
 afterEach(cleanup);
 

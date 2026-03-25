@@ -42,6 +42,43 @@ pnpm dev:landing
 pnpm build
 ```
 
+## Testing
+
+The `app` package uses [Vitest](https://vitest.dev/) with [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/) for component tests in a jsdom environment.
+
+```bash
+cd app && pnpm test
+```
+
+### Stack
+
+| Tool | Purpose |
+|------|---------|
+| Vitest | Test runner (jsdom environment) |
+| `@vitejs/plugin-react` | JSX/React transform for Vite |
+| `@testing-library/react` | Component rendering + queries |
+| `@testing-library/jest-dom` | DOM assertion matchers (`.toBeInTheDocument()`, etc.) |
+
+### Configuration
+
+- **Config**: [`app/vitest.config.ts`](/app/vitest.config.ts) — jsdom env, React plugin, `@/` path alias
+- **Setup**: [`app/vitest.setup.ts`](/app/vitest.setup.ts) — loads jest-dom matchers globally
+
+### Path Aliases
+
+The `@/` alias resolves to the `app/` package root, matching `tsconfig.json`. Use `import Foo from "@/components/Foo"` in tests.
+
+### Adding a Test
+
+1. Create `app/components/__tests__/YourComponent.test.tsx` (or co-locate as `YourComponent.test.tsx`)
+2. Import `render`/`screen` from `@testing-library/react` and `describe`/`it`/`expect` from `vitest`
+3. Call `afterEach(cleanup)` to prevent DOM leaks
+4. Run with `cd app && pnpm test`
+
+### What Needs Mocks
+
+Components using Next.js internals (`next/image`, `next/link`, `next/navigation`, `next/font/google`) require manual mocks — pure presentational components work out of the box.
+
 ## Design System
 
 The design system is built on CSS custom properties and consumed by both `app` and `landing` via Tailwind CSS 4.

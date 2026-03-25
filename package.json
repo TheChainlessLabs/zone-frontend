@@ -11,13 +11,21 @@
     "build": "pnpm -r build",
     "dev:app": "pnpm --filter app dev",
     "dev:landing": "pnpm --filter landing dev",
-    "typecheck": "pnpm --filter app tsc --noEmit"
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "typecheck": "pnpm --filter @omega/app exec tsc --noEmit"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["esbuild", "sharp"]
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "sharp"
+    ]
   },
   "engines": {
     "node": ">=18",
     "pnpm": ">=9"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2"
   }
 }

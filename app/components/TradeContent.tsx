@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Navbar from "@/components/Navbar";
 import BBOMarquee from "@/components/BBOMarquee";
 import PairSelector from "@/components/PairSelector";
 import PairList from "@/components/PairList";
@@ -10,6 +9,7 @@ import PriceChart from "@/components/PriceChart";
 import BottomPanel from "@/components/BottomPanel";
 import RecentTrades from "@/components/RecentTrades";
 import StatusBar from "@/components/StatusBar";
+import ProtectedPage from "@/components/ProtectedPage";
 
 export default function TradeContent() {
   const [isLoading, setIsLoading] = useState(true);
@@ -20,8 +20,7 @@ export default function TradeContent() {
   }, []);
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden">
-      <Navbar />
+    <ProtectedPage shellClassName="flex flex-col h-screen overflow-hidden">
       <BBOMarquee />
 
       {/* Main 2-column layout */}
@@ -62,6 +61,6 @@ export default function TradeContent() {
       </div>
 
       <StatusBar />
-    </div>
+    </ProtectedPage>
   );
 }

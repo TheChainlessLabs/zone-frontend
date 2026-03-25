@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-import Navbar from "@/components/Navbar";
+import { useState } from "react";
 import CancelAllModal from "@/components/CancelAllModal";
 import ForcedWithdrawalModal from "@/components/ForcedWithdrawalModal";
+import ProtectedPage from "@/components/ProtectedPage";
 import { mockOrderHistory } from "@/lib/mockData";
 import type { OrderStatus } from "@/lib/types";
 
@@ -37,9 +37,7 @@ export default function AccountPage() {
   const openCount = mockOrderHistory.filter((o) => o.status === "open").length;
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <Navbar />
-
+    <ProtectedPage shellClassName="flex flex-col min-h-screen">
       <div className="flex-1 p-4 md:p-6 max-w-[1200px] mx-auto w-full flex flex-col gap-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -170,6 +168,6 @@ export default function AccountPage() {
 
       <CancelAllModal isOpen={cancelAllOpen} onClose={() => setCancelAllOpen(false)} />
       <ForcedWithdrawalModal isOpen={forceWithdrawOpen} onClose={() => setForceWithdrawOpen(false)} />
-    </div>
+    </ProtectedPage>
   );
 }

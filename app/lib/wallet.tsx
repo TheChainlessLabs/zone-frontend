@@ -8,12 +8,17 @@ import {
   type ReactNode,
 } from "react";
 import { useAccount } from "wagmi";
+import { supportedChain, supportedChainId } from "./wagmiConfig";
 
 interface WalletState {
   address: `0x${string}` | undefined;
   isConnected: boolean;
   accountId: number | null;
   chainId: number | undefined;
+  expectedChainId: number;
+  expectedChainName: string;
+  isSupportedChain: boolean;
+  isHydrated: boolean;
 }
 
 const WalletContext = createContext<WalletState>({
@@ -21,10 +26,14 @@ const WalletContext = createContext<WalletState>({
   isConnected: false,
   accountId: null,
   chainId: undefined,
+  expectedChainId: supportedChainId,
+  expectedChainName: supportedChain.name,
+  isSupportedChain: false,
+  isHydrated: false,
 });
 
 export function WalletProvider({ children }: { children: ReactNode }) {
-  const { address, isConnected, chainId } = useAccount();
+  const { address, isConnected, chainId, status } = useAccount();
   const [mounted, setMounted] = useState(false);
   const [accountId, setAccountId] = useState<number | null>(null);
 
@@ -42,9 +51,20 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     setAccountId(stored ? Number(stored) : null);
   }, [address]);
 
-  const value: WalletState = mounted
-    ? { address, isConnected, accountId, chainId }
-    : { address: undefined, isConnected: false, accountId: null, chainId: undefined };
+  const isHydrated =
+    mounted && status !== "connecting" && status !== "reconnecting";
+  const isSupportedChain = isConnected && chainId === supportedChainId;
+
+  const value: WalletState = {
+    address,
+    isConnected,
+    accountId,
+    chainId,
+    expectedChainId: supportedChainId,
+    expectedChainName: supportedChain.name,
+    isSupportedChain,
+    isHydrated,
+  };
 
   return (
     <WalletContext.Provider value={value}>{children}</WalletContext.Provider>

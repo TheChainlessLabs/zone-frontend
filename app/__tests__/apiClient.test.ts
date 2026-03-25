@@ -31,6 +31,8 @@ function errorResponse(message: string, status: number) {
 
 beforeEach(() => {
   process.env.NEXT_PUBLIC_API_URL = API_BASE_URL;
+  process.env.NEXT_PUBLIC_BRIDGE_ADDRESS =
+    "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853";
   mockFetch.mockReset();
 });
 

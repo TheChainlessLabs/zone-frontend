@@ -1,25 +1,27 @@
 "use client";
 
-import { mockMarketPrices } from "@/lib/mockData";
 import { useOrderBook } from "@/lib/hooks/useOrderBook";
 import { Skeleton } from "@/components/Skeleton";
+
+// Hardcoded external venues — replace when oracle price feed is available
+const EXTERNAL_VENUES = [
+  { name: "Wise", price: "1.0851" },
+  { name: "OFX", price: "1.0852" },
+  { name: "Revolut", price: "1.0852" },
+];
 
 export default function BBOMarquee() {
   const { midpoint, isLoading, isError } = useOrderBook();
 
-  // Hardcoded venues — will be replaced when oracle price feed is available
-  const venues = mockMarketPrices.map((mp) => {
-    const isOmega = mp.source === "Omega";
-    let price: string;
-    if (isOmega) {
-      if (isLoading) price = "";
-      else if (isError || midpoint === null) price = "—";
-      else price = midpoint.toFixed(4);
-    } else {
-      price = ((mp.bid + mp.ask) / 2).toFixed(4);
-    }
-    return { name: mp.source, price, isOmega };
-  });
+  let omegaPrice: string;
+  if (isLoading) omegaPrice = "";
+  else if (isError || midpoint === null) omegaPrice = "—";
+  else omegaPrice = midpoint.toFixed(4);
+
+  const venues = [
+    ...EXTERNAL_VENUES.map((v) => ({ ...v, isOmega: false })),
+    { name: "Omega", price: omegaPrice, isOmega: true },
+  ];
 
   return (
     <div className="h-[40px] bg-bg-base border-b border-border-subtle flex items-center px-4 md:px-[60px] gap-0 overflow-x-auto shrink-0">

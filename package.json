@@ -7,12 +7,14 @@
     "url": "https://github.com/omega-markets/omega-interface"
   },
   "license": "BUSL-1.1",
+  "packageManager": "pnpm@10.33.0",
   "scripts": {
     "build": "pnpm -r build",
     "dev:app": "pnpm --filter app dev",
     "dev:landing": "pnpm --filter landing dev",
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
+    "test": "pnpm --filter @omega/app test",
     "typecheck": "pnpm --filter @omega/app exec tsc --noEmit"
   },
   "pnpm": {

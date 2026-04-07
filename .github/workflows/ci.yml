@@ -35,7 +35,7 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @omega/app test
+      - run: pnpm test
 
   build:
     name: Build

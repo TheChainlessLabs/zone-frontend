@@ -3,7 +3,10 @@
 import { useState } from "react";
 import { useWallet } from "@/lib/wallet";
 import { useAccountBalances } from "@/lib/hooks/useAccountBalances";
+import { useTokenBalance } from "@/lib/hooks/useTokenBalance";
 import { getTokenIdBySymbol } from "@/lib/tokens";
+import { config } from "@/lib/config";
+import type { Address } from "viem";
 
 type FundingTab = "deposit" | "withdraw" | "transfer";
 
@@ -24,12 +27,20 @@ export default function FundingForm({ initialTab = "deposit" }: FundingFormProps
   const [chain, setChain] = useState("Ethereum");
   const [asset, setAsset] = useState("USDC");
   const [amount, setAmount] = useState("");
-  const { accountId } = useWallet();
+  const { accountId, address } = useWallet();
   const { balances } = useAccountBalances(accountId);
+
+  const tokenAddressMap: Record<string, Address> = {
+    USDC: config.usdcAddress as Address,
+    USDT: config.usdtAddress as Address,
+  };
+  const selectedTokenAddress = tokenAddressMap[asset];
+  const { formatted: walletBalance } = useTokenBalance(selectedTokenAddress, address, 6);
 
   const tokenId = getTokenIdBySymbol(asset);
   const tokenBalance = balances.find((b) => b.tokenId === tokenId);
-  const balance = tokenBalance?.available ?? 0;
+  const engineBalance = tokenBalance?.available ?? 0;
+  const balance = tab === "deposit" ? walletBalance : engineBalance;
   const fee = tab === "transfer" ? 0 : 2.50;
   const receive = amount ? Math.max(0, parseFloat(amount) - fee) : 0;
 
@@ -108,7 +119,8 @@ export default function FundingForm({ initialTab = "deposit" }: FundingFormProps
         <div className="flex justify-between mb-1">
           <label className="text-label-uppercase text-text-muted">Amount</label>
           <span className="text-body-sm text-text-muted">
-            Balance: <span className="font-mono font-tabular">{balance.toLocaleString("en-US", { minimumFractionDigits: 2 })} {asset}</span>
+            {tab === "deposit" ? "Wallet Balance" : "Balance"}:{" "}
+            <span className="font-mono font-tabular">{balance.toLocaleString("en-US", { minimumFractionDigits: 2 })} {asset}</span>
           </span>
         </div>
         <div className="flex items-center h-[48px] bg-bg-base border border-border rounded-md px-4">

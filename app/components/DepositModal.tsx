@@ -4,7 +4,10 @@ import { useState } from "react";
 import BottomSheet from "./BottomSheet";
 import { useWallet } from "@/lib/wallet";
 import { useAccountBalances } from "@/lib/hooks/useAccountBalances";
+import { useTokenBalance } from "@/lib/hooks/useTokenBalance";
 import { getTokenIdBySymbol } from "@/lib/tokens";
+import { config } from "@/lib/config";
+import type { Address } from "viem";
 
 const chains = [
   { name: "Ethereum", color: "#627EEA" },
@@ -22,8 +25,15 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
   const [chain, setChain] = useState("Ethereum");
   const [token, setToken] = useState("USDC");
   const [amount, setAmount] = useState("");
-  const { accountId } = useWallet();
+  const { accountId, address } = useWallet();
   const { balances } = useAccountBalances(accountId);
+
+  const tokenAddressMap: Record<string, Address> = {
+    USDC: config.usdcAddress as Address,
+    USDT: config.usdtAddress as Address,
+  };
+  const selectedTokenAddress = tokenAddressMap[token];
+  const { formatted: walletBalance } = useTokenBalance(selectedTokenAddress, address, 6);
 
   const tokenId = getTokenIdBySymbol(token);
   const tokenBalance = balances.find((b) => b.tokenId === tokenId);
@@ -33,7 +43,7 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
   const receive = Math.max(0, numAmount - fee);
 
   const handleShortcut = (pct: number) => {
-    setAmount((balance * pct).toFixed(2));
+    setAmount((walletBalance * pct).toFixed(2));
   };
 
   return (
@@ -85,7 +95,7 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
           <div className="flex justify-between mb-2">
             <label className="text-label-uppercase text-text-muted">Amount</label>
             <span className="text-[12px] text-text-muted font-mono font-tabular">
-              Balance: {balance.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+              Wallet: {walletBalance.toLocaleString("en-US", { minimumFractionDigits: 2 })}
             </span>
           </div>
           <div className="flex items-center h-[48px] bg-bg-base border border-border rounded-md px-4">
@@ -98,7 +108,7 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
               className="flex-1 bg-transparent text-[18px] font-mono font-tabular outline-none text-text-primary placeholder:text-text-muted"
             />
             <button
-              onClick={() => setAmount(balance.toFixed(2))}
+              onClick={() => setAmount(walletBalance.toFixed(2))}
               className="text-label-uppercase text-accent hover:text-accent-hover transition-fast ml-2"
             >
               MAX

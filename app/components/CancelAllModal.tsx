@@ -1,15 +1,14 @@
 "use client";
 
 import Modal from "./Modal";
-import { mockOrderHistory } from "@/lib/mockData";
 
 interface CancelAllModalProps {
   isOpen: boolean;
   onClose: () => void;
+  openOrders: Array<{ id: number; pair: string; amount: number }>;
 }
 
-export default function CancelAllModal({ isOpen, onClose }: CancelAllModalProps) {
-  const openOrders = mockOrderHistory.filter((o) => o.status === "open");
+export default function CancelAllModal({ isOpen, onClose, openOrders }: CancelAllModalProps) {
   const totalValue = openOrders.reduce((sum, o) => sum + o.amount, 0);
   const pairsAffected = new Set(openOrders.map((o) => o.pair)).size;
 

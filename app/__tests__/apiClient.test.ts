@@ -172,6 +172,31 @@ describe("cancelOrder", () => {
   });
 });
 
+describe("getMarketOrders", () => {
+  it("fetches GET /markets/{id}/orders", async () => {
+    const data = { market_id: 1, orders: [] };
+    mockFetch.mockResolvedValue(jsonResponse(data));
+
+    const { getMarketOrders } = await loadApiClient();
+    const result = await getMarketOrders(1);
+
+    expect(mockFetch).toHaveBeenCalledWith(`${API_BASE_URL}/markets/1/orders`);
+    expect(result).toEqual(data);
+  });
+
+  it("throws ApiError on failure", async () => {
+    mockFetch.mockResolvedValue(errorResponse("not found", 404));
+
+    const { getMarketOrders } = await loadApiClient();
+
+    await expect(getMarketOrders(999)).rejects.toMatchObject({
+      name: "ApiError",
+      status: 404,
+      message: "not found",
+    });
+  });
+});
+
 describe("getAccountNonce", () => {
   it("fetches GET /accounts/{id}/nonce", async () => {
     const data = { account_id: 1, nonce: 5 };

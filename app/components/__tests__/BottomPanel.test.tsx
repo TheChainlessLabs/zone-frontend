@@ -6,6 +6,18 @@ vi.mock("@/lib/hooks/useTrades", () => ({
   useTrades: vi.fn().mockReturnValue({ trades: [], isLoading: false, isError: false }),
 }));
 
+vi.mock("@/lib/hooks/useUserOrders", () => ({
+  useUserOrders: vi.fn().mockReturnValue({ orders: [], openOrders: [], isLoading: false, isError: false }),
+}));
+
+vi.mock("@/lib/wallet", () => ({
+  useWallet: () => ({ accountId: 1 }),
+}));
+
+vi.mock("@/lib/hooks/useMarket", () => ({
+  useMarket: () => ({ marketId: 1, setMarketId: vi.fn() }),
+}));
+
 afterEach(cleanup);
 
 describe("BottomPanel", () => {
@@ -37,5 +49,11 @@ describe("BottomPanel", () => {
     render(<BottomPanel isLoading={false} />);
     fireEvent.click(screen.getByText("Trade History"));
     expect(screen.getByText("No trades yet")).toBeInTheDocument();
+  });
+
+  it("renders Orders tab with empty state when no open orders", () => {
+    render(<BottomPanel isLoading={false} />);
+    fireEvent.click(screen.getByText("Orders"));
+    expect(screen.getByText("No open orders")).toBeInTheDocument();
   });
 });

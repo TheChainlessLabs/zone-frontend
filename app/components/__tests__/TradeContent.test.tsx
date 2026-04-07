@@ -32,10 +32,16 @@ vi.mock("@/lib/hooks/useTrades", () => ({
   useTrades: vi.fn().mockReturnValue({ trades: [], isLoading: false, isError: false }),
 }));
 vi.mock("@/lib/wallet", () => ({
-  useWallet: () => ({ accountId: null, address: undefined, isConnected: false }),
+  useWallet: () => ({ accountId: 1, address: undefined, isConnected: false }),
 }));
 vi.mock("@/lib/hooks/useAccountBalances", () => ({
   useAccountBalances: () => ({ balances: [], isLoading: false, isError: false }),
+}));
+vi.mock("@/lib/hooks/useUserOrders", () => ({
+  useUserOrders: vi.fn().mockReturnValue({ orders: [], openOrders: [], isLoading: false, isError: false }),
+}));
+vi.mock("@/lib/hooks/useMarket", () => ({
+  useMarket: () => ({ marketId: 1, setMarketId: vi.fn() }),
 }));
 
 afterEach(cleanup);

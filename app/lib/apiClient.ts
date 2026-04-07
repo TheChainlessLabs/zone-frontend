@@ -3,6 +3,7 @@ import { ApiError } from "./apiError";
 import type {
   OrderBookResponse,
   TradesResponse,
+  MarketOrdersResponse,
   CreateOrderPayload,
   CreateOrderResponse,
   CancelOrderPayload,
@@ -56,6 +57,11 @@ export async function createAccount(payload: CreateAccountPayload): Promise<Crea
   });
   if (!res.ok) throw await ApiError.fromResponse(res);
   return res.json();
+}
+
+export async function getMarketOrders(marketId: number): Promise<MarketOrdersResponse> {
+  const res = await fetch(`${BASE}/markets/${marketId}/orders`);
+  return handleResponse<MarketOrdersResponse>(res);
 }
 
 export async function getAccountNonce(accountId: number): Promise<AccountNonceResponse> {

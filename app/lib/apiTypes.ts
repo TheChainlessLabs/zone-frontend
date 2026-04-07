@@ -98,6 +98,25 @@ export interface AccountBalancesResponse {
   balances: TokenBalance[];
 }
 
+// ── GET /markets/{id}/orders ──
+
+export interface CurrentOrderView {
+  id: number;
+  owner_account_id: number;
+  side: ApiSide;
+  kind: ApiOrderKind;
+  price: number;
+  original_quantity: number;
+  remaining_quantity: number;
+  status: "Open" | "Filled" | "Cancelled";
+  last_state_change_timestamp: number;
+}
+
+export interface MarketOrdersResponse {
+  market_id: number;
+  orders: CurrentOrderView[];
+}
+
 // ── GET /accounts/{id}/nonce ──
 
 export interface AccountNonceResponse {

@@ -1,8 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { openPositions, mockOrderHistory } from "@/lib/mockData";
+import { openPositions } from "@/lib/mockData";
 import type { OrderStatus } from "@/lib/types";
+import { useUserOrders } from "@/lib/hooks/useUserOrders";
+import { useWallet } from "@/lib/wallet";
+import { useMarket } from "@/lib/hooks/useMarket";
 import { SkeletonRow } from "@/components/Skeleton";
 import { useTrades } from "@/lib/hooks/useTrades";
 
@@ -115,7 +118,11 @@ function PositionsTable({ isLoading }: { isLoading?: boolean }) {
 }
 
 function OrdersTable() {
-  const recentOrders = mockOrderHistory.slice(0, 8);
+  const { accountId } = useWallet();
+  const { marketId } = useMarket();
+  const { openOrders, isLoading, isError } = useUserOrders(accountId, marketId);
+  const recentOrders = openOrders.slice(0, 8);
+
   return (
     <>
       <div className="flex items-center h-[28px] px-3 text-label-uppercase text-text-muted">
@@ -127,26 +134,40 @@ function OrdersTable() {
         <span className="w-[12%] text-right">Filled</span>
         <span className="w-[18%] text-right">Status</span>
       </div>
-      {recentOrders.map((order) => (
-        <div
-          key={order.id}
-          className="flex items-center h-[32px] px-3 text-body-sm font-mono font-tabular hover:bg-bg-elevated transition-fast"
-        >
-          <span className="w-[14%] font-display text-text-primary">{order.pair}</span>
-          <span className={`w-[10%] font-display capitalize ${order.side === "buy" ? "text-success" : "text-error"}`}>
-            {order.side}
-          </span>
-          <span className="w-[14%] font-display text-text-muted capitalize">{order.type}</span>
-          <span className="w-[16%] text-right text-text-primary">{order.amount.toLocaleString()}</span>
-          <span className="w-[16%] text-right text-text-primary">{order.price.toFixed(4)}</span>
-          <span className="w-[12%] text-right text-text-secondary">{order.filledPercent}%</span>
-          <span className="w-[18%] flex justify-end">
-            <span className={`text-label-uppercase px-2 py-0.5 rounded-sm ${statusColors[order.status]}`}>
-              {order.status === "aggregation-locked" ? "Agg Lock" : order.status}
-            </span>
-          </span>
+      {isLoading ? (
+        <div className="flex items-center justify-center h-[80px]">
+          <span className="text-body-sm text-text-muted">Loading orders...</span>
         </div>
-      ))}
+      ) : isError ? (
+        <div className="flex items-center justify-center h-[80px]">
+          <span className="text-body-sm text-text-muted">Data unavailable</span>
+        </div>
+      ) : recentOrders.length === 0 ? (
+        <div className="flex items-center justify-center h-[80px]">
+          <span className="text-body-sm text-text-muted">No open orders</span>
+        </div>
+      ) : (
+        recentOrders.map((order) => (
+          <div
+            key={order.id}
+            className="flex items-center h-[32px] px-3 text-body-sm font-mono font-tabular hover:bg-bg-elevated transition-fast"
+          >
+            <span className="w-[14%] font-display text-text-primary">{order.pair}</span>
+            <span className={`w-[10%] font-display capitalize ${order.side === "buy" ? "text-success" : "text-error"}`}>
+              {order.side}
+            </span>
+            <span className="w-[14%] font-display text-text-muted capitalize">{order.type}</span>
+            <span className="w-[16%] text-right text-text-primary">{order.amount.toLocaleString()}</span>
+            <span className="w-[16%] text-right text-text-primary">{order.price.toFixed(4)}</span>
+            <span className="w-[12%] text-right text-text-secondary">{order.filledPercent}%</span>
+            <span className="w-[18%] flex justify-end">
+              <span className={`text-label-uppercase px-2 py-0.5 rounded-sm ${statusColors[order.status]}`}>
+                {order.status}
+              </span>
+            </span>
+          </div>
+        ))
+      )}
     </>
   );
 }

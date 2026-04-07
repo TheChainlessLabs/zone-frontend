@@ -5,7 +5,9 @@ import { useState } from "react";
 import CancelAllModal from "@/components/CancelAllModal";
 import ForcedWithdrawalModal from "@/components/ForcedWithdrawalModal";
 import ProtectedPage from "@/components/ProtectedPage";
-import { mockOrderHistory } from "@/lib/mockData";
+import { useUserOrders } from "@/lib/hooks/useUserOrders";
+import { useWallet } from "@/lib/wallet";
+import { useMarket } from "@/lib/hooks/useMarket";
 import type { OrderStatus } from "@/lib/types";
 
 type FilterTab = OrderStatus | "all";
@@ -30,11 +32,15 @@ export default function AccountPage() {
   const [cancelAllOpen, setCancelAllOpen] = useState(false);
   const [forceWithdrawOpen, setForceWithdrawOpen] = useState(false);
 
-  const filtered = filter === "all"
-    ? mockOrderHistory
-    : mockOrderHistory.filter((o) => o.status === filter);
+  const { accountId } = useWallet();
+  const { marketId } = useMarket();
+  const { orders, openOrders, isLoading } = useUserOrders(accountId, marketId);
 
-  const openCount = mockOrderHistory.filter((o) => o.status === "open").length;
+  const filtered = filter === "all"
+    ? orders
+    : orders.filter((o) => o.status === filter);
+
+  const openCount = openOrders.length;
 
   return (
     <ProtectedPage shellClassName="flex flex-col min-h-screen">
@@ -96,57 +102,77 @@ export default function AccountPage() {
             <span className="w-[14%] text-right">Time</span>
           </div>
           <div className="max-h-[500px] overflow-y-auto">
-            {filtered.map((order) => (
-              <Link
-                key={order.id}
-                href={`/account/order/${order.id}`}
-                className="flex items-center px-4 h-[40px] text-body-sm font-mono font-tabular hover:bg-bg-elevated transition-fast"
-              >
-                <span className="w-[14%] font-display text-text-primary">{order.pair}</span>
-                <span className={`w-[8%] font-display capitalize ${order.side === "buy" ? "text-success" : "text-error"}`}>
-                  {order.side}
-                </span>
-                <span className="w-[10%] font-display text-text-muted capitalize">{order.type}</span>
-                <span className="w-[14%] text-right text-text-primary">{order.amount.toLocaleString()}</span>
-                <span className="w-[14%] text-right text-text-primary">{order.price.toFixed(4)}</span>
-                <span className="w-[10%] text-right text-text-secondary">{order.filledPercent}%</span>
-                <span className="w-[16%] flex justify-end">
-                  <span className={`text-label-uppercase px-2 py-0.5 rounded-sm ${statusColors[order.status]}`}>
-                    {order.status === "aggregation-locked" ? "Agg Lock" : order.status}
+            {isLoading ? (
+              <div className="flex items-center justify-center h-[120px]">
+                <span className="text-body-sm text-text-muted">Loading orders...</span>
+              </div>
+            ) : filtered.length === 0 ? (
+              <div className="flex items-center justify-center h-[120px]">
+                <span className="text-body-sm text-text-muted">No orders found</span>
+              </div>
+            ) : (
+              filtered.map((order) => (
+                <Link
+                  key={order.id}
+                  href={`/account/order/${order.id}`}
+                  className="flex items-center px-4 h-[40px] text-body-sm font-mono font-tabular hover:bg-bg-elevated transition-fast"
+                >
+                  <span className="w-[14%] font-display text-text-primary">{order.pair}</span>
+                  <span className={`w-[8%] font-display capitalize ${order.side === "buy" ? "text-success" : "text-error"}`}>
+                    {order.side}
                   </span>
-                </span>
-                <span className="w-[14%] text-right text-text-secondary">{order.time}</span>
-              </Link>
-            ))}
+                  <span className="w-[10%] font-display text-text-muted capitalize">{order.type}</span>
+                  <span className="w-[14%] text-right text-text-primary">{order.amount.toLocaleString()}</span>
+                  <span className="w-[14%] text-right text-text-primary">{order.price.toFixed(4)}</span>
+                  <span className="w-[10%] text-right text-text-secondary">{order.filledPercent}%</span>
+                  <span className="w-[16%] flex justify-end">
+                    <span className={`text-label-uppercase px-2 py-0.5 rounded-sm ${statusColors[order.status]}`}>
+                      {order.status}
+                    </span>
+                  </span>
+                  <span className="w-[14%] text-right text-text-secondary">{order.time}</span>
+                </Link>
+              ))
+            )}
           </div>
         </div>
 
         {/* Orders — Mobile cards */}
         <div className="md:hidden flex flex-col">
-          {filtered.map((order) => (
-            <Link
-              key={order.id}
-              href={`/account/order/${order.id}`}
-              className="block py-3 border-b border-border-subtle last:border-b-0"
-            >
-              <div className="flex items-center justify-between mb-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-[14px] font-semibold text-text-primary">{order.pair}</span>
-                  <span className={`text-[13px] font-medium capitalize ${order.side === "buy" ? "text-success" : "text-error"}`}>
-                    {order.side}
+          {isLoading ? (
+            <div className="flex items-center justify-center h-[120px]">
+              <span className="text-body-sm text-text-muted">Loading orders...</span>
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="flex items-center justify-center h-[120px]">
+              <span className="text-body-sm text-text-muted">No orders found</span>
+            </div>
+          ) : (
+            filtered.map((order) => (
+              <Link
+                key={order.id}
+                href={`/account/order/${order.id}`}
+                className="block py-3 border-b border-border-subtle last:border-b-0"
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[14px] font-semibold text-text-primary">{order.pair}</span>
+                    <span className={`text-[13px] font-medium capitalize ${order.side === "buy" ? "text-success" : "text-error"}`}>
+                      {order.side}
+                    </span>
+                    <span className="text-[13px] text-text-muted capitalize">{order.type}</span>
+                  </div>
+                  <span className={`text-label-uppercase px-2 py-0.5 rounded-sm ${statusColors[order.status]}`}>
+                    {order.status}
                   </span>
-                  <span className="text-[13px] text-text-muted capitalize">{order.type}</span>
                 </div>
-                <span className={`text-label-uppercase px-2 py-0.5 rounded-sm ${statusColors[order.status]}`}>
-                  {order.status === "aggregation-locked" ? "Agg Lock" : order.status}
-                </span>
-              </div>
-              <div className="flex justify-between text-[12px] text-text-muted font-mono font-tabular">
-                <span>{order.amount.toLocaleString()} @ {order.price.toFixed(4)}</span>
-                <span>{order.filledPercent}% filled</span>
-              </div>
-            </Link>
-          ))}
+                <div className="flex justify-between text-[12px] text-text-muted font-mono font-tabular">
+                  <span>{order.amount.toLocaleString()} @ {order.price.toFixed(4)}</span>
+                  <span>{order.filledPercent}% filled</span>
+                </div>
+              </Link>
+            ))
+          )}
         </div>
 
         {/* Force withdrawal banner */}
@@ -166,7 +192,7 @@ export default function AccountPage() {
         </div>
       </div>
 
-      <CancelAllModal isOpen={cancelAllOpen} onClose={() => setCancelAllOpen(false)} />
+      <CancelAllModal isOpen={cancelAllOpen} onClose={() => setCancelAllOpen(false)} openOrders={openOrders} />
       <ForcedWithdrawalModal isOpen={forceWithdrawOpen} onClose={() => setForceWithdrawOpen(false)} />
     </ProtectedPage>
   );

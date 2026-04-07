@@ -1,6 +1,16 @@
 import { render, screen, cleanup, act } from "@testing-library/react";
 import { afterEach, beforeEach, describe, it, expect, vi } from "vitest";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { createElement } from "react";
 import TradeContent from "@/components/TradeContent";
+
+const queryClient = new QueryClient({
+  defaultOptions: { queries: { retry: false } },
+});
+
+function renderWithProviders(ui: React.ReactElement) {
+  return render(createElement(QueryClientProvider, { client: queryClient }, ui));
+}
 
 vi.mock("@/components/Navbar", () => ({
   default: () => <div data-testid="navbar" />,
@@ -67,6 +77,26 @@ vi.mock("@tanstack/react-query", () => ({
   useQueryClient: () => ({ invalidateQueries: vi.fn() }),
 }));
 
+vi.mock("@/lib/hooks/useOrderSigning", () => ({
+  useOrderSigning: () => ({
+    signCancel: vi.fn(),
+    signLimitOrder: vi.fn(),
+    signMarketOrder: vi.fn(),
+    signFlipOrder: vi.fn(),
+  }),
+}));
+
+vi.mock("@/lib/apiClient", () => ({
+  cancelOrder: vi.fn(),
+  getMarketOrders: vi.fn(),
+  getOrderBook: vi.fn(),
+  getTrades: vi.fn(),
+}));
+
+vi.mock("@/lib/useToast", () => ({
+  useToast: () => ({ addToast: vi.fn(), removeToast: vi.fn(), toasts: [] }),
+}));
+
 afterEach(cleanup);
 
 beforeEach(() => {
@@ -79,7 +109,7 @@ afterEach(() => {
 
 describe("TradeContent", () => {
   it("renders skeletons in initial loading state", () => {
-    const { container } = render(<TradeContent />);
+    const { container } = renderWithProviders(<TradeContent />);
     const skeletonRows = container.querySelectorAll(
       "[data-testid='skeleton-row']"
     );
@@ -88,7 +118,7 @@ describe("TradeContent", () => {
   });
 
   it("renders OrderForm skeleton blocks in initial loading state", () => {
-    const { container } = render(<TradeContent />);
+    const { container } = renderWithProviders(<TradeContent />);
     const pulseElements = container.querySelectorAll(
       "[class*='animate-pulse']"
     );
@@ -97,13 +127,13 @@ describe("TradeContent", () => {
   });
 
   it("does not show Buy/Sell buttons during initial load", () => {
-    render(<TradeContent />);
+    renderWithProviders(<TradeContent />);
     expect(screen.queryByText("Buy")).toBeNull();
     expect(screen.queryByText("Sell")).toBeNull();
   });
 
   it("transitions to loaded content after 1500ms", () => {
-    const { container } = render(<TradeContent />);
+    const { container } = renderWithProviders(<TradeContent />);
 
     act(() => {
       vi.advanceTimersByTime(1500);
@@ -122,7 +152,7 @@ describe("TradeContent", () => {
   });
 
   it("applies animate-fadeIn to loaded content", () => {
-    const { container } = render(<TradeContent />);
+    const { container } = renderWithProviders(<TradeContent />);
 
     act(() => {
       vi.advanceTimersByTime(1500);
@@ -136,7 +166,7 @@ describe("TradeContent", () => {
   });
 
   it("still shows skeletons before 1500ms elapses", () => {
-    const { container } = render(<TradeContent />);
+    const { container } = renderWithProviders(<TradeContent />);
 
     act(() => {
       vi.advanceTimersByTime(1000);

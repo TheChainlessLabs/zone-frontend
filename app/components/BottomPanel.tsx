@@ -1,11 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { openPositions } from "@/lib/mockData";
 import type { OrderStatus } from "@/lib/types";
 import { useUserOrders } from "@/lib/hooks/useUserOrders";
+import { useOrderSigning } from "@/lib/hooks/useOrderSigning";
+import { cancelOrder } from "@/lib/apiClient";
 import { useWallet } from "@/lib/wallet";
 import { useMarket } from "@/lib/hooks/useMarket";
+import { useToast } from "@/lib/useToast";
 import { SkeletonRow } from "@/components/Skeleton";
 import { useTrades } from "@/lib/hooks/useTrades";
 
@@ -121,18 +125,40 @@ function OrdersTable() {
   const { accountId } = useWallet();
   const { marketId } = useMarket();
   const { openOrders, isLoading, isError } = useUserOrders(accountId, marketId);
+  const { signCancel } = useOrderSigning();
+  const { addToast } = useToast();
+  const queryClient = useQueryClient();
+  const [cancellingId, setCancellingId] = useState<number | null>(null);
   const recentOrders = openOrders.slice(0, 8);
+
+  const handleCancel = useCallback(async (orderId: number) => {
+    setCancellingId(orderId);
+    try {
+      const signed = await signCancel({ marketId, orderId });
+      await cancelOrder({ market_id: marketId, order_id: orderId, nonce: signed.nonce, signature: signed.signature });
+      addToast("success", "Order Cancelled", `Order #${orderId} cancelled`);
+      queryClient.invalidateQueries({ queryKey: ["orders", marketId] });
+      queryClient.invalidateQueries({ queryKey: ["book", marketId] });
+    } catch (err) {
+      if (!(err instanceof Error && err.message.includes("User rejected"))) {
+        addToast("error", "Cancel Failed", err instanceof Error ? err.message : "Unknown error");
+      }
+    } finally {
+      setCancellingId(null);
+    }
+  }, [marketId, signCancel, addToast, queryClient]);
 
   return (
     <>
       <div className="flex items-center h-[28px] px-3 text-label-uppercase text-text-muted">
-        <span className="w-[14%]">Pair</span>
-        <span className="w-[10%]">Side</span>
-        <span className="w-[14%]">Type</span>
-        <span className="w-[16%] text-right">Size</span>
-        <span className="w-[16%] text-right">Price</span>
-        <span className="w-[12%] text-right">Filled</span>
-        <span className="w-[18%] text-right">Status</span>
+        <span className="w-[13%]">Pair</span>
+        <span className="w-[9%]">Side</span>
+        <span className="w-[12%]">Type</span>
+        <span className="w-[15%] text-right">Size</span>
+        <span className="w-[15%] text-right">Price</span>
+        <span className="w-[10%] text-right">Filled</span>
+        <span className="w-[16%] text-right">Status</span>
+        <span className="w-[10%]"></span>
       </div>
       {isLoading ? (
         <div className="flex items-center justify-center h-[80px]">
@@ -152,18 +178,34 @@ function OrdersTable() {
             key={order.id}
             className="flex items-center h-[32px] px-3 text-body-sm font-mono font-tabular hover:bg-bg-elevated transition-fast"
           >
-            <span className="w-[14%] font-display text-text-primary">{order.pair}</span>
-            <span className={`w-[10%] font-display capitalize ${order.side === "buy" ? "text-success" : "text-error"}`}>
+            <span className="w-[13%] font-display text-text-primary">{order.pair}</span>
+            <span className={`w-[9%] font-display capitalize ${order.side === "buy" ? "text-success" : "text-error"}`}>
               {order.side}
             </span>
-            <span className="w-[14%] font-display text-text-muted capitalize">{order.type}</span>
-            <span className="w-[16%] text-right text-text-primary">{order.amount.toLocaleString()}</span>
-            <span className="w-[16%] text-right text-text-primary">{order.price.toFixed(4)}</span>
-            <span className="w-[12%] text-right text-text-secondary">{order.filledPercent}%</span>
-            <span className="w-[18%] flex justify-end">
+            <span className="w-[12%] font-display text-text-muted capitalize">{order.type}</span>
+            <span className="w-[15%] text-right text-text-primary">{order.amount.toLocaleString()}</span>
+            <span className="w-[15%] text-right text-text-primary">{order.price.toFixed(4)}</span>
+            <span className="w-[10%] text-right text-text-secondary">{order.filledPercent}%</span>
+            <span className="w-[16%] flex justify-end">
               <span className={`text-label-uppercase px-2 py-0.5 rounded-sm ${statusColors[order.status]}`}>
                 {order.status}
               </span>
+            </span>
+            <span className="w-[10%] flex justify-end">
+              {order.status === "open" && (
+                <button
+                  onClick={() => handleCancel(order.id)}
+                  disabled={cancellingId === order.id}
+                  className="w-[22px] h-[22px] flex items-center justify-center rounded-sm text-text-muted hover:text-error hover:bg-error/10 transition-fast disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Cancel order"
+                >
+                  {cancellingId === order.id ? (
+                    <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <span className="text-[13px] font-medium">&times;</span>
+                  )}
+                </button>
+              )}
             </span>
           </div>
         ))

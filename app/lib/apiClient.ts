@@ -8,6 +8,7 @@ import type {
   CancelOrderPayload,
   CreateAccountPayload,
   CreateAccountResponse,
+  AccountNonceResponse,
 } from "./apiTypes";
 
 const BASE = config.apiBaseUrl;
@@ -54,4 +55,9 @@ export async function createAccount(payload: CreateAccountPayload): Promise<Crea
   });
   if (!res.ok) throw await ApiError.fromResponse(res);
   return res.json();
+}
+
+export async function getAccountNonce(accountId: number): Promise<AccountNonceResponse> {
+  const res = await fetch(`${BASE}/accounts/${accountId}/nonce`);
+  return handleResponse<AccountNonceResponse>(res);
 }

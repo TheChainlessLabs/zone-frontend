@@ -6,6 +6,7 @@ import { config } from "../config";
 import { eip712Types, SIDE_ENCODING } from "../eip712Types";
 import type { ApiSide } from "../apiTypes";
 import { useNonce } from "./useNonce";
+import { useWallet } from "../wallet";
 
 export interface SignedResult {
   signature: string;
@@ -34,7 +35,8 @@ interface CancelParams {
 
 export function useOrderSigning() {
   const { signTypedDataAsync } = useSignTypedData();
-  const nonce = useNonce();
+  const { accountId } = useWallet();
+  const nonce = useNonce(accountId);
 
   const domain = config.eip712Domain;
 

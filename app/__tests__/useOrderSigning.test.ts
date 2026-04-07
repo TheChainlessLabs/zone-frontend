@@ -20,6 +20,22 @@ vi.mock("../lib/config", () => ({
   },
 }));
 
+vi.mock("../lib/wallet", () => ({
+  useWallet: () => ({ accountId: 1 }),
+}));
+
+// useNonce mock: each renderHook call creates a fresh useNonce via React state,
+// but since we mock at module level, we use a ref pattern that resets per hook instance.
+const nonceState = { current: 0 };
+vi.mock("../lib/hooks/useNonce", () => ({
+  useNonce: (_accountId: number | null) => ({
+    next: () => nonceState.current,
+    increment: () => { nonceState.current += 1; },
+    resync: () => { nonceState.current = 0; },
+    isReady: true,
+  }),
+}));
+
 import { useOrderSigning } from "../lib/hooks/useOrderSigning";
 
 const FAKE_SIG = "0x" + "ab".repeat(65);
@@ -27,6 +43,7 @@ const FAKE_SIG = "0x" + "ab".repeat(65);
 beforeEach(() => {
   mockSignTypedDataAsync.mockReset();
   mockSignTypedDataAsync.mockResolvedValue(FAKE_SIG);
+  nonceState.current = 0;
 });
 
 describe("useOrderSigning", () => {

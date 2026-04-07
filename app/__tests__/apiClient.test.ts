@@ -172,6 +172,27 @@ describe("cancelOrder", () => {
   });
 });
 
+describe("getAccountNonce", () => {
+  it("fetches GET /accounts/{id}/nonce", async () => {
+    const data = { account_id: 1, nonce: 5 };
+    mockFetch.mockResolvedValue(jsonResponse(data));
+
+    const { getAccountNonce } = await loadApiClient();
+    const result = await getAccountNonce(1);
+
+    expect(mockFetch).toHaveBeenCalledWith(`${API_BASE_URL}/accounts/1/nonce`);
+    expect(result).toEqual(data);
+  });
+
+  it("throws ApiError on 404", async () => {
+    mockFetch.mockResolvedValue(errorResponse("Account not found", 404));
+
+    const { getAccountNonce } = await loadApiClient();
+
+    await expect(getAccountNonce(999)).rejects.toMatchObject({ status: 404 });
+  });
+});
+
 describe("createAccount", () => {
   const payload: CreateAccountPayload = {
     owner: "0x1234567890abcdef1234567890abcdef12345678",

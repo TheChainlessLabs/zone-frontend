@@ -83,3 +83,10 @@ export interface CreateAccountPayload {
 export interface CreateAccountResponse {
   account_id: number;
 }
+
+// ── GET /accounts/{id}/nonce ──
+
+export interface AccountNonceResponse {
+  account_id: number;
+  nonce: number;
+}

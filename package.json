@@ -14,6 +14,7 @@
     "dev:landing": "pnpm --filter landing dev",
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
+    "prepare": "git config core.hooksPath .githooks",
     "test": "pnpm --filter @omega/app test",
     "typecheck": "pnpm --filter @omega/app exec tsc --noEmit"
   },

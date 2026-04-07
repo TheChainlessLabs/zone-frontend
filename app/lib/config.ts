@@ -1,22 +1,25 @@
 import { getAddress } from "viem";
 
-function requireEnv(name: string): string {
-  const value = process.env[name]?.trim();
-  if (!value) {
-    throw new Error(`Missing required environment variable: ${name}`);
-  }
-  return value;
-}
-
 function normalizeApiBaseUrl(url: string): string {
   return url.replace(/\/+$/, "");
 }
 
+const apiUrl = process.env.NEXT_PUBLIC_API_URL?.trim();
+if (!apiUrl) {
+  throw new Error("Missing required environment variable: NEXT_PUBLIC_API_URL");
+}
+
+const bridgeAddress = process.env.NEXT_PUBLIC_BRIDGE_ADDRESS?.trim();
+if (!bridgeAddress) {
+  throw new Error(
+    "Missing required environment variable: NEXT_PUBLIC_BRIDGE_ADDRESS"
+  );
+}
+
 const chainId = Number(process.env.NEXT_PUBLIC_CHAIN_ID ?? "31337");
-const bridgeAddress = requireEnv("NEXT_PUBLIC_BRIDGE_ADDRESS");
 
 export const config = {
-  apiBaseUrl: normalizeApiBaseUrl(requireEnv("NEXT_PUBLIC_API_URL")),
+  apiBaseUrl: normalizeApiBaseUrl(apiUrl),
   chainId,
   bridgeAddress,
   usdcAddress:

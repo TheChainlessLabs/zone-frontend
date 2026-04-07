@@ -6,6 +6,8 @@ import type {
   CreateOrderPayload,
   CreateOrderResponse,
   CancelOrderPayload,
+  CreateAccountPayload,
+  CreateAccountResponse,
 } from "./apiTypes";
 
 const BASE = config.apiBaseUrl;
@@ -42,4 +44,14 @@ export async function cancelOrder(payload: CancelOrderPayload): Promise<void> {
     body: JSON.stringify(payload),
   });
   if (!res.ok) throw await ApiError.fromResponse(res);
+}
+
+export async function createAccount(payload: CreateAccountPayload): Promise<CreateAccountResponse> {
+  const res = await fetch(`${BASE}/accounts`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw await ApiError.fromResponse(res);
+  return res.json();
 }

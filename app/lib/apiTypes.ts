@@ -71,3 +71,15 @@ export interface CancelOrderPayload {
   nonce: number;
   signature: string;
 }
+
+// ── POST /accounts ──
+
+export interface CreateAccountPayload {
+  owner: string;
+  signature: string;
+  nonce: number;
+}
+
+export interface CreateAccountResponse {
+  account_id: number;
+}

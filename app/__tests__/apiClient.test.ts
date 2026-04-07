@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { ApiError } from "../lib/apiError";
-import type { CreateOrderPayload, CancelOrderPayload } from "../lib/apiTypes";
+import type { CreateOrderPayload, CancelOrderPayload, CreateAccountPayload } from "../lib/apiTypes";
 
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
@@ -169,5 +169,48 @@ describe("cancelOrder", () => {
     const { cancelOrder } = await loadApiClient();
 
     await expect(cancelOrder(payload)).rejects.toMatchObject({ status: 404 });
+  });
+});
+
+describe("createAccount", () => {
+  const payload: CreateAccountPayload = {
+    owner: "0x1234567890abcdef1234567890abcdef12345678",
+    signature: "0xsig",
+    nonce: 0,
+  };
+
+  it("POSTs to /accounts with correct body", async () => {
+    mockFetch.mockResolvedValue(jsonResponse({ account_id: 1 }, 201));
+
+    const { createAccount } = await loadApiClient();
+    const result = await createAccount(payload);
+
+    expect(mockFetch).toHaveBeenCalledWith(`${API_BASE_URL}/accounts`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    expect(result).toEqual({ account_id: 1 });
+  });
+
+  it("throws ApiError on 409 conflict", async () => {
+    mockFetch.mockResolvedValue(errorResponse("account already exists", 409));
+
+    const { createAccount } = await loadApiClient();
+
+    await expect(createAccount(payload)).rejects.toMatchObject({
+      status: 409,
+      message: "account already exists",
+    });
+  });
+
+  it("throws ApiError on 500", async () => {
+    mockFetch.mockResolvedValue(errorResponse("internal error", 500));
+
+    const { createAccount } = await loadApiClient();
+
+    await expect(createAccount(payload)).rejects.toMatchObject({
+      status: 500,
+    });
   });
 });

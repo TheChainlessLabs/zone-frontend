@@ -34,4 +34,8 @@ export const eip712Types = {
     { name: "market_id", type: "uint16" },
     { name: "order_id", type: "uint64" },
   ],
+  CreateAccountRequest: [
+    { name: "owner", type: "address" },
+    { name: "nonce", type: "uint64" },
+  ],
 } as const;

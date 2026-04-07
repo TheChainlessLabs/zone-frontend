@@ -9,11 +9,13 @@ import {
 } from "react";
 import { useAccount } from "wagmi";
 import { supportedChain, supportedChainId } from "./wagmiConfig";
+import { useAccountRegistration } from "./hooks/useAccountRegistration";
 
 interface WalletState {
   address: `0x${string}` | undefined;
   isConnected: boolean;
   accountId: number | null;
+  isRegistering: boolean;
   chainId: number | undefined;
   expectedChainId: number;
   expectedChainName: string;
@@ -25,6 +27,7 @@ const WalletContext = createContext<WalletState>({
   address: undefined,
   isConnected: false,
   accountId: null,
+  isRegistering: false,
   chainId: undefined,
   expectedChainId: supportedChainId,
   expectedChainName: supportedChain.name,
@@ -51,6 +54,13 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     setAccountId(stored ? Number(stored) : null);
   }, [address]);
 
+  // Auto-register account when wallet connects and no accountId exists
+  const { isRegistering } = useAccountRegistration({
+    address,
+    accountId,
+    setAccountId,
+  });
+
   const isHydrated =
     mounted && status !== "connecting" && status !== "reconnecting";
   const isSupportedChain = isConnected && chainId === supportedChainId;
@@ -59,6 +69,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     address,
     isConnected,
     accountId,
+    isRegistering,
     chainId,
     expectedChainId: supportedChainId,
     expectedChainName: supportedChain.name,

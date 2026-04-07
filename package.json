@@ -13,6 +13,8 @@
     "dev:app": "pnpm --filter app dev",
     "dev:landing": "pnpm --filter landing dev",
     "test:e2e": "playwright test",
+    "test:e2e:unit": "playwright test --project=unit-e2e",
+    "test:e2e:integration": "playwright test --project=integration",
     "test:e2e:headed": "playwright test --headed",
     "prepare": "git config core.hooksPath .githooks",
     "test": "pnpm --filter @omega/app test",

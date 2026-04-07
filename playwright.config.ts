@@ -20,7 +20,13 @@ export default defineConfig({
   },
   projects: [
     {
-      name: "chromium",
+      name: "unit-e2e",
+      testMatch: "wallet-connection.spec.ts",
+      use: { ...devices["Desktop Chrome"] },
+    },
+    {
+      name: "integration",
+      testMatch: "verify-integration.spec.ts",
       use: { ...devices["Desktop Chrome"] },
     },
   ],

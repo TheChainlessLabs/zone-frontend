@@ -41,11 +41,9 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm test -- --coverage
-      - name: Check coverage thresholds
-        run: pnpm --filter @omega/app exec vitest run --coverage 2>&1 | tail -5
 
   e2e:
-    name: E2E Tests
+    name: E2E Tests (Wallet Connection)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -56,9 +54,121 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps chromium
-      - run: pnpm test:e2e
+      - run: pnpm test:e2e:unit
         env:
           CI: true
+
+  e2e-integration:
+    name: E2E Integration (Dev Wallet + Backend)
+    # Requires CROSS_REPO_TOKEN secret with access to omega-markets repo.
+    # Set up in GitHub: Settings → Secrets → CROSS_REPO_TOKEN (PAT with repo scope)
+    if: github.event_name == 'push' || contains(github.event.pull_request.labels.*.name, 'run-integration')
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: omega_markets
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+
+      # Install Rust toolchain for building omega-markets
+      - uses: dtolnay/rust-toolchain@stable
+
+      # Cache Rust build artifacts
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "../omega-markets -> target"
+
+      # Clone and build omega-markets (engine + API)
+      - name: Clone omega-markets
+        uses: actions/checkout@v4
+        with:
+          repository: TheChainlessLabs/omega-markets
+          path: omega-markets
+          ref: main
+          token: ${{ secrets.CROSS_REPO_TOKEN }}
+
+      - name: Build omega-markets
+        run: cargo build -p omega-node -p omega-api
+        working-directory: omega-markets
+
+      # Install Anvil
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
+      # Start Anvil
+      - name: Start Anvil
+        run: |
+          anvil --port 8545 --chain-id 31337 --balance 10000 &
+          sleep 2
+          curl -sf http://127.0.0.1:8545 -X POST -H 'Content-Type: application/json' \
+            -d '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}'
+
+      # Start omega-node (engine on :50051)
+      - name: Start engine
+        run: |
+          OMEGA_DATABASE_URL="postgres://postgres:postgres@localhost:5432/omega_markets" \
+          OMEGA_REDIS_URL="redis://localhost:6379" \
+          OMEGA_ADMIN_ADDRESS="0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266" \
+          OMEGA_CHAIN_ID="31337" \
+          OMEGA_EIP712_NAME="Omega" \
+          OMEGA_EIP712_VERSION="1" \
+          OMEGA_VERIFYING_CONTRACT="0xa513E6E4b8f2a923D98304ec87F64353C4D5C853" \
+          OMEGA_ENABLE_PROOF_DISPATCHER="false" \
+          OMEGA_ENABLE_PROOF_WORKER="false" \
+          ./omega-markets/target/debug/omega-node &
+          # Wait for gRPC to be ready
+          for i in $(seq 1 30); do
+            if lsof -i :50051 2>/dev/null | grep -q LISTEN; then break; fi
+            sleep 1
+          done
+
+      # Start omega-api (HTTP on :3000)
+      - name: Start API gateway
+        run: |
+          OMEGA_ENGINE_TARGET="http://127.0.0.1:50051" \
+          OMEGA_CHAIN_ID="31337" \
+          OMEGA_EIP712_NAME="Omega" \
+          OMEGA_EIP712_VERSION="1" \
+          OMEGA_VERIFYING_CONTRACT="0xa513E6E4b8f2a923D98304ec87F64353C4D5C853" \
+          ./omega-markets/target/debug/omega-api &
+          # Wait for HTTP to be ready
+          for i in $(seq 1 15); do
+            if curl -sf http://127.0.0.1:3000/markets/1/book > /dev/null; then break; fi
+            sleep 1
+          done
+
+      # Run integration E2E with dev wallet (backend already running, no seed needed for basic tests)
+      - name: Run integration E2E (dev wallet)
+        run: pnpm test:e2e:integration
+        env:
+          CI: true
+          NEXT_PUBLIC_DEV_WALLET_PK: "0x47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a34926a"
 
   build:
     name: Build

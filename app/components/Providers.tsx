@@ -7,6 +7,12 @@ import { config } from "@/lib/wagmiConfig";
 import { WalletProvider } from "@/lib/wallet";
 import { ToastProvider } from "@/lib/useToast";
 import { MarketProvider } from "@/lib/hooks/useMarket";
+import { injectDevWallet } from "@/lib/devWallet";
+
+// Inject dev wallet before wagmi initializes (dev mode only, no-op in prod)
+if (typeof window !== "undefined") {
+  injectDevWallet();
+}
 
 export default function Providers({
   children,

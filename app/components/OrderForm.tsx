@@ -4,12 +4,20 @@ import { useState } from "react";
 import { Info, Lock } from "lucide-react";
 import type { OrderType, Side } from "@/lib/types";
 import { Skeleton } from "@/components/Skeleton";
+import { useWallet } from "@/lib/wallet";
+import { useAccountBalances } from "@/lib/hooks/useAccountBalances";
 
 export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
   const [orderType] = useState<OrderType>("midpoint");
   const [side, setSide] = useState<Side>("buy");
   const [amount, setAmount] = useState("");
   const [price, setPrice] = useState("1.0850");
+  const { accountId } = useWallet();
+  const { balances } = useAccountBalances(accountId);
+
+  // USDC (token ID 1) is the default quote token
+  const quoteBalance = balances.find((b) => b.tokenId === 1);
+  const availableBalance = quoteBalance?.available ?? 0;
 
   const midpointRate = 1.0856;
   const parsedAmount = parseFloat(amount) || 0;
@@ -124,12 +132,20 @@ export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
 
       {/* Percentage shortcuts */}
       <div className="flex gap-2">
-        {["25%", "50%", "MAX"].map((pct) => (
+        {[
+          { label: "25%", factor: 0.25 },
+          { label: "50%", factor: 0.5 },
+          { label: "MAX", factor: 1 },
+        ].map((s) => (
           <button
-            key={pct}
+            key={s.label}
+            onClick={() => {
+              const val = availableBalance * s.factor;
+              setAmount(val > 0 ? val.toFixed(2) : "");
+            }}
             className="flex-1 h-[30px] text-body-sm font-mono text-text-muted border border-border rounded-md hover:bg-bg-elevated hover:text-text-primary transition-fast"
           >
-            {pct}
+            {s.label}
           </button>
         ))}
       </div>

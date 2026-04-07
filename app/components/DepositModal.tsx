@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 import BottomSheet from "./BottomSheet";
+import { useWallet } from "@/lib/wallet";
+import { useAccountBalances } from "@/lib/hooks/useAccountBalances";
+import { getTokenIdBySymbol } from "@/lib/tokens";
 
 const chains = [
   { name: "Ethereum", color: "#627EEA" },
@@ -19,8 +22,12 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
   const [chain, setChain] = useState("Ethereum");
   const [token, setToken] = useState("USDC");
   const [amount, setAmount] = useState("");
+  const { accountId } = useWallet();
+  const { balances } = useAccountBalances(accountId);
 
-  const balance = 48250.0;
+  const tokenId = getTokenIdBySymbol(token);
+  const tokenBalance = balances.find((b) => b.tokenId === tokenId);
+  const balance = tokenBalance?.available ?? 0;
   const fee = 2.5;
   const numAmount = parseFloat(amount) || 0;
   const receive = Math.max(0, numAmount - fee);

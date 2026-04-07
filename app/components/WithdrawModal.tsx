@@ -3,6 +3,9 @@
 import { useState } from "react";
 import { Lock, Check } from "lucide-react";
 import BottomSheet from "./BottomSheet";
+import { useWallet } from "@/lib/wallet";
+import { useAccountBalances } from "@/lib/hooks/useAccountBalances";
+import { getTokenIdBySymbol } from "@/lib/tokens";
 
 type WithdrawalMode = "standard" | "privacy";
 
@@ -16,8 +19,12 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
   const [amount, setAmount] = useState("");
   const [mode, setMode] = useState<WithdrawalMode>("standard");
   const [consent, setConsent] = useState(false);
+  const { accountId } = useWallet();
+  const { balances } = useAccountBalances(accountId);
 
-  const available = 48250.0;
+  const tokenId = getTokenIdBySymbol(token);
+  const tokenBalance = balances.find((b) => b.tokenId === tokenId);
+  const available = tokenBalance?.available ?? 0;
   const networkFee = 2.5;
   const privacyFee = mode === "privacy" ? 1.2 : 0;
   const totalFee = networkFee + privacyFee;

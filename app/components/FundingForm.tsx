@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { useWallet } from "@/lib/wallet";
+import { useAccountBalances } from "@/lib/hooks/useAccountBalances";
+import { getTokenIdBySymbol } from "@/lib/tokens";
 
 type FundingTab = "deposit" | "withdraw" | "transfer";
 
@@ -21,8 +24,12 @@ export default function FundingForm({ initialTab = "deposit" }: FundingFormProps
   const [chain, setChain] = useState("Ethereum");
   const [asset, setAsset] = useState("USDC");
   const [amount, setAmount] = useState("");
+  const { accountId } = useWallet();
+  const { balances } = useAccountBalances(accountId);
 
-  const balance = 15000.00;
+  const tokenId = getTokenIdBySymbol(asset);
+  const tokenBalance = balances.find((b) => b.tokenId === tokenId);
+  const balance = tokenBalance?.available ?? 0;
   const fee = tab === "transfer" ? 0 : 2.50;
   const receive = amount ? Math.max(0, parseFloat(amount) - fee) : 0;
 

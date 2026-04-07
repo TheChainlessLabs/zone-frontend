@@ -9,6 +9,7 @@ import type {
   CreateAccountPayload,
   CreateAccountResponse,
   AccountNonceResponse,
+  AccountBalancesResponse,
 } from "./apiTypes";
 
 const BASE = config.apiBaseUrl;
@@ -60,4 +61,9 @@ export async function createAccount(payload: CreateAccountPayload): Promise<Crea
 export async function getAccountNonce(accountId: number): Promise<AccountNonceResponse> {
   const res = await fetch(`${BASE}/accounts/${accountId}/nonce`);
   return handleResponse<AccountNonceResponse>(res);
+}
+
+export async function getAccountBalances(accountId: number): Promise<AccountBalancesResponse> {
+  const res = await fetch(`${BASE}/accounts/${accountId}/balances`);
+  return handleResponse<AccountBalancesResponse>(res);
 }

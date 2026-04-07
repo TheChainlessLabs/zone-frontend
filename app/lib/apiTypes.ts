@@ -84,6 +84,20 @@ export interface CreateAccountResponse {
   account_id: number;
 }
 
+// ── GET /accounts/{id}/balances ──
+
+export interface TokenBalance {
+  token_id: number;
+  available: string;
+  collateral: string;
+  total: string;
+}
+
+export interface AccountBalancesResponse {
+  account_id: number;
+  balances: TokenBalance[];
+}
+
 // ── GET /accounts/{id}/nonce ──
 
 export interface AccountNonceResponse {

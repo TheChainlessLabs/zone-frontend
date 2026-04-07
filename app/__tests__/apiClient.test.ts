@@ -193,6 +193,32 @@ describe("getAccountNonce", () => {
   });
 });
 
+describe("getAccountBalances", () => {
+  it("fetches GET /accounts/{id}/balances", async () => {
+    const data = {
+      account_id: 1,
+      balances: [
+        { token_id: 1, available: "10000000000", collateral: "0", total: "10000000000" },
+      ],
+    };
+    mockFetch.mockResolvedValue(jsonResponse(data));
+
+    const { getAccountBalances } = await loadApiClient();
+    const result = await getAccountBalances(1);
+
+    expect(mockFetch).toHaveBeenCalledWith(`${API_BASE_URL}/accounts/1/balances`);
+    expect(result).toEqual(data);
+  });
+
+  it("throws ApiError on 404", async () => {
+    mockFetch.mockResolvedValue(errorResponse("Account not found", 404));
+
+    const { getAccountBalances } = await loadApiClient();
+
+    await expect(getAccountBalances(999)).rejects.toMatchObject({ status: 404 });
+  });
+});
+
 describe("createAccount", () => {
   const payload: CreateAccountPayload = {
     owner: "0x1234567890abcdef1234567890abcdef12345678",

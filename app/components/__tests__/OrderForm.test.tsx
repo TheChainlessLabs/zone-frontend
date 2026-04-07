@@ -1,6 +1,14 @@
 import { render, screen, cleanup } from "@testing-library/react";
-import { afterEach, describe, it, expect } from "vitest";
+import { afterEach, describe, it, expect, vi } from "vitest";
 import OrderForm from "@/components/OrderForm";
+
+vi.mock("@/lib/wallet", () => ({
+  useWallet: () => ({ accountId: null, address: undefined, isConnected: false }),
+}));
+
+vi.mock("@/lib/hooks/useAccountBalances", () => ({
+  useAccountBalances: () => ({ balances: [], isLoading: false, isError: false }),
+}));
 
 afterEach(cleanup);
 

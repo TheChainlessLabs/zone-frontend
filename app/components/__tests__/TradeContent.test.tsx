@@ -31,6 +31,12 @@ vi.mock("@/components/ProtectedPage", () => ({
 vi.mock("@/lib/hooks/useTrades", () => ({
   useTrades: vi.fn().mockReturnValue({ trades: [], isLoading: false, isError: false }),
 }));
+vi.mock("@/lib/wallet", () => ({
+  useWallet: () => ({ accountId: null, address: undefined, isConnected: false }),
+}));
+vi.mock("@/lib/hooks/useAccountBalances", () => ({
+  useAccountBalances: () => ({ balances: [], isLoading: false, isError: false }),
+}));
 
 afterEach(cleanup);
 

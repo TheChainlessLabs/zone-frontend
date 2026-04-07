@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Pre-commit hook: runs the same checks as CI before allowing a commit.
+# Install: git config core.hooksPath .githooks
+# Skip (emergency): git commit --no-verify
+set -euo pipefail
+
+echo "🔍 Pre-commit: typecheck"
+pnpm typecheck
+
+echo "🧪 Pre-commit: unit tests"
+pnpm test
+
+echo "🏗️  Pre-commit: build"
+NEXT_PUBLIC_API_URL=http://127.0.0.1:3000 \
+NEXT_PUBLIC_CHAIN_ID=31337 \
+NEXT_PUBLIC_BRIDGE_ADDRESS=0xa513E6E4b8f2a923D98304ec87F64353C4D5C853 \
+pnpm build
+
+echo "✅ All checks passed"

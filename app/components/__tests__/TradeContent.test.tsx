@@ -43,6 +43,29 @@ vi.mock("@/lib/hooks/useUserOrders", () => ({
 vi.mock("@/lib/hooks/useMarket", () => ({
   useMarket: () => ({ marketId: 1, setMarketId: vi.fn() }),
 }));
+vi.mock("@/lib/hooks/useOrderBook", () => ({
+  useOrderBook: () => ({ book: null, midpoint: 1.0856, isLoading: false, isError: false }),
+}));
+vi.mock("@/lib/hooks/useOrderSigning", () => ({
+  useOrderSigning: () => ({
+    signLimitOrder: vi.fn(),
+    signMarketOrder: vi.fn(),
+    signFlipOrder: vi.fn(),
+    signCancel: vi.fn(),
+  }),
+}));
+vi.mock("@/lib/hooks/useNonce", () => ({
+  useNonce: () => ({ next: vi.fn(() => 0), increment: vi.fn(), resync: vi.fn(), isReady: true }),
+}));
+vi.mock("@/lib/useToast", () => ({
+  useToast: () => ({ toasts: [], addToast: vi.fn(), removeToast: vi.fn() }),
+}));
+vi.mock("@/lib/apiClient", () => ({
+  createOrder: vi.fn(),
+}));
+vi.mock("@tanstack/react-query", () => ({
+  useQueryClient: () => ({ invalidateQueries: vi.fn() }),
+}));
 
 afterEach(cleanup);
 

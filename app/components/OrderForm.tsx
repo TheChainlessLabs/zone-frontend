@@ -1,30 +1,87 @@
 "use client";
 
 import { useState } from "react";
-import { Info, Lock } from "lucide-react";
+import { Info, Lock, Loader2 } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import type { OrderType, Side } from "@/lib/types";
 import { Skeleton } from "@/components/Skeleton";
 import { useWallet } from "@/lib/wallet";
 import { useAccountBalances } from "@/lib/hooks/useAccountBalances";
+import { useOrderBook } from "@/lib/hooks/useOrderBook";
+import { useOrderSigning } from "@/lib/hooks/useOrderSigning";
+import { useMarket } from "@/lib/hooks/useMarket";
+import { useNonce } from "@/lib/hooks/useNonce";
+import { useToast } from "@/lib/useToast";
+import { createOrder } from "@/lib/apiClient";
+import { ApiError } from "@/lib/apiError";
+import { encodePrice, encodeQuantity } from "@/lib/priceUtils";
 
 export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
   const [orderType] = useState<OrderType>("midpoint");
   const [side, setSide] = useState<Side>("buy");
   const [amount, setAmount] = useState("");
   const [price, setPrice] = useState("1.0850");
+  const [isPending, setIsPending] = useState(false);
   const { accountId } = useWallet();
   const { balances } = useAccountBalances(accountId);
+  const { midpoint } = useOrderBook();
+  const { signMarketOrder } = useOrderSigning();
+  const { marketId } = useMarket();
+  const nonce = useNonce(accountId);
+  const { addToast } = useToast();
+  const queryClient = useQueryClient();
 
   // USDC (token ID 1) is the default quote token
   const quoteBalance = balances.find((b) => b.tokenId === 1);
   const availableBalance = quoteBalance?.available ?? 0;
 
-  const midpointRate = 1.0856;
+  const midpointRate = midpoint ?? 0;
   const parsedAmount = parseFloat(amount) || 0;
   const fee = parsedAmount ? (parsedAmount * 0.00005).toFixed(2) : "0.00";
   const feePercent = "0.005%";
   const estReceive = parsedAmount ? (parsedAmount * midpointRate).toFixed(2) : "0.00";
   const savingsPips = "+0.8";
+
+  async function handleSubmit() {
+    if (!accountId || isPending || !nonce.isReady || !parsedAmount || !midpointRate) return;
+    setIsPending(true);
+    const apiSide = side === "buy" ? "Buy" : "Sell";
+    const encodedPrice = BigInt(encodePrice(midpointRate));
+    const encodedQuantity = BigInt(encodeQuantity(parsedAmount, 6));
+    try {
+      const { signature, nonce: n } = await signMarketOrder({
+        marketId,
+        price: encodedPrice,
+        quantity: encodedQuantity,
+        side: apiSide,
+        maxSlippageBps: 50,
+      });
+      await createOrder({
+        market_id: marketId,
+        side: apiSide,
+        kind: "Market",
+        price: encodedPrice.toString(),
+        quantity: encodedQuantity.toString(),
+        extension: { max_slippage_bps: 50 },
+        nonce: n,
+        signature,
+      });
+      addToast("success", "Order Placed", `${side} order for ${amount} submitted`);
+      queryClient.invalidateQueries({ queryKey: ["book", marketId] });
+      queryClient.invalidateQueries({ queryKey: ["trades", marketId] });
+      setAmount("");
+    } catch (err) {
+      if (err instanceof ApiError && err.message.includes("nonce")) {
+        nonce.resync();
+        addToast("error", "Order Failed", "Nonce mismatch — please try again");
+      } else if (err instanceof ApiError && err.status === 400) {
+        addToast("error", "Order Failed", err.message);
+      }
+      // Wallet user rejection — silent
+    } finally {
+      setIsPending(false);
+    }
+  }
 
   if (isLoading) {
     return (
@@ -215,13 +272,22 @@ export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
 
       {/* Submit */}
       <button
-        className={`h-[44px] w-full rounded-md text-body-sm font-semibold tracking-[0.08em] uppercase text-text-inverse transition-fast ${
+        onClick={handleSubmit}
+        disabled={isPending || !accountId || !parsedAmount}
+        className={`h-[44px] w-full rounded-md text-body-sm font-semibold tracking-[0.08em] uppercase text-text-inverse transition-fast disabled:opacity-50 disabled:cursor-not-allowed ${
           side === "buy"
             ? "bg-success hover:bg-success-hover active:bg-success-active"
             : "bg-error hover:bg-error-hover active:bg-error-active"
         }`}
       >
-        {side === "buy" ? "Buy" : "Sell"} EUR / USD
+        {isPending ? (
+          <span className="flex items-center justify-center gap-2">
+            <Loader2 size={16} className="animate-spin" />
+            Submitting...
+          </span>
+        ) : (
+          <>{side === "buy" ? "Buy" : "Sell"} EUR / USD</>
+        )}
       </button>
 
       {/* Privacy notice */}

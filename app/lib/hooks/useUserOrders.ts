@@ -55,6 +55,9 @@ export function useUserOrders(accountId: number | null, marketId: number) {
     refetchInterval: 5000,
   });
 
+  // TODO(ENG-473): Replace with GET /accounts/{id}/orders once the backend
+  // adds a per-account endpoint. Current approach leaks all users' orders to
+  // the client and filters here — not acceptable for a darkpool.
   const allOrders =
     data?.orders
       .filter((o) => o.owner_account_id === accountId)

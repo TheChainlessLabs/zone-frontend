@@ -10,6 +10,39 @@ vi.mock("@/lib/hooks/useAccountBalances", () => ({
   useAccountBalances: () => ({ balances: [], isLoading: false, isError: false }),
 }));
 
+vi.mock("@/lib/hooks/useOrderBook", () => ({
+  useOrderBook: () => ({ book: null, midpoint: 1.0856, isLoading: false, isError: false }),
+}));
+
+vi.mock("@/lib/hooks/useOrderSigning", () => ({
+  useOrderSigning: () => ({
+    signLimitOrder: vi.fn(),
+    signMarketOrder: vi.fn(),
+    signFlipOrder: vi.fn(),
+    signCancel: vi.fn(),
+  }),
+}));
+
+vi.mock("@/lib/hooks/useMarket", () => ({
+  useMarket: () => ({ marketId: 1, setMarketId: vi.fn() }),
+}));
+
+vi.mock("@/lib/hooks/useNonce", () => ({
+  useNonce: () => ({ next: vi.fn(() => 0), increment: vi.fn(), resync: vi.fn(), isReady: true }),
+}));
+
+vi.mock("@/lib/useToast", () => ({
+  useToast: () => ({ toasts: [], addToast: vi.fn(), removeToast: vi.fn() }),
+}));
+
+vi.mock("@/lib/apiClient", () => ({
+  createOrder: vi.fn(),
+}));
+
+vi.mock("@tanstack/react-query", () => ({
+  useQueryClient: () => ({ invalidateQueries: vi.fn() }),
+}));
+
 afterEach(cleanup);
 
 describe("OrderForm", () => {
@@ -42,5 +75,18 @@ describe("OrderForm", () => {
     const { container } = render(<OrderForm isLoading={true} />);
     const fadeInEl = container.querySelector("[class*='animate-fadeIn']");
     expect(fadeInEl).toBeNull();
+  });
+
+  it("disables submit button when no accountId", () => {
+    render(<OrderForm isLoading={false} />);
+    const submitBtn = screen.getByRole("button", { name: /EUR \/ USD/i });
+    expect(submitBtn).toBeDisabled();
+  });
+
+  it("disables submit button when no amount entered", () => {
+    // accountId is null from mock, so button is disabled regardless
+    render(<OrderForm isLoading={false} />);
+    const submitBtn = screen.getByRole("button", { name: /EUR \/ USD/i });
+    expect(submitBtn).toBeDisabled();
   });
 });

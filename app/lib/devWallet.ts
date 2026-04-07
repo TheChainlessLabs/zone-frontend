@@ -126,8 +126,37 @@ export function injectDevWallet(): void {
 
   (window as any).__devWalletInjected = true;
 
+  // Pre-set wagmi cookie so it auto-reconnects on mount (no click needed)
+  const wagmiState = {
+    state: {
+      connections: {
+        __type: "Map",
+        value: [
+          [
+            "injected",
+            {
+              accounts: [account.address],
+              chainId,
+              connector: { id: "injected", name: "Injected", type: "injected" },
+            },
+          ],
+        ],
+      },
+      chainId,
+      current: "injected",
+    },
+    version: 2,
+  };
+  document.cookie = `wagmi.store=${encodeURIComponent(JSON.stringify(wagmiState))};path=/;samesite=lax`;
+
+  // Also set the account registration localStorage so the hook doesn't fire
+  localStorage.setItem(
+    `omega_account_${account.address}`,
+    "1",
+  );
+
   // eslint-disable-next-line no-console
   console.log(
-    `[Dev Wallet] Injected with address ${account.address} on chain ${chainId}`
+    `[Dev Wallet] Injected with address ${account.address} on chain ${chainId} (auto-connect enabled)`
   );
 }

@@ -15,6 +15,7 @@ import { useToast } from "@/lib/useToast";
 import type { OrderStatus } from "@/lib/types";
 import EmptyState from "@/components/EmptyState";
 import ErrorState from "@/components/ErrorState";
+import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
 import { ClipboardList } from "lucide-react";
 
 type FilterTab = OrderStatus | "all";
@@ -157,6 +158,7 @@ export default function AccountPage() {
         </div>
 
         {/* Orders — Desktop table */}
+        <SectionErrorBoundary fallbackMessage="Orders unavailable">
         <div className="hidden md:block bg-bg-surface border border-border rounded-lg overflow-hidden">
           <div className="flex items-center h-[33px] px-4 text-label-uppercase text-text-muted">
             <span className="w-[13%]">Pair</span>
@@ -226,7 +228,10 @@ export default function AccountPage() {
           </div>
         </div>
 
+        </SectionErrorBoundary>
+
         {/* Orders — Mobile cards */}
+        <SectionErrorBoundary fallbackMessage="Orders unavailable">
         <div className="md:hidden flex flex-col">
           {isLoading ? (
             <div className="flex items-center justify-center h-[120px]">
@@ -279,6 +284,7 @@ export default function AccountPage() {
             ))
           )}
         </div>
+        </SectionErrorBoundary>
 
         {/* Force withdrawal banner */}
         <div className="bg-warning/10 border border-warning/30 rounded-lg p-4 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">

@@ -7,6 +7,7 @@ import OpenPositions from "@/components/OpenPositions";
 import ProtectedPage from "@/components/ProtectedPage";
 import DepositModal from "@/components/DepositModal";
 import WithdrawModal from "@/components/WithdrawModal";
+import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
 
 export default function PortfolioPage() {
   const [depositOpen, setDepositOpen] = useState(false);
@@ -40,14 +41,20 @@ export default function PortfolioPage() {
           </div>
         </div>
 
-        <PortfolioValue />
+        <SectionErrorBoundary fallbackMessage="Portfolio value unavailable">
+          <PortfolioValue />
+        </SectionErrorBoundary>
 
         {/* Responsive tables */}
         <div className="overflow-x-auto">
-          <PortfolioBalances />
+          <SectionErrorBoundary fallbackMessage="Balances unavailable">
+            <PortfolioBalances />
+          </SectionErrorBoundary>
         </div>
         <div className="overflow-x-auto">
-          <OpenPositions />
+          <SectionErrorBoundary fallbackMessage="Open positions unavailable">
+            <OpenPositions />
+          </SectionErrorBoundary>
         </div>
       </div>
 

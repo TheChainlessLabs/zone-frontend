@@ -10,13 +10,10 @@ import BottomPanel from "@/components/BottomPanel";
 import RecentTrades from "@/components/RecentTrades";
 import StatusBar from "@/components/StatusBar";
 import ProtectedPage from "@/components/ProtectedPage";
-import { useMarket } from "@/lib/hooks/useMarket";
-import { MARKET_ID_PAIRS } from "@/lib/marketIds";
+import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
 
 export default function TradeContent() {
   const [isLoading, setIsLoading] = useState(true);
-  const { marketId } = useMarket();
-  const selectedPair = MARKET_ID_PAIRS[marketId] ?? "EUR/USD";
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 1500);
@@ -45,21 +42,29 @@ export default function TradeContent() {
 
             {/* Chart */}
             <div className="flex-1 p-3 min-w-0">
-              <PriceChart pair={selectedPair} />
+              <SectionErrorBoundary fallbackMessage="Chart unavailable">
+                <PriceChart />
+              </SectionErrorBoundary>
             </div>
           </div>
 
           {/* Bottom panel: Positions + Orders */}
           <div className="flex-1 px-3 pb-3 min-h-0 overflow-hidden">
-            <BottomPanel isLoading={isLoading} />
+            <SectionErrorBoundary fallbackMessage="Positions and orders unavailable">
+              <BottomPanel isLoading={isLoading} />
+            </SectionErrorBoundary>
           </div>
         </div>
 
         {/* Right: Order Form + Recent Fills (380px on desktop) */}
         <div className="w-full lg:w-[380px] border-t lg:border-t-0 lg:border-l border-border overflow-y-auto shrink-0">
           <div className="p-4 flex flex-col gap-4">
-            <OrderForm isLoading={isLoading} />
-            <RecentTrades />
+            <SectionErrorBoundary fallbackMessage="Order form unavailable">
+              <OrderForm isLoading={isLoading} />
+            </SectionErrorBoundary>
+            <SectionErrorBoundary fallbackMessage="Recent trades unavailable">
+              <RecentTrades />
+            </SectionErrorBoundary>
           </div>
         </div>
       </div>

@@ -20,6 +20,10 @@ vi.mock("@/lib/hooks/useUserOrders", () => ({
   useUserOrders: vi.fn().mockReturnValue({ orders: [], openOrders: [], isLoading: false, isError: false }),
 }));
 
+vi.mock("@/lib/hooks/useOrderFillDetector", () => ({
+  useOrderFillDetector: vi.fn(),
+}));
+
 vi.mock("@/lib/wallet", () => ({
   useWallet: () => ({ accountId: 1 }),
 }));

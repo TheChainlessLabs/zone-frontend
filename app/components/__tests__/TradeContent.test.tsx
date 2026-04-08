@@ -50,6 +50,9 @@ vi.mock("@/lib/hooks/useAccountBalances", () => ({
 vi.mock("@/lib/hooks/useUserOrders", () => ({
   useUserOrders: vi.fn().mockReturnValue({ orders: [], openOrders: [], isLoading: false, isError: false }),
 }));
+vi.mock("@/lib/hooks/useOrderFillDetector", () => ({
+  useOrderFillDetector: vi.fn(),
+}));
 vi.mock("@/lib/hooks/useMarket", () => ({
   useMarket: () => ({ marketId: 1, setMarketId: vi.fn() }),
 }));

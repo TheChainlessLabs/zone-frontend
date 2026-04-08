@@ -5,6 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { openPositions } from "@/lib/mockData";
 import type { OrderStatus } from "@/lib/types";
 import { useUserOrders } from "@/lib/hooks/useUserOrders";
+import { useOrderFillDetector } from "@/lib/hooks/useOrderFillDetector";
 import { useOrderSigning } from "@/lib/hooks/useOrderSigning";
 import { cancelOrder } from "@/lib/apiClient";
 import { useWallet } from "@/lib/wallet";
@@ -173,7 +174,8 @@ function PositionsTable({ isLoading }: { isLoading?: boolean }) {
 function OrdersTable() {
   const { accountId } = useWallet();
   const { marketId } = useMarket();
-  const { openOrders, isLoading, isError } = useUserOrders(accountId, marketId);
+  const { orders, openOrders, isLoading, isError } = useUserOrders(accountId, marketId);
+  useOrderFillDetector(orders);
   const { signCancel } = useOrderSigning();
   const { addToast } = useToast();
   const queryClient = useQueryClient();

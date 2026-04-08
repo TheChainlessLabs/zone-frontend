@@ -6,6 +6,8 @@ const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
 
 const API_BASE_URL = "http://127.0.0.1:3001";
+// In jsdom (browser-like) environment, apiClient routes through the BFF proxy.
+const EXPECTED_BASE = "/api/engine";
 const originalApiUrl = process.env.NEXT_PUBLIC_API_URL;
 
 async function loadApiClient() {
@@ -54,14 +56,15 @@ describe("apiClient config", () => {
     );
   });
 
-  it("normalizes a trailing slash in NEXT_PUBLIC_API_URL", async () => {
+  it("routes through BFF proxy in browser environment", async () => {
     process.env.NEXT_PUBLIC_API_URL = `${API_BASE_URL}/`;
     mockFetch.mockResolvedValue(jsonResponse({ market_id: 1, bids: [], asks: [] }));
 
     const { getOrderBook } = await loadApiClient();
     await getOrderBook(1);
 
-    expect(mockFetch).toHaveBeenCalledWith(`${API_BASE_URL}/markets/1/book`);
+    // In jsdom (browser), BASE is /api/engine regardless of env var
+    expect(mockFetch).toHaveBeenCalledWith(`${EXPECTED_BASE}/markets/1/book`);
   });
 });
 
@@ -73,7 +76,7 @@ describe("getOrderBook", () => {
     const { getOrderBook } = await loadApiClient();
     const result = await getOrderBook(1);
 
-    expect(mockFetch).toHaveBeenCalledWith(`${API_BASE_URL}/markets/1/book`);
+    expect(mockFetch).toHaveBeenCalledWith(`${EXPECTED_BASE}/markets/1/book`);
     expect(result).toEqual(data);
   });
 
@@ -98,7 +101,7 @@ describe("getTrades", () => {
     const { getTrades } = await loadApiClient();
     const result = await getTrades(1);
 
-    expect(mockFetch).toHaveBeenCalledWith(`${API_BASE_URL}/markets/1/trades`);
+    expect(mockFetch).toHaveBeenCalledWith(`${EXPECTED_BASE}/markets/1/trades`);
     expect(result).toEqual(data);
   });
 });
@@ -121,7 +124,7 @@ describe("createOrder", () => {
     const { createOrder } = await loadApiClient();
     const result = await createOrder(payload);
 
-    expect(mockFetch).toHaveBeenCalledWith(`${API_BASE_URL}/orders`, {
+    expect(mockFetch).toHaveBeenCalledWith(`${EXPECTED_BASE}/orders`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -156,7 +159,7 @@ describe("cancelOrder", () => {
 
     await expect(cancelOrder(payload)).resolves.toBeUndefined();
 
-    expect(mockFetch).toHaveBeenCalledWith(`${API_BASE_URL}/orders/cancel`, {
+    expect(mockFetch).toHaveBeenCalledWith(`${EXPECTED_BASE}/orders/cancel`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -180,7 +183,7 @@ describe("getMarketOrders", () => {
     const { getMarketOrders } = await loadApiClient();
     const result = await getMarketOrders(1);
 
-    expect(mockFetch).toHaveBeenCalledWith(`${API_BASE_URL}/markets/1/orders`);
+    expect(mockFetch).toHaveBeenCalledWith(`${EXPECTED_BASE}/markets/1/orders`);
     expect(result).toEqual(data);
   });
 
@@ -205,7 +208,7 @@ describe("getAccountNonce", () => {
     const { getAccountNonce } = await loadApiClient();
     const result = await getAccountNonce(1);
 
-    expect(mockFetch).toHaveBeenCalledWith(`${API_BASE_URL}/accounts/1/nonce`);
+    expect(mockFetch).toHaveBeenCalledWith(`${EXPECTED_BASE}/accounts/1/nonce`);
     expect(result).toEqual(data);
   });
 
@@ -231,7 +234,7 @@ describe("getAccountBalances", () => {
     const { getAccountBalances } = await loadApiClient();
     const result = await getAccountBalances(1);
 
-    expect(mockFetch).toHaveBeenCalledWith(`${API_BASE_URL}/accounts/1/balances`);
+    expect(mockFetch).toHaveBeenCalledWith(`${EXPECTED_BASE}/accounts/1/balances`);
     expect(result).toEqual(data);
   });
 
@@ -257,7 +260,7 @@ describe("createAccount", () => {
     const { createAccount } = await loadApiClient();
     const result = await createAccount(payload);
 
-    expect(mockFetch).toHaveBeenCalledWith(`${API_BASE_URL}/accounts`, {
+    expect(mockFetch).toHaveBeenCalledWith(`${EXPECTED_BASE}/accounts`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),

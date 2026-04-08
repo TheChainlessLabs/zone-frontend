@@ -13,7 +13,12 @@ import type {
   AccountBalancesResponse,
 } from "./apiTypes";
 
-const BASE = config.apiBaseUrl;
+// In the browser, route through BFF proxy to avoid CORS and hide backend URL.
+// On the server (SSR), call the backend directly for lower latency.
+const BASE =
+  typeof window !== "undefined"
+    ? "/api/engine"
+    : config.apiBaseUrl;
 
 async function handleResponse<T>(res: Response): Promise<T> {
   if (!res.ok) throw await ApiError.fromResponse(res);

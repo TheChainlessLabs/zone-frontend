@@ -18,6 +18,8 @@ import EmptyState from "@/components/EmptyState";
 import ErrorState from "@/components/ErrorState";
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
 import { ClipboardList } from "lucide-react";
+import { devError } from "@/lib/devLog";
+import { getFriendlyError } from "@/lib/errorMessages";
 
 type FilterTab = OrderStatus | "all";
 
@@ -68,10 +70,12 @@ export default function AccountPage() {
         queryClient.invalidateQueries({ queryKey: ["book", marketId] });
       });
     } catch (err) {
+      devError("cancel", "cancel order failed", err);
       if (err instanceof Error && err.message === "Another signed operation is in progress") {
         addToast("warning", "Please Wait", "Another operation is in progress...");
       } else if (!(err instanceof Error && err.message.includes("User rejected"))) {
-        addToast("error", "Cancel Failed", err instanceof Error ? err.message : "Unknown error");
+        const raw = err instanceof Error ? err.message : "Unknown error";
+        addToast("error", "Cancel Failed", getFriendlyError(raw));
       }
     } finally {
       setCancellingId(null);

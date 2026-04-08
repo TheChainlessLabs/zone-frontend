@@ -17,6 +17,7 @@ import { createOrder } from "@/lib/apiClient";
 import { ApiError } from "@/lib/apiError";
 import { encodePrice, encodeQuantity } from "@/lib/priceUtils";
 import { devLog, devError, devWarn } from "@/lib/devLog";
+import { getFriendlyError } from "@/lib/errorMessages";
 
 export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
   const [orderType, setOrderType] = useState<OrderType>("midpoint");
@@ -129,9 +130,9 @@ export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
       } else if (err instanceof ApiError && err.message.includes("nonce")) {
         devWarn("order", `nonce mismatch — resyncing`);
         nonce.resync();
-        addToast("error", "Order Failed", "Nonce mismatch — please try again");
+        addToast("error", "Order Failed", getFriendlyError(err.message));
       } else if (err instanceof ApiError && err.status === 400) {
-        addToast("error", "Order Failed", err.message);
+        addToast("error", "Order Failed", getFriendlyError(err.message));
       }
       // Wallet user rejection — silent
     } finally {

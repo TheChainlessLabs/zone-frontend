@@ -43,6 +43,10 @@ export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
   const estReceive = parsedAmount ? (parsedAmount * midpointRate).toFixed(2) : "0.00";
   const savingsPips = "+0.8";
 
+  // Balance validation
+  const amountExceedsBalance = parsedAmount > 0 && parsedAmount > availableBalance;
+  const isLargeOrder = parsedAmount > 0 && !amountExceedsBalance && parsedAmount > availableBalance * 0.5;
+
   async function handleSubmit() {
     devLog("order", `handleSubmit() — accountId=${accountId} isPending=${isPending} isReady=${nonce.isReady} amount=${parsedAmount} midpoint=${midpointRate}`);
 
@@ -50,6 +54,7 @@ export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
     if (isPending) { devWarn("order", "blocked: isPending=true"); return; }
     if (!nonce.isReady) { devWarn("order", "blocked: nonce not ready"); return; }
     if (!parsedAmount || !Number.isFinite(parsedAmount) || parsedAmount <= 0) { devWarn("order", `blocked: invalid amount "${amount}" → ${parsedAmount}`); return; }
+    if (amountExceedsBalance) { devWarn("order", "blocked: amount exceeds balance"); return; }
     if (orderType === "midpoint" && !midpointRate) { devWarn("order", "blocked: no midpointRate (needed for midpoint orders)"); return; }
 
     setIsPending(true);
@@ -247,6 +252,16 @@ export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
             EUR
           </span>
         </div>
+        {amountExceedsBalance && (
+          <p className="text-[12px] text-error mt-1">
+            Insufficient balance. Available: {availableBalance.toLocaleString("en-US", { minimumFractionDigits: 2 })} USDC
+          </p>
+        )}
+        {isLargeOrder && (
+          <p className="text-[12px] text-warning mt-1">
+            This order uses over 50% of your available balance
+          </p>
+        )}
       </div>
 
       {/* Percentage shortcuts */}
@@ -335,7 +350,7 @@ export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
       {/* Submit */}
       <button
         onClick={handleSubmit}
-        disabled={isPending || !accountId || !parsedAmount}
+        disabled={isPending || !accountId || !parsedAmount || amountExceedsBalance}
         className={`h-[44px] w-full rounded-md text-body-sm font-semibold tracking-[0.08em] uppercase text-text-inverse transition-fast disabled:opacity-50 disabled:cursor-not-allowed ${
           side === "buy"
             ? "bg-success hover:bg-success-hover active:bg-success-active"

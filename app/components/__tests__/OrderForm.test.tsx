@@ -1,5 +1,5 @@
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
-import { afterEach, describe, it, expect, vi } from "vitest";
+import { afterEach, beforeEach, describe, it, expect, vi } from "vitest";
 import OrderForm from "@/components/OrderForm";
 
 vi.mock("@/lib/wallet", () => ({
@@ -114,5 +114,47 @@ describe("OrderForm", () => {
     // Default price is 1.0850
     const submitBtn = screen.getByRole("button", { name: /EUR \/ USD at 1\.0850/i });
     expect(submitBtn).toBeInTheDocument();
+  });
+});
+
+describe("OrderForm balance validation", () => {
+  beforeEach(() => {
+    vi.doMock("@/lib/wallet", () => ({
+      useWallet: () => ({ accountId: "test-account", address: "0x123", isConnected: true }),
+    }));
+    vi.doMock("@/lib/hooks/useAccountBalances", () => ({
+      useAccountBalances: () => ({
+        balances: [{ tokenId: 1, symbol: "USDC", available: 100, locked: 0 }],
+        isLoading: false,
+        isError: false,
+      }),
+    }));
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("disables submit button when amount exceeds balance", async () => {
+    const { default: OrderFormFresh } = await import("@/components/OrderForm");
+    render(<OrderFormFresh isLoading={false} />);
+
+    const input = screen.getByPlaceholderText("0.00");
+    fireEvent.change(input, { target: { value: "150" } });
+
+    const submitBtn = screen.getByRole("button", { name: /EUR \/ USD/i });
+    expect(submitBtn).toBeDisabled();
+  });
+
+  it("shows error message when amount exceeds balance", async () => {
+    const { default: OrderFormFresh } = await import("@/components/OrderForm");
+    render(<OrderFormFresh isLoading={false} />);
+
+    const input = screen.getByPlaceholderText("0.00");
+    fireEvent.change(input, { target: { value: "150" } });
+
+    const errorMsg = screen.getByText(/Insufficient balance/);
+    expect(errorMsg).toBeInTheDocument();
+    expect(errorMsg.textContent).toContain("USDC");
   });
 });

@@ -1,12 +1,10 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { Info, Lock, Loader2 } from "lucide-react";
+import { useState } from "react";
+import { AlertTriangle, Info, Lock, Loader2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { OrderType, Side } from "@/lib/types";
 import { Skeleton } from "@/components/Skeleton";
-import OrderConfirmationModal from "@/components/OrderConfirmationModal";
-import type { OrderConfirmationDetails } from "@/components/OrderConfirmationModal";
 import { useWallet } from "@/lib/wallet";
 import { useAccountBalances } from "@/lib/hooks/useAccountBalances";
 import { useOrderBook } from "@/lib/hooks/useOrderBook";
@@ -18,6 +16,7 @@ import { useSignedOperationQueue } from "@/lib/hooks/useSignedOperationQueue";
 import { createOrder } from "@/lib/apiClient";
 import { ApiError } from "@/lib/apiError";
 import { encodePrice, encodeQuantity } from "@/lib/priceUtils";
+import { estimatePriceImpact } from "@/lib/priceImpact";
 import { devLog, devError, devWarn } from "@/lib/devLog";
 import { getFriendlyError } from "@/lib/errorMessages";
 
@@ -27,10 +26,9 @@ export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
   const [amount, setAmount] = useState("");
   const [price, setPrice] = useState("1.0850");
   const [isPending, setIsPending] = useState(false);
-  const [confirmationDetails, setConfirmationDetails] = useState<OrderConfirmationDetails | null>(null);
   const { accountId } = useWallet();
   const { balances } = useAccountBalances(accountId);
-  const { midpoint } = useOrderBook();
+  const { book, midpoint } = useOrderBook();
   const { signMarketOrder, signLimitOrder } = useOrderSigning();
   const { marketId } = useMarket();
   const nonce = useNonce(accountId);
@@ -53,7 +51,10 @@ export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
   const amountExceedsBalance = parsedAmount > 0 && parsedAmount > availableBalance;
   const isLargeOrder = parsedAmount > 0 && !amountExceedsBalance && parsedAmount > availableBalance * 0.5;
 
-  function handleSubmit() {
+  // Price impact estimation
+  const priceImpact = estimatePriceImpact(book, side, parsedAmount);
+
+  async function handleSubmit() {
     devLog("order", `handleSubmit() — accountId=${accountId} isPending=${isPending} isReady=${nonce.isReady} amount=${parsedAmount} midpoint=${midpointRate}`);
 
     if (!accountId) { devWarn("order", "blocked: no accountId"); return; }
@@ -63,20 +64,6 @@ export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
     if (amountExceedsBalance) { devWarn("order", "blocked: amount exceeds balance"); return; }
     if (orderType === "midpoint" && !midpointRate) { devWarn("order", "blocked: no midpointRate (needed for midpoint orders)"); return; }
 
-    const displayPrice = orderType === "limit" ? price : midpointRate.toFixed(4);
-    setConfirmationDetails({
-      side,
-      pair: "EUR / USD",
-      type: orderType,
-      amount: `${parsedAmount} EUR`,
-      price: displayPrice,
-      estReceive,
-      fee,
-    });
-  }
-
-  const handleConfirmedSubmit = useCallback(async () => {
-    setConfirmationDetails(null);
     setIsPending(true);
     const apiSide = side === "buy" ? "Buy" : "Sell";
     const encodedQuantity = BigInt(encodeQuantity(parsedAmount, 6));
@@ -155,7 +142,7 @@ export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
     } finally {
       setIsPending(false);
     }
-  }, [side, parsedAmount, orderType, price, midpointRate, amount, accountId, marketId, nonce, signLimitOrder, signMarketOrder, executeSignedOp, addToast, queryClient]);
+  }
 
   if (isLoading) {
     return (
@@ -286,6 +273,16 @@ export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
             This order uses over 50% of your available balance
           </p>
         )}
+        {priceImpact.severity === "warning" && (
+          <p className="text-[12px] text-warning mt-1 flex items-center gap-1">
+            <AlertTriangle size={12} /> This order is ~{priceImpact.impactPercent}% of book depth
+          </p>
+        )}
+        {priceImpact.severity === "critical" && (
+          <p className="text-[12px] text-error mt-1 flex items-center gap-1">
+            <AlertTriangle size={12} /> High price impact — ~{priceImpact.impactPercent}% of book depth
+          </p>
+        )}
       </div>
 
       {/* Percentage shortcuts */}
@@ -400,14 +397,6 @@ export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
         All orders execute privately at midpoint.{" "}
         <span className="underline cursor-pointer hover:text-text-muted">Learn more</span>
       </p>
-
-      {/* Order confirmation modal */}
-      <OrderConfirmationModal
-        isOpen={confirmationDetails !== null}
-        onClose={() => setConfirmationDetails(null)}
-        onConfirm={handleConfirmedSubmit}
-        orderDetails={confirmationDetails ?? { side: "buy", pair: "", type: "midpoint", amount: "", price: "", estReceive: "", fee: "" }}
-      />
     </div>
   );
 }

@@ -161,6 +161,7 @@ export const mockFundTransactions: FundTransaction[] = [
   { id: "FT-003", type: "transfer", amount: 2500, token: "USDC", status: "completed", mode: "standard", time: "2026-03-10 16:30:00" },
   { id: "FT-004", type: "deposit", amount: 15000, token: "EURC", status: "completed", mode: "standard", time: "2026-03-10 14:22:00" },
   { id: "FT-005", type: "withdraw", amount: 3000, token: "USDC", status: "failed", mode: "privacy", time: "2026-03-09 11:05:00" },
+  { id: "FT-006", type: "withdraw", amount: 7500, token: "USDT", status: "claimable", mode: "privacy", time: "2026-03-09 09:30:00" },
 ];
 
 // ── Withdrawal Detail ──

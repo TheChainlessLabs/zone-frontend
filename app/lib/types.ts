@@ -151,7 +151,7 @@ export interface FundTransaction {
   type: "deposit" | "withdraw" | "transfer";
   amount: number;
   token: string;
-  status: "pending" | "completed" | "failed";
+  status: "pending" | "completed" | "claimable" | "failed";
   mode: "standard" | "privacy";
   time: string;
 }

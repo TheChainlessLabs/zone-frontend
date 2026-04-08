@@ -9,7 +9,7 @@ import type { OrderBookResponse } from "@/lib/apiTypes";
 export function useOrderBook() {
   const { marketId } = useMarket();
 
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isError, dataUpdatedAt } = useQuery({
     queryKey: ["book", marketId],
     queryFn: () => getOrderBook(marketId),
     refetchInterval: 5000,
@@ -22,6 +22,7 @@ export function useOrderBook() {
     midpoint,
     isLoading,
     isError,
+    dataUpdatedAt,
   };
 }
 

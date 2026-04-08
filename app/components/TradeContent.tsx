@@ -10,10 +10,13 @@ import BottomPanel from "@/components/BottomPanel";
 import RecentTrades from "@/components/RecentTrades";
 import StatusBar from "@/components/StatusBar";
 import ProtectedPage from "@/components/ProtectedPage";
+import StaleDataOverlay from "@/components/StaleDataOverlay";
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
+import { useOrderBook } from "@/lib/hooks/useOrderBook";
 
 export default function TradeContent() {
   const [isLoading, setIsLoading] = useState(true);
+  const { dataUpdatedAt } = useOrderBook();
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 1500);
@@ -29,7 +32,8 @@ export default function TradeContent() {
         {/* Left: Chart + Positions/Orders */}
         <div className="flex-1 flex flex-col min-h-0 min-w-0">
           {/* Pair dropdown + Chart + Venue Comparison */}
-          <div className="flex flex-col min-h-0 flex-shrink-0 p-3 gap-3">
+          <div className="relative flex flex-col min-h-0 flex-shrink-0 p-3 gap-3">
+            <StaleDataOverlay lastUpdated={dataUpdatedAt || null} />
             <div className="flex items-center">
               <PairDropdown />
             </div>

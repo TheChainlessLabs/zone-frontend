@@ -29,5 +29,10 @@ export default defineConfig({
       testMatch: "verify-integration.spec.ts",
       use: { ...devices["Desktop Chrome"] },
     },
+    {
+      name: "visual",
+      testMatch: "verify-visual.spec.ts",
+      use: { ...devices["Desktop Chrome"] },
+    },
   ],
 });

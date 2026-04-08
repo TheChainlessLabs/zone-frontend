@@ -10,9 +10,13 @@ import BottomPanel from "@/components/BottomPanel";
 import RecentTrades from "@/components/RecentTrades";
 import StatusBar from "@/components/StatusBar";
 import ProtectedPage from "@/components/ProtectedPage";
+import { useMarket } from "@/lib/hooks/useMarket";
+import { MARKET_ID_PAIRS } from "@/lib/marketIds";
 
 export default function TradeContent() {
   const [isLoading, setIsLoading] = useState(true);
+  const { marketId } = useMarket();
+  const selectedPair = MARKET_ID_PAIRS[marketId] ?? "EUR/USD";
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 1500);
@@ -41,7 +45,7 @@ export default function TradeContent() {
 
             {/* Chart */}
             <div className="flex-1 p-3 min-w-0">
-              <PriceChart />
+              <PriceChart pair={selectedPair} />
             </div>
           </div>
 

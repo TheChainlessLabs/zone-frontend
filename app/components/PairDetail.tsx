@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { mockPairs, mockMarketPrices } from "@/lib/mockData";
+import { useMarket } from "@/lib/hooks/useMarket";
+import { PAIR_MARKET_IDS } from "@/lib/marketIds";
 
 const timeframes = ["1H", "4H", "1D", "1W", "1M"] as const;
 
@@ -12,8 +14,16 @@ interface PairDetailProps {
 
 export default function PairDetail({ pairSlug }: PairDetailProps) {
   const [timeframe, setTimeframe] = useState<string>("1D");
+  const { setMarketId } = useMarket();
   const pairName = pairSlug.replace("-", "/");
   const pair = mockPairs.find((p) => p.pair === pairName) ?? mockPairs[0];
+
+  useEffect(() => {
+    const id = PAIR_MARKET_IDS[pair.pair];
+    if (id !== undefined) {
+      setMarketId(id);
+    }
+  }, [pair.pair, setMarketId]);
 
   const stats = [
     { label: "24H Volume", value: "$12.4M" },

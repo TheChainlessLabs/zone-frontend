@@ -67,13 +67,13 @@ export default function StatusBar() {
   const { color, label } = statusConfig[status];
 
   return (
-    <div className="h-[28px] bg-bg-surface border-t border-border flex items-center px-4 md:px-[60px] text-[11px] font-mono text-text-muted shrink-0">
-      <div className="flex items-center gap-1.5">
+    <div className="min-h-[28px] bg-bg-surface border-t border-border flex items-center px-4 md:px-[60px] text-[11px] font-mono text-text-muted shrink-0 lg:mb-0 mb-0">
+      <div className="flex items-center gap-1.5 shrink-0">
         <span className={`w-1.5 h-1.5 rounded-full ${color}`} />
-        <span>{label}</span>
+        <span className="whitespace-nowrap">{label}</span>
       </div>
 
-      <span className="mx-3 w-px h-3 bg-border-subtle" />
+      <span className="mx-2 md:mx-3 w-px h-3 bg-border-subtle shrink-0" />
 
       <div className="hidden md:flex items-center gap-2">
         <span className="font-tabular text-text-primary">Batch #1247</span>
@@ -82,7 +82,7 @@ export default function StatusBar() {
         </span>
       </div>
 
-      <span className="ml-auto">
+      <span className="ml-auto whitespace-nowrap text-[10px] md:text-[11px]">
         Last update {formatElapsed(elapsed)}
       </span>
     </div>

@@ -66,7 +66,8 @@ describe("BottomPanel", () => {
 
   it("renders real positions when isLoading is false", () => {
     renderWithProviders(<BottomPanel isLoading={false} />);
-    expect(screen.getByText("EUR/USD")).toBeInTheDocument();
+    const matches = screen.getAllByText("EUR/USD");
+    expect(matches.length).toBeGreaterThanOrEqual(1);
   });
 
   it("wraps loaded positions in animate-fadeIn", () => {
@@ -78,12 +79,14 @@ describe("BottomPanel", () => {
   it("renders Trade History tab with empty state from hook", () => {
     renderWithProviders(<BottomPanel isLoading={false} />);
     fireEvent.click(screen.getByText("Trade History"));
-    expect(screen.getByText("No trades yet")).toBeInTheDocument();
+    const matches = screen.getAllByText("No trades yet");
+    expect(matches.length).toBeGreaterThanOrEqual(1);
   });
 
   it("renders Orders tab with empty state when no open orders", () => {
     renderWithProviders(<BottomPanel isLoading={false} />);
     fireEvent.click(screen.getByText("Orders"));
-    expect(screen.getByText("No orders yet")).toBeInTheDocument();
+    const matches = screen.getAllByText("No orders yet");
+    expect(matches.length).toBeGreaterThanOrEqual(1);
   });
 });

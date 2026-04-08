@@ -194,7 +194,7 @@ export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
           <button
             key={t}
             onClick={() => setOrderType(t)}
-            className={`flex-1 h-[28px] text-body-sm font-medium rounded-sm transition-fast capitalize ${
+            className={`flex-1 min-h-[44px] md:min-h-[28px] text-body-sm font-medium rounded-sm transition-fast capitalize ${
               orderType === t
                 ? "bg-bg-elevated text-text-primary"
                 : "text-text-muted hover:text-text-secondary"
@@ -244,7 +244,7 @@ export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
               const val = availableBalance * s.factor;
               setAmount(val > 0 ? val.toFixed(2) : "");
             }}
-            className="flex-1 h-[30px] text-body-sm font-mono text-text-muted border border-border rounded-md hover:bg-bg-elevated hover:text-text-primary transition-fast"
+            className="flex-1 min-h-[44px] md:min-h-[30px] text-body-sm font-mono text-text-muted border border-border rounded-md hover:bg-bg-elevated hover:text-text-primary transition-fast"
           >
             {s.label}
           </button>

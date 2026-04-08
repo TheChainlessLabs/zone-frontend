@@ -120,7 +120,7 @@ export default function Navbar() {
 
           {/* Mobile toggle */}
           <button
-            className="md:hidden text-text-secondary"
+            className="md:hidden min-w-[44px] min-h-[44px] flex items-center justify-center text-text-secondary -mr-2"
             onClick={() => setMobileOpen(!mobileOpen)}
           >
             {mobileOpen ? <X size={20} /> : <Menu size={20} />}
@@ -136,7 +136,7 @@ export default function Navbar() {
                 <Link
                   key={link.label}
                   href={link.href}
-                  className={`block py-2.5 text-body-sm ${
+                  className={`block py-3 min-h-[44px] flex items-center text-body-sm ${
                     isActive
                       ? "text-accent font-medium"
                       : "text-text-secondary hover:text-text-primary"

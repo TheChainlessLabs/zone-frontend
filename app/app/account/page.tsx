@@ -127,13 +127,13 @@ export default function AccountPage() {
         </div>
 
         {/* Filter bar */}
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex gap-1 bg-bg-surface border border-border rounded-md p-1">
+        <div className="flex flex-wrap items-center gap-2 md:gap-3">
+          <div className="flex gap-1 bg-bg-surface border border-border rounded-md p-1 overflow-x-auto no-scrollbar w-full md:w-auto">
             {tabs.map((tab) => (
               <button
                 key={tab.key}
                 onClick={() => setFilter(tab.key)}
-                className={`px-3 h-[28px] text-body-sm font-medium rounded-sm transition-fast ${
+                className={`px-3 min-h-[44px] md:min-h-[28px] text-body-sm font-medium rounded-sm transition-fast whitespace-nowrap ${
                   filter === tab.key
                     ? "bg-bg-elevated text-text-primary"
                     : "text-text-muted hover:text-text-secondary"
@@ -143,12 +143,12 @@ export default function AccountPage() {
               </button>
             ))}
           </div>
-          <select className="h-[32px] px-3 bg-bg-surface border border-border rounded-md text-body-sm text-text-secondary outline-none">
+          <select className="min-h-[44px] md:min-h-[32px] px-3 bg-bg-surface border border-border rounded-md text-body-sm text-text-secondary outline-none flex-1 md:flex-none">
             <option>All Pairs</option>
             <option>EUR/USD</option>
             <option>GBP/USD</option>
           </select>
-          <select className="h-[32px] px-3 bg-bg-surface border border-border rounded-md text-body-sm text-text-secondary outline-none">
+          <select className="min-h-[44px] md:min-h-[32px] px-3 bg-bg-surface border border-border rounded-md text-body-sm text-text-secondary outline-none flex-1 md:flex-none">
             <option>All Dates</option>
             <option>Today</option>
             <option>Last 7 days</option>
@@ -209,7 +209,7 @@ export default function AccountPage() {
                       <button
                         onClick={() => handleCancel(order.id)}
                         disabled={cancellingId === order.id}
-                        className="w-[24px] h-[24px] flex items-center justify-center rounded-sm text-text-muted hover:text-error hover:bg-error/10 transition-fast disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-[44px] h-[44px] md:w-[24px] md:h-[24px] flex items-center justify-center rounded-sm text-text-muted hover:text-error hover:bg-error/10 transition-fast disabled:opacity-50 disabled:cursor-not-allowed"
                         title="Cancel order"
                       >
                         {cancellingId === order.id ? (

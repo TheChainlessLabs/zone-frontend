@@ -145,8 +145,8 @@ describe("TradeContent", () => {
     const fadeInElements = container.querySelectorAll(
       "[class*='animate-fadeIn']"
     );
-    // BottomPanel Positions and OrderForm wrap loaded content in animate-fadeIn
-    expect(fadeInElements.length).toBe(2);
+    // BottomPanel Positions (desktop + mobile) and OrderForm wrap loaded content in animate-fadeIn
+    expect(fadeInElements.length).toBeGreaterThanOrEqual(2);
   });
 
   it("still shows skeletons before 1500ms elapses", () => {

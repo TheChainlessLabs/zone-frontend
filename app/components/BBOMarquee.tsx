@@ -110,7 +110,7 @@ export default function BBOMarquee() {
   const showBestPrice = isBestPrice(midpoint, venueRates);
 
   return (
-    <div className="h-[40px] bg-bg-base border-b border-border-subtle flex items-center px-4 md:px-[60px] gap-0 overflow-x-auto shrink-0">
+    <div className="h-[40px] bg-bg-base border-b border-border-subtle flex items-center px-4 md:px-[60px] gap-0 overflow-x-auto no-scrollbar shrink-0 touch-pan-x">
       {venues.map((venue, i) => {
         const status = getStatusIndicator(venue.isLoading, venue.isError, venue.price);
         const tick = ticks[venue.name] ?? null;

@@ -70,6 +70,9 @@ vi.mock("@/lib/hooks/useNonce", () => ({
 vi.mock("@/lib/useToast", () => ({
   useToast: () => ({ toasts: [], addToast: vi.fn(), removeToast: vi.fn() }),
 }));
+vi.mock("@/lib/useNotifications", () => ({
+  useNotifications: () => ({ notifications: [], unreadCount: 0, addNotification: vi.fn(), markAllRead: vi.fn() }),
+}));
 vi.mock("@/lib/apiClient", () => ({
   createOrder: vi.fn(),
 }));

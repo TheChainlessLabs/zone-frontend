@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { config } from "@/lib/wagmiConfig";
 import { WalletProvider } from "@/lib/wallet";
 import { ToastProvider } from "@/lib/useToast";
+import { NotificationProvider } from "@/lib/useNotifications";
 import { MarketProvider } from "@/lib/hooks/useMarket";
 import { injectDevWallet } from "@/lib/devWallet";
 
@@ -28,7 +29,9 @@ export default function Providers({
       <QueryClientProvider client={queryClient}>
         <MarketProvider>
           <WalletProvider>
-            <ToastProvider>{children}</ToastProvider>
+            <NotificationProvider>
+              <ToastProvider>{children}</ToastProvider>
+            </NotificationProvider>
           </WalletProvider>
         </MarketProvider>
       </QueryClientProvider>

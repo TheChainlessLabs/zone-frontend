@@ -20,6 +20,7 @@ import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
 import { ClipboardList } from "lucide-react";
 import { devError } from "@/lib/devLog";
 import { getFriendlyError } from "@/lib/errorMessages";
+import { useNotifications } from "@/lib/useNotifications";
 
 type FilterTab = OrderStatus | "all";
 
@@ -51,6 +52,7 @@ export default function AccountPage() {
   const { signCancel } = useOrderSigning();
   const { addToast } = useToast();
   const { execute: executeSignedOp } = useSignedOperationQueue();
+  const { addNotification } = useNotifications();
   const queryClient = useQueryClient();
 
   const filtered = filter === "all"
@@ -66,6 +68,7 @@ export default function AccountPage() {
         const signed = await signCancel({ marketId, orderId });
         await cancelOrder({ market_id: marketId, order_id: orderId, nonce: signed.nonce, signature: signed.signature });
         addToast("success", "Order Cancelled", `Order #${orderId} cancelled`);
+        addNotification("order_cancelled", "Order Cancelled", `Order #${orderId} has been cancelled`);
         queryClient.invalidateQueries({ queryKey: ["orders", marketId] });
         queryClient.invalidateQueries({ queryKey: ["book", marketId] });
       });

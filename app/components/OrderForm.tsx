@@ -19,6 +19,7 @@ import { encodePrice, encodeQuantity } from "@/lib/priceUtils";
 import { estimatePriceImpact } from "@/lib/priceImpact";
 import { devLog, devError, devWarn } from "@/lib/devLog";
 import { getFriendlyError } from "@/lib/errorMessages";
+import { useNotifications } from "@/lib/useNotifications";
 
 export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
   const [orderType, setOrderType] = useState<OrderType>("midpoint");
@@ -34,6 +35,7 @@ export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
   const nonce = useNonce(accountId);
   const { addToast } = useToast();
   const { execute: executeSignedOp, isLocked: isSignedOpLocked } = useSignedOperationQueue();
+  const { addNotification } = useNotifications();
   const queryClient = useQueryClient();
 
   // USDC (token ID 1) is the default quote token
@@ -123,6 +125,7 @@ export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
         });
         devLog("order", `order placed successfully`);
         addToast("success", "Order Placed", `${side} order for ${amount} submitted`);
+        addNotification("order_placed", "Order Placed", `${side} ${orderType} order for ${amount} EUR submitted`);
         queryClient.invalidateQueries({ queryKey: ["book", marketId] });
         queryClient.invalidateQueries({ queryKey: ["trades", marketId] });
         setAmount("");

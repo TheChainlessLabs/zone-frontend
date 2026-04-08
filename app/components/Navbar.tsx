@@ -9,6 +9,7 @@ import { useToast } from "@/lib/useToast";
 import WalletModal from "./WalletModal";
 import DepositModal from "./DepositModal";
 import WalletDropdown from "./WalletDropdown";
+import NotificationCenter from "./NotificationCenter";
 
 const navLinks = [
   { label: "Trade", href: "/trade" },
@@ -80,6 +81,11 @@ export default function Navbar() {
           >
             Deposit
           </button>
+
+          {/* Notification center */}
+          <div className="hidden md:block">
+            <NotificationCenter />
+          </div>
 
           {/* Wallet / Connect */}
           {isConnected && address ? (

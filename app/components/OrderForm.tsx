@@ -12,6 +12,7 @@ import { useOrderSigning } from "@/lib/hooks/useOrderSigning";
 import { useMarket } from "@/lib/hooks/useMarket";
 import { useNonce } from "@/lib/hooks/useNonce";
 import { useToast } from "@/lib/useToast";
+import { useSignedOperationQueue } from "@/lib/hooks/useSignedOperationQueue";
 import { createOrder } from "@/lib/apiClient";
 import { ApiError } from "@/lib/apiError";
 import { encodePrice, encodeQuantity } from "@/lib/priceUtils";
@@ -30,6 +31,7 @@ export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
   const { marketId } = useMarket();
   const nonce = useNonce(accountId);
   const { addToast } = useToast();
+  const { execute: executeSignedOp, isLocked: isSignedOpLocked } = useSignedOperationQueue();
   const queryClient = useQueryClient();
 
   // USDC (token ID 1) is the default quote token
@@ -61,66 +63,70 @@ export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
     const apiSide = side === "buy" ? "Buy" : "Sell";
     const encodedQuantity = BigInt(encodeQuantity(parsedAmount, 6));
     try {
-      let signature: string;
-      let n: number;
-      let kind: "Market" | "Limit";
-      let orderPrice: bigint;
-      let extension: { max_slippage_bps: number } | null;
+      await executeSignedOp(async () => {
+        let signature: string;
+        let n: number;
+        let kind: "Market" | "Limit";
+        let orderPrice: bigint;
+        let extension: { max_slippage_bps: number } | null;
 
-      if (orderType === "limit") {
-        const parsedPrice = parseFloat(price);
-        if (!parsedPrice || !Number.isFinite(parsedPrice) || parsedPrice <= 0) {
-          devWarn("order", `blocked: invalid limit price "${price}" → ${parsedPrice}`);
-          return;
+        if (orderType === "limit") {
+          const parsedPrice = parseFloat(price);
+          if (!parsedPrice || !Number.isFinite(parsedPrice) || parsedPrice <= 0) {
+            devWarn("order", `blocked: invalid limit price "${price}" → ${parsedPrice}`);
+            return;
+          }
+          orderPrice = BigInt(encodePrice(parsedPrice));
+          devLog("order", `signing limit order: price=${orderPrice} qty=${encodedQuantity} side=${apiSide}`);
+          const result = await signLimitOrder({
+            marketId,
+            price: orderPrice,
+            quantity: encodedQuantity,
+            side: apiSide,
+          });
+          signature = result.signature;
+          n = result.nonce;
+          kind = "Limit";
+          extension = null;
+        } else {
+          orderPrice = BigInt(encodePrice(midpointRate));
+          devLog("order", `signing market order: price=${orderPrice} qty=${encodedQuantity} side=${apiSide} slippage=50bps`);
+          const result = await signMarketOrder({
+            marketId,
+            price: orderPrice,
+            quantity: encodedQuantity,
+            side: apiSide,
+            maxSlippageBps: 50,
+          });
+          signature = result.signature;
+          n = result.nonce;
+          kind = "Market";
+          extension = { max_slippage_bps: 50 };
         }
-        orderPrice = BigInt(encodePrice(parsedPrice));
-        devLog("order", `signing limit order: price=${orderPrice} qty=${encodedQuantity} side=${apiSide}`);
-        const result = await signLimitOrder({
-          marketId,
-          price: orderPrice,
-          quantity: encodedQuantity,
-          side: apiSide,
-        });
-        signature = result.signature;
-        n = result.nonce;
-        kind = "Limit";
-        extension = null;
-      } else {
-        orderPrice = BigInt(encodePrice(midpointRate));
-        devLog("order", `signing market order: price=${orderPrice} qty=${encodedQuantity} side=${apiSide} slippage=50bps`);
-        const result = await signMarketOrder({
-          marketId,
-          price: orderPrice,
-          quantity: encodedQuantity,
-          side: apiSide,
-          maxSlippageBps: 50,
-        });
-        signature = result.signature;
-        n = result.nonce;
-        kind = "Market";
-        extension = { max_slippage_bps: 50 };
-      }
 
-      devLog("order", `signed with nonce=${n}, submitting to API...`);
+        devLog("order", `signed with nonce=${n}, submitting to API...`);
 
-      await createOrder({
-        market_id: marketId,
-        side: apiSide,
-        kind,
-        price: orderPrice.toString(),
-        quantity: encodedQuantity.toString(),
-        extension,
-        nonce: n,
-        signature,
+        await createOrder({
+          market_id: marketId,
+          side: apiSide,
+          kind,
+          price: orderPrice.toString(),
+          quantity: encodedQuantity.toString(),
+          extension,
+          nonce: n,
+          signature,
+        });
+        devLog("order", `order placed successfully`);
+        addToast("success", "Order Placed", `${side} order for ${amount} submitted`);
+        queryClient.invalidateQueries({ queryKey: ["book", marketId] });
+        queryClient.invalidateQueries({ queryKey: ["trades", marketId] });
+        setAmount("");
       });
-      devLog("order", `order placed successfully`);
-      addToast("success", "Order Placed", `${side} order for ${amount} submitted`);
-      queryClient.invalidateQueries({ queryKey: ["book", marketId] });
-      queryClient.invalidateQueries({ queryKey: ["trades", marketId] });
-      setAmount("");
     } catch (err) {
       devError("order", `order failed`, err);
-      if (err instanceof ApiError && err.message.includes("nonce")) {
+      if (err instanceof Error && err.message === "Another signed operation is in progress") {
+        addToast("warning", "Please Wait", "Another operation is in progress...");
+      } else if (err instanceof ApiError && err.message.includes("nonce")) {
         devWarn("order", `nonce mismatch — resyncing`);
         nonce.resync();
         addToast("error", "Order Failed", "Nonce mismatch — please try again");

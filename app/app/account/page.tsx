@@ -12,6 +12,7 @@ import { cancelOrder } from "@/lib/apiClient";
 import { useWallet } from "@/lib/wallet";
 import { useMarket } from "@/lib/hooks/useMarket";
 import { useToast } from "@/lib/useToast";
+import { useSignedOperationQueue } from "@/lib/hooks/useSignedOperationQueue";
 import type { OrderStatus } from "@/lib/types";
 import EmptyState from "@/components/EmptyState";
 import ErrorState from "@/components/ErrorState";
@@ -47,6 +48,7 @@ export default function AccountPage() {
   const { orders, openOrders, isLoading, isError } = useUserOrders(accountId, marketId);
   const { signCancel } = useOrderSigning();
   const { addToast } = useToast();
+  const { execute: executeSignedOp } = useSignedOperationQueue();
   const queryClient = useQueryClient();
 
   const filtered = filter === "all"
@@ -58,57 +60,70 @@ export default function AccountPage() {
   const handleCancel = useCallback(async (orderId: number) => {
     setCancellingId(orderId);
     try {
-      const signed = await signCancel({ marketId, orderId });
-      await cancelOrder({ market_id: marketId, order_id: orderId, nonce: signed.nonce, signature: signed.signature });
-      addToast("success", "Order Cancelled", `Order #${orderId} cancelled`);
-      queryClient.invalidateQueries({ queryKey: ["orders", marketId] });
-      queryClient.invalidateQueries({ queryKey: ["book", marketId] });
+      await executeSignedOp(async () => {
+        const signed = await signCancel({ marketId, orderId });
+        await cancelOrder({ market_id: marketId, order_id: orderId, nonce: signed.nonce, signature: signed.signature });
+        addToast("success", "Order Cancelled", `Order #${orderId} cancelled`);
+        queryClient.invalidateQueries({ queryKey: ["orders", marketId] });
+        queryClient.invalidateQueries({ queryKey: ["book", marketId] });
+      });
     } catch (err) {
-      if (!(err instanceof Error && err.message.includes("User rejected"))) {
+      if (err instanceof Error && err.message === "Another signed operation is in progress") {
+        addToast("warning", "Please Wait", "Another operation is in progress...");
+      } else if (!(err instanceof Error && err.message.includes("User rejected"))) {
         addToast("error", "Cancel Failed", err instanceof Error ? err.message : "Unknown error");
       }
     } finally {
       setCancellingId(null);
     }
-  }, [marketId, signCancel, addToast, queryClient]);
+  }, [marketId, signCancel, executeSignedOp, addToast, queryClient]);
 
   const handleCancelAll = useCallback(async () => {
     const orders = [...openOrders];
     const total = orders.length;
     if (total === 0) return;
 
-    setCancelAllProgress({ done: 0, failed: 0, total });
-    let done = 0;
-    let failed = 0;
+    try {
+      await executeSignedOp(async () => {
+        setCancelAllProgress({ done: 0, failed: 0, total });
+        let done = 0;
+        let failed = 0;
 
-    for (const order of orders) {
-      try {
-        const signed = await signCancel({ marketId, orderId: order.id });
-        await cancelOrder({ market_id: marketId, order_id: order.id, nonce: signed.nonce, signature: signed.signature });
-        done++;
-      } catch (err) {
-        if (err instanceof Error && err.message.includes("User rejected")) {
-          // User rejected signing — stop the whole batch
-          break;
+        for (const order of orders) {
+          try {
+            const signed = await signCancel({ marketId, orderId: order.id });
+            await cancelOrder({ market_id: marketId, order_id: order.id, nonce: signed.nonce, signature: signed.signature });
+            done++;
+          } catch (err) {
+            if (err instanceof Error && err.message.includes("User rejected")) {
+              // User rejected signing — stop the whole batch
+              break;
+            }
+            failed++;
+          }
+          setCancelAllProgress({ done: done + failed, failed, total });
         }
-        failed++;
+
+        if (failed === 0 && done > 0) {
+          addToast("success", "All Orders Cancelled", `${done} order${done > 1 ? "s" : ""} cancelled`);
+        } else if (done > 0 && failed > 0) {
+          addToast("warning", "Partial Cancel", `Cancelled ${done} of ${total}, ${failed} failed`);
+        } else if (failed > 0 && done === 0) {
+          addToast("error", "Cancel Failed", `All ${failed} cancellations failed`);
+        }
+
+        queryClient.invalidateQueries({ queryKey: ["orders", marketId] });
+        queryClient.invalidateQueries({ queryKey: ["book", marketId] });
+        setCancelAllProgress(null);
+        setCancelAllOpen(false);
+      });
+    } catch (err) {
+      if (err instanceof Error && err.message === "Another signed operation is in progress") {
+        addToast("warning", "Please Wait", "Another operation is in progress...");
       }
-      setCancelAllProgress({ done: done + failed, failed, total });
+      setCancelAllProgress(null);
     }
-
-    if (failed === 0 && done > 0) {
-      addToast("success", "All Orders Cancelled", `${done} order${done > 1 ? "s" : ""} cancelled`);
-    } else if (done > 0 && failed > 0) {
-      addToast("warning", "Partial Cancel", `Cancelled ${done} of ${total}, ${failed} failed`);
-    } else if (failed > 0 && done === 0) {
-      addToast("error", "Cancel Failed", `All ${failed} cancellations failed`);
-    }
-
-    queryClient.invalidateQueries({ queryKey: ["orders", marketId] });
-    queryClient.invalidateQueries({ queryKey: ["book", marketId] });
-    setCancelAllProgress(null);
-    setCancelAllOpen(false);
-  }, [openOrders, marketId, signCancel, addToast, queryClient]);
+  }, [openOrders, marketId, signCancel, executeSignedOp, addToast, queryClient]);
 
   return (
     <ProtectedPage shellClassName="flex flex-col min-h-screen">

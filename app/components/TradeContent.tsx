@@ -6,6 +6,7 @@ import PairSelector from "@/components/PairSelector";
 import PairList from "@/components/PairList";
 import OrderForm from "@/components/OrderForm";
 import PriceChart from "@/components/PriceChart";
+import PriceComparisonPanel from "@/components/PriceComparisonPanel";
 import BottomPanel from "@/components/BottomPanel";
 import RecentTrades from "@/components/RecentTrades";
 import StatusBar from "@/components/StatusBar";
@@ -40,10 +41,13 @@ export default function TradeContent() {
               </div>
             </div>
 
-            {/* Chart */}
-            <div className="flex-1 p-3 min-w-0">
+            {/* Chart + Venue Comparison */}
+            <div className="flex-1 p-3 min-w-0 flex flex-col gap-3">
               <SectionErrorBoundary fallbackMessage="Chart unavailable">
                 <PriceChart />
+              </SectionErrorBoundary>
+              <SectionErrorBoundary fallbackMessage="Venue comparison unavailable">
+                <PriceComparisonPanel />
               </SectionErrorBoundary>
             </div>
           </div>

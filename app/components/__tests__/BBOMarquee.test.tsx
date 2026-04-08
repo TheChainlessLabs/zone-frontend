@@ -18,12 +18,23 @@ vi.mock("@/lib/hooks/useVenueRates", () => ({
   }),
 }));
 
+vi.mock("@/lib/hooks/use1inchPrice", () => ({
+  use1inchPrice: vi.fn().mockReturnValue({
+    rate: null,
+    source: null,
+    isLoading: false,
+    isError: false,
+  }),
+}));
+
 import BBOMarquee from "@/components/BBOMarquee";
 import { useOrderBook } from "@/lib/hooks/useOrderBook";
 import { useVenueRates } from "@/lib/hooks/useVenueRates";
+import { use1inchPrice } from "@/lib/hooks/use1inchPrice";
 
 const mockUseOrderBook = useOrderBook as ReturnType<typeof vi.fn>;
 const mockUseVenueRates = useVenueRates as ReturnType<typeof vi.fn>;
+const mockUse1inchPrice = use1inchPrice as ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
   mockUseOrderBook.mockReturnValue({
@@ -37,6 +48,12 @@ beforeEach(() => {
     isLoading: false,
     isError: false,
   });
+  mockUse1inchPrice.mockReturnValue({
+    rate: null,
+    source: null,
+    isLoading: false,
+    isError: false,
+  });
 });
 
 afterEach(() => {
@@ -44,11 +61,12 @@ afterEach(() => {
 });
 
 describe("BBOMarquee", () => {
-  it("renders all four venue names", () => {
+  it("renders all five venue names", () => {
     render(<BBOMarquee />);
     expect(screen.getByText("Wise")).toBeInTheDocument();
     expect(screen.getByText("OFX")).toBeInTheDocument();
     expect(screen.getByText("Revolut")).toBeInTheDocument();
+    expect(screen.getByText("1inch")).toBeInTheDocument();
     expect(screen.getByText("Omega")).toBeInTheDocument();
   });
 
@@ -58,10 +76,16 @@ describe("BBOMarquee", () => {
       isLoading: false,
       isError: false,
     });
+    mockUse1inchPrice.mockReturnValue({
+      rate: 0.9998,
+      source: "mock",
+      isLoading: false,
+      isError: false,
+    });
 
     render(<BBOMarquee />);
     const liveLabels = screen.getAllByText("Live");
-    expect(liveLabels.length).toBe(3);
+    expect(liveLabels.length).toBe(4); // 3 FX venues + 1inch
   });
 
   it("shows Best Price badge for Omega when midpoint is available", () => {
@@ -127,8 +151,8 @@ describe("BBOMarquee", () => {
 
     render(<BBOMarquee />);
     const dashes = screen.getAllByText("—");
-    // 3 external venues + Omega (midpoint null) = 4
-    expect(dashes.length).toBe(4);
+    // 3 external venues + 1inch (null) + Omega (midpoint null) = 5
+    expect(dashes.length).toBe(5);
   });
 
   it("does not show LIVE label for error state venues", () => {

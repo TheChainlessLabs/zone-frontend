@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useOrderBook } from "@/lib/hooks/useOrderBook";
 import { useVenueRates } from "@/lib/hooks/useVenueRates";
+import { use1inchPrice } from "@/lib/hooks/use1inchPrice";
 import { Skeleton } from "@/components/Skeleton";
 
 const VENUE_ORDER = ["Wise", "OFX", "Revolut"] as const;
@@ -39,6 +40,7 @@ function isBestPrice(
 export default function BBOMarquee() {
   const { midpoint, isLoading: bookLoading, isError: bookError } = useOrderBook();
   const { venues: venueRates, isLoading: venueLoading, isError: venueError } = useVenueRates();
+  const { rate: oneInchRate, isLoading: oneInchLoading, isError: oneInchError } = use1inchPrice();
 
   const prevPricesRef = useRef<Record<string, number>>({});
   const [ticks, setTicks] = useState<Record<string, TickDirection>>({});
@@ -47,6 +49,11 @@ export default function BBOMarquee() {
   if (bookLoading) omegaPrice = "";
   else if (bookError || midpoint === null) omegaPrice = "—";
   else omegaPrice = midpoint.toFixed(4);
+
+  let oneInchPrice: string;
+  if (oneInchLoading) oneInchPrice = "";
+  else if (oneInchError || oneInchRate === null) oneInchPrice = "—";
+  else oneInchPrice = oneInchRate.toFixed(4);
 
   const venues = [
     ...VENUE_ORDER.map((name) => {
@@ -63,6 +70,14 @@ export default function BBOMarquee() {
         isError: venueError,
       };
     }),
+    {
+      name: "1inch",
+      price: oneInchPrice,
+      isOmega: false,
+      isLoading: oneInchLoading,
+      isError: oneInchError,
+      isPeg: true,
+    },
     {
       name: "Omega",
       price: omegaPrice,
@@ -146,7 +161,14 @@ export default function BBOMarquee() {
                   Best Price
                 </span>
               ) : venue.isOmega ? null : (
-                <StatusDot status={status} />
+                <>
+                  <StatusDot status={status} />
+                  {"isPeg" in venue && venue.isPeg && (
+                    <span className="text-[10px] font-medium tracking-wider uppercase text-text-muted">
+                      Peg
+                    </span>
+                  )}
+                </>
               )}
             </div>
           </div>

@@ -124,11 +124,22 @@ describe("createOrder", () => {
     const { createOrder } = await loadApiClient();
     const result = await createOrder(payload);
 
-    expect(mockFetch).toHaveBeenCalledWith(`${EXPECTED_BASE}/orders`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+    expect(mockFetch).toHaveBeenCalledWith(
+      `${EXPECTED_BASE}/orders`,
+      expect.objectContaining({
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+    // Verify the body contains the correct values as raw JSON numbers (not quoted strings)
+    const callBody = mockFetch.mock.calls[0][1].body;
+    expect(callBody).toContain('"market_id":1');
+    expect(callBody).toContain('"side":"Buy"');
+    expect(callBody).toContain('"kind":"Limit"');
+    expect(callBody).toContain('"nonce":1');
+    // Price and quantity are sent as raw JSON numbers, not quoted strings
+    expect(callBody).toContain(':1085600000000000000,');
+    expect(callBody).toContain(':100000000,');
     expect(result).toEqual({ order_id: 7 });
   });
 

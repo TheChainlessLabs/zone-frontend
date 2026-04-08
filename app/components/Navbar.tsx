@@ -8,16 +8,13 @@ import { useWallet } from "@/lib/wallet";
 import { useToast } from "@/lib/useToast";
 import WalletModal from "./WalletModal";
 import DepositModal from "./DepositModal";
+import WalletDropdown from "./WalletDropdown";
 
 const navLinks = [
   { label: "Trade", href: "/trade" },
   { label: "Portfolio", href: "/portfolio" },
   { label: "Explorer", href: "/explorer" },
 ];
-
-function truncateAddress(address: string) {
-  return `${address.slice(0, 6)}...${address.slice(-4)}`;
-}
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -44,14 +41,6 @@ export default function Navbar() {
 
     setDepositOpen(true);
   };
-
-  const walletText = !isConnected
-    ? "Connect Wallet"
-    : !isSupportedChain
-      ? "Wrong network"
-      : address
-        ? truncateAddress(address)
-        : "Wallet";
 
   return (
     <>
@@ -94,21 +83,10 @@ export default function Navbar() {
 
           {/* Wallet / Connect */}
           {isConnected && address ? (
-            <button
-              onClick={() => setWalletOpen(true)}
-              className={`hidden md:flex items-center gap-2 h-[30px] px-4 text-body-sm rounded-md border ${
-                isSupportedChain ? "border-border-subtle" : "border-warning/40 bg-warning/10"
-              }`}
-            >
-              <span
-                className={`w-1.5 h-1.5 rounded-full ${
-                  isSupportedChain ? "bg-success" : "bg-warning"
-                }`}
-              />
-              <span className="font-mono text-[13px] text-text-secondary">
-                {walletText}
-              </span>
-            </button>
+            <WalletDropdown
+              address={address}
+              isSupportedChain={isSupportedChain}
+            />
           ) : (
             <button
               onClick={() => setWalletOpen(true)}

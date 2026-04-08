@@ -1,4 +1,6 @@
 import { openPositions } from "@/lib/mockData";
+import { TrendingUp } from "lucide-react";
+import EmptyState from "@/components/EmptyState";
 
 export default function OpenPositions() {
   return (
@@ -8,9 +10,12 @@ export default function OpenPositions() {
       </div>
 
       {openPositions.length === 0 ? (
-        <div className="flex items-center justify-center h-[120px]">
-          <span className="text-body-sm text-text-muted">No open positions</span>
-        </div>
+        <EmptyState
+          icon={<TrendingUp size={20} />}
+          title="No open positions"
+          description="Your open positions will appear here. Start trading to build your portfolio."
+          action={{ label: "Start Trading", href: "/trade" }}
+        />
       ) : (
         <>
           {/* Desktop table */}

@@ -5,6 +5,7 @@ import Navbar from "@/components/Navbar";
 import ExchangeOverview from "@/components/ExchangeOverview";
 import BatchExplorer from "@/components/BatchExplorer";
 import ProtocolStats from "@/components/ProtocolStats";
+import EmptyState from "@/components/EmptyState";
 
 const tabs = ["Batches", "Withdrawals", "Order Lookup"] as const;
 
@@ -39,8 +40,17 @@ export default function ExplorerPage() {
         {/* Tab content */}
         {activeTab === "Batches" && <BatchExplorer />}
         {activeTab === "Withdrawals" && (
-          <div className="bg-bg-surface border border-border rounded-lg flex items-center justify-center h-[200px]">
-            <span className="text-body-sm text-text-muted">Withdrawal explorer coming soon</span>
+          <div className="bg-bg-surface border border-border rounded-lg">
+            <EmptyState
+              icon={
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                  <path d="M10 2L3 7v6l7 5 7-5V7l-7-5z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+                  <path d="M10 12V8m0 6h.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              }
+              title="No withdrawals yet"
+              description="Withdrawal history will appear here once users begin withdrawing funds."
+            />
           </div>
         )}
         {activeTab === "Order Lookup" && (
@@ -56,6 +66,16 @@ export default function ExplorerPage() {
                 Search
               </button>
             </div>
+            <EmptyState
+              icon={
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                  <circle cx="9" cy="9" r="6" stroke="currentColor" strokeWidth="1.5" />
+                  <path d="M13.5 13.5L17 17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              }
+              title="Enter an order ID to look up"
+              description="Search for any order by its ID to view execution details and status."
+            />
           </div>
         )}
 

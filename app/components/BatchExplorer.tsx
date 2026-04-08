@@ -54,7 +54,7 @@ export default function BatchExplorer() {
             </span>
             <span className="w-[20%] text-right">
               {batch.proofLink ? (
-                <span className="text-accent text-body-sm">View</span>
+                <span className="text-accent text-body-sm">View proof</span>
               ) : (
                 <span className="text-text-muted">—</span>
               )}
@@ -90,20 +90,35 @@ export default function BatchExplorer() {
         <span className="text-text-muted">
           Showing {page * PAGE_SIZE + 1}-{Math.min((page + 1) * PAGE_SIZE, mockBatches.length)} of {totalBatches.toLocaleString()} batches
         </span>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-1">
           <button
             onClick={() => setPage(Math.max(0, page - 1))}
             disabled={page === 0}
-            className="px-3 h-[28px] border border-border rounded-md text-text-secondary hover:bg-bg-elevated transition-fast disabled:opacity-40 disabled:cursor-not-allowed"
+            className="w-[32px] h-[32px] flex items-center justify-center border border-border rounded-md text-text-secondary hover:bg-bg-elevated transition-fast disabled:opacity-40 disabled:cursor-not-allowed"
+            aria-label="Previous page"
           >
-            Previous
+            &lt;
           </button>
+          {Array.from({ length: Math.min(totalPages, 3) }, (_, i) => (
+            <button
+              key={i}
+              onClick={() => setPage(i)}
+              className={`w-[32px] h-[32px] flex items-center justify-center rounded-md text-body-sm font-medium transition-fast ${
+                page === i
+                  ? "bg-accent text-text-inverse"
+                  : "border border-border text-text-secondary hover:bg-bg-elevated"
+              }`}
+            >
+              {i + 1}
+            </button>
+          ))}
           <button
             onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
             disabled={page >= totalPages - 1}
-            className="px-3 h-[28px] border border-border rounded-md text-text-secondary hover:bg-bg-elevated transition-fast disabled:opacity-40 disabled:cursor-not-allowed"
+            className="w-[32px] h-[32px] flex items-center justify-center border border-border rounded-md text-text-secondary hover:bg-bg-elevated transition-fast disabled:opacity-40 disabled:cursor-not-allowed"
+            aria-label="Next page"
           >
-            Next
+            &gt;
           </button>
         </div>
       </div>

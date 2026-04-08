@@ -17,7 +17,7 @@ import { ApiError } from "@/lib/apiError";
 import { encodePrice, encodeQuantity } from "@/lib/priceUtils";
 
 export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
-  const [orderType] = useState<OrderType>("midpoint");
+  const [orderType, setOrderType] = useState<OrderType>("midpoint");
   const [side, setSide] = useState<Side>("buy");
   const [amount, setAmount] = useState("");
   const [price, setPrice] = useState("1.0850");
@@ -25,7 +25,7 @@ export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
   const { accountId } = useWallet();
   const { balances } = useAccountBalances(accountId);
   const { midpoint } = useOrderBook();
-  const { signMarketOrder } = useOrderSigning();
+  const { signMarketOrder, signLimitOrder } = useOrderSigning();
   const { marketId } = useMarket();
   const nonce = useNonce(accountId);
   const { addToast } = useToast();
@@ -46,23 +46,50 @@ export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
     if (!accountId || isPending || !nonce.isReady || !parsedAmount || !midpointRate) return;
     setIsPending(true);
     const apiSide = side === "buy" ? "Buy" : "Sell";
-    const encodedPrice = BigInt(encodePrice(midpointRate));
     const encodedQuantity = BigInt(encodeQuantity(parsedAmount, 6));
     try {
-      const { signature, nonce: n } = await signMarketOrder({
-        marketId,
-        price: encodedPrice,
-        quantity: encodedQuantity,
-        side: apiSide,
-        maxSlippageBps: 50,
-      });
+      let signature: string;
+      let n: number;
+      let kind: "Market" | "Limit";
+      let orderPrice: bigint;
+      let extension: { max_slippage_bps: number } | null;
+
+      if (orderType === "limit") {
+        const parsedPrice = parseFloat(price);
+        if (!parsedPrice) return;
+        orderPrice = BigInt(encodePrice(parsedPrice));
+        const result = await signLimitOrder({
+          marketId,
+          price: orderPrice,
+          quantity: encodedQuantity,
+          side: apiSide,
+        });
+        signature = result.signature;
+        n = result.nonce;
+        kind = "Limit";
+        extension = null;
+      } else {
+        orderPrice = BigInt(encodePrice(midpointRate));
+        const result = await signMarketOrder({
+          marketId,
+          price: orderPrice,
+          quantity: encodedQuantity,
+          side: apiSide,
+          maxSlippageBps: 50,
+        });
+        signature = result.signature;
+        n = result.nonce;
+        kind = "Market";
+        extension = { max_slippage_bps: 50 };
+      }
+
       await createOrder({
         market_id: marketId,
         side: apiSide,
-        kind: "Market",
-        price: encodedPrice.toString(),
+        kind,
+        price: orderPrice.toString(),
         quantity: encodedQuantity.toString(),
-        extension: { max_slippage_bps: 50 },
+        extension,
         nonce: n,
         signature,
       });
@@ -159,6 +186,23 @@ export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
         >
           Sell
         </button>
+      </div>
+
+      {/* Order type tabs */}
+      <div className="flex gap-1 bg-bg-base rounded-md p-1">
+        {(["midpoint", "limit"] as const).map((t) => (
+          <button
+            key={t}
+            onClick={() => setOrderType(t)}
+            className={`flex-1 h-[28px] text-body-sm font-medium rounded-sm transition-fast capitalize ${
+              orderType === t
+                ? "bg-bg-elevated text-text-primary"
+                : "text-text-muted hover:text-text-secondary"
+            }`}
+          >
+            {t}
+          </button>
+        ))}
       </div>
 
       {/* Amount */}
@@ -286,7 +330,10 @@ export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
             Submitting...
           </span>
         ) : (
-          <>{side === "buy" ? "Buy" : "Sell"} EUR / USD</>
+          <>
+            {side === "buy" ? "Buy" : "Sell"} EUR / USD
+            {orderType === "limit" && price ? ` at ${price}` : ""}
+          </>
         )}
       </button>
 

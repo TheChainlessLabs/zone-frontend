@@ -81,26 +81,6 @@ vi.mock("@tanstack/react-query", async (importOriginal) => {
   };
 });
 
-vi.mock("@/lib/hooks/useOrderSigning", () => ({
-  useOrderSigning: () => ({
-    signCancel: vi.fn(),
-    signLimitOrder: vi.fn(),
-    signMarketOrder: vi.fn(),
-    signFlipOrder: vi.fn(),
-  }),
-}));
-
-vi.mock("@/lib/apiClient", () => ({
-  cancelOrder: vi.fn(),
-  getMarketOrders: vi.fn(),
-  getOrderBook: vi.fn(),
-  getTrades: vi.fn(),
-}));
-
-vi.mock("@/lib/useToast", () => ({
-  useToast: () => ({ addToast: vi.fn(), removeToast: vi.fn(), toasts: [] }),
-}));
-
 afterEach(cleanup);
 
 beforeEach(() => {

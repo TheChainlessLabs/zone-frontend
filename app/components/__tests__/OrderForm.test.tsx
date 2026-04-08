@@ -1,4 +1,4 @@
-import { render, screen, cleanup } from "@testing-library/react";
+import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import { afterEach, describe, it, expect, vi } from "vitest";
 import OrderForm from "@/components/OrderForm";
 
@@ -88,5 +88,31 @@ describe("OrderForm", () => {
     render(<OrderForm isLoading={false} />);
     const submitBtn = screen.getByRole("button", { name: /EUR \/ USD/i });
     expect(submitBtn).toBeDisabled();
+  });
+
+  it("renders order type tabs (Midpoint and Limit)", () => {
+    render(<OrderForm isLoading={false} />);
+    const tabs = screen.getAllByText("midpoint");
+    // One in the tab, one in the order details row
+    expect(tabs.length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText("limit")).toBeInTheDocument();
+  });
+
+  it("shows limit price input when limit tab is selected", () => {
+    render(<OrderForm isLoading={false} />);
+    // Initially no limit price input
+    expect(screen.queryByText("Limit Price")).toBeNull();
+
+    // Click limit tab
+    fireEvent.click(screen.getByText("limit"));
+    expect(screen.getByText("Limit Price")).toBeInTheDocument();
+  });
+
+  it("updates submit button text with price when limit is selected", () => {
+    render(<OrderForm isLoading={false} />);
+    fireEvent.click(screen.getByText("limit"));
+    // Default price is 1.0850
+    const submitBtn = screen.getByRole("button", { name: /EUR \/ USD at 1\.0850/i });
+    expect(submitBtn).toBeInTheDocument();
   });
 });

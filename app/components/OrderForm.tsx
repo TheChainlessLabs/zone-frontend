@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { AlertTriangle, Info, Lock, Loader2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { OrderType, Side } from "@/lib/types";
@@ -20,8 +20,7 @@ import { estimatePriceImpact } from "@/lib/priceImpact";
 import { devLog, devError, devWarn } from "@/lib/devLog";
 import { getFriendlyError } from "@/lib/errorMessages";
 import { useNotifications } from "@/lib/useNotifications";
-import { calculateFee, formatFeePercent, calculateSavingsPips } from "@/lib/fees";
-import { useVenueRates } from "@/lib/hooks/useVenueRates";
+import { useKeyboardShortcuts } from "@/lib/hooks/useKeyboardShortcuts";
 
 export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
   const [orderType, setOrderType] = useState<OrderType>("midpoint");
@@ -39,23 +38,17 @@ export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
   const { execute: executeSignedOp, isLocked: isSignedOpLocked } = useSignedOperationQueue();
   const { addNotification } = useNotifications();
   const queryClient = useQueryClient();
-  const { venues } = useVenueRates();
 
   // USDC (token ID 1) is the default quote token
   const quoteBalance = balances.find((b) => b.tokenId === 1);
   const availableBalance = quoteBalance?.available ?? 0;
 
-  const isMaker = orderType === "limit";
   const midpointRate = midpoint ?? 0;
   const parsedAmount = parseFloat(amount) || 0;
-  const feeValue = calculateFee(parsedAmount, isMaker);
-  const fee = parsedAmount ? feeValue.toFixed(2) : "0.00";
-  const feePercent = formatFeePercent(isMaker);
+  const fee = parsedAmount ? (parsedAmount * 0.00005).toFixed(2) : "0.00";
+  const feePercent = "0.005%";
   const estReceive = parsedAmount ? (parsedAmount * midpointRate).toFixed(2) : "0.00";
-  const savingsPipsValue = venues?.wise
-    ? calculateSavingsPips(midpointRate, venues.wise)
-    : null;
-  const savingsPips = savingsPipsValue !== null ? `+${savingsPipsValue}` : "--";
+  const savingsPips = "+0.8";
 
   // Balance validation
   const amountExceedsBalance = parsedAmount > 0 && parsedAmount > availableBalance;
@@ -63,6 +56,17 @@ export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
 
   // Price impact estimation
   const priceImpact = estimatePriceImpact(book, side, parsedAmount);
+
+  // Keyboard shortcuts for trading
+  const shortcuts = useMemo(() => [
+    { key: "b", handler: () => setSide("buy"), description: "Switch to Buy" },
+    { key: "s", handler: () => setSide("sell"), description: "Switch to Sell" },
+    { key: "Escape", handler: () => setAmount(""), description: "Clear amount" },
+    { key: "1", handler: () => { const val = availableBalance * 0.25; setAmount(val > 0 ? val.toFixed(2) : ""); }, description: "25% of balance" },
+    { key: "2", handler: () => { const val = availableBalance * 0.5; setAmount(val > 0 ? val.toFixed(2) : ""); }, description: "50% of balance" },
+    { key: "3", handler: () => { const val = availableBalance * 1; setAmount(val > 0 ? val.toFixed(2) : ""); }, description: "MAX balance" },
+  ], [availableBalance]);
+  useKeyboardShortcuts(shortcuts);
 
   async function handleSubmit() {
     devLog("order", `handleSubmit() — accountId=${accountId} isPending=${isPending} isReady=${nonce.isReady} amount=${parsedAmount} midpoint=${midpointRate}`);

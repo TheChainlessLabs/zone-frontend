@@ -13,6 +13,9 @@ import { useWallet } from "@/lib/wallet";
 import { useMarket } from "@/lib/hooks/useMarket";
 import { useToast } from "@/lib/useToast";
 import type { OrderStatus } from "@/lib/types";
+import EmptyState from "@/components/EmptyState";
+import ErrorState from "@/components/ErrorState";
+import { ClipboardList } from "lucide-react";
 
 type FilterTab = OrderStatus | "all";
 
@@ -40,7 +43,7 @@ export default function AccountPage() {
 
   const { accountId } = useWallet();
   const { marketId } = useMarket();
-  const { orders, openOrders, isLoading } = useUserOrders(accountId, marketId);
+  const { orders, openOrders, isLoading, isError } = useUserOrders(accountId, marketId);
   const { signCancel } = useOrderSigning();
   const { addToast } = useToast();
   const queryClient = useQueryClient();
@@ -171,10 +174,14 @@ export default function AccountPage() {
               <div className="flex items-center justify-center h-[120px]">
                 <span className="text-body-sm text-text-muted">Loading orders...</span>
               </div>
+            ) : isError ? (
+              <ErrorState message="Failed to load orders." />
             ) : filtered.length === 0 ? (
-              <div className="flex items-center justify-center h-[120px]">
-                <span className="text-body-sm text-text-muted">No orders found</span>
-              </div>
+              <EmptyState
+                icon={<ClipboardList size={24} />}
+                title="No orders yet"
+                description="When you place trades, your order history will be displayed here."
+              />
             ) : (
               filtered.map((order) => (
                 <div
@@ -225,10 +232,14 @@ export default function AccountPage() {
             <div className="flex items-center justify-center h-[120px]">
               <span className="text-body-sm text-text-muted">Loading orders...</span>
             </div>
+          ) : isError ? (
+            <ErrorState message="Failed to load orders." />
           ) : filtered.length === 0 ? (
-            <div className="flex items-center justify-center h-[120px]">
-              <span className="text-body-sm text-text-muted">No orders found</span>
-            </div>
+            <EmptyState
+              icon={<ClipboardList size={24} />}
+              title="No orders yet"
+              description="When you place trades, your order history will be displayed here."
+            />
           ) : (
             filtered.map((order) => (
               <div

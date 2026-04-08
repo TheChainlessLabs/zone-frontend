@@ -11,7 +11,10 @@ import { useWallet } from "@/lib/wallet";
 import { useMarket } from "@/lib/hooks/useMarket";
 import { useToast } from "@/lib/useToast";
 import { SkeletonRow } from "@/components/Skeleton";
+import EmptyState from "@/components/EmptyState";
+import ErrorState from "@/components/ErrorState";
 import { useTrades } from "@/lib/hooks/useTrades";
+import { TrendingUp, ClipboardList } from "lucide-react";
 
 const tabs = ["Positions", "Orders", "Trade History"] as const;
 
@@ -90,9 +93,11 @@ function PositionsTable({ isLoading }: { isLoading?: boolean }) {
       ) : (
         <div className="animate-fadeIn">
           {openPositions.length === 0 ? (
-            <div className="flex items-center justify-center h-[80px]">
-              <span className="text-body-sm text-text-muted">No open positions</span>
-            </div>
+            <EmptyState
+              icon={<TrendingUp size={24} />}
+              title="No open positions"
+              description="Your open positions will appear here. Start trading to build your portfolio."
+            />
           ) : (
             openPositions.map((pos, i) => (
               <div
@@ -165,13 +170,13 @@ function OrdersTable() {
           <span className="text-body-sm text-text-muted">Loading orders...</span>
         </div>
       ) : isError ? (
-        <div className="flex items-center justify-center h-[80px]">
-          <span className="text-body-sm text-text-muted">Data unavailable</span>
-        </div>
+        <ErrorState message="Failed to load orders." />
       ) : recentOrders.length === 0 ? (
-        <div className="flex items-center justify-center h-[80px]">
-          <span className="text-body-sm text-text-muted">No open orders</span>
-        </div>
+        <EmptyState
+          icon={<ClipboardList size={24} />}
+          title="No orders yet"
+          description="When you place trades, your order history will be displayed here."
+        />
       ) : (
         recentOrders.map((order) => (
           <div

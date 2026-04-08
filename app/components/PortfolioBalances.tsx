@@ -1,13 +1,16 @@
 "use client";
 
 import Link from "next/link";
+import { CircleDollarSign } from "lucide-react";
 import { useWallet } from "@/lib/wallet";
 import { useAccountBalances } from "@/lib/hooks/useAccountBalances";
 import { Skeleton } from "@/components/Skeleton";
+import EmptyState from "@/components/EmptyState";
+import ErrorState from "@/components/ErrorState";
 
 export default function PortfolioBalances() {
   const { accountId } = useWallet();
-  const { balances, isLoading } = useAccountBalances(accountId);
+  const { balances, isLoading, isError } = useAccountBalances(accountId);
 
   const rows = balances.map((b) => ({
     token: b.symbol,
@@ -40,6 +43,15 @@ export default function PortfolioBalances() {
             <Skeleton key={i} className="h-[40px] rounded-md" />
           ))}
         </div>
+      ) : isError ? (
+        <ErrorState message="Failed to load balances." />
+      ) : rows.length === 0 ? (
+        <EmptyState
+          icon={<CircleDollarSign size={24} />}
+          title="No tokens yet"
+          description="Deposit stablecoins to start trading on Omega."
+          action={{ label: "Deposit", href: "/funding" }}
+        />
       ) : (
         <>
           {/* Desktop rows */}

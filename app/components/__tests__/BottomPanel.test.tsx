@@ -84,6 +84,6 @@ describe("BottomPanel", () => {
   it("renders Orders tab with empty state when no open orders", () => {
     renderWithProviders(<BottomPanel isLoading={false} />);
     fireEvent.click(screen.getByText("Orders"));
-    expect(screen.getByText("No open orders")).toBeInTheDocument();
+    expect(screen.getByText("No orders yet")).toBeInTheDocument();
   });
 });

@@ -4,15 +4,24 @@ import { useState } from "react";
 import { useWallet } from "@/lib/wallet";
 import { useAccountBalances } from "@/lib/hooks/useAccountBalances";
 import { Skeleton } from "@/components/Skeleton";
+import ErrorState from "@/components/ErrorState";
 
 const timeRanges = ["24H", "7D", "30D", "ALL"] as const;
 
 export default function PortfolioValue() {
   const [range, setRange] = useState<string>("24H");
   const { accountId } = useWallet();
-  const { balances, isLoading } = useAccountBalances(accountId);
+  const { balances, isLoading, isError } = useAccountBalances(accountId);
 
   const total = balances.reduce((sum, b) => sum + b.total, 0);
+
+  if (isError) {
+    return (
+      <div className="bg-bg-surface border border-border rounded-lg">
+        <ErrorState message="Failed to load portfolio data." />
+      </div>
+    );
+  }
 
   return (
     <div className="bg-bg-surface border border-border rounded-lg p-6">

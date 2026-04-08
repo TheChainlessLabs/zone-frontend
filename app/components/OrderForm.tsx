@@ -20,6 +20,8 @@ import { estimatePriceImpact } from "@/lib/priceImpact";
 import { devLog, devError, devWarn } from "@/lib/devLog";
 import { getFriendlyError } from "@/lib/errorMessages";
 import { useNotifications } from "@/lib/useNotifications";
+import { calculateFee, formatFeePercent, calculateSavingsPips } from "@/lib/fees";
+import { useVenueRates } from "@/lib/hooks/useVenueRates";
 
 export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
   const [orderType, setOrderType] = useState<OrderType>("midpoint");
@@ -37,17 +39,23 @@ export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
   const { execute: executeSignedOp, isLocked: isSignedOpLocked } = useSignedOperationQueue();
   const { addNotification } = useNotifications();
   const queryClient = useQueryClient();
+  const { venues } = useVenueRates();
 
   // USDC (token ID 1) is the default quote token
   const quoteBalance = balances.find((b) => b.tokenId === 1);
   const availableBalance = quoteBalance?.available ?? 0;
 
+  const isMaker = orderType === "limit";
   const midpointRate = midpoint ?? 0;
   const parsedAmount = parseFloat(amount) || 0;
-  const fee = parsedAmount ? (parsedAmount * 0.00005).toFixed(2) : "0.00";
-  const feePercent = "0.005%";
+  const feeValue = calculateFee(parsedAmount, isMaker);
+  const fee = parsedAmount ? feeValue.toFixed(2) : "0.00";
+  const feePercent = formatFeePercent(isMaker);
   const estReceive = parsedAmount ? (parsedAmount * midpointRate).toFixed(2) : "0.00";
-  const savingsPips = "+0.8";
+  const savingsPipsValue = venues?.wise
+    ? calculateSavingsPips(midpointRate, venues.wise)
+    : null;
+  const savingsPips = savingsPipsValue !== null ? `+${savingsPipsValue}` : "--";
 
   // Balance validation
   const amountExceedsBalance = parsedAmount > 0 && parsedAmount > availableBalance;

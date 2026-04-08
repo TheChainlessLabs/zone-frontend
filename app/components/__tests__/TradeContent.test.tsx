@@ -76,6 +76,10 @@ vi.mock("@/lib/useNotifications", () => ({
 vi.mock("@/lib/apiClient", () => ({
   createOrder: vi.fn(),
 }));
+
+vi.mock("@/lib/hooks/useVenueRates", () => ({
+  useVenueRates: () => ({ venues: { wise: 1.0848, revolut: 1.0850, ofx: 1.0845 }, isLoading: false, isError: false }),
+}));
 vi.mock("@tanstack/react-query", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@tanstack/react-query")>();
   return {

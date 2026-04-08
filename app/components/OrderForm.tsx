@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Info, Lock, Loader2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { OrderType, Side } from "@/lib/types";
 import { Skeleton } from "@/components/Skeleton";
+import OrderConfirmationModal from "@/components/OrderConfirmationModal";
+import type { OrderConfirmationDetails } from "@/components/OrderConfirmationModal";
 import { useWallet } from "@/lib/wallet";
 import { useAccountBalances } from "@/lib/hooks/useAccountBalances";
 import { useOrderBook } from "@/lib/hooks/useOrderBook";
@@ -25,6 +27,7 @@ export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
   const [amount, setAmount] = useState("");
   const [price, setPrice] = useState("1.0850");
   const [isPending, setIsPending] = useState(false);
+  const [confirmationDetails, setConfirmationDetails] = useState<OrderConfirmationDetails | null>(null);
   const { accountId } = useWallet();
   const { balances } = useAccountBalances(accountId);
   const { midpoint } = useOrderBook();
@@ -50,7 +53,7 @@ export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
   const amountExceedsBalance = parsedAmount > 0 && parsedAmount > availableBalance;
   const isLargeOrder = parsedAmount > 0 && !amountExceedsBalance && parsedAmount > availableBalance * 0.5;
 
-  async function handleSubmit() {
+  function handleSubmit() {
     devLog("order", `handleSubmit() — accountId=${accountId} isPending=${isPending} isReady=${nonce.isReady} amount=${parsedAmount} midpoint=${midpointRate}`);
 
     if (!accountId) { devWarn("order", "blocked: no accountId"); return; }
@@ -60,6 +63,20 @@ export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
     if (amountExceedsBalance) { devWarn("order", "blocked: amount exceeds balance"); return; }
     if (orderType === "midpoint" && !midpointRate) { devWarn("order", "blocked: no midpointRate (needed for midpoint orders)"); return; }
 
+    const displayPrice = orderType === "limit" ? price : midpointRate.toFixed(4);
+    setConfirmationDetails({
+      side,
+      pair: "EUR / USD",
+      type: orderType,
+      amount: `${parsedAmount} EUR`,
+      price: displayPrice,
+      estReceive,
+      fee,
+    });
+  }
+
+  const handleConfirmedSubmit = useCallback(async () => {
+    setConfirmationDetails(null);
     setIsPending(true);
     const apiSide = side === "buy" ? "Buy" : "Sell";
     const encodedQuantity = BigInt(encodeQuantity(parsedAmount, 6));
@@ -138,7 +155,7 @@ export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
     } finally {
       setIsPending(false);
     }
-  }
+  }, [side, parsedAmount, orderType, price, midpointRate, amount, accountId, marketId, nonce, signLimitOrder, signMarketOrder, executeSignedOp, addToast, queryClient]);
 
   if (isLoading) {
     return (
@@ -383,6 +400,14 @@ export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
         All orders execute privately at midpoint.{" "}
         <span className="underline cursor-pointer hover:text-text-muted">Learn more</span>
       </p>
+
+      {/* Order confirmation modal */}
+      <OrderConfirmationModal
+        isOpen={confirmationDetails !== null}
+        onClose={() => setConfirmationDetails(null)}
+        onConfirm={handleConfirmedSubmit}
+        orderDetails={confirmationDetails ?? { side: "buy", pair: "", type: "midpoint", amount: "", price: "", estReceive: "", fee: "" }}
+      />
     </div>
   );
 }

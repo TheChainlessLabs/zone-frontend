@@ -4,11 +4,89 @@ const ENGINE_URL = (
   process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:3000"
 ).replace(/\/+$/, "");
 
+/* ── Path allowlist ──────────────────────────────────────────────── */
+
+const ALLOWED_PREFIXES = ["markets/", "accounts/", "orders", "tokens/"];
+
+function isAllowedPath(path: string): boolean {
+  return ALLOWED_PREFIXES.some((prefix) => path.startsWith(prefix));
+}
+
+/* ── In-memory rate limiting (token bucket per IP) ───────────────── */
+
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT = { maxRequests: 60, windowMs: 60_000 }; // 60 req/min
+const WRITE_RATE_LIMIT = { maxRequests: 10, windowMs: 60_000 }; // 10 writes/min
+const MAX_BODY_BYTES = 10 * 1024; // 10 KB
+
+function checkRateLimit(ip: string, isWrite: boolean): boolean {
+  const limit = isWrite ? WRITE_RATE_LIMIT : RATE_LIMIT;
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+
+  if (!entry || now > entry.resetAt) {
+    rateLimitMap.set(ip, { count: 1, resetAt: now + limit.windowMs });
+    return true;
+  }
+
+  if (entry.count >= limit.maxRequests) return false;
+  entry.count++;
+  return true;
+}
+
+function getRetryAfter(ip: string): number {
+  const entry = rateLimitMap.get(ip);
+  if (!entry) return 0;
+  return Math.max(0, Math.ceil((entry.resetAt - Date.now()) / 1000));
+}
+
+/* ── Proxy handler ───────────────────────────────────────────────── */
+
 async function proxy(
   req: NextRequest,
   { params }: { params: { path: string[] } }
 ) {
   const path = (await params).path.join("/");
+
+  // Path allowlist check
+  if (!isAllowedPath(path)) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  // Resolve client IP
+  const ip =
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    req.ip ??
+    "unknown";
+
+  // Rate limit check
+  const isWrite = req.method !== "GET" && req.method !== "HEAD";
+  if (!checkRateLimit(ip, isWrite)) {
+    const retryAfter = getRetryAfter(ip);
+    return new NextResponse(
+      JSON.stringify({ error: "Too many requests" }),
+      {
+        status: 429,
+        headers: {
+          "content-type": "application/json",
+          "retry-after": String(retryAfter),
+        },
+      }
+    );
+  }
+
+  // Body size check for write requests
+  let bodyText: string | undefined;
+  if (isWrite) {
+    bodyText = await req.text();
+    if (new TextEncoder().encode(bodyText).byteLength > MAX_BODY_BYTES) {
+      return NextResponse.json(
+        { error: "Request body too large" },
+        { status: 413 }
+      );
+    }
+  }
+
   const url = `${ENGINE_URL}/${path}`;
 
   const headers: HeadersInit = {};
@@ -18,10 +96,7 @@ async function proxy(
   const res = await fetch(url, {
     method: req.method,
     headers,
-    body:
-      req.method !== "GET" && req.method !== "HEAD"
-        ? await req.text()
-        : undefined,
+    body: isWrite ? bodyText : undefined,
   });
 
   const body = res.status === 204 ? null : await res.text();

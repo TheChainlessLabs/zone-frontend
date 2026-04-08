@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import { useAccount } from "wagmi";
+import { devLog } from "./devLog";
 import { supportedChain, supportedChainId } from "./wagmiConfig";
 import { useAccountRegistration } from "./hooks/useAccountRegistration";
 
@@ -47,10 +48,12 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   // Read accountId from localStorage when address changes
   useEffect(() => {
     if (!address) {
+      devLog("wallet", "no address — clearing accountId");
       setAccountId(null);
       return;
     }
     const stored = localStorage.getItem(`omega_account_${address}`);
+    devLog("wallet", `address=${address}, localStorage accountId=${stored}`);
     setAccountId(stored ? Number(stored) : null);
   }, [address]);
 

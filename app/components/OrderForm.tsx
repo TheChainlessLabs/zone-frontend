@@ -15,6 +15,7 @@ import { useToast } from "@/lib/useToast";
 import { createOrder } from "@/lib/apiClient";
 import { ApiError } from "@/lib/apiError";
 import { encodePrice, encodeQuantity } from "@/lib/priceUtils";
+import { devLog, devError, devWarn } from "@/lib/devLog";
 
 export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
   const [orderType, setOrderType] = useState<OrderType>("midpoint");
@@ -43,7 +44,14 @@ export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
   const savingsPips = "+0.8";
 
   async function handleSubmit() {
-    if (!accountId || isPending || !nonce.isReady || !parsedAmount || !midpointRate) return;
+    devLog("order", `handleSubmit() — accountId=${accountId} isPending=${isPending} isReady=${nonce.isReady} amount=${parsedAmount} midpoint=${midpointRate}`);
+
+    if (!accountId) { devWarn("order", "blocked: no accountId"); return; }
+    if (isPending) { devWarn("order", "blocked: isPending=true"); return; }
+    if (!nonce.isReady) { devWarn("order", "blocked: nonce not ready"); return; }
+    if (!parsedAmount || !Number.isFinite(parsedAmount) || parsedAmount <= 0) { devWarn("order", `blocked: invalid amount "${amount}" → ${parsedAmount}`); return; }
+    if (orderType === "midpoint" && !midpointRate) { devWarn("order", "blocked: no midpointRate (needed for midpoint orders)"); return; }
+
     setIsPending(true);
     const apiSide = side === "buy" ? "Buy" : "Sell";
     const encodedQuantity = BigInt(encodeQuantity(parsedAmount, 6));
@@ -56,8 +64,12 @@ export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
 
       if (orderType === "limit") {
         const parsedPrice = parseFloat(price);
-        if (!parsedPrice) return;
+        if (!parsedPrice || !Number.isFinite(parsedPrice) || parsedPrice <= 0) {
+          devWarn("order", `blocked: invalid limit price "${price}" → ${parsedPrice}`);
+          return;
+        }
         orderPrice = BigInt(encodePrice(parsedPrice));
+        devLog("order", `signing limit order: price=${orderPrice} qty=${encodedQuantity} side=${apiSide}`);
         const result = await signLimitOrder({
           marketId,
           price: orderPrice,
@@ -70,6 +82,7 @@ export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
         extension = null;
       } else {
         orderPrice = BigInt(encodePrice(midpointRate));
+        devLog("order", `signing market order: price=${orderPrice} qty=${encodedQuantity} side=${apiSide} slippage=50bps`);
         const result = await signMarketOrder({
           marketId,
           price: orderPrice,
@@ -83,6 +96,8 @@ export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
         extension = { max_slippage_bps: 50 };
       }
 
+      devLog("order", `signed with nonce=${n}, submitting to API...`);
+
       await createOrder({
         market_id: marketId,
         side: apiSide,
@@ -93,12 +108,15 @@ export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
         nonce: n,
         signature,
       });
+      devLog("order", `order placed successfully`);
       addToast("success", "Order Placed", `${side} order for ${amount} submitted`);
       queryClient.invalidateQueries({ queryKey: ["book", marketId] });
       queryClient.invalidateQueries({ queryKey: ["trades", marketId] });
       setAmount("");
     } catch (err) {
+      devError("order", `order failed`, err);
       if (err instanceof ApiError && err.message.includes("nonce")) {
+        devWarn("order", `nonce mismatch — resyncing`);
         nonce.resync();
         addToast("error", "Order Failed", "Nonce mismatch — please try again");
       } else if (err instanceof ApiError && err.status === 400) {

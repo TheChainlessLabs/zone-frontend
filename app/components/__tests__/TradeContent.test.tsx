@@ -18,11 +18,8 @@ vi.mock("@/components/Navbar", () => ({
 vi.mock("@/components/BBOMarquee", () => ({
   default: () => <div data-testid="bbo-marquee" />,
 }));
-vi.mock("@/components/PairSelector", () => ({
-  default: () => <div data-testid="pair-selector" />,
-}));
-vi.mock("@/components/PairList", () => ({
-  default: () => <div data-testid="pair-list" />,
+vi.mock("@/components/PairDropdown", () => ({
+  default: () => <div data-testid="pair-dropdown" />,
 }));
 vi.mock("@/components/PriceChart", () => ({
   default: () => <div data-testid="price-chart" />,

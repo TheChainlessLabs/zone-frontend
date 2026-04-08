@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from "react";
 import BBOMarquee from "@/components/BBOMarquee";
-import PairSelector from "@/components/PairSelector";
-import PairList from "@/components/PairList";
+import PairDropdown from "@/components/PairDropdown";
 import OrderForm from "@/components/OrderForm";
 import PriceChart from "@/components/PriceChart";
 import PriceComparisonPanel from "@/components/PriceComparisonPanel";
@@ -27,29 +26,19 @@ export default function TradeContent() {
 
       {/* Main 2-column layout */}
       <div className="flex-1 flex min-h-0 flex-col lg:flex-row">
-        {/* Left: Pair Sidebar + Chart + Positions/Orders */}
+        {/* Left: Chart + Positions/Orders */}
         <div className="flex-1 flex flex-col min-h-0 min-w-0">
-          {/* Pair sidebar + Chart (horizontal on desktop) */}
-          <div className="flex min-h-0 flex-shrink-0">
-            {/* Pair sidebar — 240px, desktop only */}
-            <div className="hidden lg:flex flex-col w-[240px] shrink-0 border-r border-border-subtle">
-              <div className="p-3">
-                <PairSelector />
-              </div>
-              <div className="flex-1 overflow-y-auto px-3 pb-3">
-                <PairList />
-              </div>
+          {/* Pair dropdown + Chart + Venue Comparison */}
+          <div className="flex flex-col min-h-0 flex-shrink-0 p-3 gap-3">
+            <div className="flex items-center">
+              <PairDropdown />
             </div>
-
-            {/* Chart + Venue Comparison */}
-            <div className="flex-1 p-3 min-w-0 flex flex-col gap-3">
-              <SectionErrorBoundary fallbackMessage="Chart unavailable">
-                <PriceChart />
-              </SectionErrorBoundary>
-              <SectionErrorBoundary fallbackMessage="Venue comparison unavailable">
-                <PriceComparisonPanel />
-              </SectionErrorBoundary>
-            </div>
+            <SectionErrorBoundary fallbackMessage="Chart unavailable">
+              <PriceChart />
+            </SectionErrorBoundary>
+            <SectionErrorBoundary fallbackMessage="Venue comparison unavailable">
+              <PriceComparisonPanel />
+            </SectionErrorBoundary>
           </div>
 
           {/* Bottom panel: Positions + Orders */}

@@ -13,14 +13,14 @@ export default function RecentTrades() {
   const { trades, isLoading, isError } = useTrades();
 
   return (
-    <div className="bg-bg-surface border border-border rounded-lg overflow-hidden">
-      <div className="flex items-center justify-between h-[36px] px-3 border-b border-border">
+    <div className="flex flex-col">
+      <div className="flex items-center justify-between h-[36px]">
         <span className="text-body-sm font-medium">Recent Fills</span>
         <span className="text-label-uppercase text-text-muted">Anonymous fills</span>
       </div>
 
       {/* Header */}
-      <div className="flex items-center h-[28px] px-3 border-b border-border-subtle">
+      <div className="flex items-center h-[28px] border-b border-border-subtle">
         <span className="text-label-uppercase text-text-muted w-[30%]">Time</span>
         <span className="text-label-uppercase text-text-muted w-[35%] text-right">Price</span>
         <span className="text-label-uppercase text-text-muted w-[35%] text-right">Size</span>
@@ -51,7 +51,7 @@ export default function RecentTrades() {
           {trades.map((trade, i) => (
             <div
               key={i}
-              className="flex items-center h-[28px] px-3 text-mono font-mono font-tabular hover:bg-bg-elevated transition-fast"
+              className="flex items-center h-[28px] text-mono font-mono font-tabular hover:bg-bg-surface transition-fast rounded-sm -mx-1 px-1"
             >
               <span className="w-[30%] text-text-muted">{trade.time}</span>
               <span className="w-[35%] text-right text-accent">

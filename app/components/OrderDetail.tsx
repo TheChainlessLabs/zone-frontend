@@ -90,7 +90,7 @@ export default function OrderDetail({ orderId }: OrderDetailProps) {
             {order.fills.map((fill, i) => (
               <div
                 key={i}
-                className="flex items-center h-[40px] text-body-sm font-mono font-tabular hover:bg-bg-surface transition-fast rounded-md -mx-2 px-2"
+                className="flex items-center h-[40px] text-body-sm font-mono font-tabular hover:bg-bg-surface transition-fast rounded-md"
               >
                 <span className="w-[25%] text-text-secondary">{fill.time}</span>
                 <span className="w-[25%] text-right text-text-primary">{fill.price.toFixed(4)}</span>

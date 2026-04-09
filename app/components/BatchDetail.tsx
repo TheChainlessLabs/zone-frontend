@@ -150,7 +150,7 @@ export default function BatchDetail({ batchId }: BatchDetailProps) {
               <Link
                 key={tx.id}
                 href={`/explorer/tx/${tx.id}`}
-                className="flex items-center h-[40px] text-body-sm font-mono font-tabular hover:bg-bg-surface transition-fast rounded-md -mx-2 px-2"
+                className="flex items-center h-[40px] text-body-sm font-mono font-tabular hover:bg-bg-surface transition-fast rounded-md"
               >
                 <span className="w-[25%] font-display text-accent">{tx.id}</span>
                 <span className="w-[15%] font-display text-text-primary">{tx.pair}</span>

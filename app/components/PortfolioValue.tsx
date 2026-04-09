@@ -35,8 +35,9 @@ export default function PortfolioValue() {
         </span>
       </div>
 
-      {/* Time range tabs */}
-      <div className="flex gap-1 mt-4 bg-bg-base rounded-md p-1 w-fit">
+      {/* Time range tabs — bumped to bg-bg-surface so the pill rail
+          stays visible now that the hero no longer sits inside a card. */}
+      <div className="flex gap-1 mt-4 bg-bg-surface rounded-md p-1 w-fit">
         {timeRanges.map((r) => (
           <button
             key={r}
@@ -52,8 +53,9 @@ export default function PortfolioValue() {
         ))}
       </div>
 
-      {/* Mini chart placeholder */}
-      <div className="mt-4 h-[120px] bg-bg-base rounded-md flex items-center justify-center">
+      {/* Mini chart placeholder — also on bg-bg-surface so the equity
+          region reads as a distinct block against the flat page bg. */}
+      <div className="mt-4 h-[120px] bg-bg-surface rounded-md flex items-center justify-center">
         <span className="text-text-muted text-body-sm">Equity chart</span>
       </div>
     </div>

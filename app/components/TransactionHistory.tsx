@@ -78,7 +78,7 @@ export default function TransactionHistory() {
             {filtered.map((tx) => (
               <div
                 key={tx.id}
-                className="flex items-center h-[40px] text-body-sm hover:bg-bg-surface transition-fast rounded-md -mx-2 px-2"
+                className="flex items-center h-[40px] text-body-sm hover:bg-bg-surface transition-fast rounded-md"
               >
                 <span className={`w-[14%] capitalize font-medium ${typeColors[tx.type]}`}>
                   {tx.type}

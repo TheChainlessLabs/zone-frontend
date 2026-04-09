@@ -210,7 +210,7 @@ export default function AccountPage() {
               filtered.map((order) => (
                 <div
                   key={order.id}
-                  className="flex items-center h-[40px] text-body-sm font-mono font-tabular hover:bg-bg-surface transition-fast rounded-md -mx-2 px-2"
+                  className="flex items-center h-[40px] text-body-sm font-mono font-tabular hover:bg-bg-surface transition-fast rounded-md"
                 >
                   <Link href={`/account/order/${order.id}`} className="flex items-center w-[93%]">
                     <span className="w-[14%] font-display text-text-primary">{order.pair}</span>

@@ -59,7 +59,7 @@ export default function PortfolioBalances() {
             {rows.map((bal) => (
               <div
                 key={bal.token}
-                className="flex items-center h-[40px] hover:bg-bg-surface transition-fast rounded-md -mx-2 px-2"
+                className="flex items-center h-[40px] hover:bg-bg-surface transition-fast rounded-md"
               >
                 <span className="w-[18%] flex items-center gap-2">
                   <span

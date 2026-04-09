@@ -36,7 +36,7 @@ export default function BatchExplorer() {
           <Link
             key={batch.id}
             href={`/explorer/batch/${batch.id}`}
-            className="flex h-[40px] items-center text-body-sm hover:bg-bg-surface transition-fast rounded-md -mx-2 px-2"
+            className="flex h-[40px] items-center text-body-sm hover:bg-bg-surface transition-fast rounded-md"
           >
             <span className="w-[20%] text-accent hover:text-accent-hover transition-fast">
               {batch.id}

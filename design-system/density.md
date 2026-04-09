@@ -69,15 +69,18 @@ the middle one.
   {/* column labels */}
 </div>
 
-// Data row
-<div className="flex items-center h-[40px] hover:bg-bg-surface transition-fast rounded-md -mx-2 px-2">
+// Data row — same width and insets as the header so column
+// percentages stay aligned. Hover pops to bg-bg-surface with a
+// rounded-md corner at the row's natural bounds.
+<div className="flex items-center h-[40px] hover:bg-bg-surface transition-fast rounded-md">
   {/* row content */}
 </div>
 ```
 
-The `-mx-2 px-2` trick lets the hover fill extend slightly beyond the
-content width without pushing column alignment. Use `-mx-1 px-1` for
-tighter tables (RecentTrades).
+Keep the header and row on the same horizontal inset — if you add
+`px-*` to the row, add it to the header too so the flex column
+percentages compute against the same content box width. Right-aligned
+numeric columns drift quickly if you don't.
 
 ## Spacing — out of scope for FE-057
 

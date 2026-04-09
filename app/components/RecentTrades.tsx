@@ -51,7 +51,7 @@ export default function RecentTrades() {
           {trades.map((trade, i) => (
             <div
               key={i}
-              className="flex items-center h-[28px] text-mono font-mono font-tabular hover:bg-bg-surface transition-fast rounded-sm -mx-1 px-1"
+              className="flex items-center h-[28px] text-mono font-mono font-tabular hover:bg-bg-surface transition-fast rounded-sm"
             >
               <span className="w-[30%] text-text-muted">{trade.time}</span>
               <span className="w-[35%] text-right text-accent">

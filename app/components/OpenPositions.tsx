@@ -32,7 +32,7 @@ export default function OpenPositions() {
             {openPositions.map((pos, i) => (
               <div
                 key={i}
-                className="flex items-center h-[40px] text-body-sm font-mono font-tabular hover:bg-bg-surface transition-fast rounded-md -mx-2 px-2"
+                className="flex items-center h-[40px] text-body-sm font-mono font-tabular hover:bg-bg-surface transition-fast rounded-md"
               >
                 <span className="w-[16%] font-display text-text-primary">{pos.pair}</span>
                 <span className={`w-[12%] font-display capitalize ${pos.side === "long" ? "text-success" : "text-error"}`}>

@@ -55,15 +55,32 @@ export function tradesToPoints(trades: RawTradeForChart[]): ChartPoint[] {
 }
 
 /**
- * Keep only points within the timeframe window ending at `nowSec`.
- * `nowSec` defaults to the current wall clock so tests can pin it.
+ * Keep only points within the timeframe window ending at `referenceSec`.
+ *
+ * When `referenceSec` is omitted, the window is anchored to the **newest
+ * point in the dataset** rather than wall-clock time. This is deliberate:
+ * the Omega backend's trade timestamps are a monotonic sequencer counter
+ * rather than Unix seconds (see `omega-markets/crates/core`), so using
+ * `Date.now()` would compare values from two different clocks and drop
+ * every point. Anchoring to the newest trade gives correct behavior
+ * regardless of whether the backend emits real Unix epochs or a
+ * monotonic tick — in both cases "1H" means "the last `windowSec`
+ * units of clock the trade stream itself is using".
+ *
+ * Pass `referenceSec` explicitly in tests that want a deterministic cutoff.
  */
 export function filterByTimeframe(
   points: ChartPoint[],
   timeframe: Timeframe,
-  nowSec: number = Math.floor(Date.now() / 1000),
+  referenceSec?: number,
 ): ChartPoint[] {
+  if (points.length === 0) return [];
   const windowSec = TIMEFRAME_WINDOW_SEC[timeframe];
-  const cutoff = nowSec - windowSec;
+  // Use the newest point in the dataset as the anchor when no explicit
+  // reference is provided. Compute via reduce so unsorted input still works.
+  const newest =
+    referenceSec ??
+    points.reduce((max, p) => (p.time > max ? p.time : max), -Infinity);
+  const cutoff = newest - windowSec;
   return points.filter((p) => p.time >= cutoff);
 }

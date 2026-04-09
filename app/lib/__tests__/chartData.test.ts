@@ -105,4 +105,53 @@ describe("filterByTimeframe", () => {
     expect(TIMEFRAME_WINDOW_SEC["1W"]).toBe(604_800);
     expect(TIMEFRAME_WINDOW_SEC["1M"]).toBe(2_592_000);
   });
+
+  // These tests cover the fix for the P1 bug Codex flagged: the backend's
+  // trade timestamps are a monotonic sequencer counter rather than Unix
+  // seconds, so anchoring the cutoff to `Date.now()` would drop every point.
+  describe("default reference (no explicit referenceSec)", () => {
+    it("anchors to the newest point in the dataset, not wall clock", () => {
+      // Monotonic-counter style: values like 1, 2, 3...  Without the fix,
+      // these would all be filtered out because `Date.now()/1000 - 3600` is
+      // ~1.8e9 and every point's time is < 10.
+      const points: ChartPoint[] = [
+        { time: 1, value: 1.08 },
+        { time: 2, value: 1.085 },
+        { time: 3, value: 1.09 },
+      ];
+      const out = filterByTimeframe(points, "1H");
+      expect(out).toHaveLength(3);
+      expect(out.map((p) => p.time)).toEqual([1, 2, 3]);
+    });
+
+    it("drops points older than (newest - window) when using default anchor", () => {
+      // Newest is 10_000. 1H window = 3600. Cutoff = 6400.
+      const points: ChartPoint[] = [
+        { time: 1_000, value: 1.0 }, // out
+        { time: 6_399, value: 1.0 }, // out
+        { time: 6_400, value: 1.0 }, // in (boundary)
+        { time: 8_000, value: 1.0 }, // in
+        { time: 10_000, value: 1.0 }, // in (newest)
+      ];
+      const out = filterByTimeframe(points, "1H");
+      expect(out.map((p) => p.time)).toEqual([6_400, 8_000, 10_000]);
+    });
+
+    it("finds the newest point even when input is not sorted ascending", () => {
+      const points: ChartPoint[] = [
+        { time: 10_000, value: 1.0 }, // newest
+        { time: 1_000, value: 1.0 }, // oldest (out)
+        { time: 8_000, value: 1.0 }, // in
+      ];
+      const out = filterByTimeframe(points, "1H");
+      expect(out).toHaveLength(2);
+      expect(out.map((p) => p.time).sort((a, b) => a - b)).toEqual([
+        8_000, 10_000,
+      ]);
+    });
+
+    it("returns an empty array when input is empty (no anchor available)", () => {
+      expect(filterByTimeframe([], "1D")).toEqual([]);
+    });
+  });
 });

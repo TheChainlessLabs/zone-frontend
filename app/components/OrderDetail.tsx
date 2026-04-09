@@ -43,15 +43,15 @@ export default function OrderDetail({ orderId }: OrderDetailProps) {
       </div>
 
       {/* Horizontal Pipeline — mobile */}
-      <div className="md:hidden bg-bg-surface border border-border rounded-lg p-4">
+      <div className="md:hidden">
         <h3 className="text-label-uppercase text-text-muted mb-3">Order Pipeline</h3>
         <HorizontalPipeline status={order.status} />
       </div>
 
       {/* Desktop: side-by-side */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-        {/* Order Details card */}
-        <div className="bg-bg-surface border border-border rounded-lg p-4 md:p-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
+        {/* Order Details */}
+        <div className="flex flex-col">
           <h3 className="text-label-uppercase text-text-muted mb-4">Order Details</h3>
           <div className="flex flex-col gap-3">
             <Row label="Pair" value={order.pair} />
@@ -66,7 +66,7 @@ export default function OrderDetail({ orderId }: OrderDetailProps) {
         </div>
 
         {/* Pipeline — desktop only */}
-        <div className="hidden md:block bg-bg-surface border border-border rounded-lg p-6">
+        <div className="hidden md:block">
           <h3 className="text-label-uppercase text-text-muted mb-4">Pipeline</h3>
           <VerticalPipeline status={order.status} />
         </div>
@@ -74,14 +74,14 @@ export default function OrderDetail({ orderId }: OrderDetailProps) {
 
       {/* Fills */}
       {order.fills.length > 0 && (
-        <div className="bg-bg-surface border border-border rounded-lg overflow-hidden">
-          <div className="px-4 py-3 border-b border-border">
+        <div className="flex flex-col">
+          <div className="pb-3">
             <h3 className="text-body-sm font-semibold">Fills</h3>
           </div>
 
           {/* Desktop table */}
           <div className="hidden md:block">
-            <div className="flex items-center h-[33px] px-4 text-label-uppercase text-text-muted">
+            <div className="flex items-center h-[33px] border-b border-border-subtle text-label-uppercase text-text-muted">
               <span className="w-[25%]">Time</span>
               <span className="w-[25%] text-right">Price</span>
               <span className="w-[25%] text-right">Size</span>
@@ -90,7 +90,7 @@ export default function OrderDetail({ orderId }: OrderDetailProps) {
             {order.fills.map((fill, i) => (
               <div
                 key={i}
-                className="flex items-center px-4 h-[40px] text-body-sm font-mono font-tabular hover:bg-bg-elevated transition-fast"
+                className="flex items-center h-[40px] text-body-sm font-mono font-tabular hover:bg-bg-surface transition-fast rounded-md -mx-2 px-2"
               >
                 <span className="w-[25%] text-text-secondary">{fill.time}</span>
                 <span className="w-[25%] text-right text-text-primary">{fill.price.toFixed(4)}</span>

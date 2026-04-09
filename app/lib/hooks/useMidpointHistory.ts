@@ -123,7 +123,7 @@ export function useMidpointHistory(timeframe: Timeframe): {
   isError: boolean;
 } {
   const { marketId } = useMarket();
-  const { book, isLoading, isError } = useOrderBook();
+  const { book, isLoading, isError, dataUpdatedAt } = useOrderBook();
   const referencePrice = useMemo(() => computeReferencePrice(book), [book]);
 
   // Reload buffer whenever the active market changes.
@@ -134,29 +134,33 @@ export function useMidpointHistory(timeframe: Timeframe): {
     setHistory(loadHistory(marketId));
   }, [marketId]);
 
-  // Append a new observation each time the reference price changes.
-  // Dedupe by second (to stay monotonic in lightweight-charts) and by
-  // identical value (to avoid an ever-growing buffer when nothing is
-  // moving). When the book is entirely empty, `referencePrice` is null
-  // and we simply don't append — the UI stays in its "collecting" state.
+  // Append a new observation on **every successful poll**, not only when
+  // the reference price changes — a flat market would otherwise yield a
+  // single point that ages out of the selected window, and long unchanged
+  // segments would be missing from the series. We depend on
+  // `dataUpdatedAt` (which react-query bumps on every refetch) so this
+  // effect fires once per poll regardless of whether the book moved.
+  //
+  // Same-second observations collapse into one point (the chart requires
+  // monotonically increasing timestamps) by overwriting the last entry if
+  // its time key matches, so two rapid re-renders within the same second
+  // never produce duplicate timestamps.
   useEffect(() => {
+    if (dataUpdatedAt === 0) return; // no successful fetch yet
     if (referencePrice == null || !Number.isFinite(referencePrice)) return;
     setHistory((prev) => {
-      const now = Math.floor(Date.now() / 1000);
+      const nowSec = Math.floor(dataUpdatedAt / 1000);
       const last = prev[prev.length - 1];
-      if (last && last.time === now) {
-        // Same-second update — overwrite the latest value so the chart
-        // tracks the most recent reference price within each second bucket.
+      if (last && last.time === nowSec) {
+        // Same-second observation — overwrite so the series stays
+        // strictly monotonic in time.
         if (last.value === referencePrice) return prev;
         const next = prev.slice(0, -1);
-        next.push({ time: now, value: referencePrice });
+        next.push({ time: nowSec, value: referencePrice });
         saveHistory(marketId, next);
         return next;
       }
-      if (last && last.value === referencePrice && now - last.time < 1) {
-        return prev;
-      }
-      const next = [...prev, { time: now, value: referencePrice }];
+      const next = [...prev, { time: nowSec, value: referencePrice }];
       const trimmed =
         next.length > MAX_POINTS_PER_MARKET
           ? next.slice(-MAX_POINTS_PER_MARKET)
@@ -164,7 +168,7 @@ export function useMidpointHistory(timeframe: Timeframe): {
       saveHistory(marketId, trimmed);
       return trimmed;
     });
-  }, [referencePrice, marketId]);
+  }, [dataUpdatedAt, referencePrice, marketId]);
 
   const points = useMemo(
     () => filterByTimeframe(history, timeframe),

@@ -116,11 +116,14 @@ export default function PairDetail({ pairSlug }: PairDetailProps) {
       {/* Chart + Venue comparison */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
         <div className="lg:col-span-2">
-          {/* Chart card with integrated timeframe tabs */}
-          <div className="bg-bg-surface border border-border rounded-lg overflow-hidden">
-            <div className="flex items-center justify-between p-3 md:p-4">
+          {/* Chart sits flat on the page background (no card wrapper),
+              matching the Uniswap reference. Timeframe tabs keep a
+              subtle bg-bg-surface pill so they still read as a toggle
+              group. */}
+          <div className="flex flex-col">
+            <div className="flex items-center justify-between mb-2">
               <span className="text-body-sm font-semibold">Price Chart</span>
-              <div className="flex gap-0.5 bg-bg-base rounded-md p-0.5">
+              <div className="flex gap-0.5 bg-bg-surface rounded-md p-0.5">
                 {TIMEFRAMES.map((tf) => (
                   <button
                     key={tf}

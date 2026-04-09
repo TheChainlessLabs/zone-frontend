@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useOrderBook } from "./useOrderBook";
 import { useMarket } from "./useMarket";
+import { decodePrice } from "@/lib/priceUtils";
+import type { OrderBookResponse } from "@/lib/apiTypes";
 import {
   filterByTimeframe,
   type ChartPoint,
@@ -12,7 +14,7 @@ import {
 /**
  * Chart data source for the /trade and /trade/pair pages.
  *
- * **Why midpoint instead of backend trades?**
+ * **Why a reference price instead of backend trades?**
  * The Omega sequencer is a deterministic state machine with no wall clock,
  * so `trade.timestamp` is a monotonic counter (`AtomicU64::fetch_add(1)` in
  * `omega-markets/crates/engine/src/sequencer.rs`) rather than Unix epoch
@@ -22,13 +24,21 @@ import {
  * also absent on quiet or freshly-seeded markets, which would leave the
  * chart blank forever.
  *
- * Instead, we derive price history from the live midpoint that
+ * Instead we derive price history from the live order book that
  * `useOrderBook()` already polls every 5 s, stamping each observation
- * with `Math.floor(Date.now() / 1000)` on the client. This guarantees:
+ * with `Math.floor(Date.now() / 1000)` on the client.
  *
+ * The observed value is a **reference price** computed via
+ * {@link computeReferencePrice}: the bid/ask midpoint when both sides
+ * exist, otherwise the single available side. This handles the
+ * freshly-seeded / low-liquidity case where only bids or only asks
+ * are present in the book — without the fallback the chart would be
+ * stuck on its empty state until both sides filled.
+ *
+ * Guarantees:
  *   1. Real Unix epoch timestamps → correct wall-clock filtering and axis labels
- *   2. Always-available data — the chart is populated as soon as the
- *      order book returns a valid midpoint, not only after a trade fills
+ *   2. Always-available data — the chart populates as soon as the book
+ *      has **any** orders on either side, not only when a trade fills
  *   3. Continuity across navigation within a tab via `sessionStorage`
  *
  * Each market has its own buffer; switching markets loads the previously
@@ -78,13 +88,43 @@ function saveHistory(marketId: number, points: ChartPoint[]): void {
   }
 }
 
+/**
+ * Compute a reference price from the order book with a graceful fallback
+ * for one-sided books:
+ *
+ *   - Both sides present → mid of best bid and best ask (classic midpoint)
+ *   - Only bids present  → best bid (the highest price anyone wants to buy at)
+ *   - Only asks present  → best ask (the lowest price anyone wants to sell at)
+ *   - Book empty         → null (chart stays in its "collecting" state)
+ *
+ * Falling back to one-sided data keeps the chart alive on freshly seeded
+ * or low-liquidity markets where one side of the book hasn't populated
+ * yet. Without this, `useOrderBook()` returns `midpoint === null` whenever
+ * either side is missing and the chart would be stuck on the empty state
+ * indefinitely.
+ */
+function computeReferencePrice(
+  book: OrderBookResponse | undefined,
+): number | null {
+  if (!book) return null;
+  const bestBidEntry = book.bids[0];
+  const bestAskEntry = book.asks[0];
+  const bestBid = bestBidEntry ? decodePrice(bestBidEntry.price) : null;
+  const bestAsk = bestAskEntry ? decodePrice(bestAskEntry.price) : null;
+  if (bestBid != null && bestAsk != null) return (bestBid + bestAsk) / 2;
+  if (bestBid != null) return bestBid;
+  if (bestAsk != null) return bestAsk;
+  return null;
+}
+
 export function useMidpointHistory(timeframe: Timeframe): {
   points: ChartPoint[];
   isLoading: boolean;
   isError: boolean;
 } {
   const { marketId } = useMarket();
-  const { midpoint, isLoading, isError } = useOrderBook();
+  const { book, isLoading, isError } = useOrderBook();
+  const referencePrice = useMemo(() => computeReferencePrice(book), [book]);
 
   // Reload buffer whenever the active market changes.
   const [history, setHistory] = useState<ChartPoint[]>(() =>
@@ -94,27 +134,29 @@ export function useMidpointHistory(timeframe: Timeframe): {
     setHistory(loadHistory(marketId));
   }, [marketId]);
 
-  // Append a new observation each time the midpoint changes. Dedupe by
-  // second (to stay monotonic in lightweight-charts) and by identical value
-  // (to avoid an ever-growing buffer when nothing is moving).
+  // Append a new observation each time the reference price changes.
+  // Dedupe by second (to stay monotonic in lightweight-charts) and by
+  // identical value (to avoid an ever-growing buffer when nothing is
+  // moving). When the book is entirely empty, `referencePrice` is null
+  // and we simply don't append — the UI stays in its "collecting" state.
   useEffect(() => {
-    if (midpoint == null || !Number.isFinite(midpoint)) return;
+    if (referencePrice == null || !Number.isFinite(referencePrice)) return;
     setHistory((prev) => {
       const now = Math.floor(Date.now() / 1000);
       const last = prev[prev.length - 1];
       if (last && last.time === now) {
         // Same-second update — overwrite the latest value so the chart
-        // tracks the most recent midpoint within each second bucket.
-        if (last.value === midpoint) return prev;
+        // tracks the most recent reference price within each second bucket.
+        if (last.value === referencePrice) return prev;
         const next = prev.slice(0, -1);
-        next.push({ time: now, value: midpoint });
+        next.push({ time: now, value: referencePrice });
         saveHistory(marketId, next);
         return next;
       }
-      if (last && last.value === midpoint && now - last.time < 1) {
+      if (last && last.value === referencePrice && now - last.time < 1) {
         return prev;
       }
-      const next = [...prev, { time: now, value: midpoint }];
+      const next = [...prev, { time: now, value: referencePrice }];
       const trimmed =
         next.length > MAX_POINTS_PER_MARKET
           ? next.slice(-MAX_POINTS_PER_MARKET)
@@ -122,7 +164,7 @@ export function useMidpointHistory(timeframe: Timeframe): {
       saveHistory(marketId, trimmed);
       return trimmed;
     });
-  }, [midpoint, marketId]);
+  }, [referencePrice, marketId]);
 
   const points = useMemo(
     () => filterByTimeframe(history, timeframe),

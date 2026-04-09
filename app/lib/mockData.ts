@@ -40,6 +40,7 @@ function generateTrades(): Trade[] {
     const size = sizes[i];
     return {
       time: time.toLocaleTimeString("en-US", { hour12: false }),
+      timestamp: Math.floor(time.getTime() / 1000),
       pair: "EUR/USD",
       price: +(1.0845 + Math.random() * 0.002).toFixed(4),
       size,

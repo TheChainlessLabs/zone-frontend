@@ -1,19 +1,32 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { mockPairs, mockMarketPrices } from "@/lib/mockData";
 import { useMarket } from "@/lib/hooks/useMarket";
 import { PAIR_MARKET_IDS } from "@/lib/marketIds";
+import { TIMEFRAMES, type Timeframe } from "@/lib/chartData";
+import { useTradePoints } from "@/lib/hooks/useTradePoints";
 
-const timeframes = ["1H", "4H", "1D", "1W", "1M"] as const;
+// NeonPriceChart uses lightweight-charts which touches `document` on init —
+// must be loaded client-only via next/dynamic to stay out of the SSR bundle.
+const NeonPriceChart = dynamic(() => import("./NeonPriceChart"), {
+  ssr: false,
+  loading: () => (
+    <div className="h-full w-full flex items-center justify-center">
+      <span className="text-text-muted text-body-sm">Loading chart…</span>
+    </div>
+  ),
+});
 
 interface PairDetailProps {
   pairSlug: string;
 }
 
 export default function PairDetail({ pairSlug }: PairDetailProps) {
-  const [timeframe, setTimeframe] = useState<string>("1D");
+  const [timeframe, setTimeframe] = useState<Timeframe>("1D");
+  const { points, isLoading } = useTradePoints(timeframe);
   const { setMarketId } = useMarket();
   const pairName = pairSlug.replace("-", "/");
   const pair = mockPairs.find((p) => p.pair === pairName) ?? mockPairs[0];
@@ -70,7 +83,7 @@ export default function PairDetail({ pairSlug }: PairDetailProps) {
             <div className="flex items-center justify-between p-3 md:p-4">
               <span className="text-body-sm font-semibold">Price Chart</span>
               <div className="flex gap-0.5 bg-bg-base rounded-md p-0.5">
-                {timeframes.map((tf) => (
+                {TIMEFRAMES.map((tf) => (
                   <button
                     key={tf}
                     onClick={() => setTimeframe(tf)}
@@ -79,14 +92,26 @@ export default function PairDetail({ pairSlug }: PairDetailProps) {
                         ? "bg-bg-elevated text-text-primary"
                         : "text-text-muted hover:text-text-secondary"
                     }`}
+                    aria-pressed={timeframe === tf}
                   >
                     {tf}
                   </button>
                 ))}
               </div>
             </div>
-            <div className="flex items-center justify-center aspect-[2/1] md:aspect-[3/1]">
-              <span className="text-text-muted text-body-sm">TradingView Chart</span>
+            <div
+              className="relative aspect-[2/1] md:aspect-[3/1]"
+              data-testid="price-chart"
+            >
+              {points.length === 0 ? (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-text-muted text-body-sm">
+                    {isLoading ? "Loading chart…" : "Waiting for first trade…"}
+                  </span>
+                </div>
+              ) : (
+                <NeonPriceChart points={points} />
+              )}
             </div>
           </div>
         </div>

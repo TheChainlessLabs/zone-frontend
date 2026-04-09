@@ -16,7 +16,10 @@ export interface OrderBookEntry {
 }
 
 export interface Trade {
+  /** Display time, already formatted for the recent-trades list. */
   time: string;
+  /** Unix timestamp in seconds — used by the price chart. */
+  timestamp: number;
   pair: string;
   price: number;
   size: number;

@@ -15,6 +15,7 @@ function mapTrade(t: ApiTrade): Trade {
   const size = decodeQuantity(t.quantity, 6);
   return {
     time: new Date(t.timestamp * 1000).toLocaleTimeString("en-US", { hour12: false }),
+    timestamp: t.timestamp,
     pair: MARKET_NAMES[t.market_id] ?? `Market ${t.market_id}`,
     price: decodePrice(t.price),
     size,

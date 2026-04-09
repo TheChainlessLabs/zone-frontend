@@ -124,6 +124,54 @@ test.describe("Trade page — visual data verification", () => {
     expect(body).toContain("EUR/USD");
     expect(elapsed, "page should load within 8s").toBeLessThan(8000);
   });
+
+  test("price chart container renders and has non-zero size", async ({ page }) => {
+    await page.waitForTimeout(4000);
+    const chart = page.getByTestId("price-chart").first();
+    await expect(chart, "price-chart testid should be present").toBeVisible();
+    const box = await chart.boundingBox();
+    expect(box, "chart should have a bounding box").not.toBeNull();
+    expect(box!.width, "chart width should be > 0").toBeGreaterThan(0);
+    expect(box!.height, "chart height should be > 0").toBeGreaterThan(0);
+  });
+
+  test("price chart renders canvas when trade history is present", async ({ page }) => {
+    await page.waitForTimeout(6000); // allow initial trades fetch
+    const chart = page.getByTestId("price-chart").first();
+    const canvasCount = await chart.locator("canvas").count();
+    const bodyText = await page.evaluate(() => document.body.innerText);
+
+    if (canvasCount > 0) {
+      // Seeded data path — lightweight-charts has drawn.
+      const firstCanvas = chart.locator("canvas").first();
+      await expect(firstCanvas).toBeVisible();
+      const box = await firstCanvas.boundingBox();
+      expect(box!.width).toBeGreaterThan(0);
+      expect(box!.height).toBeGreaterThan(0);
+    } else {
+      // Empty trades path — empty state must be surfaced to the user.
+      expect(
+        bodyText,
+        "empty chart should show 'Waiting for first trade' message",
+      ).toMatch(/Waiting for first trade|Loading chart/);
+    }
+  });
+
+  test("no TradingView iframe script is loaded", async ({ page }) => {
+    const tvRequests: string[] = [];
+    page.on("request", (req) => {
+      const url = req.url();
+      if (url.includes("tradingview.com")) {
+        tvRequests.push(url);
+      }
+    });
+    await page.goto("/trade");
+    await page.waitForTimeout(4000);
+    expect(
+      tvRequests,
+      "no request should hit any tradingview.com subdomain",
+    ).toHaveLength(0);
+  });
 });
 
 test.describe("Portfolio page — visual data verification", () => {

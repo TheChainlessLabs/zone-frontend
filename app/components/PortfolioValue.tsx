@@ -16,15 +16,11 @@ export default function PortfolioValue() {
   const total = balances.reduce((sum, b) => sum + b.total, 0);
 
   if (isError) {
-    return (
-      <div className="bg-bg-surface border border-border rounded-lg">
-        <ErrorState message="Failed to load portfolio data." />
-      </div>
-    );
+    return <ErrorState message="Failed to load portfolio data." />;
   }
 
   return (
-    <div className="bg-bg-surface border border-border rounded-lg p-6">
+    <div className="flex flex-col">
       <span className="text-label-uppercase text-text-muted">Total Portfolio Value</span>
       <div className="mt-2 flex items-baseline gap-4">
         {isLoading ? (

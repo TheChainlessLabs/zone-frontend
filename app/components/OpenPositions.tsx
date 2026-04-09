@@ -4,8 +4,8 @@ import EmptyState from "@/components/EmptyState";
 
 export default function OpenPositions() {
   return (
-    <div className="bg-bg-surface border border-border rounded-lg overflow-hidden">
-      <div className="flex items-center h-[36px] px-3 border-b border-border">
+    <div className="flex flex-col">
+      <div className="flex items-center h-[36px] pb-2">
         <span className="text-body-sm font-medium">Open Positions</span>
       </div>
 
@@ -20,7 +20,7 @@ export default function OpenPositions() {
         <>
           {/* Desktop table */}
           <div className="hidden md:block">
-            <div className="flex items-center h-[33px] px-3 text-label-uppercase text-text-muted">
+            <div className="flex items-center h-[33px] border-b border-border-subtle text-label-uppercase text-text-muted">
               <span className="w-[16%]">Pair</span>
               <span className="w-[12%]">Side</span>
               <span className="w-[18%] text-right">Size</span>
@@ -32,7 +32,7 @@ export default function OpenPositions() {
             {openPositions.map((pos, i) => (
               <div
                 key={i}
-                className="flex items-center h-[40px] px-3 text-body-sm font-mono font-tabular hover:bg-bg-elevated transition-fast"
+                className="flex items-center h-[40px] text-body-sm font-mono font-tabular hover:bg-bg-surface transition-fast rounded-md -mx-2 px-2"
               >
                 <span className="w-[16%] font-display text-text-primary">{pos.pair}</span>
                 <span className={`w-[12%] font-display capitalize ${pos.side === "long" ? "text-success" : "text-error"}`}>

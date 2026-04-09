@@ -24,16 +24,49 @@ interface PairDetailProps {
   pairSlug: string;
 }
 
+/**
+ * Chart body for an available market. Extracted into its own component so
+ * `useMidpointHistory` (which transitively drives `useOrderBook` polling)
+ * only runs when the page's pair actually maps to a backend market —
+ * otherwise /trade/pair/gbp-usd would poll EUR/USD in the background and
+ * pollute that market's sessionStorage history.
+ */
+function AvailableMarketChart({ timeframe }: { timeframe: Timeframe }) {
+  const { points, isLoading, isError } = useMidpointHistory(timeframe);
+
+  // Priority: keep the chart visible if we have cached points, even if
+  // the latest refetch errored. Only escalate to the hard error state
+  // when there is nothing to draw yet.
+  if (points.length > 0) {
+    return <NeonPriceChart points={points} />;
+  }
+  if (isError) {
+    return (
+      <div className="absolute inset-0 flex items-center justify-center px-4 text-center">
+        <span className="text-error text-body-sm">
+          Chart unavailable — could not fetch the order book
+        </span>
+      </div>
+    );
+  }
+  return (
+    <div className="absolute inset-0 flex items-center justify-center">
+      <span className="text-text-muted text-body-sm">
+        {isLoading ? "Loading chart…" : "Collecting midpoint history…"}
+      </span>
+    </div>
+  );
+}
+
 export default function PairDetail({ pairSlug }: PairDetailProps) {
   const [timeframe, setTimeframe] = useState<Timeframe>("1D");
-  const { points, isLoading, isError } = useMidpointHistory(timeframe);
   const { setMarketId } = useMarket();
   const pairName = pairSlug.replace("-", "/");
   const pair = mockPairs.find((p) => p.pair === pairName) ?? mockPairs[0];
-  // True when the pair is present in mock metadata but has no backend
-  // market — in that case the chart must NOT render points from whatever
-  // market the MarketProvider is currently pointing at (which would be
-  // EUR/USD as a default), because that would silently mislabel the data.
+  // True when the pair is present in mock metadata AND has a backend
+  // market. When false we must not mount `AvailableMarketChart`, because
+  // that would start polling another market's order book in the
+  // background and silently mislabel the cached chart history.
   const marketAvailable = PAIR_MARKET_IDS[pair.pair] !== undefined;
 
   useEffect(() => {
@@ -92,7 +125,8 @@ export default function PairDetail({ pairSlug }: PairDetailProps) {
                   <button
                     key={tf}
                     onClick={() => setTimeframe(tf)}
-                    className={`px-2 md:px-3 h-[26px] text-[11px] md:text-body-sm font-medium rounded-sm transition-fast ${
+                    disabled={!marketAvailable}
+                    className={`px-2 md:px-3 h-[26px] text-[11px] md:text-body-sm font-medium rounded-sm transition-fast disabled:opacity-40 disabled:cursor-not-allowed ${
                       timeframe === tf
                         ? "bg-bg-elevated text-text-primary"
                         : "text-text-muted hover:text-text-secondary"
@@ -108,26 +142,14 @@ export default function PairDetail({ pairSlug }: PairDetailProps) {
               className="relative aspect-[2/1] md:aspect-[3/1]"
               data-testid="price-chart"
             >
-              {!marketAvailable ? (
+              {marketAvailable ? (
+                <AvailableMarketChart timeframe={timeframe} />
+              ) : (
                 <div className="absolute inset-0 flex items-center justify-center px-4 text-center">
                   <span className="text-text-muted text-body-sm">
                     {pair.pair} is not yet listed on Omega
                   </span>
                 </div>
-              ) : isError ? (
-                <div className="absolute inset-0 flex items-center justify-center px-4 text-center">
-                  <span className="text-error text-body-sm">
-                    Chart unavailable — could not fetch the order book
-                  </span>
-                </div>
-              ) : points.length === 0 ? (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-text-muted text-body-sm">
-                    {isLoading ? "Loading chart…" : "Collecting midpoint history…"}
-                  </span>
-                </div>
-              ) : (
-                <NeonPriceChart points={points} />
               )}
             </div>
           </div>

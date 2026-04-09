@@ -56,22 +56,31 @@ export default function PriceChart({ pair = "EUR/USD" }: PriceChartProps) {
         </div>
       </div>
 
-      {/* Chart body */}
+      {/* Chart body
+          Priority:
+            1. Render the chart whenever we have cached points — even if
+               the latest refetch errored — so a transient backend hiccup
+               doesn't blank out the user's price history. StaleDataOverlay
+               (wrapping this component on /trade) handles the "data may
+               be stale" surface.
+            2. Show the hard error state only when there is nothing to draw.
+            3. Fall back to the empty/loading state otherwise.
+      */}
       <div className="aspect-video relative">
-        {isError ? (
+        {points.length > 0 ? (
+          <NeonPriceChart points={points} />
+        ) : isError ? (
           <div className="absolute inset-0 flex items-center justify-center px-4 text-center">
             <span className="text-error text-body-sm">
               Chart unavailable — could not fetch the order book
             </span>
           </div>
-        ) : points.length === 0 ? (
+        ) : (
           <div className="absolute inset-0 flex items-center justify-center">
             <span className="text-text-muted text-body-sm">
               {isLoading ? "Loading chart…" : "Collecting midpoint history…"}
             </span>
           </div>
-        ) : (
-          <NeonPriceChart points={points} />
         )}
       </div>
     </div>

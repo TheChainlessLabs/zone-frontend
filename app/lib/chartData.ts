@@ -55,19 +55,34 @@ export function tradesToPoints(trades: RawTradeForChart[]): ChartPoint[] {
 }
 
 /**
- * Keep only points within the timeframe window ending at `referenceSec`.
+ * Any value >= this threshold (2001-09-09 UTC) is treated as a real Unix
+ * epoch timestamp. Anything smaller is interpreted as a monotonic sequencer
+ * counter. See `filterByTimeframe` below for why this distinction matters.
+ */
+export const UNIX_EPOCH_THRESHOLD_SEC = 1_000_000_000;
+
+/**
+ * Keep only points within the timeframe window ending at the chosen anchor.
  *
- * When `referenceSec` is omitted, the window is anchored to the **newest
- * point in the dataset** rather than wall-clock time. This is deliberate:
- * the Omega backend's trade timestamps are a monotonic sequencer counter
- * rather than Unix seconds (see `omega-markets/crates/core`), so using
- * `Date.now()` would compare values from two different clocks and drop
- * every point. Anchoring to the newest trade gives correct behavior
- * regardless of whether the backend emits real Unix epochs or a
- * monotonic tick — in both cases "1H" means "the last `windowSec`
- * units of clock the trade stream itself is using".
+ * ### Anchor selection
+ * - If the caller passes `referenceSec`, that value is used directly (tests).
+ * - Otherwise, the anchor depends on whether the newest point "looks like" a
+ *   Unix epoch (`>= UNIX_EPOCH_THRESHOLD_SEC`):
+ *   - **Unix epoch path**: anchor to `Math.floor(Date.now() / 1000)`.
+ *     "1H" means the last hour of wall-clock time, so quiet markets
+ *     correctly show an empty window when no recent trades exist.
+ *   - **Monotonic counter path**: anchor to the newest point in the dataset.
+ *     The Omega backend's trade `timestamp` field is a sequencer counter
+ *     (see `omega-markets/crates/engine/src/sequencer.rs` `next_timestamp`
+ *     — a plain `AtomicU64::fetch_add(1)`) rather than Unix seconds,
+ *     because the deterministic state machine deliberately has no wall
+ *     clock. Without this branch `Date.now()` would compare the web
+ *     client's real time against small counter values (1, 2, 3 …) and
+ *     drop every point.
  *
- * Pass `referenceSec` explicitly in tests that want a deterministic cutoff.
+ * This hybrid keeps the chart visually functional on the current backend
+ * while also giving correct "last hour / last day" semantics if the backend
+ * is ever migrated to Unix timestamps, with zero config changes required.
  */
 export function filterByTimeframe(
   points: ChartPoint[],
@@ -76,11 +91,24 @@ export function filterByTimeframe(
 ): ChartPoint[] {
   if (points.length === 0) return [];
   const windowSec = TIMEFRAME_WINDOW_SEC[timeframe];
-  // Use the newest point in the dataset as the anchor when no explicit
-  // reference is provided. Compute via reduce so unsorted input still works.
-  const newest =
-    referenceSec ??
-    points.reduce((max, p) => (p.time > max ? p.time : max), -Infinity);
-  const cutoff = newest - windowSec;
+
+  // Compute the newest point defensively so unsorted input still works.
+  const newest = points.reduce(
+    (max, p) => (p.time > max ? p.time : max),
+    -Infinity,
+  );
+
+  let anchor: number;
+  if (referenceSec !== undefined) {
+    anchor = referenceSec;
+  } else if (newest >= UNIX_EPOCH_THRESHOLD_SEC) {
+    // Real Unix epoch — anchor to wall clock so "1H" = last hour.
+    anchor = Math.floor(Date.now() / 1000);
+  } else {
+    // Monotonic sequencer counter — anchor to the newest counter value.
+    anchor = newest;
+  }
+
+  const cutoff = anchor - windowSec;
   return points.filter((p) => p.time >= cutoff);
 }

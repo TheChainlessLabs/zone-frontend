@@ -23,7 +23,7 @@ interface PriceChartProps {
 
 export default function PriceChart({ pair = "EUR/USD" }: PriceChartProps) {
   const [timeframe, setTimeframe] = useState<Timeframe>("1D");
-  const { points, isLoading } = useTradePoints(timeframe);
+  const { points, isLoading, isError } = useTradePoints(timeframe);
 
   const [base, quote] = pair.split("/");
 
@@ -58,7 +58,13 @@ export default function PriceChart({ pair = "EUR/USD" }: PriceChartProps) {
 
       {/* Chart body */}
       <div className="aspect-video relative">
-        {points.length === 0 ? (
+        {isError ? (
+          <div className="absolute inset-0 flex items-center justify-center px-4 text-center">
+            <span className="text-error text-body-sm">
+              Chart unavailable — could not fetch trades
+            </span>
+          </div>
+        ) : points.length === 0 ? (
           <div className="absolute inset-0 flex items-center justify-center">
             <span className="text-text-muted text-body-sm">
               {isLoading ? "Loading chart…" : "Waiting for first trade…"}

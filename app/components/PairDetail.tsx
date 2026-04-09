@@ -26,10 +26,15 @@ interface PairDetailProps {
 
 export default function PairDetail({ pairSlug }: PairDetailProps) {
   const [timeframe, setTimeframe] = useState<Timeframe>("1D");
-  const { points, isLoading } = useTradePoints(timeframe);
+  const { points, isLoading, isError } = useTradePoints(timeframe);
   const { setMarketId } = useMarket();
   const pairName = pairSlug.replace("-", "/");
   const pair = mockPairs.find((p) => p.pair === pairName) ?? mockPairs[0];
+  // True when the pair is present in mock metadata but has no backend
+  // market — in that case the chart must NOT render points from whatever
+  // market the MarketProvider is currently pointing at (which would be
+  // EUR/USD as a default), because that would silently mislabel the data.
+  const marketAvailable = PAIR_MARKET_IDS[pair.pair] !== undefined;
 
   useEffect(() => {
     const id = PAIR_MARKET_IDS[pair.pair];
@@ -103,7 +108,19 @@ export default function PairDetail({ pairSlug }: PairDetailProps) {
               className="relative aspect-[2/1] md:aspect-[3/1]"
               data-testid="price-chart"
             >
-              {points.length === 0 ? (
+              {!marketAvailable ? (
+                <div className="absolute inset-0 flex items-center justify-center px-4 text-center">
+                  <span className="text-text-muted text-body-sm">
+                    {pair.pair} is not yet listed on Omega
+                  </span>
+                </div>
+              ) : isError ? (
+                <div className="absolute inset-0 flex items-center justify-center px-4 text-center">
+                  <span className="text-error text-body-sm">
+                    Chart unavailable — could not fetch trades
+                  </span>
+                </div>
+              ) : points.length === 0 ? (
                 <div className="absolute inset-0 flex items-center justify-center">
                   <span className="text-text-muted text-body-sm">
                     {isLoading ? "Loading chart…" : "Waiting for first trade…"}

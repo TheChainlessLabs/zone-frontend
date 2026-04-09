@@ -22,10 +22,10 @@ export default function BatchExplorer() {
   const displayed = mockBatches.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
   return (
-    <div className="bg-bg-surface border border-border rounded-lg">
+    <div className="flex flex-col">
       {/* Desktop table */}
       <div className="hidden md:block">
-        <div className="flex h-[33px] items-center px-4 text-label-uppercase text-text-muted">
+        <div className="flex h-[33px] items-center border-b border-border-subtle text-label-uppercase text-text-muted">
           <span className="w-[20%]">Batch ID</span>
           <span className="w-[15%] text-right">Tx Count</span>
           <span className="w-[18%] text-right">Status</span>
@@ -36,7 +36,7 @@ export default function BatchExplorer() {
           <Link
             key={batch.id}
             href={`/explorer/batch/${batch.id}`}
-            className="flex h-[40px] items-center px-4 text-body-sm hover:bg-bg-elevated transition-fast"
+            className="flex h-[40px] items-center text-body-sm hover:bg-bg-surface transition-fast rounded-md"
           >
             <span className="w-[20%] text-accent hover:text-accent-hover transition-fast">
               {batch.id}
@@ -86,7 +86,7 @@ export default function BatchExplorer() {
       </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-between px-4 h-[44px] border-t border-border text-body-sm">
+      <div className="flex items-center justify-between h-[44px] border-t border-border-subtle text-body-sm mt-2">
         <span className="text-text-muted">
           Showing {page * PAGE_SIZE + 1}-{Math.min((page + 1) * PAGE_SIZE, mockBatches.length)} of {totalBatches.toLocaleString()} batches
         </span>

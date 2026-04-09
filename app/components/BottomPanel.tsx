@@ -40,9 +40,9 @@ export default function BottomPanel({ isLoading }: { isLoading?: boolean }) {
   const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>("Positions");
 
   return (
-    <div className="bg-bg-surface border border-border rounded-lg overflow-hidden flex flex-col min-h-0">
+    <div className="flex flex-col min-h-0">
       {/* Tab bar */}
-      <div className="flex gap-1 p-2 border-b border-border shrink-0 overflow-x-auto no-scrollbar">
+      <div className="flex gap-1 pb-2 border-b border-border-subtle shrink-0 overflow-x-auto no-scrollbar">
         {tabs.map((tab) => (
           <button
             key={tab}

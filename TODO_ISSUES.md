@@ -23,6 +23,9 @@ Swap the heavy `s3.tradingview.com` iframe widget for a native canvas area chart
 ### FE-055: Seed neon chart with historical price data from a backend source — [#52](https://github.com/TheChainlessLabs/omega-interface/issues/52) (blocked on backend)
 Follow-up to FE-054. The new chart only caches points the client has observed since the session began, so fresh tabs start empty. Needs a proper `/markets/{id}/midpoint-history` endpoint on `omega-markets` (or equivalent) to backfill the series on first load. Blocked on backend work — ping Pablo.
 
+### FE-057: Flatten card backgrounds app-wide — [#54](https://github.com/TheChainlessLabs/omega-interface/issues/54) (in progress)
+Remove unnecessary `bg-bg-surface` / `bg-bg-elevated` card wrappers from hero content and data tables so the app matches the Uniswap reference. Keeps cards only for interactive tiles, forms, modals, alerts. Decision rules documented in `design-system/density.md`. Branched off FE-054, depends on #51 merging first.
+
 ## NEW — Not on Linear (limit reached)
 
 ### FE-052: Full button/interaction audit

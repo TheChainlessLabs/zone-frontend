@@ -28,16 +28,15 @@ export default function PriceChart({ pair = "EUR/USD" }: PriceChartProps) {
   const [base, quote] = pair.split("/");
 
   return (
-    <div
-      className="bg-bg-elevated rounded-lg overflow-hidden flex flex-col"
-      data-testid="price-chart"
-    >
-      {/* Chart header with timeframe selector */}
-      <div className="flex items-center justify-between h-[44px] px-4 border-b border-border-subtle">
+    <div className="flex flex-col" data-testid="price-chart">
+      {/* Chart header with timeframe selector. The chart now sits flat on
+          the page background (no card wrapper), so the header is aligned
+          to the chart body via padding/margin alone. */}
+      <div className="flex items-center justify-between h-[32px] mb-2">
         <span className="text-body-sm font-semibold text-text-primary">
           {base} / {quote}
         </span>
-        <div className="flex gap-0.5 bg-bg-base rounded-md p-0.5">
+        <div className="flex gap-0.5 bg-bg-surface rounded-md p-0.5">
           {TIMEFRAMES.map((tf) => (
             <button
               key={tf}

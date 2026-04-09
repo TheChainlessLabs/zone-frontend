@@ -40,8 +40,8 @@ export default function TransactionDetail({ txId }: TransactionDetailProps) {
         </span>
       </div>
 
-      {/* TX details card */}
-      <div className="bg-bg-surface border border-border rounded-lg p-4 md:p-6">
+      {/* TX details */}
+      <div className="flex flex-col">
         <h3 className="text-label-uppercase text-text-muted mb-4">Transaction Details</h3>
         <div className="flex flex-col gap-3">
           <Row label="Pair" value={tx.pair} />
@@ -68,8 +68,8 @@ export default function TransactionDetail({ txId }: TransactionDetailProps) {
         <StatCard label="Slippage" value={`${tx.slippage.toFixed(2)}%`} />
       </div>
 
-      {/* Batch info card */}
-      <div className="bg-bg-surface border border-border rounded-lg p-4 md:p-6">
+      {/* Batch info */}
+      <div className="flex flex-col">
         <h3 className="text-label-uppercase text-text-muted mb-4">Batch</h3>
         <div className="flex flex-col gap-3">
           <div className="flex justify-between text-body-sm">

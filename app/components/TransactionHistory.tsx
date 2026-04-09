@@ -33,8 +33,8 @@ export default function TransactionHistory() {
   });
 
   return (
-    <div className="bg-bg-surface border border-border rounded-lg overflow-hidden">
-      <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+    <div className="flex flex-col">
+      <div className="pb-3 flex items-center justify-between">
         <h3 className="text-body-sm font-semibold">Transaction History</h3>
         <div className="flex gap-2">
           <select
@@ -67,7 +67,7 @@ export default function TransactionHistory() {
         <>
           {/* Desktop table */}
           <div className="hidden md:block">
-            <div className="flex items-center h-[33px] px-4 text-label-uppercase text-text-muted">
+            <div className="flex items-center h-[33px] border-b border-border-subtle text-label-uppercase text-text-muted">
               <span className="w-[14%]">Type</span>
               <span className="w-[20%] text-right">Amount</span>
               <span className="w-[14%] text-right">Token</span>
@@ -78,7 +78,7 @@ export default function TransactionHistory() {
             {filtered.map((tx) => (
               <div
                 key={tx.id}
-                className="flex items-center px-4 h-[40px] text-body-sm hover:bg-bg-elevated transition-fast"
+                className="flex items-center h-[40px] text-body-sm hover:bg-bg-surface transition-fast rounded-md"
               >
                 <span className={`w-[14%] capitalize font-medium ${typeColors[tx.type]}`}>
                   {tx.type}

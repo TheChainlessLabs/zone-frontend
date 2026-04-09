@@ -48,9 +48,9 @@ export default function WithdrawalDetail({ withdrawalId }: WithdrawalDetailProps
         </span>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
         {/* Withdrawal details */}
-        <div className="bg-bg-surface border border-border rounded-lg p-4 md:p-6">
+        <div className="flex flex-col">
           <h3 className="text-label-uppercase text-text-muted mb-4">Withdrawal Details</h3>
           <div className="flex flex-col gap-3">
             <Row label="Amount" value={`${wd.amount.toLocaleString("en-US", { minimumFractionDigits: 2 })} ${wd.token}`} mono />
@@ -68,7 +68,7 @@ export default function WithdrawalDetail({ withdrawalId }: WithdrawalDetailProps
         </div>
 
         {/* Timeline */}
-        <div className="bg-bg-surface border border-border rounded-lg p-4 md:p-6">
+        <div className="flex flex-col">
           <h3 className="text-label-uppercase text-text-muted mb-4">Timeline</h3>
           <div className="flex flex-col gap-0">
             {wd.timeline.map((step, i) => {

@@ -54,10 +54,10 @@ export default function BatchDetail({ batchId }: BatchDetailProps) {
         </span>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-        <div className="flex flex-col gap-4 md:gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
+        <div className="flex flex-col gap-6 md:gap-8">
           {/* Status Timeline */}
-          <div className="bg-bg-surface border border-border rounded-lg p-4 md:p-6">
+          <div className="flex flex-col">
             <h3 className="text-label-uppercase text-text-muted mb-4">Timeline</h3>
             <div className="flex flex-col gap-0">
               {timelineSteps.map((step, i) => {
@@ -105,7 +105,7 @@ export default function BatchDetail({ batchId }: BatchDetailProps) {
           </div>
 
           {/* Batch info */}
-          <div className="bg-bg-surface border border-border rounded-lg p-4 md:p-6">
+          <div className="flex flex-col">
             <h3 className="text-label-uppercase text-text-muted mb-4">Batch Info</h3>
             <div className="flex flex-col gap-3">
               <Row label="Transactions" value={String(batch.txCount)} mono />
@@ -138,8 +138,8 @@ export default function BatchDetail({ batchId }: BatchDetailProps) {
           </div>
 
           {/* Desktop table */}
-          <div className="hidden md:block bg-bg-surface border border-border rounded-lg overflow-hidden">
-            <div className="flex items-center h-[33px] px-4 text-label-uppercase text-text-muted">
+          <div className="hidden md:block">
+            <div className="flex items-center h-[33px] border-b border-border-subtle text-label-uppercase text-text-muted">
               <span className="w-[25%]">Tx ID</span>
               <span className="w-[15%]">Pair</span>
               <span className="w-[12%]">Side</span>
@@ -150,7 +150,7 @@ export default function BatchDetail({ batchId }: BatchDetailProps) {
               <Link
                 key={tx.id}
                 href={`/explorer/tx/${tx.id}`}
-                className="flex items-center px-4 h-[40px] text-body-sm font-mono font-tabular hover:bg-bg-elevated transition-fast"
+                className="flex items-center h-[40px] text-body-sm font-mono font-tabular hover:bg-bg-surface transition-fast rounded-md"
               >
                 <span className="w-[25%] font-display text-accent">{tx.id}</span>
                 <span className="w-[15%] font-display text-text-primary">{tx.pair}</span>

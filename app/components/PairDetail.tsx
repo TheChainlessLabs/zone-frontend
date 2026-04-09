@@ -7,7 +7,7 @@ import { mockPairs, mockMarketPrices } from "@/lib/mockData";
 import { useMarket } from "@/lib/hooks/useMarket";
 import { PAIR_MARKET_IDS } from "@/lib/marketIds";
 import { TIMEFRAMES, type Timeframe } from "@/lib/chartData";
-import { useTradePoints } from "@/lib/hooks/useTradePoints";
+import { useMidpointHistory } from "@/lib/hooks/useMidpointHistory";
 
 // NeonPriceChart uses lightweight-charts which touches `document` on init —
 // must be loaded client-only via next/dynamic to stay out of the SSR bundle.
@@ -26,7 +26,7 @@ interface PairDetailProps {
 
 export default function PairDetail({ pairSlug }: PairDetailProps) {
   const [timeframe, setTimeframe] = useState<Timeframe>("1D");
-  const { points, isLoading, isError } = useTradePoints(timeframe);
+  const { points, isLoading, isError } = useMidpointHistory(timeframe);
   const { setMarketId } = useMarket();
   const pairName = pairSlug.replace("-", "/");
   const pair = mockPairs.find((p) => p.pair === pairName) ?? mockPairs[0];
@@ -117,13 +117,13 @@ export default function PairDetail({ pairSlug }: PairDetailProps) {
               ) : isError ? (
                 <div className="absolute inset-0 flex items-center justify-center px-4 text-center">
                   <span className="text-error text-body-sm">
-                    Chart unavailable — could not fetch trades
+                    Chart unavailable — could not fetch the order book
                   </span>
                 </div>
               ) : points.length === 0 ? (
                 <div className="absolute inset-0 flex items-center justify-center">
                   <span className="text-text-muted text-body-sm">
-                    {isLoading ? "Loading chart…" : "Waiting for first trade…"}
+                    {isLoading ? "Loading chart…" : "Collecting midpoint history…"}
                   </span>
                 </div>
               ) : (

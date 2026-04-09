@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import dynamic from "next/dynamic";
-import { useTradePoints } from "@/lib/hooks/useTradePoints";
+import { useMidpointHistory } from "@/lib/hooks/useMidpointHistory";
 import { TIMEFRAMES, type Timeframe } from "@/lib/chartData";
 
 // lightweight-charts touches `document` on construction, so NeonPriceChart
@@ -23,7 +23,7 @@ interface PriceChartProps {
 
 export default function PriceChart({ pair = "EUR/USD" }: PriceChartProps) {
   const [timeframe, setTimeframe] = useState<Timeframe>("1D");
-  const { points, isLoading, isError } = useTradePoints(timeframe);
+  const { points, isLoading, isError } = useMidpointHistory(timeframe);
 
   const [base, quote] = pair.split("/");
 
@@ -61,13 +61,13 @@ export default function PriceChart({ pair = "EUR/USD" }: PriceChartProps) {
         {isError ? (
           <div className="absolute inset-0 flex items-center justify-center px-4 text-center">
             <span className="text-error text-body-sm">
-              Chart unavailable — could not fetch trades
+              Chart unavailable — could not fetch the order book
             </span>
           </div>
         ) : points.length === 0 ? (
           <div className="absolute inset-0 flex items-center justify-center">
             <span className="text-text-muted text-body-sm">
-              {isLoading ? "Loading chart…" : "Waiting for first trade…"}
+              {isLoading ? "Loading chart…" : "Collecting midpoint history…"}
             </span>
           </div>
         ) : (

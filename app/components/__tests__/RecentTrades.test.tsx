@@ -41,8 +41,8 @@ describe("RecentTrades", () => {
   it("renders trade data when loaded", () => {
     mockUseTrades.mockReturnValue({
       trades: [
-        { time: "14:32:05", timestamp: 1710000000, pair: "EUR/USD", price: 1.0856, size: 125000, sizeFormatted: "€125K", side: "buy" as const },
-        { time: "14:32:17", timestamp: 1710000012, pair: "EUR/USD", price: 1.0854, size: 250000, sizeFormatted: "€250K", side: "sell" as const },
+        { time: "14:32:05", pair: "EUR/USD", price: 1.0856, size: 125000, sizeFormatted: "€125K", side: "buy" as const },
+        { time: "14:32:17", pair: "EUR/USD", price: 1.0854, size: 250000, sizeFormatted: "€250K", side: "sell" as const },
       ],
       isLoading: false,
       isError: false,
@@ -54,7 +54,7 @@ describe("RecentTrades", () => {
 
   it("wraps loaded content in animate-fadeIn", () => {
     mockUseTrades.mockReturnValue({
-      trades: [{ time: "14:32:05", timestamp: 1710000000, pair: "EUR/USD", price: 1.0856, size: 125000, side: "buy" as const }],
+      trades: [{ time: "14:32:05", pair: "EUR/USD", price: 1.0856, size: 125000, side: "buy" as const }],
       isLoading: false,
       isError: false,
     });

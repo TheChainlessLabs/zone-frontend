@@ -22,13 +22,13 @@ export default function PortfolioBalances() {
   }));
 
   return (
-    <div className="bg-bg-surface border border-border rounded-lg overflow-hidden">
-      <div className="px-4 py-3 border-b border-border">
+    <div className="flex flex-col">
+      <div className="pb-3">
         <h3 className="text-body-sm font-semibold">Balances</h3>
       </div>
 
       {/* Desktop table header */}
-      <div className="hidden md:flex items-center h-[33px] px-4 text-label-uppercase text-text-muted">
+      <div className="hidden md:flex items-center h-[33px] border-b border-border-subtle text-label-uppercase text-text-muted">
         <span className="w-[18%]">Token</span>
         <span className="w-[18%] text-right">Total</span>
         <span className="w-[18%] text-right">Available</span>
@@ -59,7 +59,7 @@ export default function PortfolioBalances() {
             {rows.map((bal) => (
               <div
                 key={bal.token}
-                className="flex items-center px-4 h-[40px] hover:bg-bg-elevated transition-fast"
+                className="flex items-center h-[40px] hover:bg-bg-surface transition-fast rounded-md -mx-2 px-2"
               >
                 <span className="w-[18%] flex items-center gap-2">
                   <span

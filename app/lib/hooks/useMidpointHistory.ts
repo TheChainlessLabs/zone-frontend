@@ -36,8 +36,14 @@ import {
  * `MAX_POINTS_PER_MARKET` to bound memory.
  */
 
-const MAX_POINTS_PER_MARKET = 10_000;
-const STORAGE_VERSION = 1;
+// At 5 s polling, 20_000 observations covers ~27.8 hours — comfortably more
+// than the longest exposed timeframe (1D = 24 h) so filterByTimeframe
+// always has enough history. Storage footprint: ~800 KB per market in
+// JSON form, well under the 5 MB sessionStorage budget most browsers
+// enforce. If a longer timeframe (1W, 1M) is ever exposed, this cap must
+// either scale with it or the buffer needs downsampling of older data.
+const MAX_POINTS_PER_MARKET = 20_000;
+const STORAGE_VERSION = 2;
 
 function storageKey(marketId: number): string {
   return `omega:chart:midpoint-history:v${STORAGE_VERSION}:${marketId}`;

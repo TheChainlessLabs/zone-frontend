@@ -9,23 +9,23 @@
  * format heuristics.
  */
 
-export type Timeframe = "1H" | "4H" | "1D" | "1W" | "1M";
+export type Timeframe = "1H" | "4H" | "1D";
 
-export const TIMEFRAMES: readonly Timeframe[] = [
-  "1H",
-  "4H",
-  "1D",
-  "1W",
-  "1M",
-] as const;
+/**
+ * Exposed timeframe tabs. We deliberately stop at 1D for now:
+ * `useMidpointHistory` stores at most `MAX_BUFFER_POINTS` observations
+ * (one per 5 s poll), which bounds real-time retention to a little over
+ * a day. Longer windows (1W, 1M) would silently truncate and mislead
+ * the user — they can be added once the chart has a server-side
+ * historical source to back them.
+ */
+export const TIMEFRAMES: readonly Timeframe[] = ["1H", "4H", "1D"] as const;
 
 /** Rolling window length in seconds for each timeframe. */
 export const TIMEFRAME_WINDOW_SEC: Record<Timeframe, number> = {
   "1H": 60 * 60,
   "4H": 4 * 60 * 60,
   "1D": 24 * 60 * 60,
-  "1W": 7 * 24 * 60 * 60,
-  "1M": 30 * 24 * 60 * 60,
 };
 
 /**

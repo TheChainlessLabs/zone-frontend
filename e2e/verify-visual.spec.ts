@@ -135,25 +135,32 @@ test.describe("Trade page — visual data verification", () => {
     expect(box!.height, "chart height should be > 0").toBeGreaterThan(0);
   });
 
-  test("price chart renders canvas when trade history is present", async ({ page }) => {
-    await page.waitForTimeout(6000); // allow initial trades fetch
+  test("price chart renders canvas or an explicit empty/error state", async ({ page }) => {
+    // Enough time for useMidpointHistory to collect at least one
+    // observation from the 5 s useOrderBook poll.
+    await page.waitForTimeout(8000);
     const chart = page.getByTestId("price-chart").first();
     const canvasCount = await chart.locator("canvas").count();
     const bodyText = await page.evaluate(() => document.body.innerText);
 
     if (canvasCount > 0) {
-      // Seeded data path — lightweight-charts has drawn.
+      // Populated path — lightweight-charts has drawn at least one canvas.
       const firstCanvas = chart.locator("canvas").first();
       await expect(firstCanvas).toBeVisible();
       const box = await firstCanvas.boundingBox();
       expect(box!.width).toBeGreaterThan(0);
       expect(box!.height).toBeGreaterThan(0);
     } else {
-      // Empty trades path — empty state must be surfaced to the user.
+      // No canvas yet — the UI must be surfacing one of the documented
+      // non-populated states (loading, collecting, or error) so the user
+      // understands why the chart is blank. This matches the copy in
+      // PriceChart.tsx / PairDetail.tsx.
       expect(
         bodyText,
-        "empty chart should show 'Waiting for first trade' message",
-      ).toMatch(/Waiting for first trade|Loading chart/);
+        "blank chart must surface a recognizable empty/error state",
+      ).toMatch(
+        /Collecting midpoint history|Loading chart|Chart unavailable/,
+      );
     }
   });
 

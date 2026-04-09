@@ -90,7 +90,11 @@ describe("filterByTimeframe", () => {
     expect(TIMEFRAME_WINDOW_SEC["1H"]).toBe(3600);
     expect(TIMEFRAME_WINDOW_SEC["4H"]).toBe(14_400);
     expect(TIMEFRAME_WINDOW_SEC["1D"]).toBe(86_400);
-    expect(TIMEFRAME_WINDOW_SEC["1W"]).toBe(604_800);
-    expect(TIMEFRAME_WINDOW_SEC["1M"]).toBe(2_592_000);
+  });
+
+  it("exposes exactly three timeframes (1H, 4H, 1D)", () => {
+    // Longer windows are intentionally withheld until the chart has a
+    // server-side history source — see useMidpointHistory.ts JSDoc.
+    expect([...TIMEFRAMES]).toEqual(["1H", "4H", "1D"]);
   });
 });

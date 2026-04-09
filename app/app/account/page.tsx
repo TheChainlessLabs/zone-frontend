@@ -181,8 +181,8 @@ export default function AccountPage() {
 
         {/* Orders — Desktop table */}
         <SectionErrorBoundary fallbackMessage="Orders unavailable">
-        <div className="hidden md:block bg-bg-surface border border-border rounded-lg overflow-hidden">
-          <div className="flex items-center h-[33px] px-4 text-label-uppercase text-text-muted">
+        <div className="hidden md:block">
+          <div className="flex items-center h-[33px] border-b border-border-subtle text-label-uppercase text-text-muted">
             <span className="w-[13%]">Pair</span>
             <span className="w-[8%]">Side</span>
             <span className="w-[10%]">Type</span>
@@ -210,7 +210,7 @@ export default function AccountPage() {
               filtered.map((order) => (
                 <div
                   key={order.id}
-                  className="flex items-center px-4 h-[40px] text-body-sm font-mono font-tabular hover:bg-bg-elevated transition-fast"
+                  className="flex items-center h-[40px] text-body-sm font-mono font-tabular hover:bg-bg-surface transition-fast rounded-md -mx-2 px-2"
                 >
                   <Link href={`/account/order/${order.id}`} className="flex items-center w-[93%]">
                     <span className="w-[14%] font-display text-text-primary">{order.pair}</span>

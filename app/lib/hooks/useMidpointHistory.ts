@@ -14,7 +14,29 @@ import {
 /**
  * Chart data source for the /trade and /trade/pair pages.
  *
- * **Why a reference price instead of backend trades?**
+ * ## Known limitation — history is session-local
+ *
+ * This hook builds the price series from the client's own poll
+ * observations and caches it in `sessionStorage`. A fresh tab / hard
+ * reload / private window starts with an empty buffer, so the 1H / 4H /
+ * 1D tabs can only show whatever has been observed **since this browser
+ * session began**. They are not a query against a historical archive.
+ *
+ * This is a deliberate tradeoff driven by the current backend surface:
+ * Omega's sequencer does not expose a historical price series (there is
+ * no `/markets/{id}/history` endpoint, and `trade.timestamp` is a
+ * monotonic sequencer counter rather than Unix seconds — see
+ * `omega-markets/crates/engine/src/sequencer.rs`). The alternatives were
+ * worse: keep the TradingView iframe (which showed external
+ * FX:EURUSD data, not Omega's own market), or block the PR entirely on
+ * a backend change.
+ *
+ * Users are told what the chart represents via the "Collecting midpoint
+ * history…" empty state. A real historical backfill is tracked in
+ * `TODO_ISSUES.md` under FE-055 and will replace the seed path in
+ * `loadHistory()` once a backend endpoint exists.
+ *
+ * ## Why a reference price instead of backend trades?
  * The Omega sequencer is a deterministic state machine with no wall clock,
  * so `trade.timestamp` is a monotonic counter (`AtomicU64::fetch_add(1)` in
  * `omega-markets/crates/engine/src/sequencer.rs`) rather than Unix epoch

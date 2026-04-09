@@ -20,6 +20,9 @@
 ### FE-054: Replace TradingView embed with neon lightweight-charts area chart — [#51](https://github.com/TheChainlessLabs/omega-interface/issues/51) (in progress)
 Swap the heavy `s3.tradingview.com` iframe widget for a native canvas area chart matching the Uniswap app aesthetic — smooth neon-cyan gradient + subtle drop-shadow glow. Uses `lightweight-charts@^5.1` (the same lib Uniswap ships).
 
+### FE-055: Seed neon chart with historical price data from a backend source — [#52](https://github.com/TheChainlessLabs/omega-interface/issues/52) (blocked on backend)
+Follow-up to FE-054. The new chart only caches points the client has observed since the session began, so fresh tabs start empty. Needs a proper `/markets/{id}/midpoint-history` endpoint on `omega-markets` (or equivalent) to backfill the series on first load. Blocked on backend work — ping Pablo.
+
 ## NEW — Not on Linear (limit reached)
 
 ### FE-052: Full button/interaction audit

@@ -170,9 +170,26 @@ export function useMidpointHistory(timeframe: Timeframe): {
     });
   }, [dataUpdatedAt, referencePrice, marketId]);
 
+  // Wall-clock tick for the timeframe filter. Without this, the `points`
+  // memo below would only recompute when `history` or `timeframe` change,
+  // so if polling stalls — backend down, tab backgrounded, laptop asleep
+  // — the selected window stops aging and the 1H/4H/1D tabs keep showing
+  // datapoints that are already outside the advertised window. Ticking
+  // every 30 s gives ~120-step resolution against the shortest window
+  // (1H = 3600 s) without churning renders.
+  const [nowTick, setNowTick] = useState(() =>
+    Math.floor(Date.now() / 1000),
+  );
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      setNowTick(Math.floor(Date.now() / 1000));
+    }, 30_000);
+    return () => window.clearInterval(id);
+  }, []);
+
   const points = useMemo(
-    () => filterByTimeframe(history, timeframe),
-    [history, timeframe],
+    () => filterByTimeframe(history, timeframe, nowTick),
+    [history, timeframe, nowTick],
   );
 
   return { points, isLoading, isError };

@@ -11,10 +11,12 @@ import DepositModal from "./DepositModal";
 import WalletDropdown from "./WalletDropdown";
 import NotificationCenter from "./NotificationCenter";
 
+const explorerEnabled = process.env.NEXT_PUBLIC_EXPLORER_ENABLED === "true";
+
 const navLinks = [
   { label: "Trade", href: "/trade" },
   { label: "Portfolio", href: "/portfolio" },
-  { label: "Explorer", href: "/explorer" },
+  ...(explorerEnabled ? [{ label: "Explorer", href: "/explorer" }] : []),
 ];
 
 export default function Navbar() {

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useWallet } from "@/lib/wallet";
 import { useAccountBalances } from "@/lib/hooks/useAccountBalances";
+import { useOrderBook } from "@/lib/hooks/useOrderBook";
 import { Skeleton } from "@/components/Skeleton";
 import ErrorState from "@/components/ErrorState";
 
@@ -11,9 +12,32 @@ const timeRanges = ["24H", "7D", "30D", "ALL"] as const;
 export default function PortfolioValue() {
   const [range, setRange] = useState<string>("24H");
   const { accountId } = useWallet();
-  const { balances, isLoading, isError } = useAccountBalances(accountId);
+  const { balances, isLoading: balancesLoading, isError: balancesError } =
+    useAccountBalances(accountId);
+  const {
+    midpoint,
+    isLoading: bookLoading,
+    isError: bookError,
+  } = useOrderBook();
 
-  const total = balances.reduce((sum, b) => sum + b.total, 0);
+  // USDC/USDT price at ~$1. EURC is priced at the active EUR/USD market
+  // midpoint; when the midpoint is unavailable we omit EURC from the total
+  // rather than fabricate a rate.
+  const totalUsd = balances.reduce((sum, b) => {
+    if (b.symbol === "USDC" || b.symbol === "USDT") return sum + b.total;
+    if (b.symbol === "EURC" && midpoint !== null) return sum + b.total * midpoint;
+    return sum;
+  }, 0);
+
+  // Wait for the midpoint whenever the account actually holds a non-USD
+  // stable that needs pricing. We block on `midpoint === null` regardless of
+  // the book's reported isLoading — a thin or one-sided book can return a
+  // null midpoint without isLoading being true — because silently dropping
+  // EURC from the total would misrepresent the real portfolio value.
+  const needsMidpoint = balances.some((b) => b.symbol === "EURC" && b.total > 0);
+  const isLoading =
+    balancesLoading || (needsMidpoint && midpoint === null && !bookError);
+  const isError = balancesError || (needsMidpoint && bookError);
 
   if (isError) {
     return <ErrorState message="Failed to load portfolio data." />;
@@ -27,12 +51,12 @@ export default function PortfolioValue() {
           <Skeleton className="h-[36px] w-[200px] rounded-md" />
         ) : (
           <span className="text-h1 font-mono font-tabular">
-            ${total.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+            ${totalUsd.toLocaleString("en-US", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
           </span>
         )}
-        <span className="text-body-sm font-mono font-tabular text-text-muted">
-          {"\u2014"}
-        </span>
       </div>
 
       {/* Time range tabs — bumped to bg-bg-surface so the pill rail

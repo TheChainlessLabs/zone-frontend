@@ -9,10 +9,15 @@ import { ToastProvider } from "@/lib/useToast";
 import { NotificationProvider } from "@/lib/useNotifications";
 import { MarketProvider } from "@/lib/hooks/useMarket";
 import { injectDevWallet } from "@/lib/devWallet";
+import { initTestHooks, TestStoreMirror } from "@/lib/testHooks";
 
 // Inject dev wallet before wagmi initializes (dev mode only, no-op in prod)
 if (typeof window !== "undefined") {
   injectDevWallet();
+  // Populate __TEST_WAGMI_CONFIG__ / __TEST_STORE__ / __TEST_SKIP_ONBOARDING
+  // for Playwright specs. Production builds resolve this to a no-op via
+  // the testHooks → testHooksStub webpack alias (see next.config.mjs).
+  initTestHooks(config);
 }
 
 export default function Providers({
@@ -30,7 +35,10 @@ export default function Providers({
         <MarketProvider>
           <WalletProvider>
             <NotificationProvider>
-              <ToastProvider>{children}</ToastProvider>
+              <ToastProvider>
+                <TestStoreMirror />
+                {children}
+              </ToastProvider>
             </NotificationProvider>
           </WalletProvider>
         </MarketProvider>

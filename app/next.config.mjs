@@ -16,6 +16,15 @@ const nextConfig = {
           "lib/devWalletStub"
         ),
       };
+
+      // Same pattern for the e2e test hooks: only bundle the real
+      // implementation when explicitly opted in via
+      // NEXT_PUBLIC_OMEGA_E2E_TEST=true. Otherwise resolve to the stub so
+      // __TEST_* globals and mirror logic drop out of prod bundles.
+      if (process.env.NEXT_PUBLIC_OMEGA_E2E_TEST !== "true") {
+        config.resolve.alias[path.resolve(__dirname, "lib/testHooks")] =
+          path.resolve(__dirname, "lib/testHooksStub");
+      }
     }
     return config;
   },

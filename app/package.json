@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:e2e": "NEXT_PUBLIC_OMEGA_E2E_TEST=true next build",
     "start": "next start",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"

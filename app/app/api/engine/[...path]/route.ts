@@ -6,7 +6,7 @@ const ENGINE_URL = (
 
 /* ── Path allowlist ──────────────────────────────────────────────── */
 
-const ALLOWED_PREFIXES = ["markets", "accounts", "orders", "tokens"];
+const ALLOWED_PREFIXES = ["markets", "accounts", "orders", "tokens", "admin/accounts"];
 
 function isAllowedPath(path: string): boolean {
   // Match either the bare allowlist entry OR any sub-path under it.

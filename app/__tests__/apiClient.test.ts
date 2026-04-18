@@ -300,3 +300,18 @@ describe("createAccount", () => {
     });
   });
 });
+
+describe("mockFund", () => {
+  it("POSTs to /admin/accounts/{id}/fund with no body", async () => {
+    mockFetch.mockResolvedValue(new Response(null, { status: 204, statusText: "No Content" }));
+
+    const { mockFund } = await loadApiClient();
+
+    await expect(mockFund("42")).resolves.toBeUndefined();
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      `${EXPECTED_BASE}/admin/accounts/42/fund`,
+      { method: "POST" },
+    );
+  });
+});

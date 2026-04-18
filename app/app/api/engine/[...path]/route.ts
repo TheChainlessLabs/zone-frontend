@@ -6,10 +6,15 @@ const ENGINE_URL = (
 
 /* ── Path allowlist ──────────────────────────────────────────────── */
 
-const ALLOWED_PREFIXES = ["markets/", "accounts/", "orders", "tokens/"];
+const ALLOWED_PREFIXES = ["markets", "accounts", "orders", "tokens"];
 
 function isAllowedPath(path: string): boolean {
-  return ALLOWED_PREFIXES.some((prefix) => path.startsWith(prefix));
+  // Match either the bare allowlist entry OR any sub-path under it.
+  // Using startsWith(prefix + "/") alone would 404 the bare `/accounts`
+  // POST that useAccountRegistration depends on.
+  return ALLOWED_PREFIXES.some(
+    (prefix) => path === prefix || path.startsWith(`${prefix}/`),
+  );
 }
 
 /* ── In-memory rate limiting (token bucket per IP) ───────────────── */

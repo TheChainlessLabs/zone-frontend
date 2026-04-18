@@ -4,10 +4,12 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { TrendingUp, Wallet, Search } from "lucide-react";
 
+const explorerEnabled = process.env.NEXT_PUBLIC_EXPLORER_ENABLED === "true";
+
 const tabs = [
   { label: "Trade", href: "/trade", icon: TrendingUp },
   { label: "Portfolio", href: "/portfolio", icon: Wallet },
-  { label: "Explorer", href: "/explorer", icon: Search },
+  ...(explorerEnabled ? [{ label: "Explorer", href: "/explorer", icon: Search }] : []),
 ];
 
 export default function MobileTabBar() {

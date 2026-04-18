@@ -62,6 +62,7 @@ export default function CancelAllModal({ isOpen, onClose, openOrders, onCancelAl
 
         <div className="flex gap-3">
           <button
+            data-testid="cancel-all-modal-keep"
             onClick={onClose}
             disabled={isCancelling}
             className="flex-1 h-[44px] text-body-sm font-medium border border-border rounded-md text-text-primary hover:bg-bg-elevated transition-fast disabled:opacity-50 disabled:cursor-not-allowed"
@@ -69,6 +70,7 @@ export default function CancelAllModal({ isOpen, onClose, openOrders, onCancelAl
             Keep Orders
           </button>
           <button
+            data-testid="cancel-all-modal-confirm"
             onClick={onCancelAll}
             disabled={isCancelling || openOrders.length === 0}
             className="flex-1 h-[44px] text-body-sm font-semibold rounded-md bg-error text-text-inverse hover:bg-error-hover transition-fast disabled:opacity-50 disabled:cursor-not-allowed"

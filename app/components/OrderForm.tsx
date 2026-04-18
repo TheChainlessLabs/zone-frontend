@@ -216,6 +216,7 @@ export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
       {/* Buy/Sell toggle */}
       <div className="flex gap-1">
         <button
+          data-testid="order-form-buy"
           onClick={() => setSide("buy")}
           className={`flex-1 h-[40px] text-body-sm font-semibold rounded-md transition-fast ${
             side === "buy"
@@ -226,6 +227,7 @@ export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
           Buy
         </button>
         <button
+          data-testid="order-form-sell"
           onClick={() => setSide("sell")}
           className={`flex-1 h-[40px] text-body-sm font-semibold rounded-md transition-fast ${
             side === "sell"
@@ -242,6 +244,7 @@ export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
         {(["midpoint", "limit"] as const).map((t) => (
           <button
             key={t}
+            data-testid={`order-form-order-type-${t}`}
             onClick={() => setOrderType(t)}
             className={`flex-1 min-h-[44px] md:min-h-[28px] text-body-sm font-medium rounded-sm transition-fast capitalize ${
               orderType === t
@@ -263,6 +266,7 @@ export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
           }`}
         >
           <input
+            data-testid="order-form-amount"
             type="text"
             inputMode="decimal"
             placeholder="0.00"
@@ -331,6 +335,7 @@ export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
           </div>
           <div className="flex items-center h-[44px] bg-bg-base border border-border rounded-md px-4">
             <input
+              data-testid="order-form-price"
               type="text"
               inputMode="decimal"
               value={price}
@@ -385,6 +390,7 @@ export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
 
       {/* Submit */}
       <button
+        data-testid="order-form-submit"
         onClick={handleSubmit}
         disabled={isPending || !accountId || !parsedAmount || amountExceedsBalance}
         className={`h-[44px] w-full rounded-md text-body-sm font-semibold tracking-[0.08em] uppercase text-text-inverse transition-fast disabled:opacity-50 disabled:cursor-not-allowed ${

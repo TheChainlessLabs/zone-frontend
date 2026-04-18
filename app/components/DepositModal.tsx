@@ -56,6 +56,7 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
             {chains.map((c) => (
               <button
                 key={c.name}
+                data-testid={`deposit-modal-chain-${c.name.toLowerCase()}`}
                 onClick={() => setChain(c.name)}
                 className={`flex items-center gap-2 h-[40px] px-4 rounded-md text-body-sm transition-fast border flex-1 ${
                   chain === c.name
@@ -77,6 +78,7 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
             {tokens.map((t) => (
               <button
                 key={t}
+                data-testid={`deposit-modal-token-${t.toLowerCase()}`}
                 onClick={() => setToken(t)}
                 className={`h-[40px] px-4 rounded-md text-body-sm font-medium transition-fast border ${
                   token === t
@@ -100,6 +102,7 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
           </div>
           <div className="flex items-center h-[48px] bg-bg-base border border-border rounded-md px-4">
             <input
+              data-testid="deposit-modal-amount"
               type="text"
               inputMode="decimal"
               placeholder="0.00"
@@ -149,7 +152,10 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
         </div>
 
         {/* CTA */}
-        <button className="h-[48px] w-full rounded-md text-body-sm font-semibold bg-accent text-text-inverse hover:bg-accent-hover transition-fast">
+        <button
+          data-testid="deposit-modal-submit"
+          className="h-[48px] w-full rounded-md text-body-sm font-semibold bg-accent text-text-inverse hover:bg-accent-hover transition-fast"
+        >
           Confirm Deposit
         </button>
       </div>

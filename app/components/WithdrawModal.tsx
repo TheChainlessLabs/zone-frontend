@@ -47,6 +47,7 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
               {token}
             </span>
             <input
+              data-testid="withdraw-modal-amount"
               type="text"
               inputMode="decimal"
               placeholder="0.00"
@@ -68,6 +69,7 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
           <label className="text-label-uppercase text-text-muted mb-2 block">Withdrawal Mode</label>
           <div className="grid grid-cols-2 gap-2">
             <button
+              data-testid="withdraw-modal-mode-standard"
               onClick={() => setMode("standard")}
               className={`flex flex-col items-start p-3 rounded-md border transition-fast ${
                 mode === "standard"
@@ -79,6 +81,7 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
               <span className="text-[11px] text-text-muted">Faster, lower fee</span>
             </button>
             <button
+              data-testid="withdraw-modal-mode-privacy"
               onClick={() => setMode("privacy")}
               className={`flex flex-col items-start p-3 rounded-md border transition-fast ${
                 mode === "privacy"
@@ -98,6 +101,7 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
         {/* Privacy consent */}
         {mode === "privacy" && (
           <button
+            data-testid="withdraw-modal-consent"
             onClick={() => setConsent(!consent)}
             className="flex items-start gap-3 text-left"
           >
@@ -138,6 +142,7 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
 
         {/* CTA */}
         <button
+          data-testid="withdraw-modal-submit"
           disabled={mode === "privacy" && !consent}
           className="h-[48px] w-full rounded-md text-body-sm font-semibold bg-accent text-text-inverse hover:bg-accent-hover transition-fast disabled:opacity-40 disabled:cursor-not-allowed"
         >

@@ -50,7 +50,7 @@ export default function Navbar() {
       <header className="h-[48px] bg-bg-base border-b border-border-subtle flex items-center px-4 md:px-[60px]">
         <Link
           href="/"
-          className="text-[18px] font-bold tracking-[-0.02em] text-text-primary"
+          className="font-mono text-[13px] font-semibold tracking-[0.18em] text-text-primary"
         >
           OMEGA
         </Link>

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import dynamic from "next/dynamic";
 import { useMidpointHistory } from "@/lib/hooks/useMidpointHistory";
+import { useOrderBook } from "@/lib/hooks/useOrderBook";
 import { TIMEFRAMES, type Timeframe } from "@/lib/chartData";
 
 // lightweight-charts touches `document` on construction, so the chart
@@ -24,18 +25,31 @@ interface PriceChartProps {
 export default function PriceChart({ pair = "EUR/USD" }: PriceChartProps) {
   const [timeframe, setTimeframe] = useState<Timeframe>("1D");
   const { points, isLoading, isError } = useMidpointHistory(timeframe);
+  const { midpoint, isLoading: bookLoading, isError: bookError } = useOrderBook();
 
   const [base, quote] = pair.split("/");
+  let midpointDisplay: string;
+  if (bookLoading && midpoint === null) midpointDisplay = "";
+  else if (bookError && midpoint === null) midpointDisplay = "—";
+  else if (midpoint === null) midpointDisplay = "—";
+  else midpointDisplay = midpoint.toFixed(4);
 
   return (
     <div className="flex flex-col" data-testid="price-chart">
-      {/* Chart header with timeframe selector. The chart now sits flat on
-          the page background (no card wrapper), so the header is aligned
-          to the chart body via padding/margin alone. */}
-      <div className="flex items-center justify-between h-[32px] mb-2">
-        <span className="text-body-sm font-semibold text-text-primary">
-          {base} / {quote}
-        </span>
+      {/* Chart header. Pair + midpoint are the visual index — the eye
+          should land here first on /trade, then on the chart, then on
+          the marquee for venue comparison. The marquee at the top of
+          the page renders at body-sm; this header carries the larger
+          mono treatment so the price actually dominates. */}
+      <div className="flex items-end justify-between mb-3">
+        <div className="flex items-baseline gap-3">
+          <span className="text-h2 font-mono font-tabular tracking-[-0.01em] text-text-primary">
+            {base}<span className="text-text-muted">/</span>{quote}
+          </span>
+          <span className="text-h3 md:text-h2 font-mono font-tabular text-accent">
+            {midpointDisplay || " "}
+          </span>
+        </div>
         <div className="flex gap-0.5 bg-bg-surface rounded-md p-0.5">
           {TIMEFRAMES.map((tf) => (
             <button

@@ -27,7 +27,7 @@ export default function Modal({ isOpen, onClose, title, children }: ModalProps) 
       className="fixed inset-0 z-[60] flex items-center justify-center"
       onClick={onClose}
     >
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-[4px]" />
+      <div className="absolute inset-0 bg-black/70" />
       <div
         className="relative bg-bg-surface border border-border rounded-lg p-6 max-w-[480px] w-full mx-4"
         style={{ animation: "modal-enter 150ms ease-out" }}

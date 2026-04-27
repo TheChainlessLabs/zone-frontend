@@ -29,7 +29,7 @@ export default function BottomSheet({ isOpen, onClose, title, children }: Bottom
   return (
     <div className="fixed inset-0 z-[60]" onClick={onClose}>
       {/* Scrim */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-[4px]" />
+      <div className="absolute inset-0 bg-black/70" />
 
       {/* Desktop: centered modal */}
       <div

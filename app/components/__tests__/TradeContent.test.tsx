@@ -24,9 +24,6 @@ vi.mock("@/components/PairDropdown", () => ({
 vi.mock("@/components/PriceChart", () => ({
   default: () => <div data-testid="price-chart" />,
 }));
-vi.mock("@/components/PriceComparisonPanel", () => ({
-  default: () => <div data-testid="price-comparison-panel" />,
-}));
 vi.mock("@/components/StatusBar", () => ({
   default: () => <div data-testid="status-bar" />,
 }));

@@ -5,7 +5,6 @@ import BBOMarquee from "@/components/BBOMarquee";
 import PairDropdown from "@/components/PairDropdown";
 import OrderForm from "@/components/OrderForm";
 import PriceChart from "@/components/PriceChart";
-import PriceComparisonPanel from "@/components/PriceComparisonPanel";
 import BottomPanel from "@/components/BottomPanel";
 import RecentTrades from "@/components/RecentTrades";
 import StatusBar from "@/components/StatusBar";
@@ -31,7 +30,9 @@ export default function TradeContent() {
       <div className="flex-1 flex min-h-0 flex-col lg:flex-row">
         {/* Left: Chart + Positions/Orders */}
         <div className="flex-1 flex flex-col min-h-0 min-w-0">
-          {/* Pair dropdown + Chart + Venue Comparison */}
+          {/* Pair dropdown + Chart. Venue comparison lives on /trade/pair/[pair]
+              now — the BBOMarquee at the top of the page already carries the
+              live venue pulse on /trade. */}
           <div className="relative flex flex-col min-h-0 flex-shrink-0 p-3 gap-3">
             <StaleDataOverlay lastUpdated={dataUpdatedAt || null} />
             <div className="flex items-center">
@@ -39,9 +40,6 @@ export default function TradeContent() {
             </div>
             <SectionErrorBoundary fallbackMessage="Chart unavailable">
               <PriceChart />
-            </SectionErrorBoundary>
-            <SectionErrorBoundary fallbackMessage="Venue comparison unavailable">
-              <PriceComparisonPanel />
             </SectionErrorBoundary>
           </div>
 

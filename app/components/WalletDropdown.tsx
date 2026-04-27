@@ -63,9 +63,9 @@ export default function WalletDropdown({
       <button
         data-testid="wallet-dropdown-trigger"
         onClick={() => setOpen((v) => !v)}
-        className={`hidden md:flex items-center gap-2 h-[30px] px-4 text-body-sm rounded-md border ${
+        className={`flex items-center gap-2 h-[32px] px-3 md:px-4 text-body-sm rounded-md border transition-fast hover:bg-bg-elevated ${
           isSupportedChain
-            ? "border-border-subtle"
+            ? "border-border"
             : "border-warning/40 bg-warning/10"
         }`}
       >
@@ -73,6 +73,7 @@ export default function WalletDropdown({
           className={`w-1.5 h-1.5 rounded-full ${
             isSupportedChain ? "bg-success" : "bg-warning"
           }`}
+          aria-hidden
         />
         <span className="font-mono text-[13px] text-text-secondary">
           {isSupportedChain ? truncateAddress(address) : "Wrong network"}

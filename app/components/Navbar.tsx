@@ -1,13 +1,10 @@
 "use client";
 
-import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Menu, X } from "lucide-react";
+import { useState } from "react";
 import { useWallet } from "@/lib/wallet";
-import { useToast } from "@/lib/useToast";
 import WalletModal from "./WalletModal";
-import DepositModal from "./DepositModal";
 import WalletDropdown from "./WalletDropdown";
 import NotificationCenter from "./NotificationCenter";
 
@@ -16,80 +13,75 @@ const explorerEnabled = process.env.NEXT_PUBLIC_EXPLORER_ENABLED === "true";
 const navLinks = [
   { label: "Trade", href: "/trade" },
   { label: "Portfolio", href: "/portfolio" },
+  { label: "Account", href: "/account" },
+  { label: "Funding", href: "/funding" },
   ...(explorerEnabled ? [{ label: "Explorer", href: "/explorer" }] : []),
 ];
 
+/**
+ * Navbar — V1 Institutional Calm.
+ *
+ * Quiet supportive chrome, never competing with the order form. The
+ * Deposit button moved out of the navbar (it lives inside the wallet
+ * dropdown and on /portfolio + /funding) because nav-bar real estate
+ * shouldn't carry the loudest CTA on the page. Active nav links use
+ * a 1.5 px accent underline rather than a coloured pill, so the eye
+ * stops at the data plane, not the chrome. Mobile sheds the
+ * hamburger entirely — `MobileTabBar` already handles navigation
+ * at the bottom of the viewport.
+ */
 export default function Navbar() {
   const pathname = usePathname();
-  const { addToast } = useToast();
-  const { address, expectedChainName, isConnected, isSupportedChain } = useWallet();
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const { address, isConnected, isSupportedChain } = useWallet();
   const [walletOpen, setWalletOpen] = useState(false);
-  const [depositOpen, setDepositOpen] = useState(false);
-
-  const handleDepositClick = () => {
-    if (!isConnected) {
-      setWalletOpen(true);
-      return;
-    }
-
-    if (!isSupportedChain) {
-      addToast(
-        "error",
-        "Unsupported Network",
-        `Switch to ${expectedChainName} before using wallet-funded actions.`
-      );
-      return;
-    }
-
-    setDepositOpen(true);
-  };
 
   return (
     <>
-      <header className="h-[48px] bg-bg-base border-b border-border-subtle flex items-center px-4 md:px-[60px]">
+      <header className="h-[56px] bg-bg-base border-b border-border-subtle flex items-center px-4 md:px-8">
+        {/* Wordmark */}
         <Link
-          href="/"
+          href="/trade"
           className="font-mono text-[13px] font-semibold tracking-[0.18em] text-text-primary"
         >
           OMEGA
         </Link>
 
         {/* Desktop nav */}
-        <nav className="hidden md:flex items-center ml-8">
+        <nav
+          aria-label="Primary"
+          className="hidden md:flex items-center ml-10 h-full"
+        >
           {navLinks.map((link) => {
-            const isActive = pathname.startsWith(link.href);
+            const isActive =
+              link.href === "/" ? pathname === "/" : pathname.startsWith(link.href);
             return (
               <Link
                 key={link.label}
                 href={link.href}
-                className={`px-3 py-1.5 text-body-sm rounded-md transition-fast ${
+                aria-current={isActive ? "page" : undefined}
+                className={`relative h-full px-4 inline-flex items-center text-body-sm transition-fast ${
                   isActive
-                    ? "text-accent bg-accent-subtle font-medium"
-                    : "text-text-muted hover:text-text-primary"
+                    ? "text-text-primary"
+                    : "text-text-muted hover:text-text-secondary"
                 }`}
               >
                 {link.label}
+                {isActive && (
+                  <span
+                    aria-hidden
+                    className="absolute left-4 right-4 bottom-0 h-[1.5px] rounded-full bg-accent"
+                  />
+                )}
               </Link>
             );
           })}
         </nav>
 
         <div className="ml-auto flex items-center gap-3">
-          {/* Deposit button */}
-          <button
-            onClick={handleDepositClick}
-            className="hidden md:flex items-center h-[30px] px-4 text-body-sm font-medium rounded-md bg-accent text-text-inverse hover:bg-accent-hover transition-fast"
-          >
-            Deposit
-          </button>
-
-          {/* Notification center */}
           <div className="hidden md:block">
             <NotificationCenter />
           </div>
 
-          {/* Wallet / Connect */}
           {isConnected && address ? (
             <WalletDropdown
               address={address}
@@ -98,73 +90,15 @@ export default function Navbar() {
           ) : (
             <button
               onClick={() => setWalletOpen(true)}
-              className="hidden md:flex items-center h-[30px] px-4 text-body-sm font-medium border border-border rounded-md text-text-primary hover:bg-bg-elevated transition-fast"
+              className="h-[32px] px-4 text-body-sm font-medium border border-border rounded-md text-text-primary hover:bg-bg-elevated transition-fast"
             >
-              Connect Wallet
+              Connect
             </button>
           )}
-
-          {/* Mobile toggle */}
-          <button
-            className="md:hidden min-w-[44px] min-h-[44px] flex items-center justify-center text-text-secondary -mr-2"
-            onClick={() => setMobileOpen(!mobileOpen)}
-          >
-            {mobileOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
         </div>
-
-        {/* Mobile menu */}
-        {mobileOpen && (
-          <div className="absolute top-[48px] left-0 right-0 bg-bg-surface border-b border-border p-4 md:hidden z-50">
-            {navLinks.map((link) => {
-              const isActive = pathname.startsWith(link.href);
-              return (
-                <Link
-                  key={link.label}
-                  href={link.href}
-                  className={`block py-3 min-h-[44px] flex items-center text-body-sm ${
-                    isActive
-                      ? "text-accent font-medium"
-                      : "text-text-secondary hover:text-text-primary"
-                  }`}
-                  onClick={() => setMobileOpen(false)}
-                >
-                  {link.label}
-                </Link>
-              );
-            })}
-            <div className="mt-3 flex flex-col gap-2">
-              <button
-                onClick={() => {
-                  setMobileOpen(false);
-                  handleDepositClick();
-                }}
-                className="w-full h-[40px] text-body-sm font-medium rounded-md bg-accent text-text-inverse"
-              >
-                Deposit
-              </button>
-              {!isConnected ? (
-                <button
-                  onClick={() => {
-                    setMobileOpen(false);
-                    setWalletOpen(true);
-                  }}
-                  className="w-full h-[40px] text-body-sm font-medium border border-border rounded-md text-text-primary"
-                >
-                  Connect Wallet
-                </button>
-              ) : !isSupportedChain ? (
-                <div className="rounded-md border border-warning/30 bg-warning/10 px-3 py-2 text-body-sm text-warning">
-                  Switch to {expectedChainName} to trade.
-                </div>
-              ) : null}
-            </div>
-          </div>
-        )}
       </header>
 
       <WalletModal isOpen={walletOpen} onClose={() => setWalletOpen(false)} />
-      <DepositModal isOpen={depositOpen} onClose={() => setDepositOpen(false)} />
     </>
   );
 }

@@ -104,9 +104,9 @@ describe("StatusBar", () => {
     expect(screen.getByText("TEE Connected")).toBeInTheDocument();
   });
 
-  it("renders batch info", () => {
+  it("does not render mock batch info", () => {
     render(<StatusBar />);
-    expect(screen.getByText("Batch #1247")).toBeInTheDocument();
-    expect(screen.getByText("Processing")).toBeInTheDocument();
+    expect(screen.queryByText("Batch #1247")).not.toBeInTheDocument();
+    expect(screen.queryByText("Processing")).not.toBeInTheDocument();
   });
 });

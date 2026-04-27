@@ -8,7 +8,7 @@ import type { BatchStatus } from "@/lib/types";
 const statusColors: Record<BatchStatus, string> = {
   processing: "bg-warning/20 text-warning",
   proposed: "bg-warning/20 text-warning",
-  proved: "bg-info/20 text-info",
+  proved: "bg-bg-elevated text-text-secondary",
   settled: "bg-success/20 text-success",
   finalized: "bg-accent/20 text-accent",
 };

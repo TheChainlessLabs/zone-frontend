@@ -33,7 +33,7 @@ const tabs: { key: FilterTab; label: string }[] = [
 ];
 
 const statusColors: Record<OrderStatus, string> = {
-  open: "bg-info/20 text-info",
+  open: "bg-bg-elevated text-text-secondary",
   filled: "bg-success/20 text-success",
   cancelled: "bg-error/20 text-error",
   "aggregation-locked": "bg-warning/20 text-warning",

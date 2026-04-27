@@ -73,15 +73,6 @@ export default function StatusBar() {
         <span className="whitespace-nowrap">{label}</span>
       </div>
 
-      <span className="mx-2 md:mx-3 w-px h-3 bg-border-subtle shrink-0" />
-
-      <div className="hidden md:flex items-center gap-2">
-        <span className="font-tabular text-text-primary">Batch #1247</span>
-        <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded-sm bg-warning/20 text-warning">
-          Processing
-        </span>
-      </div>
-
       <span className="ml-auto whitespace-nowrap text-[10px] md:text-[11px]">
         Last update {formatElapsed(elapsed)}
       </span>

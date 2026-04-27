@@ -19,7 +19,7 @@ const statusColors: Record<FundTransaction["status"], string> = {
 
 const modeColors: Record<FundTransaction["mode"], string> = {
   standard: "bg-bg-elevated text-text-secondary",
-  privacy: "bg-info/20 text-info",
+  privacy: "bg-bg-elevated text-text-secondary",
 };
 
 export default function TransactionHistory() {

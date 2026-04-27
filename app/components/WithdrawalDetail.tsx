@@ -8,8 +8,8 @@ import { Check, Download, Shield } from "lucide-react";
 const statusOrder: WithdrawalStatus[] = ["initiated", "proof-generated", "claimable", "claimed", "confirmed"];
 
 const statusColors: Record<WithdrawalStatus, string> = {
-  initiated: "bg-info/20 text-info",
-  "proof-generated": "bg-info/20 text-info",
+  initiated: "bg-bg-elevated text-text-secondary",
+  "proof-generated": "bg-bg-elevated text-text-secondary",
   claimable: "bg-warning/20 text-warning",
   claimed: "bg-success/20 text-success",
   confirmed: "bg-success/20 text-success",
@@ -17,7 +17,7 @@ const statusColors: Record<WithdrawalStatus, string> = {
 
 const modeColors: Record<string, string> = {
   standard: "bg-bg-elevated text-text-secondary",
-  privacy: "bg-info/20 text-info",
+  privacy: "bg-bg-elevated text-text-secondary",
 };
 
 interface WithdrawalDetailProps {

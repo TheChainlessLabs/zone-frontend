@@ -6,7 +6,7 @@ import type { OrderStatus } from "@/lib/types";
 import { Check } from "lucide-react";
 
 const statusColors: Record<OrderStatus, string> = {
-  open: "bg-info/20 text-info",
+  open: "bg-bg-elevated text-text-secondary",
   filled: "bg-success/20 text-success",
   cancelled: "bg-error/20 text-error",
   "aggregation-locked": "bg-warning/20 text-warning",
@@ -18,6 +18,7 @@ interface OrderDetailProps {
 
 export default function OrderDetail({ orderId }: OrderDetailProps) {
   const order = { ...mockOrderDetail, id: orderId };
+  const [base] = order.pair.split("/");
 
   return (
     <div className="flex flex-col gap-4 md:gap-6">
@@ -57,7 +58,7 @@ export default function OrderDetail({ orderId }: OrderDetailProps) {
             <Row label="Pair" value={order.pair} />
             <Row label="Side" value={order.side} className={order.side === "buy" ? "text-success" : "text-error"} />
             <Row label="Type" value={order.type === "midpoint" ? "Midpoint Peg" : order.type} />
-            <Row label="Size" value={`€${order.size.toLocaleString()}.00`} mono />
+            <Row label="Size" value={`${order.size.toLocaleString()}.00 ${base}`} mono />
             <Row label="Midpoint Rate" value={order.midpointRate.toFixed(4)} mono />
             <Row label="Slippage" value={`${order.slippage}%`} mono />
             <Row label="Filled" value={`${order.filledPercent}%`} mono className={order.filledPercent > 0 ? "text-success" : undefined} />
@@ -115,13 +116,13 @@ export default function OrderDetail({ orderId }: OrderDetailProps) {
                   </Link>
                 </div>
                 <span className="text-body-sm font-mono font-tabular text-text-primary">
-                  €{fill.size.toLocaleString()} @ {fill.price.toFixed(4)}
+                  {fill.size.toLocaleString()} {base} @ {fill.price.toFixed(4)}
                 </span>
               </div>
             ))}
             {order.filledPercent < 100 && (
               <div className="px-4 py-3 text-[12px] text-text-muted italic">
-                Remaining €{(order.size * (1 - order.filledPercent / 100)).toLocaleString()} in aggregation queue...
+                Remaining {(order.size * (1 - order.filledPercent / 100)).toLocaleString()} {base} in aggregation queue...
               </div>
             )}
           </div>

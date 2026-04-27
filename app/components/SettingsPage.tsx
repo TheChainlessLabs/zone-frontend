@@ -4,10 +4,7 @@ import { useState } from "react";
 
 const sections = [
   { key: "trading", label: "Trading" },
-  { key: "display", label: "Display" },
   { key: "privacy", label: "Privacy" },
-  { key: "notifications", label: "Notifs" },
-  { key: "wallet", label: "Wallet" },
 ] as const;
 
 type Section = (typeof sections)[number]["key"];
@@ -39,10 +36,7 @@ export default function SettingsPage() {
       {/* Content */}
       <div className="flex-1 max-w-[600px]">
         {activeSection === "trading" && <TradingSettings />}
-        {activeSection === "display" && <DisplaySettings />}
         {activeSection === "privacy" && <PrivacySettings />}
-        {activeSection === "notifications" && <PlaceholderSection title="Notifications" />}
-        {activeSection === "wallet" && <PlaceholderSection title="Wallet" />}
       </div>
     </div>
   );
@@ -58,21 +52,20 @@ function TradingSettings() {
   const [compactMode, setCompactMode] = useState(false);
 
   return (
-    <div className="flex flex-col gap-0">
-      {/* Section header */}
-      <div className="bg-bg-surface border border-border rounded-lg p-4 mb-5">
-        <h2 className="text-body-sm font-semibold">Trading Preferences</h2>
-        <p className="text-[12px] text-text-muted mt-0.5">Configure default order behavior and execution settings.</p>
-      </div>
-
-      <div className="flex flex-col gap-5">
-        {/* Default Order Type */}
+    <div className="flex flex-col gap-8">
+      <Fieldset
+        title="Execution"
+        description="Default order behaviour and confirmation flow."
+      >
         <SettingRow
           label="Default Order Type"
           description="Pre-selected on the trading form"
         >
           <div className="flex gap-1 bg-bg-surface border border-border rounded-md p-1">
-            {[{ key: "midpoint", label: "Midpoint Peg" }, { key: "limit", label: "Limit" }].map((t) => (
+            {[
+              { key: "midpoint", label: "Midpoint Peg" },
+              { key: "limit", label: "Limit" },
+            ].map((t) => (
               <button
                 key={t.key}
                 onClick={() => setOrderType(t.key)}
@@ -88,9 +81,8 @@ function TradingSettings() {
           </div>
         </SettingRow>
 
-        <div className="border-t border-border-subtle" />
+        <Divider />
 
-        {/* Default Slippage */}
         <SettingRow
           label="Default Slippage"
           description="Max price deviation from midpoint"
@@ -122,9 +114,8 @@ function TradingSettings() {
           </div>
         </SettingRow>
 
-        <div className="border-t border-border-subtle" />
+        <Divider />
 
-        {/* Toggles */}
         <Toggle
           label="Confirm Before Submit"
           description="Show confirmation dialog before placing orders"
@@ -132,7 +123,7 @@ function TradingSettings() {
           onChange={setConfirmBeforeSubmit}
         />
 
-        <div className="border-t border-border-subtle" />
+        <Divider />
 
         <Toggle
           label="Default Privacy Mode"
@@ -140,13 +131,15 @@ function TradingSettings() {
           checked={defaultPrivacy}
           onChange={setDefaultPrivacy}
         />
+      </Fieldset>
 
-        <div className="border-t border-border-subtle" />
-
-        {/* Display Currency */}
+      <Fieldset
+        title="Display"
+        description="How rates and balances render on the trading screen."
+      >
         <SettingRow
           label="Display Currency"
-          description="Base currency for portfolio value display"
+          description="Base currency for portfolio value"
         >
           <select
             value={currency}
@@ -159,9 +152,8 @@ function TradingSettings() {
           </select>
         </SettingRow>
 
-        <div className="border-t border-border-subtle" />
+        <Divider />
 
-        {/* Price Decimal Places */}
         <SettingRow
           label="Price Decimal Places"
           description="Number of decimal places for FX rates"
@@ -183,7 +175,7 @@ function TradingSettings() {
           </div>
         </SettingRow>
 
-        <div className="border-t border-border-subtle" />
+        <Divider />
 
         <Toggle
           label="Compact Mode"
@@ -191,16 +183,7 @@ function TradingSettings() {
           checked={compactMode}
           onChange={setCompactMode}
         />
-      </div>
-    </div>
-  );
-}
-
-function DisplaySettings() {
-  return (
-    <div className="flex flex-col gap-4">
-      <h2 className="text-h3 font-semibold">Display & Appearance</h2>
-      <p className="text-body-sm text-text-muted">Display settings are now in the Trading tab.</p>
+      </Fieldset>
     </div>
   );
 }
@@ -209,25 +192,42 @@ function PrivacySettings() {
   const [privacyDefault, setPrivacyDefault] = useState(true);
 
   return (
-    <div className="flex flex-col gap-6">
-      <h2 className="text-h3 font-semibold">Privacy</h2>
+    <Fieldset
+      title="Privacy"
+      description="Defaults for the on-chain privacy claim flow."
+    >
       <Toggle
         label="Privacy Mode Default"
         description="Enable privacy mode for all new transactions by default"
         checked={privacyDefault}
         onChange={setPrivacyDefault}
       />
-    </div>
+    </Fieldset>
   );
 }
 
-function PlaceholderSection({ title }: { title: string }) {
+function Fieldset({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description: string;
+  children: React.ReactNode;
+}) {
   return (
-    <div className="flex flex-col gap-4">
-      <h2 className="text-h3 font-semibold">{title}</h2>
-      <p className="text-body-sm text-text-muted">Coming soon</p>
-    </div>
+    <section className="flex flex-col gap-5">
+      <header className="flex flex-col gap-1 pb-3 border-b border-border-subtle">
+        <h2 className="text-body-sm font-semibold text-text-primary">{title}</h2>
+        <p className="text-[12px] text-text-muted">{description}</p>
+      </header>
+      {children}
+    </section>
   );
+}
+
+function Divider() {
+  return <div className="border-t border-border-subtle" />;
 }
 
 function SettingRow({
@@ -269,12 +269,13 @@ function Toggle({
       </div>
       <button
         onClick={() => onChange(!checked)}
+        aria-pressed={checked}
         className={`w-[44px] h-[24px] rounded-full shrink-0 transition-fast relative ${
           checked ? "bg-accent" : "bg-bg-elevated"
         }`}
       >
         <span
-          className={`absolute top-[2px] w-[20px] h-[20px] rounded-full bg-white transition-fast ${
+          className={`absolute top-[2px] w-[20px] h-[20px] rounded-full bg-text-primary transition-fast ${
             checked ? "left-[22px]" : "left-[2px]"
           }`}
         />

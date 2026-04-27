@@ -21,6 +21,10 @@ import { devLog, devError, devWarn } from "@/lib/devLog";
 import { getFriendlyError } from "@/lib/errorMessages";
 import { useNotifications } from "@/lib/useNotifications";
 import { useKeyboardShortcuts } from "@/lib/hooks/useKeyboardShortcuts";
+import { useConfirmBeforeSubmit } from "@/lib/hooks/useConfirmBeforeSubmit";
+import OrderConfirmationModal, {
+  type OrderConfirmationDetails,
+} from "@/components/OrderConfirmationModal";
 
 export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
   const [orderType, setOrderType] = useState<OrderType>("midpoint");
@@ -38,6 +42,8 @@ export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
   const { execute: executeSignedOp, isLocked: isSignedOpLocked } = useSignedOperationQueue();
   const { addNotification } = useNotifications();
   const queryClient = useQueryClient();
+  const [confirmBeforeSubmit] = useConfirmBeforeSubmit();
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   // USDC (token ID 1) is the default quote token
   const quoteBalance = balances.find((b) => b.tokenId === 1);
@@ -53,6 +59,26 @@ export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
   // Balance validation
   const amountExceedsBalance = parsedAmount > 0 && parsedAmount > availableBalance;
   const isLargeOrder = parsedAmount > 0 && !amountExceedsBalance && parsedAmount > availableBalance * 0.5;
+  // High-stake orders (>50% of balance) always confirm, regardless of preference.
+  const requireConfirm = confirmBeforeSubmit || isLargeOrder;
+
+  function handleSubmitClick() {
+    if (requireConfirm) {
+      setConfirmOpen(true);
+      return;
+    }
+    void handleSubmit();
+  }
+
+  const orderDetails: OrderConfirmationDetails = {
+    side,
+    pair: "EUR/USD",
+    type: orderType,
+    amount: parsedAmount ? `${parsedAmount.toLocaleString()} EUR` : "—",
+    price: orderType === "limit" ? price : midpointRate ? midpointRate.toFixed(4) : "—",
+    estReceive,
+    fee,
+  };
 
   // Price impact estimation
   const priceImpact = estimatePriceImpact(book, side, parsedAmount);
@@ -391,7 +417,7 @@ export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
       {/* Submit */}
       <button
         data-testid="order-form-submit"
-        onClick={handleSubmit}
+        onClick={handleSubmitClick}
         disabled={isPending || !accountId || !parsedAmount || amountExceedsBalance}
         className={`h-[44px] w-full rounded-md text-body-sm font-semibold tracking-[0.08em] uppercase text-text-inverse transition-fast disabled:opacity-50 disabled:cursor-not-allowed ${
           side === "buy"
@@ -418,6 +444,16 @@ export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
         All orders execute privately at midpoint.{" "}
         <span className="underline cursor-pointer hover:text-text-muted">Learn more</span>
       </p>
+
+      <OrderConfirmationModal
+        isOpen={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        onConfirm={() => {
+          setConfirmOpen(false);
+          void handleSubmit();
+        }}
+        orderDetails={orderDetails}
+      />
     </div>
   );
 }

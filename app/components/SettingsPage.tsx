@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useConfirmBeforeSubmit } from "@/lib/hooks/useConfirmBeforeSubmit";
 
 const sections = [
   { key: "trading", label: "Trading" },
@@ -45,7 +46,7 @@ export default function SettingsPage() {
 function TradingSettings() {
   const [orderType, setOrderType] = useState("midpoint");
   const [slippage, setSlippage] = useState("0.5");
-  const [confirmBeforeSubmit, setConfirmBeforeSubmit] = useState(true);
+  const [confirmBeforeSubmit, setConfirmBeforeSubmit] = useConfirmBeforeSubmit();
   const [defaultPrivacy, setDefaultPrivacy] = useState(false);
   const [currency, setCurrency] = useState("USD");
   const [decimals, setDecimals] = useState("4");

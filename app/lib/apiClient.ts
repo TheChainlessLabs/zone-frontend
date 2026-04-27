@@ -115,15 +115,3 @@ export async function getAccountBalances(accountId: number): Promise<AccountBala
   const res = await fetch(`${BASE}/accounts/${accountId}/balances`);
   return handleResponse<AccountBalancesResponse>(res);
 }
-
-export async function mockFund(accountId: string): Promise<void> {
-  const res = await fetch(`${BASE}/admin/accounts/${accountId}/fund`, {
-    method: "POST",
-  });
-  if (!res.ok) {
-    const err = await ApiError.fromResponse(res);
-    devError("api", `POST /admin/accounts/${accountId}/fund failed: ${res.status} ${err.message}`);
-    throw new Error(err.message || "Funding failed");
-  }
-  devLog("api", `POST /admin/accounts/${accountId}/fund → ${res.status}`);
-}

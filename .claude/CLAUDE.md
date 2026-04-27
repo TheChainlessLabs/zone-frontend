@@ -10,11 +10,13 @@ pnpm monorepo with 3 packages:
 - `design-system/` — CSS custom properties, Tailwind theme, tokens.json
 
 ## Design System
-- **Aesthetic**: high-contrast cool-dark. Electric cyan accent on near-pure-black backgrounds, vibrant semantic colors. Mono-dominant in the data plane; accent used purposefully on critical highlights (current-pair, submit CTA, current-price line, active-tab underline). The structural moves — no chart glow, no glassmorphism scrims, no marketing copy in-product — still apply; only the chromatic register is bright.
-- **Accent**: `#0EA5E9` (electric cyan) — purposeful, not decorative.
-- **Base**: `#0A0A0A` (near-pure black), Surface: `#161616`, Elevated: `#232323`, Overlay: `#2E2E2E`
-- **Text**: Primary `#FAFAFA`, Secondary `#B5B5B5`, Muted `#707070`
-- **Semantic**: Success `#22C55E`, Error `#EF4444`, Warning `#F59E0B`, Info `#0EA5E9` (matches accent)
+- **Aesthetic**: **Institutional Calm.** Steel-blue accent on a matte near-black register, muted institutional semantic colors. The product is a TEE-attested dark-pool FX trading interface for institutional and sophisticated DeFi users — the UI must read as a calm execution surface, not a crypto-DEX demo and not a cyan terminal. Mono-dominant in the data plane. Accent used purposefully (current pair, submit CTA when not buy/sell-tinted, active tab, focus rings). No glow, no glassmorphism scrims, no marketing copy in-product, no fake stats, no public-order-book implication.
+- **Accent**: `#3A6EA5` (calm steel blue) — the default everywhere.
+- **Accent strong**: `#22D3EE` (cyan) — RESERVED for Limit-mode precision surfaces only (price-input focus ring, active LIMIT tab underline, at most one precision label). Never on the CTA, never on the form border, never on the chart line. The page must not slide into a cyan-terminal aesthetic.
+- **Base**: `#0A0A0A` (near-black), Surface: `#141414`, Elevated: `#1C1C1C`, Overlay: `#181818`
+- **Text**: Primary `#F5F5F5`, Secondary `#A1A1A1`, Muted `#6B6B6B`
+- **Semantic**: Success `#4D8C57` (matte institutional green), Error `#A85A5A` (matte institutional red), Warning `#B88746` (matte amber), Info `#3A6EA5` (matches accent)
+- **Borders**: translucent on dark — `rgba(255,255,255,0.14)` default, `rgba(255,255,255,0.08)` subtle
 - **Fonts**: Space Grotesk (display, --font-display), JetBrains Mono (mono, --font-mono). Mono dominates the data plane.
 - **Spacing**: 4px base grid. Component heights: sm 32px, md 40px, lg 48px
 - **Transitions**: fast 100ms, normal 150ms, slow 300ms
@@ -22,6 +24,28 @@ pnpm monorepo with 3 packages:
 - Tailwind theme mapping in `design-system/tailwind.theme.css`
 - Use token classes (`bg-bg-surface`, `text-accent`, `border-border`) — never hardcode hex values
 - Reference doc `design-system/palette.md` is currently out of sync with the new tokens; it will be rewritten in a follow-up. Consult `tokens.json` for canonical hex values.
+
+## Design Context — V1 Action-First Execution Model
+
+The trading surface is reorganised around an **action-first execution model**: the order form *is* the product. Reference: Uniswap / CoW Swap dominance and simplicity, with an institutional dark-pool execution feel.
+
+**Two modes on `/trade`, progressive disclosure, no route change:**
+
+1. **Market (default)** — centred dominant swap card. No chart, no public book, no marquee. A small CoW-Swap-like **Execution Context strip** below the card carries midpoint / estimated received / fee — real values only, never fake. Strictly secondary, never marquee-loud.
+2. **Limit** — same order form remains the visually dominant surface, anchored left at desktop ≥1024px. Chart fades in to the right at lower contrast (steel-blue line, no glow). User-specific fills appear below. **No public order book** — the product is a dark pool. Cyan precision-strong accent appears in **at most three places**: the price-input focus ring, the active LIMIT tab underline, and at most one precision label.
+
+**Mode transition:** 200ms `ease-out`. Supporting surfaces fade in with `opacity 0→1` + `translateY(16px)→0`. The order form does NOT animate (trading-critical, must stay anchored). No bouncy easing.
+
+**Hard rules during implementation:**
+
+- The chart line uses `--color-accent` (steel blue), never `--color-accent-strong` (cyan), even in Limit mode.
+- The CTA uses `--color-success` for Buy and `--color-error` for Sell — never accent.
+- `OrderBook.tsx` is **unmounted from `/trade`** for V1 (file may stay around as an unused primitive).
+- `BBOMarquee.tsx` is **unmounted from `/trade`** in Market mode and replaced by the quieter `ExecutionContextStrip`.
+- User-fills section uses `useUserOrders()` — never global market trades. If `RecentTrades.tsx` is global, repurpose into `MyFills.tsx`.
+- No public-order-book visual anywhere on the trading surface.
+
+For the full brief, see `~/.claude/plans/i-think-this-can-fuzzy-fox.md`.
 
 ## App Pages
 - `/trade` — Trading with BBO marquee, pair selector, order form, chart, positions/orders
@@ -84,7 +108,7 @@ User's required workflow: **Design in Paper MCP first → user reviews → imple
    - Account/Funding/Settings mobile layouts
    - All 5 detail pages (Order/Batch/TX/Pair/Withdrawal) mobile layouts
    - Wired DepositModal to Navbar
-3. Updated design system: accent color #3467A1 → #0EA5E9 → #D4A847 → #0EA5E9 (heritage amber pass reverted; back to electric cyan with brighter text + darker base for higher contrast)
+3. Updated design system: accent color #3467A1 → #0EA5E9 → #D4A847 → #0EA5E9 → #3A6EA5 (Institutional Calm — calm steel blue base, cyan #22D3EE reserved for Limit-mode precision only)
 4. Added MobileTabBar, BBOMarquee, ProtocolStats, StatusBar components
 5. Responsive padding fixes on all page wrappers
 6. Favicon color updates

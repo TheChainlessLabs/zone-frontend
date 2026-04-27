@@ -47,13 +47,13 @@ export default function LightweightChart({
       autoSize: true,
       layout: {
         background: { type: ColorType.Solid, color: "transparent" },
-        textColor: "#B5B5B5",
+        textColor: "#A1A1A1",
         fontFamily: "var(--font-mono), ui-monospace, monospace",
         fontSize: 11,
       },
       grid: {
         vertLines: { visible: false },
-        horzLines: { color: "rgba(51, 51, 51, 0.5)" },
+        horzLines: { color: "rgba(255, 255, 255, 0.06)" },
       },
       rightPriceScale: {
         borderVisible: false,
@@ -67,31 +67,35 @@ export default function LightweightChart({
       crosshair: {
         mode: CrosshairMode.Magnet,
         vertLine: {
-          color: "#707070",
+          color: "#6B6B6B",
           width: 1,
           style: LineStyle.Dashed,
-          labelBackgroundColor: "#232323",
+          labelBackgroundColor: "#1C1C1C",
         },
         horzLine: {
-          color: "#707070",
+          color: "#6B6B6B",
           width: 1,
           style: LineStyle.Dashed,
-          labelBackgroundColor: "#232323",
+          labelBackgroundColor: "#1C1C1C",
         },
       },
       handleScale: false,
       handleScroll: false,
     });
 
+    // Chart line uses the calm steel-blue accent — never the cyan
+    // accent-strong, even in Limit mode. The chart is supporting
+    // context, not the focal surface; precision-strong belongs to
+    // the order form's price-input affordances only.
     const series = chart.addSeries(AreaSeries, {
-      lineColor: "#0EA5E9",
-      topColor: "rgba(14, 165, 233, 0.18)",
-      bottomColor: "rgba(14, 165, 233, 0.00)",
+      lineColor: "#3A6EA5",
+      topColor: "rgba(58, 110, 165, 0.16)",
+      bottomColor: "rgba(58, 110, 165, 0.00)",
       lineWidth: 2,
       priceLineVisible: false,
       lastValueVisible: true,
       crosshairMarkerRadius: 5,
-      crosshairMarkerBorderColor: "#0EA5E9",
+      crosshairMarkerBorderColor: "#3A6EA5",
       crosshairMarkerBackgroundColor: "#0A0A0A",
     });
 

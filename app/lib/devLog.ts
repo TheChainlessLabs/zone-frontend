@@ -6,13 +6,13 @@
 const isDev = process.env.NODE_ENV === "development";
 
 const COLORS: Record<string, string> = {
-  nonce: "color: #22C55E",        // green
-  order: "color: #0EA5E9",        // cyan
-  wallet: "color: #EAB308",       // yellow
+  nonce: "color: #4D8C57",        // matte success green
+  order: "color: #3A6EA5",        // calm steel-blue accent
+  wallet: "color: #B88746",       // matte amber
   api: "color: #A78BFA",          // purple
-  balance: "color: #F97316",      // orange
-  signing: "color: #EC4899",      // pink
-  registration: "color: #14B8A6", // teal
+  balance: "color: #A85A5A",      // matte error red
+  signing: "color: #22D3EE",      // precision-strong cyan (signing is the precision moment)
+  registration: "color: #A1A1A1", // text-secondary neutral
 };
 
 export function devLog(tag: string, message: string, data?: unknown) {

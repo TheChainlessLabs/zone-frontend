@@ -47,13 +47,13 @@ export default function LightweightChart({
       autoSize: true,
       layout: {
         background: { type: ColorType.Solid, color: "transparent" },
-        textColor: "#B0A89E",
+        textColor: "#B5B5B5",
         fontFamily: "var(--font-mono), ui-monospace, monospace",
         fontSize: 11,
       },
       grid: {
         vertLines: { visible: false },
-        horzLines: { color: "rgba(58, 54, 51, 0.4)" },
+        horzLines: { color: "rgba(51, 51, 51, 0.5)" },
       },
       rightPriceScale: {
         borderVisible: false,
@@ -67,16 +67,16 @@ export default function LightweightChart({
       crosshair: {
         mode: CrosshairMode.Magnet,
         vertLine: {
-          color: "#6E6862",
+          color: "#707070",
           width: 1,
           style: LineStyle.Dashed,
-          labelBackgroundColor: "#221F1C",
+          labelBackgroundColor: "#232323",
         },
         horzLine: {
-          color: "#6E6862",
+          color: "#707070",
           width: 1,
           style: LineStyle.Dashed,
-          labelBackgroundColor: "#221F1C",
+          labelBackgroundColor: "#232323",
         },
       },
       handleScale: false,
@@ -84,15 +84,15 @@ export default function LightweightChart({
     });
 
     const series = chart.addSeries(AreaSeries, {
-      lineColor: "#D4A847",
-      topColor: "rgba(212, 168, 71, 0.10)",
-      bottomColor: "rgba(212, 168, 71, 0.00)",
+      lineColor: "#0EA5E9",
+      topColor: "rgba(14, 165, 233, 0.18)",
+      bottomColor: "rgba(14, 165, 233, 0.00)",
       lineWidth: 2,
       priceLineVisible: false,
       lastValueVisible: true,
       crosshairMarkerRadius: 5,
-      crosshairMarkerBorderColor: "#D4A847",
-      crosshairMarkerBackgroundColor: "#0E0D0B",
+      crosshairMarkerBorderColor: "#0EA5E9",
+      crosshairMarkerBackgroundColor: "#0A0A0A",
     });
 
     chartRef.current = chart;

@@ -1,19 +1,27 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import BBOMarquee from "@/components/BBOMarquee";
-import PairDropdown from "@/components/PairDropdown";
 import OrderForm from "@/components/OrderForm";
-import OrderBook from "@/components/OrderBook";
-import PriceChart from "@/components/PriceChart";
-import BottomPanel from "@/components/BottomPanel";
-import RecentTrades from "@/components/RecentTrades";
+import ExecutionContextStrip from "@/components/ExecutionContextStrip";
+import PairDropdown from "@/components/PairDropdown";
 import StatusBar from "@/components/StatusBar";
 import ProtectedPage from "@/components/ProtectedPage";
 import StaleDataOverlay from "@/components/StaleDataOverlay";
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
 import { useOrderBook } from "@/lib/hooks/useOrderBook";
 
+/**
+ * /trade — V1 action-first execution model. The order form is the
+ * product; everything else is supporting context. This is Market
+ * mode: a centred dominant swap card, generous negative space, no
+ * chart, no public order book (the product is a dark pool), no
+ * marquee, no global trades. The ExecutionContextStrip below the
+ * card carries the quiet protocol-level execution context.
+ *
+ * Limit mode (added in a follow-up slice) will introduce a chart
+ * and user-fills as supporting context, with the form remaining the
+ * visually dominant surface.
+ */
 export default function TradeContent() {
   const [isLoading, setIsLoading] = useState(true);
   const { dataUpdatedAt } = useOrderBook();
@@ -24,51 +32,34 @@ export default function TradeContent() {
   }, []);
 
   return (
-    <ProtectedPage shellClassName="flex flex-col h-screen overflow-hidden">
-      <BBOMarquee />
+    <ProtectedPage shellClassName="flex flex-col h-screen overflow-hidden bg-bg-base">
+      {/* Centred execution column. Single dominant surface. */}
+      <main className="flex-1 overflow-y-auto">
+        <div className="mx-auto w-full max-w-[480px] px-4 sm:px-6 pt-10 pb-16 flex flex-col gap-4">
+          <StaleDataOverlay lastUpdated={dataUpdatedAt || null} />
 
-      {/* Main 2-column layout */}
-      <div className="flex-1 flex min-h-0 flex-col lg:flex-row">
-        {/* Left: Chart + Positions/Orders */}
-        <div className="flex-1 flex flex-col min-h-0 min-w-0">
-          {/* Pair dropdown + Chart. Venue comparison lives on /trade/pair/[pair]
-              now — the BBOMarquee at the top of the page already carries the
-              live venue pulse on /trade. */}
-          <div className="relative flex flex-col min-h-0 flex-shrink-0 p-3 gap-3">
-            <StaleDataOverlay lastUpdated={dataUpdatedAt || null} />
-            <div className="flex items-center">
-              <PairDropdown />
-            </div>
-            <SectionErrorBoundary fallbackMessage="Chart unavailable">
-              <PriceChart />
-            </SectionErrorBoundary>
+          {/* Pair anchor — small, mono, sits above the card. The
+              ExecutionContextStrip carries the actual midpoint; this
+              row is just the pair selector. */}
+          <div className="flex items-center justify-between">
+            <PairDropdown />
           </div>
 
-          {/* Bottom panel: Positions + Orders */}
-          <div className="flex-1 px-3 pb-3 min-h-0 overflow-hidden">
-            <SectionErrorBoundary fallbackMessage="Positions and orders unavailable">
-              <BottomPanel isLoading={isLoading} />
-            </SectionErrorBoundary>
-          </div>
-        </div>
-
-        {/* Right: Order Book + Order Form + Recent Fills (380px on desktop). The
-            book is the centrepiece of a CLOB UI — it sits at the top of the
-            right rail so the eye lands on depth before the form. */}
-        <div className="w-full lg:w-[380px] border-t lg:border-t-0 lg:border-l border-border overflow-y-auto shrink-0">
-          <div className="p-4 flex flex-col gap-4">
-            <SectionErrorBoundary fallbackMessage="Order book unavailable">
-              <OrderBook />
-            </SectionErrorBoundary>
-            <SectionErrorBoundary fallbackMessage="Order form unavailable">
+          {/* Dominant swap card. */}
+          <SectionErrorBoundary fallbackMessage="Order form unavailable">
+            <div className="rounded-md border border-border bg-bg-surface p-5">
               <OrderForm isLoading={isLoading} />
-            </SectionErrorBoundary>
-            <SectionErrorBoundary fallbackMessage="Recent trades unavailable">
-              <RecentTrades />
-            </SectionErrorBoundary>
-          </div>
+            </div>
+          </SectionErrorBoundary>
+
+          {/* Quiet execution context. Bounded to the same width as
+              the card; thin top separator; no card background of its
+              own. Strictly secondary. */}
+          <SectionErrorBoundary fallbackMessage="Execution context unavailable">
+            <ExecutionContextStrip />
+          </SectionErrorBoundary>
         </div>
-      </div>
+      </main>
 
       <StatusBar />
     </ProtectedPage>

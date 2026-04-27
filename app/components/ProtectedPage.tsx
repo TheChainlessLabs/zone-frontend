@@ -85,12 +85,11 @@ export default function ProtectedPage({
         <Navbar />
         <DisconnectedState
           actionLabel={`Switch to ${expectedChainName}`}
-          description={`This wallet is connected to the wrong network. Switch to ${expectedChainName} to access Omega's protected trading and account screens.`}
+          description={`This wallet is connected to the wrong network. Switch to ${expectedChainName} to access trading and account screens.`}
           icon={AlertTriangle}
           onAction={handleUnsupportedAction}
-          showStats={false}
           testId="unsupported-network-state"
-          title="Unsupported Network"
+          title="Unsupported network"
         />
         {isSwitchingChain ? (
           <p className="pb-8 text-center text-body-sm text-text-muted">

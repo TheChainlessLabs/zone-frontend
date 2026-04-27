@@ -1,29 +1,20 @@
 import { Lock, type LucideIcon } from "lucide-react";
 
-const stats = [
-  { label: "24H Volume", value: "$248M" },
-  { label: "Trades Today", value: "12,847" },
-  { label: "Savings Delivered", value: "$1.2M", highlight: true },
-  { label: "Avg Spread", value: "0.3 pips" },
-];
-
 interface DisconnectedStateProps {
   onAction: () => void;
   actionLabel?: string;
   title?: string;
   description?: string;
   icon?: LucideIcon;
-  showStats?: boolean;
   testId?: string;
 }
 
 export default function DisconnectedState({
   onAction,
-  actionLabel = "Connect Wallet to Get Started",
-  title = "Trade FX at the True Midpoint",
-  description = "Omega is a darkpool for stablecoin FX. Anonymous execution at midpoint pricing with zero information leakage.",
+  actionLabel = "Connect Wallet",
+  title = "Anonymous spot FX. On-chain settlement.",
+  description = "Connect a wallet to access the order book, place limit and market orders, and view your fills.",
   icon: Icon = Lock,
-  showStats = true,
   testId = "disconnected-state",
 }: DisconnectedStateProps) {
   return (
@@ -31,45 +22,23 @@ export default function DisconnectedState({
       className="flex-1 flex flex-col items-center justify-center px-4 py-16"
       data-testid={testId}
     >
-      <div className="w-[64px] h-[64px] rounded-xl bg-bg-elevated flex items-center justify-center mb-6">
-        <Icon size={28} className="text-accent" />
+      <div className="w-[44px] h-[44px] rounded-md border border-border bg-bg-surface flex items-center justify-center mb-6">
+        <Icon size={20} className="text-text-secondary" aria-hidden />
       </div>
 
-      <h1 className="text-h2 md:text-h1 font-semibold text-center">
+      <h1 className="text-h3 md:text-h2 font-semibold text-text-primary text-center max-w-[520px]">
         {title}
       </h1>
-      <p className="text-body-sm text-text-muted mt-3 text-center max-w-[460px]">
+      <p className="text-body-sm text-text-secondary mt-3 text-center max-w-[460px]">
         {description}
       </p>
 
       <button
         onClick={onAction}
-        className="mt-8 h-[48px] px-8 text-body-sm font-medium rounded-md bg-accent text-text-inverse hover:bg-accent-hover transition-fast"
+        className="mt-8 h-[44px] px-6 text-body-sm font-medium tracking-wide rounded-sm bg-accent text-text-inverse hover:bg-accent-hover transition-fast"
       >
         {actionLabel}
       </button>
-
-      {showStats ? (
-        <div className="flex items-center gap-0 mt-12">
-          {stats.map((stat, i) => (
-            <div
-              key={stat.label}
-              className={`flex flex-col items-center px-6 md:px-8 ${
-                i < stats.length - 1 ? "border-r border-border" : ""
-              }`}
-            >
-              <span
-                className={`text-h3 md:text-h2 font-mono font-tabular ${
-                  stat.highlight ? "text-success" : "text-text-primary"
-                }`}
-              >
-                {stat.value}
-              </span>
-              <span className="text-[11px] text-text-muted mt-1">{stat.label}</span>
-            </div>
-          ))}
-        </div>
-      ) : null}
     </div>
   );
 }

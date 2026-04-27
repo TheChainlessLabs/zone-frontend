@@ -26,8 +26,25 @@ import OrderConfirmationModal, {
   type OrderConfirmationDetails,
 } from "@/components/OrderConfirmationModal";
 
-export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
-  const [orderType, setOrderType] = useState<OrderType>("midpoint");
+interface OrderFormProps {
+  isLoading?: boolean;
+  /** Controlled orderType — when omitted the component manages its own state. */
+  orderType?: OrderType;
+  /** Fires whenever the user toggles between Market (midpoint) and Limit. */
+  onOrderTypeChange?: (next: OrderType) => void;
+}
+
+export default function OrderForm({
+  isLoading,
+  orderType: controlledOrderType,
+  onOrderTypeChange,
+}: OrderFormProps) {
+  const [internalOrderType, setInternalOrderType] = useState<OrderType>("midpoint");
+  const orderType = controlledOrderType ?? internalOrderType;
+  const setOrderType = (next: OrderType) => {
+    if (controlledOrderType === undefined) setInternalOrderType(next);
+    onOrderTypeChange?.(next);
+  };
   const [side, setSide] = useState<Side>("buy");
   const [amount, setAmount] = useState("");
   const [price, setPrice] = useState("1.0850");
@@ -265,22 +282,35 @@ export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
         </button>
       </div>
 
-      {/* Order type tabs */}
+      {/* Order type tabs. The active LIMIT tab carries a small precision-
+          strong underline — the canonical "you are in precision mode now"
+          signal. Active MIDPOINT tab stays on calm steel-blue (default). */}
       <div className="flex gap-1 bg-bg-base rounded-md p-1">
-        {(["midpoint", "limit"] as const).map((t) => (
-          <button
-            key={t}
-            data-testid={`order-form-order-type-${t}`}
-            onClick={() => setOrderType(t)}
-            className={`flex-1 min-h-[44px] md:min-h-[28px] text-body-sm font-medium rounded-sm transition-fast capitalize ${
-              orderType === t
-                ? "bg-bg-elevated text-text-primary"
-                : "text-text-muted hover:text-text-secondary"
-            }`}
-          >
-            {t}
-          </button>
-        ))}
+        {(["midpoint", "limit"] as const).map((t) => {
+          const active = orderType === t;
+          const isLimitActive = active && t === "limit";
+          return (
+            <button
+              key={t}
+              data-testid={`order-form-order-type-${t}`}
+              onClick={() => setOrderType(t)}
+              className={`relative flex-1 min-h-[44px] md:min-h-[28px] text-body-sm font-medium rounded-sm transition-fast capitalize ${
+                active
+                  ? "bg-bg-elevated text-text-primary"
+                  : "text-text-muted hover:text-text-secondary"
+              }`}
+            >
+              {t}
+              {isLimitActive && (
+                <span
+                  aria-hidden
+                  className="absolute left-1/2 -translate-x-1/2 bottom-[3px] h-[1.5px] w-5 rounded-full"
+                  style={{ background: "var(--color-accent-strong)" }}
+                />
+              )}
+            </button>
+          );
+        })}
       </div>
 
       {/* Amount */}
@@ -350,16 +380,31 @@ export default function OrderForm({ isLoading }: { isLoading?: boolean }) {
         ))}
       </div>
 
-      {/* Price (limit only) */}
+      {/* Price (limit only). The "Limit Price" label is the single
+          precision-strong label permitted by the design context — the
+          eye reads "this is the precision moment" without the rest of
+          the form shifting register. The input gets a precision-strong
+          focus ring; everything else stays on the calm steel-blue. */}
       {orderType === "limit" && (
         <div>
           <div className="flex justify-between mb-1.5">
-            <label className="text-label-uppercase text-text-muted">Limit Price</label>
+            <label
+              className="text-[11px] uppercase tracking-wider font-medium"
+              style={{ color: "var(--color-accent-strong)" }}
+            >
+              Limit Price
+            </label>
             <span className="text-[11px] text-text-muted">
               Mid: {midpointRate.toFixed(4)}
             </span>
           </div>
-          <div className="flex items-center h-[44px] bg-bg-base border border-border rounded-md px-4">
+          <div
+            className="flex items-center h-[44px] bg-bg-base border rounded-md px-4 transition-fast focus-within:ring-2"
+            style={{
+              borderColor: "var(--color-border)",
+              ["--tw-ring-color" as string]: "var(--color-accent-strong)",
+            }}
+          >
             <input
               data-testid="order-form-price"
               type="text"

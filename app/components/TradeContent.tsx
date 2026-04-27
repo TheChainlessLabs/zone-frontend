@@ -3,27 +3,41 @@
 import { useState, useEffect } from "react";
 import OrderForm from "@/components/OrderForm";
 import ExecutionContextStrip from "@/components/ExecutionContextStrip";
+import PriceChart from "@/components/PriceChart";
 import PairDropdown from "@/components/PairDropdown";
+import MyFills from "@/components/MyFills";
 import StatusBar from "@/components/StatusBar";
 import ProtectedPage from "@/components/ProtectedPage";
 import StaleDataOverlay from "@/components/StaleDataOverlay";
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
 import { useOrderBook } from "@/lib/hooks/useOrderBook";
+import type { OrderType } from "@/lib/types";
 
 /**
  * /trade — V1 action-first execution model. The order form is the
- * product; everything else is supporting context. This is Market
- * mode: a centred dominant swap card, generous negative space, no
- * chart, no public order book (the product is a dark pool), no
- * marquee, no global trades. The ExecutionContextStrip below the
- * card carries the quiet protocol-level execution context.
+ * product; everything else is supporting context.
  *
- * Limit mode (added in a follow-up slice) will introduce a chart
- * and user-fills as supporting context, with the form remaining the
- * visually dominant surface.
+ * Two modes, progressive disclosure, no route change:
+ *
+ * - Market (default) — centred dominant swap card with a quiet
+ *   protocol-level execution context strip below. No chart, no
+ *   public book (the product is a dark pool), no marquee, no global
+ *   trades.
+ *
+ * - Limit — the same card remains the visually dominant surface and
+ *   anchors left at desktop ≥1024px; a muted price chart fades in to
+ *   the right as supporting context, and the user's own order
+ *   history fades in below. No public order book. The form's price-
+ *   input focus ring and the active LIMIT tab carry the precision-
+ *   strong cyan accent — every other surface stays on calm steel
+ *   blue.
+ *
+ * Mode transition: 200ms ease-out, opacity + translateY(16px). The
+ * order form does NOT animate (trading-critical, must stay anchored).
  */
 export default function TradeContent() {
   const [isLoading, setIsLoading] = useState(true);
+  const [orderType, setOrderType] = useState<OrderType>("midpoint");
   const { dataUpdatedAt } = useOrderBook();
 
   useEffect(() => {
@@ -31,33 +45,70 @@ export default function TradeContent() {
     return () => clearTimeout(timer);
   }, []);
 
+  const isLimit = orderType === "limit";
+
   return (
     <ProtectedPage shellClassName="flex flex-col h-screen overflow-hidden bg-bg-base">
-      {/* Centred execution column. Single dominant surface. */}
       <main className="flex-1 overflow-y-auto">
-        <div className="mx-auto w-full max-w-[480px] px-4 sm:px-6 pt-10 pb-16 flex flex-col gap-4">
+        <div
+          className={`mx-auto w-full px-4 sm:px-6 pt-10 pb-16 transition-[max-width] duration-200 ease-out ${
+            isLimit ? "max-w-[1100px]" : "max-w-[480px]"
+          }`}
+        >
           <StaleDataOverlay lastUpdated={dataUpdatedAt || null} />
 
-          {/* Pair anchor — small, mono, sits above the card. The
-              ExecutionContextStrip carries the actual midpoint; this
-              row is just the pair selector. */}
-          <div className="flex items-center justify-between">
-            <PairDropdown />
-          </div>
+          {/* On desktop in Limit mode the form anchors left and the
+              chart sits in the right column. On mobile or in Market
+              mode the layout is a single column. */}
+          <div
+            className={`grid gap-6 ${
+              isLimit
+                ? "lg:grid-cols-[480px_minmax(0,1fr)] lg:items-start"
+                : "grid-cols-1"
+            }`}
+          >
+            {/* Left column — pair, swap card, execution strip. The
+                column itself does NOT animate across modes; only the
+                supporting surfaces fade in/out. */}
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center justify-between">
+                <PairDropdown />
+              </div>
 
-          {/* Dominant swap card. */}
-          <SectionErrorBoundary fallbackMessage="Order form unavailable">
-            <div className="rounded-md border border-border bg-bg-surface p-5">
-              <OrderForm isLoading={isLoading} />
+              <SectionErrorBoundary fallbackMessage="Order form unavailable">
+                <div className="rounded-md border border-border bg-bg-surface p-5">
+                  <OrderForm
+                    isLoading={isLoading}
+                    orderType={orderType}
+                    onOrderTypeChange={setOrderType}
+                  />
+                </div>
+              </SectionErrorBoundary>
+
+              <SectionErrorBoundary fallbackMessage="Execution context unavailable">
+                <ExecutionContextStrip />
+              </SectionErrorBoundary>
             </div>
-          </SectionErrorBoundary>
 
-          {/* Quiet execution context. Bounded to the same width as
-              the card; thin top separator; no card background of its
-              own. Strictly secondary. */}
-          <SectionErrorBoundary fallbackMessage="Execution context unavailable">
-            <ExecutionContextStrip />
-          </SectionErrorBoundary>
+            {/* Right column — supporting context. Mounted only in
+                Limit mode; fades in with the brief's motion spec. */}
+            {isLimit && (
+              <div
+                key="limit-supporting"
+                className="flex flex-col gap-6 animate-fadeInUp"
+              >
+                <SectionErrorBoundary fallbackMessage="Chart unavailable">
+                  <div className="rounded-md border border-border-subtle bg-bg-surface/60 p-4 lg:min-h-[320px]">
+                    <PriceChart />
+                  </div>
+                </SectionErrorBoundary>
+
+                <SectionErrorBoundary fallbackMessage="Order history unavailable">
+                  <MyFills />
+                </SectionErrorBoundary>
+              </div>
+            )}
+          </div>
         </div>
       </main>
 

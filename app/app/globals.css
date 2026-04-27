@@ -73,3 +73,22 @@
   animation: fadeIn 300ms ease-out;
 }
 
+/* Mode-transition motion for /trade Limit mode supporting surfaces.
+   200ms ease-out is the brief — no bouncy easing for trading-critical
+   adjacent surfaces. The order form does NOT use this animation; it
+   stays anchored across mode changes. */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@utility animate-fadeInUp {
+  animation: fadeInUp 200ms ease-out both;
+}
+

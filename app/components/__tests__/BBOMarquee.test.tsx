@@ -88,7 +88,24 @@ describe("BBOMarquee", () => {
     expect(liveLabels.length).toBe(4); // 3 FX venues + 1inch
   });
 
-  it("shows Best Price badge for Omega when midpoint is available", () => {
+  it("shows Best Price badge when Omega midpoint clears the cheapest retail rate", () => {
+    mockUseOrderBook.mockReturnValue({
+      book: null,
+      midpoint: 1.0830,
+      isLoading: false,
+      isError: false,
+    });
+    mockUseVenueRates.mockReturnValue({
+      venues: { wise: 1.0856, ofx: 1.0842, revolut: 1.0838 },
+      isLoading: false,
+      isError: false,
+    });
+
+    render(<BBOMarquee />);
+    expect(screen.getByText("Best Price")).toBeInTheDocument();
+  });
+
+  it("does not show Best Price badge when Omega midpoint sits inside the retail spread", () => {
     mockUseOrderBook.mockReturnValue({
       book: null,
       midpoint: 1.0849,
@@ -102,7 +119,7 @@ describe("BBOMarquee", () => {
     });
 
     render(<BBOMarquee />);
-    expect(screen.getByText("Best Price")).toBeInTheDocument();
+    expect(screen.queryByText("Best Price")).not.toBeInTheDocument();
   });
 
   it("does not show Best Price badge when Omega midpoint is unavailable", () => {

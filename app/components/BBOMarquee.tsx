@@ -32,9 +32,16 @@ function isBestPrice(
   venueRates: { wise: number; ofx: number; revolut: number } | undefined,
 ): boolean {
   if (omegaMidpoint === null || !venueRates) return false;
-  // Omega is "best" if it exists — the spread is tighter by construction in a CLOB
-  // In production, compare actual bid/ask spreads. For now, show badge when Omega has data.
-  return true;
+  const competitors = [venueRates.wise, venueRates.ofx, venueRates.revolut].filter(
+    (rate) => Number.isFinite(rate),
+  );
+  if (competitors.length === 0) return false;
+  // "Best" = Omega midpoint is strictly tighter than every retail consumer
+  // venue's quoted rate. The marquee row is read by descending preference
+  // (lower rate = less paid per unit of quote currency), so a midpoint
+  // that clears the cheapest retail rate is genuinely the best price on
+  // the row. Anything else and the badge is misleading.
+  return omegaMidpoint < Math.min(...competitors);
 }
 
 export default function BBOMarquee() {

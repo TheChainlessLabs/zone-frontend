@@ -1,6 +1,7 @@
 "use client";
 
 import { AlertTriangle } from "lucide-react";
+import { motion } from "motion/react";
 import Modal from "@/components/Modal";
 import type { Side, OrderType } from "@/lib/types";
 
@@ -85,13 +86,17 @@ export default function OrderConfirmationModal({
 
         {/* Actions */}
         <div className="flex gap-3 mt-2">
-          <button
+          <motion.button
+            whileTap={{ scale: 0.98 }}
+            transition={{ duration: 0.1, ease: "easeOut" }}
             onClick={onClose}
             className="flex-1 h-[44px] rounded-md text-body-sm font-semibold border border-border text-text-secondary hover:bg-bg-elevated transition-fast"
           >
             Cancel
-          </button>
-          <button
+          </motion.button>
+          <motion.button
+            whileTap={{ scale: 0.98 }}
+            transition={{ duration: 0.1, ease: "easeOut" }}
             onClick={onConfirm}
             className={`flex-1 h-[44px] rounded-md text-body-sm font-semibold text-text-inverse transition-fast ${
               isBuy
@@ -100,7 +105,7 @@ export default function OrderConfirmationModal({
             }`}
           >
             Confirm Order
-          </button>
+          </motion.button>
         </div>
       </div>
     </Modal>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import {
   Bell,
   ShoppingCart,
@@ -57,7 +58,9 @@ export default function NotificationCenter() {
 
   return (
     <div className="relative" ref={ref}>
-      <button
+      <motion.button
+        whileTap={{ scale: 0.95 }}
+        transition={{ duration: 0.1, ease: "easeOut" }}
         onClick={() => setOpen((prev) => !prev)}
         className="relative flex items-center justify-center w-[30px] h-[30px] rounded-md text-text-secondary hover:text-text-primary hover:bg-bg-elevated transition-fast"
         aria-label="Notifications"
@@ -68,58 +71,68 @@ export default function NotificationCenter() {
             {unreadCount > 99 ? "99+" : unreadCount}
           </span>
         )}
-      </button>
+      </motion.button>
 
-      {open && (
-        <div className="absolute right-0 top-[38px] w-[320px] bg-bg-elevated border border-border rounded-lg shadow-lg z-50 overflow-hidden">
-          {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-border-subtle">
-            <span className="text-body-sm font-semibold text-text-primary">
-              Notifications
-            </span>
-            {unreadCount > 0 && (
-              <button
-                onClick={() => markAllRead()}
-                className="text-[12px] text-accent hover:text-accent-hover transition-fast"
-              >
-                Mark all read
-              </button>
-            )}
-          </div>
-
-          {/* List */}
-          <div className="max-h-[400px] overflow-y-auto">
-            {displayed.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-10 text-text-muted">
-                <Bell size={24} className="mb-2 opacity-40" />
-                <span className="text-body-sm">No notifications yet</span>
-              </div>
-            ) : (
-              displayed.map((n) => (
-                <div
-                  key={n.id}
-                  className={`flex items-start gap-3 px-4 py-3 border-b border-border-subtle last:border-b-0 transition-fast ${
-                    n.read ? "opacity-60" : ""
-                  }`}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: -4, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -4, scale: 0.98 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
+            className="absolute right-0 top-[38px] w-[320px] origin-top-right bg-bg-elevated border border-border rounded-lg shadow-lg z-50 overflow-hidden"
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border-subtle">
+              <span className="text-body-sm font-semibold text-text-primary">
+                Notifications
+              </span>
+              {unreadCount > 0 && (
+                <motion.button
+                  whileTap={{ scale: 0.97 }}
+                  transition={{ duration: 0.1, ease: "easeOut" }}
+                  onClick={() => markAllRead()}
+                  className="text-[12px] text-accent hover:text-accent-hover transition-fast"
                 >
-                  <div className="mt-0.5">{iconForType(n.type)}</div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-medium text-text-primary truncate">
-                      {n.title}
-                    </p>
-                    <p className="text-[12px] text-text-muted truncate">
-                      {n.message}
-                    </p>
-                  </div>
-                  <span className="text-[11px] text-text-muted whitespace-nowrap shrink-0">
-                    {relativeTime(n.timestamp)}
-                  </span>
+                  Mark all read
+                </motion.button>
+              )}
+            </div>
+
+            {/* List */}
+            <div className="max-h-[400px] overflow-y-auto">
+              {displayed.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-10 text-text-muted">
+                  <Bell size={24} className="mb-2 opacity-40" />
+                  <span className="text-body-sm">No notifications yet</span>
                 </div>
-              ))
-            )}
-          </div>
-        </div>
-      )}
+              ) : (
+                displayed.map((n) => (
+                  <div
+                    key={n.id}
+                    className={`flex items-start gap-3 px-4 py-3 border-b border-border-subtle last:border-b-0 transition-fast ${
+                      n.read ? "opacity-60" : ""
+                    }`}
+                  >
+                    <div className="mt-0.5">{iconForType(n.type)}</div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[13px] font-medium text-text-primary truncate">
+                        {n.title}
+                      </p>
+                      <p className="text-[12px] text-text-muted truncate">
+                        {n.message}
+                      </p>
+                    </div>
+                    <span className="text-[11px] text-text-muted whitespace-nowrap shrink-0">
+                      {relativeTime(n.timestamp)}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

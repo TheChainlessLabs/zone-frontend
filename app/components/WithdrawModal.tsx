@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Lock, Check } from "lucide-react";
+import { motion } from "motion/react";
 import BottomSheet from "./BottomSheet";
 import { useWallet } from "@/lib/wallet";
 import { useAccountBalances } from "@/lib/hooks/useAccountBalances";
@@ -55,12 +56,14 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
               onChange={(e) => setAmount(e.target.value)}
               className="flex-1 bg-transparent px-4 text-[18px] font-mono font-tabular outline-none text-text-primary placeholder:text-text-muted"
             />
-            <button
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              transition={{ duration: 0.1, ease: "easeOut" }}
               onClick={() => setAmount(available.toFixed(2))}
               className="text-label-uppercase text-accent hover:text-accent-hover transition-fast px-4"
             >
               MAX
-            </button>
+            </motion.button>
           </div>
         </div>
 
@@ -68,8 +71,10 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
         <div>
           <label className="text-label-uppercase text-text-muted mb-2 block">Withdrawal Mode</label>
           <div className="grid grid-cols-2 gap-2">
-            <button
+            <motion.button
               data-testid="withdraw-modal-mode-standard"
+              whileTap={{ scale: 0.98 }}
+              transition={{ duration: 0.1, ease: "easeOut" }}
               onClick={() => setMode("standard")}
               className={`flex flex-col items-start p-3 rounded-md border transition-fast ${
                 mode === "standard"
@@ -79,9 +84,11 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
             >
               <span className="text-body-sm font-medium text-text-primary">Standard</span>
               <span className="text-[11px] text-text-muted">Faster, lower fee</span>
-            </button>
-            <button
+            </motion.button>
+            <motion.button
               data-testid="withdraw-modal-mode-privacy"
+              whileTap={{ scale: 0.98 }}
+              transition={{ duration: 0.1, ease: "easeOut" }}
               onClick={() => setMode("privacy")}
               className={`flex flex-col items-start p-3 rounded-md border transition-fast ${
                 mode === "privacy"
@@ -94,14 +101,16 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                 Privacy
               </span>
               <span className="text-[11px] text-text-muted">ZK proof, no history leaked</span>
-            </button>
+            </motion.button>
           </div>
         </div>
 
         {/* Privacy consent */}
         {mode === "privacy" && (
-          <button
+          <motion.button
             data-testid="withdraw-modal-consent"
+            whileTap={{ scale: 0.98 }}
+            transition={{ duration: 0.1, ease: "easeOut" }}
             onClick={() => setConsent(!consent)}
             className="flex items-start gap-3 text-left"
           >
@@ -117,7 +126,7 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
             <span className="text-[12px] text-text-muted leading-[1.5]">
               I understand privacy withdrawals generate a ZK proof and require an on-chain claim step. Additional fee applies.
             </span>
-          </button>
+          </motion.button>
         )}
 
         {/* Fee breakdown */}
@@ -141,13 +150,15 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
         </div>
 
         {/* CTA */}
-        <button
+        <motion.button
           data-testid="withdraw-modal-submit"
+          whileTap={{ scale: 0.98 }}
+          transition={{ duration: 0.1, ease: "easeOut" }}
           disabled={mode === "privacy" && !consent}
           className="h-[48px] w-full rounded-md text-body-sm font-semibold bg-accent text-text-inverse hover:bg-accent-hover transition-fast disabled:opacity-40 disabled:cursor-not-allowed"
         >
           Confirm Withdrawal
-        </button>
+        </motion.button>
       </div>
     </BottomSheet>
   );

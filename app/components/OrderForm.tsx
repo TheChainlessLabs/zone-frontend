@@ -265,8 +265,10 @@ export default function OrderForm({
     >
       {/* Buy/Sell toggle */}
       <div className="flex gap-1">
-        <button
+        <motion.button
           data-testid="order-form-buy"
+          whileTap={{ scale: 0.98 }}
+          transition={{ duration: 0.1, ease: "easeOut" }}
           onClick={() => setSide("buy")}
           className={`flex-1 h-[40px] text-body-sm font-semibold rounded-md transition-fast ${
             side === "buy"
@@ -275,9 +277,11 @@ export default function OrderForm({
           }`}
         >
           Buy
-        </button>
-        <button
+        </motion.button>
+        <motion.button
           data-testid="order-form-sell"
+          whileTap={{ scale: 0.98 }}
+          transition={{ duration: 0.1, ease: "easeOut" }}
           onClick={() => setSide("sell")}
           className={`flex-1 h-[40px] text-body-sm font-semibold rounded-md transition-fast ${
             side === "sell"
@@ -286,7 +290,7 @@ export default function OrderForm({
           }`}
         >
           Sell
-        </button>
+        </motion.button>
       </div>
 
       {/* Order type tabs. The active LIMIT tab carries a small precision-
@@ -297,9 +301,11 @@ export default function OrderForm({
           const active = orderType === t;
           const isLimitActive = active && t === "limit";
           return (
-            <button
+            <motion.button
               key={t}
               data-testid={`order-form-order-type-${t}`}
+              whileTap={{ scale: 0.98 }}
+              transition={{ duration: 0.1, ease: "easeOut" }}
               onClick={() => setOrderType(t)}
               className={`relative flex-1 min-h-[44px] md:min-h-[28px] text-body-sm font-medium rounded-sm transition-fast capitalize ${
                 active
@@ -309,13 +315,15 @@ export default function OrderForm({
             >
               {t}
               {isLimitActive && (
-                <span
+                <motion.span
                   aria-hidden
+                  layoutId="order-form-limit-underline"
                   className="absolute left-1/2 -translate-x-1/2 bottom-[3px] h-[1.5px] w-5 rounded-full"
                   style={{ background: "var(--color-accent-strong)" }}
+                  transition={{ duration: 0.2, ease: "easeOut" }}
                 />
               )}
-            </button>
+            </motion.button>
           );
         })}
       </div>
@@ -374,8 +382,10 @@ export default function OrderForm({
           { label: "50%", factor: 0.5 },
           { label: "MAX", factor: 1 },
         ].map((s) => (
-          <button
+          <motion.button
             key={s.label}
+            whileTap={{ scale: 0.97 }}
+            transition={{ duration: 0.1, ease: "easeOut" }}
             onClick={() => {
               const val = availableBalance * s.factor;
               setAmount(val > 0 ? val.toFixed(2) : "");
@@ -383,7 +393,7 @@ export default function OrderForm({
             className="flex-1 min-h-[44px] md:min-h-[30px] text-body-sm font-mono text-text-muted border border-border rounded-md hover:bg-bg-elevated hover:text-text-primary transition-fast"
           >
             {s.label}
-          </button>
+          </motion.button>
         ))}
       </div>
 
@@ -467,8 +477,10 @@ export default function OrderForm({
       </div>
 
       {/* Submit */}
-      <button
+      <motion.button
         data-testid="order-form-submit"
+        whileTap={{ scale: 0.98 }}
+        transition={{ duration: 0.1, ease: "easeOut" }}
         onClick={handleSubmitClick}
         disabled={isPending || !accountId || !parsedAmount || amountExceedsBalance}
         className={`h-[44px] w-full rounded-md text-body-sm font-semibold tracking-[0.08em] uppercase text-text-inverse transition-fast disabled:opacity-50 disabled:cursor-not-allowed ${
@@ -488,7 +500,7 @@ export default function OrderForm({
             {orderType === "limit" && price ? ` at ${price}` : ""}
           </>
         )}
-      </button>
+      </motion.button>
 
       {/* Privacy notice */}
       <p className="flex items-center gap-1.5 text-[12px] text-text-muted/60">

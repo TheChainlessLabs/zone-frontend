@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "motion/react";
 import { useConfirmBeforeSubmit } from "@/lib/hooks/useConfirmBeforeSubmit";
 
 const sections = [
@@ -18,19 +19,32 @@ export default function SettingsPage() {
       {/* Sidebar — horizontal scroll on mobile, vertical on desktop */}
       <nav className="w-full md:w-[200px] shrink-0">
         <div className="flex md:flex-col gap-1 overflow-x-auto no-scrollbar bg-bg-surface md:bg-transparent border border-border md:border-0 rounded-md md:rounded-none p-1 md:p-0">
-          {sections.map((s) => (
-            <button
-              key={s.key}
-              onClick={() => setActiveSection(s.key)}
-              className={`shrink-0 text-left px-3 h-[36px] text-body-sm rounded-md transition-fast whitespace-nowrap ${
-                activeSection === s.key
-                  ? "bg-bg-elevated text-text-primary font-medium"
-                  : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated/50"
-              }`}
-            >
-              {s.label}
-            </button>
-          ))}
+          {sections.map((s) => {
+            const isActive = activeSection === s.key;
+            return (
+              <motion.button
+                key={s.key}
+                whileTap={{ scale: 0.97 }}
+                transition={{ duration: 0.1, ease: "easeOut" }}
+                onClick={() => setActiveSection(s.key)}
+                className={`relative shrink-0 text-left px-3 h-[36px] text-body-sm rounded-md transition-fast whitespace-nowrap ${
+                  isActive
+                    ? "text-text-primary font-medium"
+                    : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated/50"
+                }`}
+              >
+                {isActive && (
+                  <motion.span
+                    layoutId="settings-active-section"
+                    aria-hidden
+                    className="absolute inset-0 bg-bg-elevated rounded-md"
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                  />
+                )}
+                <span className="relative">{s.label}</span>
+              </motion.button>
+            );
+          })}
         </div>
       </nav>
 
@@ -67,8 +81,10 @@ function TradingSettings() {
               { key: "midpoint", label: "Midpoint Peg" },
               { key: "limit", label: "Limit" },
             ].map((t) => (
-              <button
+              <motion.button
                 key={t.key}
+                whileTap={{ scale: 0.97 }}
+                transition={{ duration: 0.1, ease: "easeOut" }}
                 onClick={() => setOrderType(t.key)}
                 className={`px-3 h-[28px] text-[12px] font-medium rounded-sm transition-fast whitespace-nowrap ${
                   orderType === t.key
@@ -77,7 +93,7 @@ function TradingSettings() {
                 }`}
               >
                 {t.label}
-              </button>
+              </motion.button>
             ))}
           </div>
         </SettingRow>
@@ -90,8 +106,10 @@ function TradingSettings() {
         >
           <div className="flex gap-1 bg-bg-surface border border-border rounded-md p-1">
             {["0.1", "0.5", "1.0"].map((s) => (
-              <button
+              <motion.button
                 key={s}
+                whileTap={{ scale: 0.97 }}
+                transition={{ duration: 0.1, ease: "easeOut" }}
                 onClick={() => setSlippage(s)}
                 className={`px-2.5 h-[28px] text-[12px] font-mono rounded-sm transition-fast ${
                   slippage === s
@@ -100,9 +118,11 @@ function TradingSettings() {
                 }`}
               >
                 {s}%
-              </button>
+              </motion.button>
             ))}
-            <button
+            <motion.button
+              whileTap={{ scale: 0.97 }}
+              transition={{ duration: 0.1, ease: "easeOut" }}
               onClick={() => setSlippage("custom")}
               className={`px-2.5 h-[28px] text-[12px] rounded-sm transition-fast ${
                 slippage === "custom"
@@ -111,7 +131,7 @@ function TradingSettings() {
               }`}
             >
               Custom
-            </button>
+            </motion.button>
           </div>
         </SettingRow>
 
@@ -161,8 +181,10 @@ function TradingSettings() {
         >
           <div className="flex gap-1 bg-bg-surface border border-border rounded-md p-1">
             {["2", "4", "6"].map((d) => (
-              <button
+              <motion.button
                 key={d}
+                whileTap={{ scale: 0.97 }}
+                transition={{ duration: 0.1, ease: "easeOut" }}
                 onClick={() => setDecimals(d)}
                 className={`w-[28px] h-[28px] text-[12px] font-medium rounded-sm transition-fast ${
                   decimals === d
@@ -171,7 +193,7 @@ function TradingSettings() {
                 }`}
               >
                 {d}
-              </button>
+              </motion.button>
             ))}
           </div>
         </SettingRow>
@@ -268,19 +290,21 @@ function Toggle({
         <p className="text-body-sm text-text-primary">{label}</p>
         <p className="text-body-sm text-text-muted mt-0.5">{description}</p>
       </div>
-      <button
+      <motion.button
+        whileTap={{ scale: 0.95 }}
+        transition={{ duration: 0.1, ease: "easeOut" }}
         onClick={() => onChange(!checked)}
         aria-pressed={checked}
         className={`w-[44px] h-[24px] rounded-full shrink-0 transition-fast relative ${
           checked ? "bg-accent" : "bg-bg-elevated"
         }`}
       >
-        <span
-          className={`absolute top-[2px] w-[20px] h-[20px] rounded-full bg-text-primary transition-fast ${
-            checked ? "left-[22px]" : "left-[2px]"
-          }`}
+        <motion.span
+          animate={{ x: checked ? 20 : 0 }}
+          transition={{ type: "spring", stiffness: 500, damping: 32 }}
+          className="absolute top-[2px] left-[2px] w-[20px] h-[20px] rounded-full bg-text-primary"
         />
-      </button>
+      </motion.button>
     </div>
   );
 }

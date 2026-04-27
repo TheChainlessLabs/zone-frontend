@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useConnect } from "wagmi";
 import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { motion } from "motion/react";
 import Modal from "./Modal";
 import { useToast } from "@/lib/useToast";
 
@@ -195,18 +196,22 @@ export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
               {errorMessage}
             </p>
             <div className="flex gap-3 w-full">
-              <button
+              <motion.button
+                whileTap={{ scale: 0.98 }}
+                transition={{ duration: 0.1, ease: "easeOut" }}
                 onClick={handleClose}
                 className="flex-1 h-10 border border-border rounded-md text-body-sm font-medium text-text-secondary hover:bg-bg-elevated transition-fast"
               >
                 Cancel
-              </button>
-              <button
+              </motion.button>
+              <motion.button
+                whileTap={{ scale: 0.98 }}
+                transition={{ duration: 0.1, ease: "easeOut" }}
                 onClick={handleRetry}
                 className="flex-1 h-10 bg-accent rounded-md text-body-sm font-medium text-white hover:bg-accent/90 transition-fast"
               >
                 Try Again
-              </button>
+              </motion.button>
             </div>
           </div>
         );
@@ -219,8 +224,10 @@ export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
             </p>
             <div className="flex flex-col gap-2" data-testid="connector-list">
               {availableConnectors.map((connector) => (
-                <button
+                <motion.button
                   key={connector.uid}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ duration: 0.1, ease: "easeOut" }}
                   onClick={() => handleConnect(connector)}
                   disabled={isPending}
                   className="flex items-center gap-3 h-[56px] px-4 bg-bg-base border border-border rounded-md hover:bg-bg-elevated transition-fast disabled:opacity-50"
@@ -236,7 +243,7 @@ export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
                   <span className="text-body-sm font-medium">
                     {getConnectorLabel(connector.name)}
                   </span>
-                </button>
+                </motion.button>
               ))}
             </div>
             {availableConnectors.length === 0 ? (

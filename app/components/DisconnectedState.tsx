@@ -1,4 +1,7 @@
+"use client";
+
 import { Lock, type LucideIcon } from "lucide-react";
+import { motion } from "motion/react";
 
 interface DisconnectedStateProps {
   onAction: () => void;
@@ -33,12 +36,14 @@ export default function DisconnectedState({
         {description}
       </p>
 
-      <button
+      <motion.button
+        whileTap={{ scale: 0.98 }}
+        transition={{ duration: 0.1, ease: "easeOut" }}
         onClick={onAction}
         className="mt-8 h-[44px] px-6 text-body-sm font-medium tracking-wide rounded-sm bg-accent text-text-inverse hover:bg-accent-hover transition-fast"
       >
         {actionLabel}
-      </button>
+      </motion.button>
     </div>
   );
 }

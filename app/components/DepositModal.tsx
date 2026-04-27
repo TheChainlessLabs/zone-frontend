@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "motion/react";
 import BottomSheet from "./BottomSheet";
 import { useWallet } from "@/lib/wallet";
 import { useAccountBalances } from "@/lib/hooks/useAccountBalances";
@@ -54,9 +55,11 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
           <label className="text-label-uppercase text-text-muted mb-2 block">Select Chain</label>
           <div className="flex gap-2">
             {chains.map((c) => (
-              <button
+              <motion.button
                 key={c.name}
                 data-testid={`deposit-modal-chain-${c.name.toLowerCase()}`}
+                whileTap={{ scale: 0.98 }}
+                transition={{ duration: 0.1, ease: "easeOut" }}
                 onClick={() => setChain(c.name)}
                 className={`flex items-center gap-2 h-[40px] px-4 rounded-md text-body-sm transition-fast border flex-1 ${
                   chain === c.name
@@ -66,7 +69,7 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
               >
                 <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: c.color }} />
                 {c.name}
-              </button>
+              </motion.button>
             ))}
           </div>
         </div>
@@ -76,9 +79,11 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
           <label className="text-label-uppercase text-text-muted mb-2 block">Select Token</label>
           <div className="flex gap-2">
             {tokens.map((t) => (
-              <button
+              <motion.button
                 key={t}
                 data-testid={`deposit-modal-token-${t.toLowerCase()}`}
+                whileTap={{ scale: 0.98 }}
+                transition={{ duration: 0.1, ease: "easeOut" }}
                 onClick={() => setToken(t)}
                 className={`h-[40px] px-4 rounded-md text-body-sm font-medium transition-fast border ${
                   token === t
@@ -87,7 +92,7 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
                 }`}
               >
                 {t}
-              </button>
+              </motion.button>
             ))}
           </div>
         </div>
@@ -110,12 +115,14 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
               onChange={(e) => setAmount(e.target.value)}
               className="flex-1 bg-transparent text-[18px] font-mono font-tabular outline-none text-text-primary placeholder:text-text-muted"
             />
-            <button
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              transition={{ duration: 0.1, ease: "easeOut" }}
               onClick={() => setAmount(walletBalance.toFixed(2))}
               className="text-label-uppercase text-accent hover:text-accent-hover transition-fast ml-2"
             >
               MAX
-            </button>
+            </motion.button>
           </div>
         </div>
 
@@ -127,13 +134,15 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
             { label: "75%", pct: 0.75 },
             { label: "MAX", pct: 1 },
           ].map((s) => (
-            <button
+            <motion.button
               key={s.label}
+              whileTap={{ scale: 0.97 }}
+              transition={{ duration: 0.1, ease: "easeOut" }}
               onClick={() => handleShortcut(s.pct)}
               className="h-[36px] border border-border rounded-md text-body-sm text-text-secondary hover:bg-bg-elevated transition-fast"
             >
               {s.label}
-            </button>
+            </motion.button>
           ))}
         </div>
 
@@ -152,12 +161,14 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
         </div>
 
         {/* CTA */}
-        <button
+        <motion.button
           data-testid="deposit-modal-submit"
+          whileTap={{ scale: 0.98 }}
+          transition={{ duration: 0.1, ease: "easeOut" }}
           className="h-[48px] w-full rounded-md text-body-sm font-semibold bg-accent text-text-inverse hover:bg-accent-hover transition-fast"
         >
           Confirm Deposit
-        </button>
+        </motion.button>
       </div>
     </BottomSheet>
   );

@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useState } from "react";
+import { motion } from "motion/react";
 import { useWallet } from "@/lib/wallet";
 import WalletModal from "./WalletModal";
 import WalletDropdown from "./WalletDropdown";
@@ -67,9 +68,11 @@ export default function Navbar() {
               >
                 {link.label}
                 {isActive && (
-                  <span
+                  <motion.span
+                    layoutId="navbar-active-indicator"
                     aria-hidden
                     className="absolute left-4 right-4 bottom-0 h-[1.5px] rounded-full bg-accent"
+                    transition={{ duration: 0.2, ease: "easeOut" }}
                   />
                 )}
               </Link>
@@ -88,12 +91,14 @@ export default function Navbar() {
               isSupportedChain={isSupportedChain}
             />
           ) : (
-            <button
+            <motion.button
+              whileTap={{ scale: 0.97 }}
+              transition={{ duration: 0.1, ease: "easeOut" }}
               onClick={() => setWalletOpen(true)}
               className="h-[32px] px-4 text-body-sm font-medium border border-border rounded-md text-text-primary hover:bg-bg-elevated transition-fast"
             >
               Connect
-            </button>
+            </motion.button>
           )}
         </div>
       </header>

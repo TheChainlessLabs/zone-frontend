@@ -1,4 +1,4 @@
-import { render, screen, cleanup, fireEvent, act } from "@testing-library/react";
+import { render, screen, cleanup, fireEvent, act, waitFor } from "@testing-library/react";
 import { afterEach, describe, it, expect, vi, beforeEach } from "vitest";
 
 const mockDisconnect = vi.fn();
@@ -61,8 +61,10 @@ describe("WalletDropdown", () => {
 
     expect(writeText).toHaveBeenCalledWith(TEST_ADDRESS);
     expect(mockAddToast).toHaveBeenCalledWith("success", "Address copied", "Copied to clipboard");
-    // Dropdown should close
-    expect(screen.queryByTestId("wallet-dropdown-menu")).toBeNull();
+    // Dropdown should close (waiting for AnimatePresence exit)
+    await waitFor(() => {
+      expect(screen.queryByTestId("wallet-dropdown-menu")).toBeNull();
+    });
   });
 
   it("opens Etherscan link on View on Etherscan click", () => {
@@ -79,17 +81,19 @@ describe("WalletDropdown", () => {
     openSpy.mockRestore();
   });
 
-  it("disconnects wallet on Disconnect click", () => {
+  it("disconnects wallet on Disconnect click", async () => {
     render(<WalletDropdown address={TEST_ADDRESS} isSupportedChain={true} />);
     fireEvent.click(screen.getByTestId("wallet-dropdown-trigger"));
     fireEvent.click(screen.getByTestId("wallet-dropdown-disconnect"));
 
     expect(mockDisconnect).toHaveBeenCalledTimes(1);
-    // Dropdown should close
-    expect(screen.queryByTestId("wallet-dropdown-menu")).toBeNull();
+    // Dropdown should close (waiting for AnimatePresence exit)
+    await waitFor(() => {
+      expect(screen.queryByTestId("wallet-dropdown-menu")).toBeNull();
+    });
   });
 
-  it("closes on outside click", () => {
+  it("closes on outside click", async () => {
     render(
       <div>
         <div data-testid="outside">Outside</div>
@@ -101,7 +105,9 @@ describe("WalletDropdown", () => {
     expect(screen.getByTestId("wallet-dropdown-menu")).toBeTruthy();
 
     fireEvent.mouseDown(screen.getByTestId("outside"));
-    expect(screen.queryByTestId("wallet-dropdown-menu")).toBeNull();
+    await waitFor(() => {
+      expect(screen.queryByTestId("wallet-dropdown-menu")).toBeNull();
+    });
   });
 
   it("shows 'Wrong network' when chain is not supported", () => {

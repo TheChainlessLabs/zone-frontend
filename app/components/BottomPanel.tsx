@@ -44,19 +44,32 @@ export default function BottomPanel({ isLoading }: { isLoading?: boolean }) {
     <div className="flex flex-col min-h-0">
       {/* Tab bar */}
       <div className="flex gap-1 pb-2 border-b border-border-subtle shrink-0 overflow-x-auto no-scrollbar">
-        {tabs.map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`px-3 min-h-[44px] md:min-h-[28px] text-body-sm font-medium rounded-sm transition-fast whitespace-nowrap ${
-              activeTab === tab
-                ? "bg-bg-elevated text-text-primary"
-                : "text-text-muted hover:text-text-secondary"
-            }`}
-          >
-            {tab}
-          </button>
-        ))}
+        {tabs.map((tab) => {
+          const isActive = activeTab === tab;
+          return (
+            <motion.button
+              key={tab}
+              whileTap={{ scale: 0.97 }}
+              transition={{ duration: 0.1, ease: "easeOut" }}
+              onClick={() => setActiveTab(tab)}
+              className={`relative px-3 min-h-[44px] md:min-h-[28px] text-body-sm font-medium rounded-sm transition-fast whitespace-nowrap ${
+                isActive
+                  ? "text-text-primary"
+                  : "text-text-muted hover:text-text-secondary"
+              }`}
+            >
+              {isActive && (
+                <motion.span
+                  layoutId="bottom-panel-active-tab"
+                  aria-hidden
+                  className="absolute inset-0 bg-bg-elevated rounded-sm"
+                  transition={{ duration: 0.2, ease: "easeOut" }}
+                />
+              )}
+              <span className="relative">{tab}</span>
+            </motion.button>
+          );
+        })}
       </div>
 
       {/* Content */}

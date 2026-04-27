@@ -1,4 +1,4 @@
-import { render, screen, cleanup, fireEvent } from "@testing-library/react";
+import { render, screen, cleanup, fireEvent, waitFor } from "@testing-library/react";
 import { afterEach, describe, it, expect, vi } from "vitest";
 
 const mockSetMarketId = vi.fn();
@@ -49,7 +49,7 @@ describe("PairDropdown", () => {
     expect(screen.getByText("USD/JPY")).toBeInTheDocument();
   });
 
-  it("closes on selection", () => {
+  it("closes on selection", async () => {
     render(<PairDropdown />);
     fireEvent.click(screen.getByRole("button", { expanded: false }));
 
@@ -58,15 +58,19 @@ describe("PairDropdown", () => {
     fireEvent.click(eurOption);
 
     expect(mockSetMarketId).toHaveBeenCalledWith(1);
-    expect(screen.queryByRole("listbox")).toBeNull();
+    await waitFor(() => {
+      expect(screen.queryByRole("listbox")).toBeNull();
+    });
   });
 
-  it("closes on outside click", () => {
+  it("closes on outside click", async () => {
     render(<PairDropdown />);
     fireEvent.click(screen.getByRole("button", { expanded: false }));
     expect(screen.getByRole("listbox")).toBeInTheDocument();
 
     fireEvent.mouseDown(document.body);
-    expect(screen.queryByRole("listbox")).toBeNull();
+    await waitFor(() => {
+      expect(screen.queryByRole("listbox")).toBeNull();
+    });
   });
 });

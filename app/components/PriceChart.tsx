@@ -5,10 +5,10 @@ import dynamic from "next/dynamic";
 import { useMidpointHistory } from "@/lib/hooks/useMidpointHistory";
 import { TIMEFRAMES, type Timeframe } from "@/lib/chartData";
 
-// lightweight-charts touches `document` on construction, so NeonPriceChart
+// lightweight-charts touches `document` on construction, so the chart
 // must be client-only. next/dynamic with ssr:false also keeps the canvas
 // library out of the server bundle.
-const NeonPriceChart = dynamic(() => import("./NeonPriceChart"), {
+const LightweightChart = dynamic(() => import("./LightweightChart"), {
   ssr: false,
   loading: () => (
     <div className="h-full w-full flex items-center justify-center">
@@ -67,7 +67,7 @@ export default function PriceChart({ pair = "EUR/USD" }: PriceChartProps) {
       */}
       <div className="aspect-video relative">
         {points.length > 0 ? (
-          <NeonPriceChart points={points} />
+          <LightweightChart points={points} />
         ) : isError ? (
           <div className="absolute inset-0 flex items-center justify-center px-4 text-center">
             <span className="text-error text-body-sm">

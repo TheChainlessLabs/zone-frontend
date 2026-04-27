@@ -13,26 +13,27 @@ import {
 } from "lightweight-charts";
 import type { ChartPoint } from "@/lib/chartData";
 
-interface NeonPriceChartProps {
+interface LightweightChartProps {
   points: ChartPoint[];
   /** Optional override for test environments. */
   className?: string;
 }
 
 /**
- * Canvas area chart rendered with `lightweight-charts` — the same library
- * shipped by the Uniswap web app. Styled with Omega's accent cyan gradient
- * and wrapped in a container that applies a CSS drop-shadow for the neon
- * glow (see `.neon-chart canvas` rule in globals.css).
+ * Canvas area chart rendered with `lightweight-charts` (same library the
+ * Uniswap web app ships). Quiet by design — no glow, no halo. The
+ * crosshair is a muted dashed line, the area fill is a low-alpha amber
+ * wash, and the trend line uses the heritage accent only for the
+ * current-price highlight.
  *
- * This component touches `document` on construction via `createChart`, so it
- * must be rendered client-side only. Import it via `next/dynamic` with
+ * `createChart` touches `document` on construction, so this component
+ * must be rendered client-side only — import it via `next/dynamic` with
  * `ssr: false` from parent components.
  */
-export default function NeonPriceChart({
+export default function LightweightChart({
   points,
   className = "h-full w-full",
-}: NeonPriceChartProps) {
+}: LightweightChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<"Area"> | null>(null);
@@ -46,13 +47,13 @@ export default function NeonPriceChart({
       autoSize: true,
       layout: {
         background: { type: ColorType.Solid, color: "transparent" },
-        textColor: "#A0A0A0",
+        textColor: "#B0A89E",
         fontFamily: "var(--font-mono), ui-monospace, monospace",
         fontSize: 11,
       },
       grid: {
         vertLines: { visible: false },
-        horzLines: { color: "rgba(51, 51, 51, 0.35)" },
+        horzLines: { color: "rgba(58, 54, 51, 0.4)" },
       },
       rightPriceScale: {
         borderVisible: false,
@@ -66,16 +67,16 @@ export default function NeonPriceChart({
       crosshair: {
         mode: CrosshairMode.Magnet,
         vertLine: {
-          color: "#0EA5E9",
+          color: "#6E6862",
           width: 1,
           style: LineStyle.Dashed,
-          labelBackgroundColor: "#0EA5E9",
+          labelBackgroundColor: "#221F1C",
         },
         horzLine: {
-          color: "#0EA5E9",
+          color: "#6E6862",
           width: 1,
           style: LineStyle.Dashed,
-          labelBackgroundColor: "#0EA5E9",
+          labelBackgroundColor: "#221F1C",
         },
       },
       handleScale: false,
@@ -83,15 +84,15 @@ export default function NeonPriceChart({
     });
 
     const series = chart.addSeries(AreaSeries, {
-      lineColor: "#0EA5E9",
-      topColor: "rgba(14, 165, 233, 0.35)",
-      bottomColor: "rgba(14, 165, 233, 0.00)",
+      lineColor: "#D4A847",
+      topColor: "rgba(212, 168, 71, 0.10)",
+      bottomColor: "rgba(212, 168, 71, 0.00)",
       lineWidth: 2,
       priceLineVisible: false,
       lastValueVisible: true,
       crosshairMarkerRadius: 5,
-      crosshairMarkerBorderColor: "#0EA5E9",
-      crosshairMarkerBackgroundColor: "#0D0D0D",
+      crosshairMarkerBorderColor: "#D4A847",
+      crosshairMarkerBackgroundColor: "#0E0D0B",
     });
 
     chartRef.current = chart;
@@ -120,7 +121,7 @@ export default function NeonPriceChart({
   }, [points]);
 
   return (
-    <div className={`neon-chart ${className}`} data-testid="neon-chart-canvas">
+    <div className={className} data-testid="lightweight-chart-canvas">
       <div ref={containerRef} className="h-full w-full" />
     </div>
   );

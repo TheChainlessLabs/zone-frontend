@@ -9,9 +9,9 @@ import { PAIR_MARKET_IDS } from "@/lib/marketIds";
 import { TIMEFRAMES, type Timeframe } from "@/lib/chartData";
 import { useMidpointHistory } from "@/lib/hooks/useMidpointHistory";
 
-// NeonPriceChart uses lightweight-charts which touches `document` on init —
-// must be loaded client-only via next/dynamic to stay out of the SSR bundle.
-const NeonPriceChart = dynamic(() => import("./NeonPriceChart"), {
+// lightweight-charts touches `document` on init — must be loaded
+// client-only via next/dynamic to stay out of the SSR bundle.
+const LightweightChart = dynamic(() => import("./LightweightChart"), {
   ssr: false,
   loading: () => (
     <div className="h-full w-full flex items-center justify-center">
@@ -38,7 +38,7 @@ function AvailableMarketChart({ timeframe }: { timeframe: Timeframe }) {
   // the latest refetch errored. Only escalate to the hard error state
   // when there is nothing to draw yet.
   if (points.length > 0) {
-    return <NeonPriceChart points={points} />;
+    return <LightweightChart points={points} />;
   }
   if (isError) {
     return (

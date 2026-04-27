@@ -137,6 +137,18 @@
   --space-16: 64px;
   --space-24: 96px;
 
+  /* ── Density tokens ──
+     Reference values for the breathing-room rhythm across the app.
+     Mobile gets 16 px, desktop gets 24 px. Inner card padding mirrors
+     the gap so containers and the gaps between them carry the same
+     visual weight. The page wrapper max-width is the consistency
+     anchor; do not override it per-page without writing a why-not. */
+  --section-gap-mobile: 16px;
+  --section-gap-desktop: 24px;
+  --card-padding-mobile: 16px;
+  --card-padding-desktop: 24px;
+  --page-max-width: 1200px;
+
   /* ── Radii ── */
   --radius-sm: 4px;
   --radius-md: 8px;

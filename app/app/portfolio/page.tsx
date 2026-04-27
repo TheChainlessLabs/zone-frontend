@@ -15,7 +15,7 @@ export default function PortfolioPage() {
 
   return (
     <ProtectedPage shellClassName="flex flex-col min-h-screen">
-      <div className="flex-1 p-4 md:p-6 max-w-[1200px] mx-auto w-full flex flex-col gap-6">
+      <div className="flex-1 p-4 md:p-6 max-w-[1200px] mx-auto w-full flex flex-col gap-4 md:gap-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <h1 className="text-h2 font-semibold">Portfolio</h1>
           <div className="flex gap-2 overflow-x-auto no-scrollbar">

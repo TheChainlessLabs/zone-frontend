@@ -134,7 +134,7 @@ export default function AccountPage() {
 
   return (
     <ProtectedPage shellClassName="flex flex-col min-h-screen">
-      <div className="flex-1 p-4 md:p-6 max-w-[1200px] mx-auto w-full flex flex-col gap-6">
+      <div className="flex-1 p-4 md:p-6 max-w-[1200px] mx-auto w-full flex flex-col gap-4 md:gap-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-4">
@@ -309,7 +309,7 @@ export default function AccountPage() {
         </SectionErrorBoundary>
 
         {/* Force withdrawal banner */}
-        <div className="bg-warning/10 border border-warning/30 rounded-lg p-4 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+        <div className="bg-warning/10 border border-warning/30 rounded-lg p-4 md:p-6 flex flex-col sm:flex-row sm:items-center gap-3 md:gap-4 justify-between">
           <div>
             <p className="text-body-sm font-medium text-warning">Force Withdrawal Available</p>
             <p className="text-body-sm text-text-muted mt-0.5">

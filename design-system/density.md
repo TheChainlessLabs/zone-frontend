@@ -82,7 +82,48 @@ Keep the header and row on the same horizontal inset — if you add
 percentages compute against the same content box width. Right-aligned
 numeric columns drift quickly if you don't.
 
-## Spacing — out of scope for FE-057
+## Spacing — the density model (FE-058)
 
-FE-057 is about color layering only. Internal padding, section gaps,
-and page wrappers are tracked separately in FE-058.
+FE-057 handled colour layering. FE-058 handles the vertical / horizontal
+rhythm: how much space sits between sections, and how much padding
+sits inside cards.
+
+### Reference values
+
+| Surface | Mobile | Desktop | CSS variable |
+|---|---|---|---|
+| Inter-section gap | 16 px | 24 px | `--section-gap-mobile` / `--section-gap-desktop` |
+| Card internal padding | 16 px | 24 px | `--card-padding-mobile` / `--card-padding-desktop` |
+| Page max-width | — | 1200 px | `--page-max-width` |
+
+In Tailwind class form: `gap-4 md:gap-6` between sections, `p-4 md:p-6`
+inside cards, `max-w-[1200px] mx-auto w-full` on every page wrapper.
+The `/trade` simple-mode column is the one intentional exception
+because the action-first execution model anchors the swap card at
+`max-w-[480px]`.
+
+### When to deviate
+
+- **Tight inline groups** (filter tabs, pill rows, breadcrumbs) — use
+  `gap-2` or `gap-3`. The 24 px rule is for *major* sections.
+- **Detail pages with dense step pipelines** — `OrderDetail` /
+  `BatchDetail` timelines pack closer; use `gap-4` desktop, `gap-3`
+  mobile.
+- **`/trade` simple mode** — explicit max-w-[480px], generous vertical
+  padding (`pt-10 pb-16`). Don't bring the 1200 px wrapper there.
+
+### What this gives the user
+
+A consistent "deep breath" between sections. Uniswap and CoW Swap both
+use ~24 px between major surfaces; the prior 12-16 px rhythm read as
+crowded once colour layering was simplified in FE-057. Don't tighten
+further per page without writing a why.
+
+### Where the tokens live
+
+CSS custom properties are declared in `design-system/variables.css`
+under the "Density tokens" block. JSON parallels in `tokens.json`
+under `spacing.density`. Where Tailwind utilities exist for the value
+(e.g. `gap-6` for 24 px), prefer the utility — the CSS variables are
+the documented reference, not the runtime knob to wire into every
+class.

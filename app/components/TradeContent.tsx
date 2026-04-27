@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import BBOMarquee from "@/components/BBOMarquee";
 import PairDropdown from "@/components/PairDropdown";
 import OrderForm from "@/components/OrderForm";
+import OrderBook from "@/components/OrderBook";
 import PriceChart from "@/components/PriceChart";
 import BottomPanel from "@/components/BottomPanel";
 import RecentTrades from "@/components/RecentTrades";
@@ -51,9 +52,14 @@ export default function TradeContent() {
           </div>
         </div>
 
-        {/* Right: Order Form + Recent Fills (380px on desktop) */}
+        {/* Right: Order Book + Order Form + Recent Fills (380px on desktop). The
+            book is the centrepiece of a CLOB UI — it sits at the top of the
+            right rail so the eye lands on depth before the form. */}
         <div className="w-full lg:w-[380px] border-t lg:border-t-0 lg:border-l border-border overflow-y-auto shrink-0">
           <div className="p-4 flex flex-col gap-4">
+            <SectionErrorBoundary fallbackMessage="Order book unavailable">
+              <OrderBook />
+            </SectionErrorBoundary>
             <SectionErrorBoundary fallbackMessage="Order form unavailable">
               <OrderForm isLoading={isLoading} />
             </SectionErrorBoundary>

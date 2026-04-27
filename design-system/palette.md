@@ -1,5 +1,9 @@
 # Omega Markets Color Palette
 
+> **Out of sync as of 2026-04-27.** The token source (`tokens.json`, `variables.css`) was reframed to a warm-dark FX-terminal heritage palette. The hex values, swatches, and rationale below still reflect the **previous** electric-cyan-on-cool-dark system and are kept here only for change-history context.
+>
+> For canonical values, consult `tokens.json` and `variables.css`. A full rewrite of this document is tracked as a follow-up to the redesign epic.
+
 Color reference for the Omega Markets design system. All values are sourced from `tokens.json` and resolved through `variables.css`. Every component in the system consumes these colors via CSS custom properties -- never hardcoded hex values. The palette is built for a dark-first trading interface where legibility under sustained screen time is the primary constraint.
 
 No pure white (#FFFFFF) appears anywhere in this system. The lightest color is #F5F5F5, chosen to reduce eye strain during extended trading sessions.

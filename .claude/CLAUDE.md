@@ -10,16 +10,18 @@ pnpm monorepo with 3 packages:
 - `design-system/` — CSS custom properties, Tailwind theme, tokens.json
 
 ## Design System
-- **Accent**: `#0EA5E9` (electric cyan) — was `#3467A1`, updated in this session
-- **Base**: `#0D0D0D`, Surface: `#1A1A1A`, Elevated: `#262626`
-- **Text**: Primary `#F5F5F5`, Secondary `#A0A0A0`, Muted `#666666`
-- **Semantic**: Success `#22C55E`, Error `#EF4444`, Warning `#EAB308`, Info `#0EA5E9`
-- **Fonts**: Space Grotesk (display, --font-display), JetBrains Mono (mono, --font-mono)
+- **Aesthetic**: warm-dark FX-terminal heritage. Mono-dominant in the data plane, accent used sparingly on critical highlights only (current-pair, submit CTA, current-price line, active-tab underline). Reference: Renegade.fi for restraint, Bloomberg/CME Direct for typographic discipline.
+- **Accent**: `#D4A847` (heritage amber) — used sparingly. Not on every interactive element.
+- **Base**: `#0E0D0B` (warm-near-black), Surface: `#181614`, Elevated: `#221F1C`, Overlay: `#2D2A26`
+- **Text**: Primary `#F2EBDD` (warm cream — not pure white), Secondary `#B0A89E`, Muted `#6E6862`
+- **Semantic**: Success `#6FA07F` (institutional green), Error `#C97266` (institutional red), Warning `#C97B3A` (burnt orange), Info `#B0A89E` (warm neutral — aliased to secondary; component migration is a follow-up)
+- **Fonts**: Space Grotesk (display, --font-display), JetBrains Mono (mono, --font-mono). Mono dominates the data plane.
 - **Spacing**: 4px base grid. Component heights: sm 32px, md 40px, lg 48px
 - **Transitions**: fast 100ms, normal 150ms, slow 300ms
 - Tokens live in `design-system/variables.css` and `design-system/tokens.json`
 - Tailwind theme mapping in `design-system/tailwind.theme.css`
 - Use token classes (`bg-bg-surface`, `text-accent`, `border-border`) — never hardcode hex values
+- Reference doc `design-system/palette.md` is currently out of sync with the new tokens; it will be rewritten in a follow-up. Consult `tokens.json` for canonical hex values.
 
 ## App Pages
 - `/trade` — Trading with BBO marquee, pair selector, order form, chart, positions/orders
@@ -82,7 +84,7 @@ User's required workflow: **Design in Paper MCP first → user reviews → imple
    - Account/Funding/Settings mobile layouts
    - All 5 detail pages (Order/Batch/TX/Pair/Withdrawal) mobile layouts
    - Wired DepositModal to Navbar
-3. Updated design system: accent color #3467A1 → #0EA5E9
+3. Updated design system: accent color #3467A1 → #0EA5E9 → #D4A847 (heritage amber re-frame, FX-terminal palette)
 4. Added MobileTabBar, BBOMarquee, ProtocolStats, StatusBar components
 5. Responsive padding fixes on all page wrappers
 6. Favicon color updates

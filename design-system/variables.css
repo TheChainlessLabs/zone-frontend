@@ -2,57 +2,66 @@
    Omega Markets — CSS Custom Properties
    Runtime source of truth. All components consume these variables.
    Dark theme is the default; optional light override included.
+
+   Palette: warm-dark heritage. Cyan removed; accent is heritage amber used
+   sparingly on critical highlights only (current-pair, submit CTA, current-
+   price line, active-tab underline). Buy/sell semantic colors are
+   desaturated institutional, not neon. Backgrounds carry a subtle warm
+   tint — pure cool-dark reads Web3 SaaS, slight warmth reads terminal.
    ========================================================================== */
 
 :root {
-  /* ── Accent ── */
-  --color-accent: #0EA5E9;
-  --color-accent-hover: #38BDF8;
-  --color-accent-active: #0284C7;
-  --color-accent-muted: #7DD3FC;
-  --color-accent-subtle: #0EA5E91F;
+  /* ── Accent — heritage amber, used sparingly ── */
+  --color-accent: #D4A847;
+  --color-accent-hover: #E0B557;
+  --color-accent-active: #B88E2E;
+  --color-accent-muted: #6B5826;
+  --color-accent-subtle: #D4A8471F;
 
-  /* ── Text ── */
-  --color-text-primary: #F5F5F5;
-  --color-text-secondary: #A0A0A0;
-  --color-text-muted: #666666;
-  --color-text-inverse: #0D0D0D;
+  /* ── Text — warm cream, not pure white ── */
+  --color-text-primary: #F2EBDD;
+  --color-text-secondary: #B0A89E;
+  --color-text-muted: #6E6862;
+  --color-text-inverse: #0E0D0B;
 
-  /* ── Backgrounds ── */
-  --color-bg-base: #0D0D0D;
-  --color-bg-surface: #1A1A1A;
-  --color-bg-elevated: #262626;
-  --color-bg-overlay: #333333;
+  /* ── Backgrounds — warm-near-black ── */
+  --color-bg-base: #0E0D0B;
+  --color-bg-surface: #181614;
+  --color-bg-elevated: #221F1C;
+  --color-bg-overlay: #2D2A26;
 
-  /* ── Borders ── */
-  --color-border: #333333;
-  --color-border-subtle: #1A1A1A;
-  --color-border-focus: #38BDF8;
-  --color-border-focus-ring: #38BDF826;
+  /* ── Borders — quiet ── */
+  --color-border: #3A3633;
+  --color-border-subtle: #2A2724;
+  --color-border-focus: #D4A847;
+  --color-border-focus-ring: #D4A84726;
 
-  /* ── Semantic: Success ── */
-  --color-success: #22C55E;
-  --color-success-hover: #2DD96B;
-  --color-success-active: #1EA750;
-  --color-success-subtle: #22C55E1F;
+  /* ── Semantic: Success — desaturated institutional green ── */
+  --color-success: #6FA07F;
+  --color-success-hover: #7CB28E;
+  --color-success-active: #5C8B6C;
+  --color-success-subtle: #6FA07F1F;
 
-  /* ── Semantic: Error ── */
-  --color-error: #EF4444;
-  --color-error-hover: #F25D5D;
-  --color-error-active: #D93B3B;
-  --color-error-subtle: #EF44441F;
+  /* ── Semantic: Error — desaturated institutional red ── */
+  --color-error: #C97266;
+  --color-error-hover: #D4847A;
+  --color-error-active: #B25F54;
+  --color-error-subtle: #C972661F;
 
-  /* ── Semantic: Warning ── */
-  --color-warning: #F59E0B;
-  --color-warning-hover: #F7AE2E;
-  --color-warning-active: #D98B09;
-  --color-warning-subtle: #F59E0B1F;
+  /* ── Semantic: Warning — burnt orange, distinct from accent ── */
+  --color-warning: #C97B3A;
+  --color-warning-hover: #D88B4A;
+  --color-warning-active: #B26830;
+  --color-warning-subtle: #C97B3A1F;
 
-  /* ── Semantic: Info ── */
-  --color-info: #0EA5E9;
-  --color-info-hover: #38BDF8;
-  --color-info-active: #0284C7;
-  --color-info-subtle: #0EA5E91F;
+  /* ── Semantic: Info — warm neutral (was cyan) ──
+     Aliased to the warm secondary tone so existing `bg-info/20 text-info`
+     status pills render as quiet neutral chips. Component-level migration
+     to text-secondary is a follow-up. */
+  --color-info: #B0A89E;
+  --color-info-hover: #C0B8AE;
+  --color-info-active: #98908A;
+  --color-info-subtle: #B0A89E1F;
 
   /* ── Typography ── */
   --font-display: 'Space Grotesk', system-ui, sans-serif;
@@ -136,22 +145,25 @@
   --easing-default: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* ── Optional Light Theme Override ── */
+/* ── Optional Light Theme Override ──
+   Mirrors the dark heritage palette in a parchment register. */
 [data-theme="light"] {
-  --color-text-primary: #0D0D0D;
-  --color-text-secondary: #666666;
-  --color-text-muted: #A0A0A0;
-  --color-text-inverse: #F5F5F5;
+  --color-text-primary: #1A1714;
+  --color-text-secondary: #5C544B;
+  --color-text-muted: #968B7E;
+  /* Same hex as dark `text-primary` on purpose: in light mode `text-inverse`
+     sits on dark/amber fills (e.g. submit CTA), so it stays cream — not a copy-paste. */
+  --color-text-inverse: #F2EBDD;
 
-  --color-bg-base: #F5F5F5;
-  --color-bg-surface: #FAFAFA;
-  --color-bg-elevated: #EBEBEB;
-  --color-bg-overlay: #D4D4D4;
+  --color-bg-base: #F5EFE3;
+  --color-bg-surface: #FAF5EB;
+  --color-bg-elevated: #EDE5D5;
+  --color-bg-overlay: #D6CCBA;
 
-  --color-border: #D4D4D4;
-  --color-border-subtle: #EBEBEB;
+  --color-border: #C9BFAC;
+  --color-border-subtle: #DED4C0;
 
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.08);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --shadow-sm: 0 1px 2px rgba(40, 30, 18, 0.08);
+  --shadow-md: 0 4px 12px rgba(40, 30, 18, 0.12);
+  --shadow-lg: 0 8px 24px rgba(40, 30, 18, 0.16);
 }

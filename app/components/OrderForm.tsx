@@ -22,6 +22,7 @@ import { getFriendlyError } from "@/lib/errorMessages";
 import { useNotifications } from "@/lib/useNotifications";
 import { useKeyboardShortcuts } from "@/lib/hooks/useKeyboardShortcuts";
 import { useConfirmBeforeSubmit } from "@/lib/hooks/useConfirmBeforeSubmit";
+import { motion } from "motion/react";
 import OrderConfirmationModal, {
   type OrderConfirmationDetails,
 } from "@/components/OrderConfirmationModal";
@@ -255,7 +256,13 @@ export default function OrderForm({
   }
 
   return (
-    <div className="flex flex-col gap-4 animate-fadeIn">
+    <motion.div
+      data-testid="order-form-loaded"
+      className="flex flex-col gap-4"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3, ease: "easeOut" }}
+    >
       {/* Buy/Sell toggle */}
       <div className="flex gap-1">
         <button
@@ -499,6 +506,6 @@ export default function OrderForm({
         }}
         orderDetails={orderDetails}
       />
-    </div>
+    </motion.div>
   );
 }

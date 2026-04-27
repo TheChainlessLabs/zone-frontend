@@ -74,10 +74,10 @@ describe("BottomPanel", () => {
     expect(matches.length).toBeGreaterThanOrEqual(1);
   });
 
-  it("wraps loaded positions in animate-fadeIn", () => {
+  it("renders loaded positions (skeletons gone) when not loading", () => {
     const { container } = renderWithProviders(<BottomPanel isLoading={false} />);
-    const fadeInEl = container.querySelector("[class*='animate-fadeIn']");
-    expect(fadeInEl).not.toBeNull();
+    const skeletons = container.querySelectorAll("[data-testid='skeleton-row']");
+    expect(skeletons.length).toBe(0);
   });
 
   it("renders Trade History tab with empty state from hook", () => {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import OrderForm from "@/components/OrderForm";
 import ExecutionContextStrip from "@/components/ExecutionContextStrip";
 import PriceChart from "@/components/PriceChart";
@@ -91,23 +92,32 @@ export default function TradeContent() {
             </div>
 
             {/* Right column — supporting context. Mounted only in
-                Limit mode; fades in with the brief's motion spec. */}
-            {isLimit && (
-              <div
-                key="limit-supporting"
-                className="flex flex-col gap-6 animate-fadeInUp"
-              >
-                <SectionErrorBoundary fallbackMessage="Chart unavailable">
-                  <div className="rounded-md border border-border-subtle bg-bg-surface/60 p-4 lg:min-h-[320px]">
-                    <PriceChart />
-                  </div>
-                </SectionErrorBoundary>
+                Limit mode; fades in with the brief's motion spec
+                (200ms ease-out, opacity + translateY 16 → 0). The
+                left column never animates — the order form must
+                stay anchored across mode changes. */}
+            <AnimatePresence initial={false}>
+              {isLimit && (
+                <motion.div
+                  key="limit-supporting"
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 16 }}
+                  transition={{ duration: 0.2, ease: "easeOut" }}
+                  className="flex flex-col gap-6"
+                >
+                  <SectionErrorBoundary fallbackMessage="Chart unavailable">
+                    <div className="rounded-md border border-border-subtle bg-bg-surface/60 p-4 lg:min-h-[320px]">
+                      <PriceChart />
+                    </div>
+                  </SectionErrorBoundary>
 
-                <SectionErrorBoundary fallbackMessage="Order history unavailable">
-                  <MyFills />
-                </SectionErrorBoundary>
-              </div>
-            )}
+                  <SectionErrorBoundary fallbackMessage="Order history unavailable">
+                    <MyFills />
+                  </SectionErrorBoundary>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
       </main>

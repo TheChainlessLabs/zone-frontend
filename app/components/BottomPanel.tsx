@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { motion } from "motion/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { openPositions } from "@/lib/mockData";
 import type { OrderStatus } from "@/lib/types";
@@ -94,7 +95,11 @@ function PositionsTable({ isLoading }: { isLoading?: boolean }) {
             ))}
           </div>
         ) : (
-          <div className="animate-fadeIn">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+          >
             {openPositions.length === 0 ? (
               <EmptyState
                 icon={<TrendingUp size={24} />}
@@ -123,7 +128,7 @@ function PositionsTable({ isLoading }: { isLoading?: boolean }) {
                 </div>
               ))
             )}
-          </div>
+          </motion.div>
         )}
       </div>
 
@@ -136,7 +141,11 @@ function PositionsTable({ isLoading }: { isLoading?: boolean }) {
             ))}
           </div>
         ) : (
-          <div className="animate-fadeIn">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+          >
             {openPositions.length === 0 ? (
               <EmptyState
                 icon={<TrendingUp size={24} />}
@@ -164,7 +173,7 @@ function PositionsTable({ isLoading }: { isLoading?: boolean }) {
                 </div>
               ))
             )}
-          </div>
+          </motion.div>
         )}
       </div>
     </>

@@ -73,16 +73,14 @@ describe("OrderForm", () => {
     expect(screen.getByText("Sell")).toBeInTheDocument();
   });
 
-  it("wraps loaded content in animate-fadeIn", () => {
-    const { container } = render(<OrderForm isLoading={false} />);
-    const fadeInEl = container.querySelector("[class*='animate-fadeIn']");
-    expect(fadeInEl).not.toBeNull();
+  it("renders the loaded surface (motion-driven) when not loading", () => {
+    const { queryByTestId } = render(<OrderForm isLoading={false} />);
+    expect(queryByTestId("order-form-loaded")).not.toBeNull();
   });
 
-  it("does not show animate-fadeIn when loading", () => {
-    const { container } = render(<OrderForm isLoading={true} />);
-    const fadeInEl = container.querySelector("[class*='animate-fadeIn']");
-    expect(fadeInEl).toBeNull();
+  it("does not render the loaded surface when loading", () => {
+    const { queryByTestId } = render(<OrderForm isLoading={true} />);
+    expect(queryByTestId("order-form-loaded")).toBeNull();
   });
 
   it("disables submit button when no accountId", () => {

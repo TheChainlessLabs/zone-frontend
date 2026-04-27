@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, type ReactNode } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import { X } from "lucide-react";
 
 interface ModalProps {
@@ -20,30 +21,41 @@ export default function Modal({ isOpen, onClose, title, children }: ModalProps) 
     return () => window.removeEventListener("keydown", handleKey);
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
-
   return (
-    <div
-      className="fixed inset-0 z-[60] flex items-center justify-center"
-      onClick={onClose}
-    >
-      <div className="absolute inset-0 bg-black/70" />
-      <div
-        className="relative bg-bg-surface border border-border rounded-lg p-6 max-w-[480px] w-full mx-4"
-        style={{ animation: "modal-enter 150ms ease-out" }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-h3 font-semibold">{title}</h2>
-          <button
-            onClick={onClose}
-            className="text-text-muted hover:text-text-primary transition-fast"
+    <AnimatePresence>
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center"
+          onClick={onClose}
+        >
+          <motion.div
+            className="absolute inset-0 bg-black/70"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
+          />
+          <motion.div
+            className="relative bg-bg-surface border border-border rounded-lg p-6 max-w-[480px] w-full mx-4"
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.96 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
+            onClick={(e) => e.stopPropagation()}
           >
-            <X size={18} />
-          </button>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-h3 font-semibold">{title}</h2>
+              <button
+                onClick={onClose}
+                className="text-text-muted hover:text-text-primary transition-fast"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            {children}
+          </motion.div>
         </div>
-        {children}
-      </div>
-    </div>
+      )}
+    </AnimatePresence>
   );
 }

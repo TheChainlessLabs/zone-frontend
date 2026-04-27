@@ -52,22 +52,21 @@ describe("RecentTrades", () => {
     expect(screen.getByText("€125K")).toBeInTheDocument();
   });
 
-  it("wraps loaded content in animate-fadeIn", () => {
+  it("renders trade rows when loaded", () => {
     mockUseTrades.mockReturnValue({
       trades: [{ time: "14:32:05", pair: "EUR/USD", price: 1.0856, size: 125000, side: "buy" as const }],
       isLoading: false,
       isError: false,
     });
     const { container } = render(<RecentTrades />);
-    const fadeInEl = container.querySelector("[class*='animate-fadeIn']");
-    expect(fadeInEl).not.toBeNull();
+    expect(container.querySelector("[class*='font-tabular']")).not.toBeNull();
   });
 
-  it("does not show animate-fadeIn when loading", () => {
+  it("does not render trade rows while loading", () => {
     mockUseTrades.mockReturnValue({ trades: [], isLoading: true, isError: false });
-    const { container } = render(<RecentTrades />);
-    const fadeInEl = container.querySelector("[class*='animate-fadeIn']");
-    expect(fadeInEl).toBeNull();
+    render(<RecentTrades />);
+    const skeletons = document.querySelectorAll("[data-testid='skeleton-row']");
+    expect(skeletons.length).toBeGreaterThan(0);
   });
 
   it("keeps the title bar visible during loading", () => {

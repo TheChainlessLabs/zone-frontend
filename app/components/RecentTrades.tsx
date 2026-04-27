@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "motion/react";
 import { useTrades } from "@/lib/hooks/useTrades";
 import { SkeletonRow } from "@/components/Skeleton";
 
@@ -47,7 +48,11 @@ export default function RecentTrades() {
           <span className="text-body-sm text-text-muted">No trades yet</span>
         </div>
       ) : (
-        <div className="animate-fadeIn">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
+        >
           {trades.map((trade, i) => (
             <div
               key={i}
@@ -62,7 +67,7 @@ export default function RecentTrades() {
               </span>
             </div>
           ))}
-        </div>
+        </motion.div>
       )}
     </div>
   );

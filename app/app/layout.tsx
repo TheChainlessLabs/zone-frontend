@@ -1,8 +1,10 @@
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { Source_Serif_4 } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
+import { WalletStateProvider } from "@/components/shell/WalletStateProvider";
 import "./globals.css";
 
 // Source Serif 4 — Adobe, OFL. Used for italic display moments only:
@@ -42,7 +44,12 @@ export default function RootLayout({
       className={`${GeistSans.variable} ${GeistMono.variable} ${sourceSerif.variable}`}
     >
       <body>
-        {children}
+        {/* WalletStateProvider reads `?walletState=` via useSearchParams,
+            which Next 14 requires to be inside a Suspense boundary so
+            static rendering of /brand and /system stays bailout-free. */}
+        <Suspense fallback={null}>
+          <WalletStateProvider>{children}</WalletStateProvider>
+        </Suspense>
         <Toaster />
       </body>
     </html>

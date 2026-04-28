@@ -130,8 +130,8 @@ export function GlassPriceTicker() {
       transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
       className="glass-pill inline-flex items-center gap-3 rounded-[var(--radius-lg)] px-4 py-2 font-mono text-xs"
     >
-      <span className="text-[var(--muted-foreground)]">EUR/USD</span>
-      <span className="font-tabular tabular-nums">1.0856</span>
+      <span className="text-[var(--muted-foreground)]">USDC/EURC</span>
+      <span className="font-tabular tabular-nums">0.9213</span>
       <span className="inline-flex items-center gap-0.5 text-[var(--success)]">
         <ArrowUp size={10} strokeWidth={2.5} />
         <span className="font-tabular">0.42%</span>
@@ -147,8 +147,8 @@ export function GlassPriceTickerDown() {
       transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
       className="glass-pill inline-flex items-center gap-3 rounded-[var(--radius-lg)] px-4 py-2 font-mono text-xs"
     >
-      <span className="text-[var(--muted-foreground)]">GBP/USD</span>
-      <span className="font-tabular tabular-nums">1.2645</span>
+      <span className="text-[var(--muted-foreground)]">USDT/EURC</span>
+      <span className="font-tabular tabular-nums">0.9211</span>
       <span className="inline-flex items-center gap-0.5 text-[var(--destructive)]">
         <ArrowDown size={10} strokeWidth={2.5} />
         <span className="font-tabular">0.18%</span>

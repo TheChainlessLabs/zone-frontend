@@ -697,7 +697,7 @@ export function cn(...inputs: ClassValue[]) {
             <Button
               variant="outline"
               onClick={() =>
-                toast.success("Order matched at midpoint 1.0856", {
+                toast.success("Order matched at midpoint 0.9213", {
                   description: "Batch #48,201 · awaiting L1 attestation.",
                 })
               }
@@ -764,10 +764,10 @@ export function cn(...inputs: ClassValue[]) {
             <div className="flex flex-col gap-4">
               <ColumnLabel>Vertical · between inline items</ColumnLabel>
               <div className="flex h-8 items-center gap-4 text-sm">
-                <span className="font-mono">EUR/USD</span>
+                <span className="font-mono">USDC/EURC</span>
                 <Separator orientation="vertical" />
                 <span className="font-tabular text-[var(--muted-foreground)]">
-                  1.0856 +0.42%
+                  0.9213 +0.42%
                 </span>
               </div>
             </div>

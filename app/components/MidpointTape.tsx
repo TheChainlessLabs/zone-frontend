@@ -2,25 +2,27 @@
 
 /**
  * MidpointTape — the refractable substrate behind the liquid-glass demo.
- * Renders a vertical tape of EUR/USD midpoint ticks with timestamps. The
+ * Renders a vertical tape of USDC/EURC midpoint ticks with timestamps. The
  * brand commits to no public order book, so the substrate intentionally
  * shows what the dark pool *does* expose — the midpoint reference and
- * settled tx hashes — refracted through the privacy layer above.
+ * settled tx hashes — refracted through the privacy layer above. The pair
+ * is the canonical demo pair from the brand naming sheet (omega-docs
+ * 03-brand/naming.md) — Omega trades stablecoin tokens, never fiat.
  */
 
 const TICKS = [
-  { ts: "14:02:18.412", price: "1.0856", delta: "+0.0002" },
-  { ts: "14:02:18.117", price: "1.0854", delta: "+0.0001" },
-  { ts: "14:02:17.998", price: "1.0853", delta: "−0.0003" },
-  { ts: "14:02:17.764", price: "1.0856", delta: "+0.0001" },
-  { ts: "14:02:17.531", price: "1.0855", delta: "+0.0002" },
-  { ts: "14:02:17.298", price: "1.0853", delta: "−0.0001" },
-  { ts: "14:02:17.142", price: "1.0854", delta: "+0.0004" },
-  { ts: "14:02:16.989", price: "1.0850", delta: "−0.0002" },
-  { ts: "14:02:16.713", price: "1.0852", delta: "+0.0001" },
-  { ts: "14:02:16.502", price: "1.0851", delta: "+0.0003" },
-  { ts: "14:02:16.317", price: "1.0848", delta: "−0.0001" },
-  { ts: "14:02:16.105", price: "1.0849", delta: "+0.0002" },
+  { ts: "14:02:18.412", price: "0.9213", delta: "+0.0002" },
+  { ts: "14:02:18.117", price: "0.9211", delta: "+0.0001" },
+  { ts: "14:02:17.998", price: "0.9210", delta: "−0.0003" },
+  { ts: "14:02:17.764", price: "0.9213", delta: "+0.0001" },
+  { ts: "14:02:17.531", price: "0.9212", delta: "+0.0002" },
+  { ts: "14:02:17.298", price: "0.9210", delta: "−0.0001" },
+  { ts: "14:02:17.142", price: "0.9211", delta: "+0.0004" },
+  { ts: "14:02:16.989", price: "0.9207", delta: "−0.0002" },
+  { ts: "14:02:16.713", price: "0.9209", delta: "+0.0001" },
+  { ts: "14:02:16.502", price: "0.9208", delta: "+0.0003" },
+  { ts: "14:02:16.317", price: "0.9205", delta: "−0.0001" },
+  { ts: "14:02:16.105", price: "0.9206", delta: "+0.0002" },
 ];
 
 const HASHES = [
@@ -40,7 +42,7 @@ export function MidpointTape() {
       {/* Left column: midpoint ticks */}
       <div className="absolute inset-y-0 left-0 w-[42%] px-6 py-8 font-mono">
         <div className="mb-2 text-[9px] uppercase tracking-[0.2em] text-[var(--muted-foreground)]/30">
-          midpoint · EUR/USD
+          midpoint · USDC/EURC
         </div>
         <ul className="flex flex-col gap-px">
           {TICKS.map((t) => (

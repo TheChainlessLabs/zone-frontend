@@ -212,7 +212,7 @@ export default function BrandBoard() {
           <div className="flex flex-col gap-6">
             <TypeRow
               label="Mono Tabular · 14 / 400"
-              sample="1.0856  +0.42%  3,201.00"
+              sample="0.9213  +0.42%  3,201.00"
               className="font-mono text-sm font-tabular"
             />
             <TypeRow
@@ -301,10 +301,10 @@ export default function BrandBoard() {
 
             {/* Chips */}
             <ComponentRow label="Filter chips">
-              <GlassChip active>EUR/USD</GlassChip>
-              <GlassChip>GBP/USD</GlassChip>
-              <GlassChip>USDC/EURC</GlassChip>
-              <GlassChip>USD/JPY</GlassChip>
+              <GlassChip active>USDC/EURC</GlassChip>
+              <GlassChip>USDC/USDT</GlassChip>
+              <GlassChip>USDT/EURC</GlassChip>
+              <GlassChip>ETH/USDC</GlassChip>
             </ComponentRow>
 
             {/* Price tickers — ambient brand */}
@@ -703,7 +703,7 @@ function Voice({ id }: { id: string }) {
           <ColumnLabel>Status</ColumnLabel>
           <VoiceLine
             tone="do"
-            text="Order matched at midpoint 1.0856"
+            text="Order matched at midpoint 0.9213"
           />
           <VoiceLine
             tone="dont"

@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@plugin "tailwindcss-animate";
 
 /* Omega Markets — design tokens (sourced from omega-docs/03-brand/assets/tokens.json).
    Default mode is dark. Light mode supported via [data-theme="light"]. */
@@ -8,6 +9,8 @@
   --foreground: #fafafa;
   --card: #09090b;
   --card-foreground: #fafafa;
+  --popover: #09090b;
+  --popover-foreground: #fafafa;
   --muted: #18181b;
   --muted-foreground: #a1a1aa;
   --accent: #27272a;
@@ -17,6 +20,7 @@
   --secondary: #27272a;
   --secondary-foreground: #fafafa;
   --destructive: #ef4444;
+  --destructive-foreground: #fafafa;
   --success: #10b981;
   --border: #27272a;
   --input: #27272a;
@@ -42,6 +46,8 @@
   --foreground: #09090b;
   --card: #fafafa;
   --card-foreground: #09090b;
+  --popover: #fafafa;
+  --popover-foreground: #09090b;
   --muted: #f4f4f5;
   --muted-foreground: #71717a;
   --accent: #f4f4f5;
@@ -51,6 +57,7 @@
   --secondary: #f4f4f5;
   --secondary-foreground: #18181b;
   --destructive: #dc2626;
+  --destructive-foreground: #fafafa;
   --success: #059669;
   --border: #e4e4e7;
   --input: #e4e4e7;
@@ -66,6 +73,8 @@
   --color-foreground: var(--foreground);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
@@ -75,6 +84,7 @@
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
   --color-success: var(--success);
   --color-border: var(--border);
   --color-input: var(--input);

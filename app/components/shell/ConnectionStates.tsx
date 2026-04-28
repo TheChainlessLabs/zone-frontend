@@ -14,11 +14,34 @@
  * no anxiety verbs ("trapped", "lost"), no apology pile-up.
  */
 
+import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/lib/icons";
 import { useWalletState } from "@/components/shell/WalletStateProvider";
+import {
+  ConnectWalletModal,
+  type ConnectWalletState,
+} from "@/components/modals";
+
+const CONNECTOR_DISPLAY: Record<string, string> = {
+  metamask: "MetaMask",
+  walletconnect: "WalletConnect",
+  coinbase: "Coinbase Wallet",
+  injected: "Browser wallet",
+};
 
 export function DisconnectedState({ routeLabel }: { routeLabel?: string }) {
+  const wallet = useWalletState();
+  const [openRequested, setOpenRequested] = React.useState(false);
+
+  // Mirror the WalletStatus modal-derivation logic: open when the user asks,
+  // or implicitly while we're mid-connect from this surface. Closes when the
+  // user dismisses, when the wallet returns to disconnected, or when the
+  // wallet finishes connecting (the AppShell will swap this surface out).
+  const modalOpen = openRequested || wallet.state === "connecting";
+  const modalState: ConnectWalletState =
+    wallet.state === "connecting" ? "connecting" : "idle";
+
   return (
     <main className="mx-auto flex min-h-[calc(100vh-14rem)] max-w-xl flex-col items-center justify-center gap-6 px-4 py-16 text-center">
       <span
@@ -39,10 +62,23 @@ export function DisconnectedState({ routeLabel }: { routeLabel?: string }) {
           page until you authorise.
         </p>
       </div>
-      <Button variant="outline" size="sm" onClick={() => {}}>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => setOpenRequested(true)}
+      >
         <Icon.Wallet aria-hidden />
         <span>Connect Wallet</span>
       </Button>
+      <ConnectWalletModal
+        open={modalOpen}
+        state={modalState}
+        activeConnector={wallet.connector}
+        onClose={() => setOpenRequested(false)}
+        onSelectConnector={(id) =>
+          wallet.connect(CONNECTOR_DISPLAY[id] ?? id)
+        }
+      />
     </main>
   );
 }
@@ -84,7 +120,7 @@ export function NoNftPassState() {
  * wallet is on the right chain (or disconnected).
  */
 export function WrongNetworkBanner() {
-  const { state, chainName } = useWalletState();
+  const { state, chainName, switchNetwork } = useWalletState();
 
   if (state !== "wrong-network") return null;
 
@@ -105,7 +141,7 @@ export function WrongNetworkBanner() {
       <Button
         variant="destructive"
         size="sm"
-        onClick={() => {}}
+        onClick={() => switchNetwork()}
         aria-label="Switch to Ethereum mainnet"
       >
         Switch to Ethereum mainnet

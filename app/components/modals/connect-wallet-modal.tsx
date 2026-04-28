@@ -42,6 +42,13 @@ export interface ConnectWalletModalProps {
   errorMessage?: string;
   onSelectConnector?: (connector: ConnectorId) => void;
   onRetry?: () => void;
+  /**
+   * Optional disconnect handler. When provided AND `state === "connected"`,
+   * the modal renders a Disconnect button below the success badge and
+   * suppresses the 1.5s auto-close — the user closes manually or
+   * disconnects from the popup itself.
+   */
+  onDisconnect?: () => void;
 }
 
 type ConnectorId = "metamask" | "walletconnect" | "coinbase" | "injected";
@@ -69,13 +76,16 @@ export function ConnectWalletModal({
   errorMessage = "Wallet rejected the signature. Try again or check your wallet.",
   onSelectConnector,
   onRetry,
+  onDisconnect,
 }: ConnectWalletModalProps) {
-  // Auto-close on success — matches the spec's 1.5s window.
+  // Auto-close on success — matches the spec's 1.5s window. Suppressed
+  // when an `onDisconnect` handler is supplied so the user can read and
+  // act on the wallet popup (Disconnect / Close) manually.
   React.useEffect(() => {
-    if (!open || state !== "connected") return;
+    if (!open || state !== "connected" || onDisconnect) return;
     const id = window.setTimeout(onClose, 1500);
     return () => window.clearTimeout(id);
-  }, [open, state, onClose]);
+  }, [open, state, onClose, onDisconnect]);
 
   return (
     <ModalShell
@@ -128,6 +138,24 @@ export function ConnectWalletModal({
           <span className="font-mono text-sm tabular-nums text-[var(--foreground)]">
             {address}
           </span>
+          {onDisconnect ? (
+            <div className="mt-2 flex w-full items-center justify-end gap-2">
+              <Button variant="ghost" onClick={onClose}>
+                Close
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  onDisconnect();
+                  onClose();
+                }}
+                aria-label="Disconnect wallet"
+              >
+                <Icon.Disconnect aria-hidden />
+                <span>Disconnect</span>
+              </Button>
+            </div>
+          ) : null}
         </div>
       ) : null}
 

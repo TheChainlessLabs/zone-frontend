@@ -6,6 +6,7 @@ dist/
 *.tsbuildinfo
 playwright-report/
 test-results/
+storybook-static/
 .env
 .env.*
 !.env.example

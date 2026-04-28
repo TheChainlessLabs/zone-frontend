@@ -1,0 +1,13 @@
+/* Reduced-transparency toolbar simulation.
+ *
+ * The real `prefers-reduced-transparency: reduce` media query isn't
+ * toggleable from JS, so we mirror its effect with a body class that the
+ * toolbar adds. The selectors below match the rules in `app/globals.css`
+ * so the visual fallback is byte-identical to what a user with the OS
+ * preference set actually sees. */
+body.reduced-transparency .glass,
+body.reduced-transparency .glass-pill {
+  background: var(--muted);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}

@@ -12,6 +12,9 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     include: ["**/__tests__/**/*.test.{ts,tsx}", "**/*.test.{ts,tsx}"],
+    // Storybook stories are not tests — keep vitest from accidentally
+    // picking them up if include globs ever broaden.
+    exclude: ["**/node_modules/**", "**/.storybook/**", "**/*.stories.{ts,tsx}"],
     passWithNoTests: true,
   },
 });

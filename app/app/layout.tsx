@@ -37,7 +37,7 @@ export default function RootLayout({
 
   return (
     <html lang="en" className={`${spaceGrotesk.variable} ${jetbrainsMono.variable}`}>
-      <body className="bg-bg-base text-text-primary font-display min-h-screen antialiased pb-[60px] lg:pb-0 overflow-x-hidden">
+      <body className="bg-bg-base text-text-primary font-display min-h-screen flex flex-col antialiased pb-[60px] lg:pb-0 overflow-x-hidden">
         <Providers initialState={initialState}>
           {children}
           <Toast />

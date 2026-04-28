@@ -4,7 +4,7 @@ import TransactionHistory from "@/components/TransactionHistory";
 
 export default function FundingPage() {
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-1 flex-col">
       <Navbar />
 
       <div className="flex-1 p-4 md:p-6 max-w-[1200px] mx-auto w-full flex flex-col gap-4 md:gap-6">

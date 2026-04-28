@@ -2,7 +2,7 @@ import { Skeleton } from "@/components/Skeleton";
 
 export default function TradeLoading() {
   return (
-    <div className="flex flex-col h-screen">
+    <div className="flex flex-1 flex-col">
       {/* Navbar placeholder */}
       <div className="h-[48px] bg-bg-base border-b border-border-subtle" />
       {/* BBO marquee placeholder */}

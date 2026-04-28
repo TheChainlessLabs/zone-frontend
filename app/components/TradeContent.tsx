@@ -49,7 +49,7 @@ export default function TradeContent() {
   const isLimit = orderType === "limit";
 
   return (
-    <ProtectedPage shellClassName="flex flex-col h-screen overflow-hidden bg-bg-base">
+    <ProtectedPage shellClassName="flex flex-1 flex-col overflow-hidden bg-bg-base">
       <main className="flex-1 overflow-y-auto">
         <div
           className={`mx-auto w-full px-4 sm:px-6 pt-10 pb-16 transition-[max-width] duration-200 ease-out ${

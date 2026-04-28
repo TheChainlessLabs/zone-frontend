@@ -14,7 +14,7 @@ export default function PortfolioPage() {
   const [withdrawOpen, setWithdrawOpen] = useState(false);
 
   return (
-    <ProtectedPage shellClassName="flex flex-col min-h-screen">
+    <ProtectedPage shellClassName="flex flex-1 flex-col">
       <div className="flex-1 p-4 md:p-6 max-w-[1200px] mx-auto w-full flex flex-col gap-4 md:gap-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <h1 className="text-h2 font-semibold">Portfolio</h1>

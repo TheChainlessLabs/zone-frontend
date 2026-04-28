@@ -3,7 +3,7 @@ import Navbar from "@/components/Navbar";
 
 export default function NotFound() {
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-1 flex-col">
       <Navbar />
 
       <div className="flex-1 flex flex-col items-center justify-center px-4">

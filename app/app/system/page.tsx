@@ -69,6 +69,8 @@ import {
   DrawerTrigger,
 } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
+import { type LucideIcon } from "lucide-react";
+import { Icon } from "@/lib/icons";
 
 const SECTIONS = [
   { id: "foundation", number: "01", label: "Foundation" },
@@ -83,7 +85,53 @@ const SECTIONS = [
   { id: "sheet", number: "10", label: "Sheet" },
   { id: "toast", number: "11", label: "Toast" },
   { id: "separator", number: "12", label: "Separator" },
+  { id: "icons", number: "13", label: "Icons" },
 ] as const;
+
+// Semantic-name → Lucide source-name map, used in the /system Icons section
+// to surface the underlying glyph next to the brand alias. Kept colocated with
+// the showcase rather than in lib/icons.tsx, since it's a documentation
+// concern — not part of the public icon API.
+type IconEntry = { name: string; source: string; Component: LucideIcon };
+
+function isLucideIcon(value: unknown): value is LucideIcon {
+  // Lucide components are React forwardRef exotic components — objects with a
+  // render fn — or plain function components. Either way, they expose
+  // displayName / $$typeof. The nested-group sentinel is "no displayName and
+  // is a plain object with string keys mapping to Lucide components".
+  return (
+    typeof value === "function" ||
+    (typeof value === "object" && value !== null && "$$typeof" in value)
+  );
+}
+
+const ICON_ENTRIES: IconEntry[] = (() => {
+  const entries: IconEntry[] = [];
+  for (const [key, value] of Object.entries(Icon)) {
+    if (isLucideIcon(value)) {
+      const Comp = value as LucideIcon;
+      entries.push({ name: key, source: Comp.displayName ?? key, Component: Comp });
+    } else {
+      for (const [sub, Comp] of Object.entries(value as Record<string, LucideIcon>)) {
+        entries.push({
+          name: `${key}.${sub}`,
+          source: Comp.displayName ?? sub,
+          Component: Comp,
+        });
+      }
+    }
+  }
+  return entries;
+})();
+
+const ICON_SIZE_VARIANTS = [12, 14, 16, 20, 24, 32] as const;
+
+const ICON_COLOR_CONTEXTS: Array<{ label: string; className: string }> = [
+  { label: "default", className: "text-[var(--foreground)]" },
+  { label: "success", className: "text-[var(--success)]" },
+  { label: "destructive", className: "text-[var(--destructive)]" },
+  { label: "muted", className: "text-[var(--muted-foreground)]" },
+];
 
 export default function SystemShowcase() {
   return (
@@ -721,6 +769,97 @@ export function cn(...inputs: ClassValue[]) {
                 <span className="font-tabular text-[var(--muted-foreground)]">
                   1.0856 +0.42%
                 </span>
+              </div>
+            </div>
+          </div>
+        </Section>
+
+        <Section
+          id="icons"
+          number="13"
+          label="Icons"
+          title={
+            <>
+              Semantic over visual.{" "}
+              <span className="font-serif text-[var(--muted-foreground)]">
+                Lucide is the anchor.
+              </span>
+            </>
+          }
+          description={
+            <>
+              Components reference{" "}
+              <code className="font-mono text-xs text-[var(--foreground)]">Icon.Buy</code>,{" "}
+              <code className="font-mono text-xs text-[var(--foreground)]">Icon.Settled</code>,{" "}
+              <code className="font-mono text-xs text-[var(--foreground)]">Icon.Proof</code>{" "}
+              — never the underlying Lucide glyph. The brand lexicon (
+              <a
+                href="https://github.com/TheChainlessLabs/omega-docs/blob/main/03-brand/naming.md"
+                className="font-mono text-xs text-[var(--foreground)] underline underline-offset-4 hover:text-[var(--muted-foreground)]"
+              >
+                omega-docs/03-brand/naming.md
+              </a>
+              ) drives the alias names; the map in{" "}
+              <code className="font-mono text-xs text-[var(--foreground)]">app/lib/icons.tsx</code>{" "}
+              is the only place{" "}
+              <span className="font-serif text-[var(--foreground)]">lucide-react</span> is imported.
+              When the brand picks a different glyph for a semantic, swap it once there.
+            </>
+          }
+        >
+          <div className="flex flex-col gap-12">
+            <div className="flex flex-col gap-4">
+              <ColumnLabel>Aliases · 24px</ColumnLabel>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+                {ICON_ENTRIES.map((entry) => {
+                  const I = entry.Component;
+                  return (
+                    <div
+                      key={entry.name}
+                      className="flex flex-col items-start gap-3 rounded-[var(--radius-md)] bg-[var(--muted)] p-4"
+                    >
+                      <I size={24} aria-hidden />
+                      <div className="flex flex-col gap-0.5">
+                        <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-[var(--foreground)]">
+                          {entry.name}
+                        </span>
+                        <span className="font-mono text-[10px] text-[var(--muted-foreground)]">
+                          {entry.source}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-4">
+              <ColumnLabel>Sizes · 12 · 14 · 16 · 20 · 24 · 32</ColumnLabel>
+              <div className="flex flex-wrap items-end gap-6">
+                {ICON_SIZE_VARIANTS.map((size) => (
+                  <div key={size} className="flex flex-col items-center gap-2">
+                    <Icon.Settled size={size} aria-hidden />
+                    <span className="font-mono text-[10px] text-[var(--muted-foreground)]">
+                      {size}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-4">
+              <ColumnLabel>Color contexts</ColumnLabel>
+              <div className="flex flex-wrap items-end gap-6">
+                {ICON_COLOR_CONTEXTS.map((ctx) => (
+                  <div key={ctx.label} className="flex flex-col items-center gap-2">
+                    <span className={ctx.className}>
+                      <Icon.Settled size={24} aria-hidden />
+                    </span>
+                    <span className="font-mono text-[10px] text-[var(--muted-foreground)]">
+                      {ctx.label}
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, MotionConfig } from "motion/react";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
   AlignCenter,
   AlignLeft,
@@ -73,6 +73,8 @@ import {
 } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { Animate, AnimatePresence } from "@/components/ui/animate";
+import { Badge } from "@/components/ui/badge";
+import { Status, type StatusState } from "@/components/ui/status";
 import { type LucideIcon } from "lucide-react";
 import { Icon } from "@/lib/icons";
 
@@ -92,6 +94,7 @@ const SECTIONS = [
   { id: "icons", number: "13", label: "Icons" },
   { id: "glass-variants", number: "14", label: "Glass" },
   { id: "motion", number: "15", label: "Motion" },
+  { id: "status", number: "16", label: "Status" },
 ] as const;
 
 // Semantic-name → Lucide source-name map, used in the /system Icons section
@@ -1037,6 +1040,40 @@ export function cn(...inputs: ClassValue[]) {
           <MotionShowcase />
         </Section>
 
+        <Section
+          id="status"
+          number="16"
+          label="Status"
+          title={
+            <>
+              Brand-lexicon{" "}
+              <span className="font-serif text-[var(--muted-foreground)]">
+                in a pill.
+              </span>
+            </>
+          }
+          description={
+            <>
+              Status is the brand-aware composition of Badge + Icon. The 10
+              canonical states map directly to{" "}
+              <a
+                href="https://github.com/TheChainlessLabs/omega-docs/blob/main/03-brand/messaging.md"
+                className="font-mono text-xs text-[var(--foreground)] underline underline-offset-4 hover:text-[var(--muted-foreground)]"
+              >
+                omega-docs/03-brand/messaging.md
+              </a>{" "}
+              · Status labels.{" "}
+              <span className="font-serif text-[var(--foreground)]">
+                Reach for Status, not Badge,
+              </span>{" "}
+              when the label is one of the canonical lifecycle / connection
+              states.
+            </>
+          }
+        >
+          <StatusShowcase />
+        </Section>
+
         <footer className="border-t border-[var(--border)] py-12">
           <div className="mx-auto flex max-w-6xl flex-col items-start gap-3 px-4 text-xs text-[var(--muted-foreground)] md:px-8">
             <div className="font-mono uppercase tracking-[0.18em]">
@@ -1385,6 +1422,121 @@ function ButtonRow({
           </span>
         </div>
       </div>
+    </div>
+  );
+}
+
+const STATUS_ROWS: ReadonlyArray<{ state: StatusState; description: string }> = [
+  { state: "pending", description: "Order accepted, queued for the next batch." },
+  { state: "submitting", description: "Order in flight to the gateway. Pre-signature." },
+  { state: "awaiting-signature", description: "EIP-712 prompt is open in the wallet." },
+  { state: "matched", description: "Filled at midpoint inside the TEE-attested CLOB." },
+  { state: "settled", description: "Batch sealed and confirmed onchain on L1." },
+  { state: "proven", description: "Settlement carries an SP1 / TEE proof, verifiable." },
+  { state: "cancelled", description: "User-cancelled before the batch sealed." },
+  { state: "failed", description: "Match or settle failed. Error copy carries what-next." },
+  { state: "connected", description: "Wallet connected on the expected chain." },
+  { state: "wrong-network", description: "Wallet is on a chain Omega doesn't support." },
+] as const;
+
+function StatusShowcase() {
+  return (
+    <div className="flex flex-col gap-12">
+      <div className="flex flex-col gap-4">
+        <ColumnLabel>States · 10 canonical</ColumnLabel>
+        <div className="grid grid-cols-1 divide-y divide-[var(--border)] rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--muted)]/30">
+          {STATUS_ROWS.map(({ state, description }) => (
+            <div
+              key={state}
+              className="grid grid-cols-1 items-center gap-3 px-4 py-3 md:grid-cols-[10rem_10rem_1fr]"
+            >
+              <Status state={state} />
+              <code className="font-mono text-[11px] uppercase tracking-[0.12em] text-[var(--foreground)]">
+                {state}
+              </code>
+              <span className="text-xs leading-relaxed text-[var(--muted-foreground)]">
+                {description}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-4">
+        <ColumnLabel>Glass · for order form & sheets</ColumnLabel>
+        <GlassWell>
+          <div className="flex flex-wrap items-center gap-2">
+            <Status state="awaiting-signature" glass />
+            <Status state="matched" glass />
+            <Status state="settled" glass />
+            <Status state="connected" glass />
+            <Status state="wrong-network" glass />
+          </div>
+        </GlassWell>
+      </div>
+
+      <div className="flex flex-col gap-4">
+        <ColumnLabel>Live transition · pending → matched → settled</ColumnLabel>
+        <StatusTransitionDemo />
+      </div>
+
+      <div className="flex flex-col gap-4">
+        <ColumnLabel>Badge · generic primitive (no warning yet — tokens)</ColumnLabel>
+        <div className="flex flex-wrap items-center gap-3 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--muted)]/30 p-4">
+          <Badge>Default</Badge>
+          <Badge variant="outline">Outline</Badge>
+          <Badge variant="success">Success</Badge>
+          <Badge variant="destructive">Destructive</Badge>
+          <Badge variant="success">
+            <Badge.Dot />
+            With dot
+          </Badge>
+        </div>
+        <GlassWell>
+          <Badge variant="glass">Glass</Badge>
+        </GlassWell>
+      </div>
+
+      <div className="flex flex-col gap-3">
+        <ColumnLabel>API</ColumnLabel>
+        <pre className="overflow-x-auto rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--muted)]/40 p-4 font-mono text-[11px] leading-relaxed text-[var(--foreground)]">
+          <code>{`<Status state="settled" />
+<Status state="matched" glass />
+<Badge variant="success">Live</Badge>`}</code>
+        </pre>
+      </div>
+    </div>
+  );
+}
+
+function StatusTransitionDemo() {
+  const SEQUENCE: StatusState[] = ["pending", "matched", "settled"];
+  const [step, setStep] = useState(0);
+
+  // Auto-advance every 1.6s so the page does the demo for you, but expose
+  // a button so reviewers can trigger transitions manually.
+  useEffect(() => {
+    const t = setTimeout(() => setStep((s) => (s + 1) % SEQUENCE.length), 1600);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
+
+  const state = SEQUENCE[step]!;
+
+  return (
+    <div className="flex flex-wrap items-center gap-4 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--muted)]/30 p-6">
+      <Status state={state} />
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => setStep((s) => (s + 1) % SEQUENCE.length)}
+      >
+        Advance
+        <ArrowRight />
+      </Button>
+      <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
+        {SEQUENCE.map((s, i) => (i === step ? `[${s}]` : s)).join(" · ")}
+      </span>
     </div>
   );
 }

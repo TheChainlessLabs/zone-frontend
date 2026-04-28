@@ -7,6 +7,11 @@ dist/
 playwright-report/
 test-results/
 storybook-static/
+# Visual regression baselines live under app/__snapshots__/ and are committed.
+# These two directories are noise jest-image-snapshot writes during failing
+# runs (the actual capture and the visual diff) — keep them local-only.
+**/__snapshots__/__diff_output__/
+**/__snapshots__/__received_output__/
 .env
 .env.*
 !.env.example

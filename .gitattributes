@@ -1,0 +1,4 @@
+# Visual regression baselines are binary PNGs — disable text-mode diff so
+# `git diff` doesn't try to render them and so line-ending normalisation
+# leaves them untouched.
+*.png binary diff=

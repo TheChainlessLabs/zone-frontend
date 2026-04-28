@@ -65,6 +65,17 @@ pnpm test        # Vitest run
 pnpm sync-tokens # Regenerate app/app/_generated/tokens.css from omega-docs
 ```
 
+### Visual regression (M2.6)
+
+```bash
+pnpm --filter @omega/app test:visual         # diff every Storybook story against the committed baseline; fails on >0.1% pixel drift
+pnpm --filter @omega/app test:visual:update  # accept the current state as the new baseline
+```
+
+Both scripts build a static Storybook (`storybook-static/`), serve it on port 6006, and run `@storybook/test-runner` (Playwright/Chromium) against every story. One PNG capture per story, diffed via `jest-image-snapshot`. Baselines live under `app/__snapshots__/` and are committed to the repo.
+
+Re-run `:update` when a primitive's visual contract intentionally changes; commit the resulting PNG churn alongside the code change. Single-browser (Chromium) for V1 — cross-browser visual coverage and CI integration are M7 work.
+
 ## Design tokens
 
 Canonical source: `omega-docs/03-brand/assets/tokens.json` (sibling repo). `omega-interface` consumes via `scripts/sync-tokens.mjs`, which writes `app/app/_generated/tokens.css`. Sync runs automatically before `pnpm dev` and `pnpm build`. Do not hand-edit `_generated/tokens.css` — it gets overwritten.

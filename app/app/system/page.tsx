@@ -18,6 +18,9 @@ import {
   User,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { Section } from "@/components/Section";
 import { SectionNav } from "@/components/SectionNav";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -27,6 +30,15 @@ import { Button } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import {
   Card,
   CardContent,
@@ -95,6 +107,7 @@ const SECTIONS = [
   { id: "glass-variants", number: "14", label: "Glass" },
   { id: "motion", number: "15", label: "Motion" },
   { id: "status", number: "16", label: "Status" },
+  { id: "form", number: "17", label: "Form" },
 ] as const;
 
 // Semantic-name → Lucide source-name map, used in the /system Icons section
@@ -1074,6 +1087,48 @@ export function cn(...inputs: ClassValue[]) {
           <StatusShowcase />
         </Section>
 
+        <Section
+          id="form"
+          number="17"
+          label="Form"
+          title={
+            <>
+              react-hook-form + zod.{" "}
+              <span className="font-serif text-[var(--muted-foreground)]">
+                Errors carry what-next.
+              </span>
+            </>
+          }
+          description={
+            <>
+              Form is the shadcn primitive — composed Label, Input, Description,
+              Message — wired to{" "}
+              <code className="font-mono text-xs text-[var(--foreground)]">
+                react-hook-form
+              </code>{" "}
+              and{" "}
+              <code className="font-mono text-xs text-[var(--foreground)]">
+                zod
+              </code>
+              . Microcopy follows{" "}
+              <a
+                href="https://github.com/TheChainlessLabs/omega-docs/blob/main/03-brand/messaging.md"
+                className="font-mono text-xs text-[var(--foreground)] underline underline-offset-4 hover:text-[var(--muted-foreground)]"
+              >
+                omega-docs/03-brand/messaging.md
+              </a>{" "}
+              — error format{" "}
+              <span className="font-serif text-[var(--foreground)]">
+                [What happened.] [What to do next.]
+              </span>
+              . Validation defaults: validate on submit, re-validate on blur per
+              field after the first attempt.
+            </>
+          }
+        >
+          <FormShowcase />
+        </Section>
+
         <footer className="border-t border-[var(--border)] py-12">
           <div className="mx-auto flex max-w-6xl flex-col items-start gap-3 px-4 text-xs text-[var(--muted-foreground)] md:px-8">
             <div className="font-mono uppercase tracking-[0.18em]">
@@ -1537,6 +1592,272 @@ function StatusTransitionDemo() {
       <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
         {SEQUENCE.map((s, i) => (i === step ? `[${s}]` : s)).join(" · ")}
       </span>
+    </div>
+  );
+}
+
+// --- Form showcase --------------------------------------------------------
+
+// Schema lives at module scope so the snippet shown in the demo is the
+// literal source the live form uses. Error messages follow the brand
+// microcopy pattern: [What happened.] [What to do next.] — see
+// omega-docs/03-brand/messaging.md.
+const formDemoSchema = z.object({
+  wallet: z
+    .string()
+    .min(1, "Wallet required. Connect or paste a 0x address.")
+    .regex(
+      /^0x[a-fA-F0-9]{40}$/,
+      "Invalid wallet address. Use a 0x-prefixed 40-char hex address."
+    ),
+  amount: z
+    .string()
+    .min(1, "Amount required. Enter a positive number.")
+    .refine((v) => Number.isFinite(Number(v)) && Number(v) > 0, {
+      message: "Invalid amount. Use a positive number.",
+    }),
+  memo: z
+    .string()
+    .max(64, "Memo too long. Keep it under 64 characters.")
+    .optional(),
+});
+type FormDemoSchema = z.infer<typeof formDemoSchema>;
+
+const FORM_DEMO_SNIPPET = `import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Form, FormControl, FormDescription,
+  FormField, FormItem, FormLabel, FormMessage,
+} from "@/components/ui/form";
+
+const schema = z.object({
+  wallet: z.string().regex(/^0x[a-fA-F0-9]{40}$/,
+    "Invalid wallet address. Use a 0x-prefixed 40-char hex address."),
+  amount: z.string().refine((v) => Number(v) > 0,
+    "Invalid amount. Use a positive number."),
+  memo: z.string().max(64).optional(),
+});
+
+const form = useForm<z.infer<typeof schema>>({
+  resolver: zodResolver(schema),
+  defaultValues: { wallet: "", amount: "", memo: "" },
+});
+
+<Form {...form}>
+  <form onSubmit={form.handleSubmit(onSubmit)}>
+    <FormField control={form.control} name="amount" render={({ field }) => (
+      <FormItem>
+        <FormLabel required>Amount</FormLabel>
+        <FormControl><Input {...field} /></FormControl>
+        <FormDescription>Settled in the next batch.</FormDescription>
+        <FormMessage />
+      </FormItem>
+    )} />
+  </form>
+</Form>`;
+
+function FormShowcase() {
+  const [submitted, setSubmitted] = useState<null | "ok">(null);
+  const form = useForm<FormDemoSchema>({
+    resolver: zodResolver(formDemoSchema),
+    defaultValues: { wallet: "", amount: "", memo: "" },
+    // Documenting the brand defaults — these are also the react-hook-form
+    // defaults, kept explicit so consumers don't have to read the source.
+    mode: "onSubmit",
+    reValidateMode: "onBlur",
+  });
+
+  const submitting = form.formState.isSubmitting;
+
+  return (
+    <div className="flex flex-col gap-12">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_1fr]">
+        {/* Live demo */}
+        <div className="flex flex-col gap-4">
+          <ColumnLabel>Live demo · pristine → error → submit</ColumnLabel>
+          <div className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--muted)]/30 p-6">
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(async (values) => {
+                  // The form doesn't actually submit anywhere in the
+                  // showcase — log + transient settled status, then reset.
+                  // eslint-disable-next-line no-console
+                  console.log("Form submitted:", values);
+                  await new Promise((r) => setTimeout(r, 400));
+                  setSubmitted("ok");
+                  setTimeout(() => {
+                    setSubmitted(null);
+                    form.reset();
+                  }, 1500);
+                })}
+                className="flex flex-col gap-5"
+              >
+                <FormField
+                  control={form.control}
+                  name="wallet"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel required>Wallet address</FormLabel>
+                      <FormControl>
+                        <Input placeholder="0x…" {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        EOA on the Omega-supported chain.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="amount"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel required>Amount</FormLabel>
+                      <FormControl>
+                        <Input placeholder="10,000.00" {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        Settled at midpoint in the next batch.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="memo"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Memo</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Optional · max 64 chars"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Visible in your fill history. Not seen by counterparties.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="flex items-center gap-3 pt-1">
+                  <Button type="submit" disabled={submitting}>
+                    {submitting ? "Submitting…" : "Submit"}
+                  </Button>
+                  {submitting ? <Status state="submitting" /> : null}
+                  {submitted === "ok" ? <Status state="settled" /> : null}
+                </div>
+              </form>
+            </Form>
+          </div>
+          <p className="text-xs leading-relaxed text-[var(--muted-foreground)]">
+            Try submit-empty to surface errors. Errors render with{" "}
+            <code className="font-mono text-[var(--foreground)]">Icon.Failed</code>{" "}
+            and a soft enter motion. The required indicator on the label is the{" "}
+            Linear-style accent dot, not an asterisk.
+          </p>
+        </div>
+
+        {/* Static state matrix — pristine, focused, error, description, disabled */}
+        <div className="flex flex-col gap-4">
+          <ColumnLabel>States · static</ColumnLabel>
+          <div className="grid grid-cols-1 gap-6 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--muted)]/30 p-6">
+            <FormStateExample label="Pristine">
+              <Label htmlFor="form-pristine">Wallet address</Label>
+              <Input id="form-pristine" placeholder="0x…" />
+            </FormStateExample>
+            <FormStateExample label="Focused">
+              <Label htmlFor="form-focused">Amount</Label>
+              <Input
+                id="form-focused"
+                placeholder="10,000.00"
+                defaultValue="10,000.00"
+              />
+            </FormStateExample>
+            <FormStateExample label="With description">
+              <Label htmlFor="form-described">Memo</Label>
+              <Input id="form-described" placeholder="Optional" />
+              <span className="text-xs leading-relaxed text-[var(--muted-foreground)]">
+                Visible in your fill history. Not seen by counterparties.
+              </span>
+            </FormStateExample>
+            <FormStateExample label="With error">
+              <Label
+                htmlFor="form-error"
+                className="inline-flex items-center gap-1.5 text-[var(--destructive)]"
+              >
+                <span>Wallet address</span>
+                <span
+                  aria-hidden
+                  className="inline-block h-1 w-1 shrink-0 rounded-full bg-[var(--destructive)]"
+                />
+              </Label>
+              <Input
+                id="form-error"
+                defaultValue="0x42"
+                aria-invalid="true"
+                className="border-[var(--destructive)] focus-visible:ring-[var(--destructive)]"
+              />
+              <span className="inline-flex items-start gap-1.5 text-xs leading-relaxed text-[var(--destructive)]">
+                <Icon.Failed size={12} aria-hidden className="mt-0.5 shrink-0" />
+                <span>
+                  Invalid wallet address. Use a 0x-prefixed 40-char hex address.
+                </span>
+              </span>
+            </FormStateExample>
+            <FormStateExample label="Disabled">
+              <Label htmlFor="form-disabled">Slippage</Label>
+              <Input id="form-disabled" defaultValue="0.10%" disabled />
+            </FormStateExample>
+            <FormStateExample label="Submitting">
+              <div className="flex items-center gap-3">
+                <Button disabled>Submitting…</Button>
+                <Status state="submitting" />
+              </div>
+            </FormStateExample>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-3">
+        <ColumnLabel>API · schema + Form</ColumnLabel>
+        <pre className="overflow-x-auto rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--muted)]/40 p-4 font-mono text-[11px] leading-relaxed text-[var(--foreground)]">
+          <code>{FORM_DEMO_SNIPPET}</code>
+        </pre>
+        <p className="text-xs leading-relaxed text-[var(--muted-foreground)]">
+          Validation defaults:{" "}
+          <code className="font-mono text-[var(--foreground)]">mode: &quot;onSubmit&quot;</code>{" "}
+          +{" "}
+          <code className="font-mono text-[var(--foreground)]">
+            reValidateMode: &quot;onBlur&quot;
+          </code>
+          . First submit decides per-field whether errors stick; after that,
+          each field re-validates on blur. Override at the{" "}
+          <code className="font-mono text-[var(--foreground)]">useForm()</code>{" "}
+          call site if a surface needs different timing.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function FormStateExample({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
+        {label}
+      </span>
+      {children}
     </div>
   );
 }

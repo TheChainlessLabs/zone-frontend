@@ -82,6 +82,14 @@ import {
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
+} from "@/components/ui/drawer";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
 } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { Animate, AnimatePresence } from "@/components/ui/animate";
@@ -631,66 +639,99 @@ export function cn(...inputs: ClassValue[]) {
         <Section
           id="sheet"
           number="10"
-          label="Sheet"
+          label="Sheet · Drawer"
           title={
             <>
-              Mobile drawer.{" "}
+              Side panel + mobile drawer.{" "}
               <span className="font-serif text-[var(--muted-foreground)]">
-                Tactile, draggable.
+                Two primitives, two contexts.
               </span>
             </>
           }
           description={
             <>
-              Sheet uses{" "}
-              <code className="font-mono text-xs text-[var(--foreground)]">vaul</code>{" "}
-              for native-feel mobile drawers — drag to dismiss, snap behaviour,
-              background scaling.{" "}
-              <span className="font-serif text-[var(--foreground)]">
-                The only place spring motion is allowed
-              </span>{" "}
-              per the brand motion ladder.
+              <span className="font-serif text-[var(--foreground)]">Sheet</span>{" "}
+              is the desktop side panel — Radix Dialog with side-slide variants,
+              max 480 px wide, slides from left/right/top/bottom. Used for
+              settings, filters, secondary navigation.{" "}
+              <span className="font-serif text-[var(--foreground)]">Drawer</span>{" "}
+              is the mobile bottom drawer — vaul-based, drag-to-dismiss, spring
+              snap. Used in a phone-shaped frame so the demo reads at the actual
+              dimensions a user holds.
             </>
           }
         >
-          <Drawer>
-            <DrawerTrigger asChild>
-              <Button variant="outline">Open drawer</Button>
-            </DrawerTrigger>
-            <DrawerContent>
-              <DrawerHeader>
-                <DrawerTitle>Order details</DrawerTitle>
-                <DrawerDescription>
-                  Submitted · matched at midpoint · awaiting batch seal.
-                </DrawerDescription>
-              </DrawerHeader>
-              <div className="px-4 pb-2 text-sm">
-                <ul className="flex flex-col gap-2 font-tabular">
-                  <li className="flex items-center justify-between">
-                    <span className="text-[var(--muted-foreground)]">Sell</span>
-                    <span className="font-mono">10,000.00 USDC</span>
-                  </li>
-                  <li className="flex items-center justify-between">
-                    <span className="text-[var(--muted-foreground)]">Receive</span>
-                    <span className="font-mono">9,213.40 EURC</span>
-                  </li>
-                  <li className="flex items-center justify-between">
-                    <span className="text-[var(--muted-foreground)]">Mid</span>
-                    <span className="font-mono">0.9213</span>
-                  </li>
-                </ul>
+          <div className="grid grid-cols-1 gap-12 md:grid-cols-2">
+            {/* Sheet — desktop side panel */}
+            <div className="flex flex-col gap-3">
+              <h3 className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
+                Sheet · desktop side panel
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button variant="outline">Right</Button>
+                  </SheetTrigger>
+                  <SheetContent side="right">
+                    <SheetHeader>
+                      <SheetTitle>Filters</SheetTitle>
+                      <SheetDescription>
+                        Refine the order book by side, size, venue, and status.
+                      </SheetDescription>
+                    </SheetHeader>
+                  </SheetContent>
+                </Sheet>
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button variant="outline">Left</Button>
+                  </SheetTrigger>
+                  <SheetContent side="left">
+                    <SheetHeader>
+                      <SheetTitle>Pairs</SheetTitle>
+                      <SheetDescription>
+                        Switch between the five launch pairs.
+                      </SheetDescription>
+                    </SheetHeader>
+                  </SheetContent>
+                </Sheet>
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button variant="outline">Bottom</Button>
+                  </SheetTrigger>
+                  <SheetContent side="bottom">
+                    <SheetHeader>
+                      <SheetTitle>Bottom panel</SheetTitle>
+                      <SheetDescription>
+                        Anchored to the bottom edge — full-width on desktop, capped on tall viewports.
+                      </SheetDescription>
+                    </SheetHeader>
+                  </SheetContent>
+                </Sheet>
               </div>
-              <DrawerFooter>
-                <Button>
-                  Confirm
-                  <Check />
-                </Button>
-                <DrawerClose asChild>
-                  <Button variant="ghost">Close</Button>
-                </DrawerClose>
-              </DrawerFooter>
-            </DrawerContent>
-          </Drawer>
+              <p className="text-xs leading-relaxed text-[var(--muted-foreground)]">
+                Constrained to{" "}
+                <code className="font-mono text-[var(--foreground)]">max-w-[480px]</code>{" "}
+                on left/right; full-width on top/bottom. Soft-surface treatment
+                (no hard hairline border).
+              </p>
+            </div>
+
+            {/* Drawer — mobile bottom, in a phone frame */}
+            <div className="flex flex-col gap-3">
+              <h3 className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
+                Drawer · mobile bottom (375 × 667)
+              </h3>
+              <div className="flex justify-center">
+                <PhoneFrame>
+                  <DrawerInPhone />
+                </PhoneFrame>
+              </div>
+              <p className="text-xs leading-relaxed text-[var(--muted-foreground)]">
+                vaul-based · drag-to-dismiss · spring snap. Shown inside an
+                iPhone-shaped frame so the demo reads at actual mobile width.
+              </p>
+            </div>
+          </div>
         </Section>
 
         <Section
@@ -1858,6 +1899,79 @@ function FormStateExample({
         {label}
       </span>
       {children}
+    </div>
+  );
+}
+
+/* —— Phone-shaped frame for showing mobile primitives at actual width —— */
+
+function PhoneFrame({ children }: { children: ReactNode }) {
+  return (
+    <div
+      className="relative overflow-hidden rounded-[40px] border-[10px] border-[#0a0a0a] bg-[var(--background)] shadow-[0_24px_64px_-12px_rgba(0,0,0,0.5)]"
+      style={{ width: 375, height: 667 }}
+      aria-label="Mobile preview frame"
+    >
+      {/* notch */}
+      <div className="pointer-events-none absolute left-1/2 top-0 z-20 h-6 w-32 -translate-x-1/2 rounded-b-2xl bg-[#0a0a0a]" />
+      {/* status bar */}
+      <div className="pointer-events-none absolute inset-x-0 top-1 z-20 flex items-center justify-between px-6 font-mono text-[10px] tabular-nums text-[var(--foreground)]">
+        <span>9:41</span>
+        <span>━━━</span>
+      </div>
+      <div className="relative h-full w-full overflow-hidden">{children}</div>
+    </div>
+  );
+}
+
+function DrawerInPhone() {
+  return (
+    <div className="flex h-full flex-col items-center justify-end gap-4 bg-gradient-to-b from-[var(--background)] to-[var(--muted)] p-6">
+      <div className="flex w-full flex-col gap-3 pb-6 pt-12">
+        <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
+          Mobile preview
+        </span>
+        <p className="text-sm leading-relaxed text-[var(--muted-foreground)]">
+          Tap the button to open the bottom drawer. Drag the handle to dismiss.
+        </p>
+      </div>
+      <Drawer>
+        <DrawerTrigger asChild>
+          <Button variant="default" className="w-full">
+            View order details
+          </Button>
+        </DrawerTrigger>
+        <DrawerContent>
+          <DrawerHeader>
+            <DrawerTitle>Order details</DrawerTitle>
+            <DrawerDescription>
+              Submitted · matched at midpoint · awaiting batch seal.
+            </DrawerDescription>
+          </DrawerHeader>
+          <div className="px-4 pb-2 text-sm">
+            <ul className="flex flex-col gap-2 font-tabular">
+              <li className="flex items-center justify-between">
+                <span className="text-[var(--muted-foreground)]">Sell</span>
+                <span className="font-mono">10,000.00 USDC</span>
+              </li>
+              <li className="flex items-center justify-between">
+                <span className="text-[var(--muted-foreground)]">Receive</span>
+                <span className="font-mono">9,213.40 EURC</span>
+              </li>
+              <li className="flex items-center justify-between">
+                <span className="text-[var(--muted-foreground)]">Mid</span>
+                <span className="font-mono">0.9213</span>
+              </li>
+            </ul>
+          </div>
+          <DrawerFooter>
+            <Button>Confirm</Button>
+            <DrawerClose asChild>
+              <Button variant="ghost">Close</Button>
+            </DrawerClose>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 }

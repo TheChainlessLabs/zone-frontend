@@ -52,7 +52,7 @@ import {
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
-} from "@/components/ui/sheet";
+} from "@/components/ui/drawer";
 import { Status, STATE_SPECS, type StatusState } from "@/components/ui/status";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Toggle } from "@/components/ui/toggle";

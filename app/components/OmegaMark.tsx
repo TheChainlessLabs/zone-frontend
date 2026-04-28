@@ -22,7 +22,7 @@ export function OmegaMark({
     <svg
       width={size}
       height={size}
-      viewBox="0 0 1024 1024"
+      viewBox="345 345 320 320"
       fill="currentColor"
       className={className}
       role={title ? "img" : "presentation"}

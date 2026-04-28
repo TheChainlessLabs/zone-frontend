@@ -11,6 +11,17 @@
    keep this stub until tokens.json adds the 2xl rung, then delete. */
 :root {
   --radius-2xl: 24px;
+
+  /* Soft surface treatment — diffuse drop + faint inner ring. See
+     omega-docs/03-brand/visual-identity.md "Surface treatment". The sync
+     script doesn't emit shadow tokens yet (TODO follow-up); inlined
+     here from tokens.json shadow.{soft,surface-edge}. */
+  --shadow-soft: 0 8px 32px -8px rgba(0, 0, 0, 0.40), 0 2px 8px -2px rgba(0, 0, 0, 0.30);
+  --surface-edge: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="light"] {
+  --surface-edge: rgba(0, 0, 0, 0.06);
 }
 
 body {
@@ -50,6 +61,25 @@ body {
 
 .font-tabular {
   font-variant-numeric: tabular-nums;
+}
+
+/* Soft surface — for compact menus (DropdownMenu, Tooltip, Popover, etc).
+   Replaces the 1px hard hairline with a diffuse drop + faint inner ring.
+   See omega-docs/03-brand/visual-identity.md "Surface treatment". */
+.surface-soft {
+  background: var(--popover, var(--card));
+  box-shadow:
+    inset 0 0 0 1px var(--surface-edge),
+    var(--shadow-soft);
+  border: none;
+}
+
+@media (prefers-contrast: more) {
+  .surface-soft {
+    background: var(--popover, var(--card));
+    border: 1px solid var(--border);
+    box-shadow: none;
+  }
 }
 
 /* Editorial italic — Source Serif 4. Use for display moments only:

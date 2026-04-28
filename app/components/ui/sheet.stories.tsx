@@ -1,69 +1,95 @@
 import type { Meta, StoryObj } from "@storybook/react";
 
 import {
-  Drawer,
-  DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
 } from "./sheet";
 import { Button } from "./button";
 
 /**
- * Sheet — vaul drawer primitive. Tagged as Sheet in the brand lexicon
- * (mobile sheets, settings panes), backed by `vaul`. Story title scopes
- * under Primitives/Sheet to match the file name.
+ * Sheet — side-anchored panel built on Radix Dialog. For full-width-on-desktop
+ * behaviour use Drawer (vaul). Sheet is for desktop side panels — settings,
+ * filters, secondary navigation: max 480 px wide on desktop, slides from the
+ * specified `side`. Soft-surface treatment per brand spec.
  */
-const meta: Meta<typeof Drawer> = {
+const meta: Meta<typeof Sheet> = {
   title: "Primitives/Sheet",
-  component: Drawer,
+  component: Sheet,
   parameters: { layout: "fullscreen" },
   tags: ["autodocs"],
 };
 export default meta;
 
-type Story = StoryObj<typeof Drawer>;
+type Story = StoryObj<typeof Sheet>;
 
-export const Default: Story = {
+function Body() {
+  return (
+    <SheetHeader>
+      <SheetTitle>Side panel</SheetTitle>
+      <SheetDescription>
+        Anchored to one edge. Max 480 px on desktop, full-width on narrow viewports.
+      </SheetDescription>
+    </SheetHeader>
+  );
+}
+
+export const Right: Story = {
   render: () => (
-    <div className="flex min-h-[300px] items-center justify-center">
-      <Drawer>
-        <DrawerTrigger asChild>
-          <Button variant="outline">Open sheet</Button>
-        </DrawerTrigger>
-        <DrawerContent>
-          <DrawerHeader>
-            <DrawerTitle>Order details</DrawerTitle>
-            <DrawerDescription>
-              1,000.00 USDC at midpoint, settle in next batch.
-            </DrawerDescription>
-          </DrawerHeader>
-          <DrawerFooter>
-            <Button>Confirm</Button>
-            <Button variant="outline">Cancel</Button>
-          </DrawerFooter>
-        </DrawerContent>
-      </Drawer>
-    </div>
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button variant="outline">Open right sheet</Button>
+      </SheetTrigger>
+      <SheetContent side="right">
+        <Body />
+        <SheetFooter>
+          <Button variant="ghost">Cancel</Button>
+          <Button>Save</Button>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   ),
 };
 
-export const Open: Story = {
+export const Left: Story = {
   render: () => (
-    <div className="flex min-h-[400px] items-center justify-center">
-      <Drawer defaultOpen>
-        <DrawerContent>
-          <DrawerHeader>
-            <DrawerTitle>Receipt</DrawerTitle>
-            <DrawerDescription>Settled · proof posted to L1.</DrawerDescription>
-          </DrawerHeader>
-          <DrawerFooter>
-            <Button>Done</Button>
-          </DrawerFooter>
-        </DrawerContent>
-      </Drawer>
-    </div>
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button variant="outline">Open left sheet</Button>
+      </SheetTrigger>
+      <SheetContent side="left">
+        <Body />
+      </SheetContent>
+    </Sheet>
+  ),
+};
+
+export const Top: Story = {
+  render: () => (
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button variant="outline">Open top sheet</Button>
+      </SheetTrigger>
+      <SheetContent side="top">
+        <Body />
+      </SheetContent>
+    </Sheet>
+  ),
+};
+
+export const Bottom: Story = {
+  render: () => (
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button variant="outline">Open bottom sheet</Button>
+      </SheetTrigger>
+      <SheetContent side="bottom">
+        <Body />
+      </SheetContent>
+    </Sheet>
   ),
 };

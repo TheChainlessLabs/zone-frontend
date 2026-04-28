@@ -9,6 +9,8 @@ export const batchesDetailPending: BatchesDetailFixture = {
     sealedAt: "2026-04-27T13:56:00Z",
     orderCount: 14,
     fillCount: 8,
+    pairs: ["USDC/EURC", "USDT/EURC"],
+    volumeUsd: "96400.25",
     settlementTx: null,
   },
   orders: [

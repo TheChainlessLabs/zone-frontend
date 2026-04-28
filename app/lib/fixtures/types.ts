@@ -91,6 +91,24 @@ export interface BatchFixture {
   settlementTx: `0x${string}` | null;
   /** Optional proof reference for verified batches. */
   proofRef?: `0x${string}`;
+  /**
+   * Aggregate pairs that cleared in this batch. Aggregate-only — never
+   * paired with counterparty IDs. The list view renders a chip cluster;
+   * the detail page renders a pair-level fill breakdown.
+   */
+  pairs?: MarketPair[];
+  /**
+   * Aggregate USD-equivalent volume across all fills, decimal string.
+   * Fixture-only field for the wireframe; M6 sources from the price
+   * oracle.
+   */
+  volumeUsd?: string;
+  /**
+   * Human-readable failure reason for `status: "failed"` batches. Surfaced
+   * in the detail-page banner. Aggregate context only — never references
+   * an individual order/fill counterparty.
+   */
+  failureReason?: string;
 }
 
 export interface BalanceFixture {

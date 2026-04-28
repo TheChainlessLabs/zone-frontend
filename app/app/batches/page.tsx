@@ -1,24 +1,26 @@
-import { AppShell } from "@/components/shell/AppShell";
+import { Suspense } from "react";
 
-// M3.1 stub. M3.4 lands the batches surface — public per the PRD
-// (omega-docs#5), so this route renders without `auth`.
+import { AppShell } from "@/components/shell/AppShell";
+import { BatchesListView } from "./_components/batches-list-view";
+
+/**
+ * /batches — public settlement explorer (M3.4 wireframe).
+ *
+ * Per omega-docs#5 the surface is public: the AppShell renders without
+ * `auth`, content stays visible regardless of `?walletState=`. The PRD
+ * resolution Q3 anchors the default to the last 100 batches paginated
+ * client-side; search by batch ID or tx hash narrows the table.
+ *
+ * Privacy hard rule: this page exposes aggregate metadata only. Counter-
+ * party identity, individual fills, and order IDs surface only to their
+ * owner via /portfolio.
+ */
 export default function BatchesPage() {
   return (
     <AppShell route="/batches">
-      <main className="mx-auto max-w-6xl px-4 py-8 md:px-6">
-        <div className="flex flex-col gap-3">
-          <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
-            03 — Batches
-          </span>
-          <h1 className="text-2xl font-medium tracking-tight md:text-4xl">
-            Batches
-          </h1>
-          <p className="max-w-2xl text-sm leading-relaxed text-[var(--muted-foreground)] md:text-base">
-            M3.4 wireframe lands here. Settled batch index, proof status,
-            on-chain links.
-          </p>
-        </div>
-      </main>
+      <Suspense fallback={null}>
+        <BatchesListView />
+      </Suspense>
     </AppShell>
   );
 }

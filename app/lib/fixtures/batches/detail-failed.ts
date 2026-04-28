@@ -15,8 +15,12 @@ export const batchesDetailFailed: BatchesDetailFixture = {
     sealedAt: "2026-04-27T12:34:00Z",
     orderCount: 6,
     fillCount: 3,
+    pairs: ["USDC/EURC"],
+    volumeUsd: "26100.00",
     settlementTx:
       "0xfa11edfa11edfa11ed5ea1b2c3d4e5f60718293a4b5c6d7e8f9a0b1c2d3e4f5a",
+    failureReason:
+      "Settlement reverted on L1. Bridge reorg encountered during submission. Fills remain valid offchain.",
   },
   orders: [
     {

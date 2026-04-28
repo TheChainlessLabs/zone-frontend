@@ -15,6 +15,8 @@ export const batchesDefault: BatchesListFixture = {
       sealedAt: "2026-04-27T14:02:00Z",
       orderCount: 18,
       fillCount: 11,
+      pairs: ["USDC/EURC", "USDC/USDT"],
+      volumeUsd: "184250.00",
       settlementTx:
         "0xa1b2c3d4e5f60718293a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e",
       proofRef:
@@ -27,6 +29,8 @@ export const batchesDefault: BatchesListFixture = {
       sealedAt: "2026-04-27T14:00:00Z",
       orderCount: 24,
       fillCount: 15,
+      pairs: ["USDC/EURC", "USDC/USDT", "USDT/EURC", "ETH/USDC"],
+      volumeUsd: "412780.50",
       settlementTx:
         "0xd5e60718293a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5ea1b2c3d4",
       proofRef:
@@ -39,6 +43,8 @@ export const batchesDefault: BatchesListFixture = {
       sealedAt: "2026-04-27T13:58:00Z",
       orderCount: 9,
       fillCount: 6,
+      pairs: ["USDC/EURC"],
+      volumeUsd: "62100.00",
       settlementTx:
         "0x718293a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5ea1b2c3d4e5f60",
       proofRef:
@@ -51,6 +57,8 @@ export const batchesDefault: BatchesListFixture = {
       sealedAt: "2026-04-27T13:56:00Z",
       orderCount: 14,
       fillCount: 8,
+      pairs: ["USDC/EURC", "USDT/EURC"],
+      volumeUsd: "96400.25",
       settlementTx: null,
     },
     {
@@ -60,6 +68,8 @@ export const batchesDefault: BatchesListFixture = {
       sealedAt: "2026-04-27T13:54:00Z",
       orderCount: 31,
       fillCount: 22,
+      pairs: ["USDC/EURC", "USDC/USDT", "USDT/EURC", "ETH/USDC", "BTC/USDC"],
+      volumeUsd: "874320.00",
       settlementTx:
         "0xf60718293a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5ea1b2c3d4e5",
       proofRef:
@@ -72,6 +82,8 @@ export const batchesDefault: BatchesListFixture = {
       sealedAt: "2026-04-27T13:52:00Z",
       orderCount: 7,
       fillCount: 4,
+      pairs: ["USDC/USDT"],
+      volumeUsd: "31000.00",
       settlementTx:
         "0x293a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5ea1b2c3d4e5f60718",
       proofRef:
@@ -84,6 +96,8 @@ export const batchesDefault: BatchesListFixture = {
       sealedAt: "2026-04-27T13:50:00Z",
       orderCount: 12,
       fillCount: 7,
+      pairs: ["USDC/EURC", "USDC/USDT"],
+      volumeUsd: "108200.00",
       settlementTx:
         "0x4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5ea1b2c3d4e5f60718293a",
       proofRef:
@@ -96,6 +110,8 @@ export const batchesDefault: BatchesListFixture = {
       sealedAt: "2026-04-27T13:48:00Z",
       orderCount: 19,
       fillCount: 13,
+      pairs: ["USDC/EURC", "USDC/USDT", "USDT/EURC"],
+      volumeUsd: "227560.00",
       settlementTx:
         "0x6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5ea1b2c3d4e5f60718293a4b5c",
       proofRef:

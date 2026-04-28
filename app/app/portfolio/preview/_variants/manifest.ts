@@ -21,6 +21,7 @@ import Variant07 from "./variant-07-robinhood-hero";
 import Variant08 from "./variant-08-zerion-tabs";
 import Variant09 from "./variant-09-rainbow-cards";
 import Variant10 from "./variant-10-darkpool-report";
+import Variant11 from "./variant-11-blended";
 
 export type VariantSlot =
   | "dense"
@@ -141,6 +142,16 @@ export const VARIANTS: VariantMeta[] = [
     hierarchy: "Report card — value, attestation strip, ledger",
     viz: "Sparkline + provenance band",
     Component: Variant10,
+  },
+  {
+    id: "11",
+    number: "11",
+    name: "Blended",
+    slot: "hero-chart",
+    inspiration: "04 + 05 + 07 blend",
+    hierarchy: "Frame, hero chart, dual-column with sticky summary",
+    viz: "Area chart + donut + ratio bar",
+    Component: Variant11,
   },
 ];
 

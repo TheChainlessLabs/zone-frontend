@@ -98,24 +98,34 @@ import { Status, type StatusState } from "@/components/ui/status";
 import { type LucideIcon } from "lucide-react";
 import { Icon } from "@/lib/icons";
 
+// Section ordering follows a deliberate narrative:
+//   - Foundation sets the rules.
+//   - Buttons, Inputs, Form: form-y inputs together.
+//   - Cards, Glass: surfaces together.
+//   - Tabs, Dropdown, Tooltip: navigation/context.
+//   - Dialog, Sheet/Drawer: modal moments.
+//   - Toggle, Toast, Status: feedback / binary state.
+//   - Separator, Icons, Motion: utilities last.
+//   - Conventions closes the loop with class/token reference.
 const SECTIONS = [
   { id: "foundation", number: "01", label: "Foundation" },
   { id: "buttons", number: "02", label: "Buttons" },
   { id: "inputs", number: "03", label: "Inputs" },
-  { id: "cards", number: "04", label: "Cards" },
-  { id: "tabs", number: "05", label: "Tabs" },
-  { id: "toggle", number: "06", label: "Toggle" },
-  { id: "dialog", number: "07", label: "Dialog" },
+  { id: "form", number: "04", label: "Form" },
+  { id: "cards", number: "05", label: "Cards" },
+  { id: "glass-variants", number: "06", label: "Glass" },
+  { id: "tabs", number: "07", label: "Tabs" },
   { id: "dropdown", number: "08", label: "Dropdown" },
   { id: "tooltip", number: "09", label: "Tooltip" },
-  { id: "sheet", number: "10", label: "Sheet" },
-  { id: "toast", number: "11", label: "Toast" },
-  { id: "separator", number: "12", label: "Separator" },
-  { id: "icons", number: "13", label: "Icons" },
-  { id: "glass-variants", number: "14", label: "Glass" },
-  { id: "motion", number: "15", label: "Motion" },
-  { id: "status", number: "16", label: "Status" },
-  { id: "form", number: "17", label: "Form" },
+  { id: "dialog", number: "10", label: "Dialog" },
+  { id: "sheet", number: "11", label: "Sheet" },
+  { id: "toggle", number: "12", label: "Toggle" },
+  { id: "toast", number: "13", label: "Toast" },
+  { id: "status", number: "14", label: "Status" },
+  { id: "separator", number: "15", label: "Separator" },
+  { id: "icons", number: "16", label: "Icons" },
+  { id: "motion", number: "17", label: "Motion" },
+  { id: "conventions", number: "18", label: "Conventions" },
 ] as const;
 
 // Semantic-name → Lucide source-name map, used in the /system Icons section
@@ -189,8 +199,9 @@ export default function SystemShowcase() {
               <span className="font-serif text-[var(--foreground)]">
                 Complementary to Storybook
               </span>{" "}
-              (not yet wired) — reach for /system when you want a fast visual sweep,
-              reach for Storybook when you need isolated states and visual regression.
+              — reach for /system when you want a fast visual sweep, reach for
+              Storybook (<InlineCode>pnpm storybook</InlineCode>) when you need
+              isolated states and visual regression.
             </>
           }
         >
@@ -206,30 +217,25 @@ export default function SystemShowcase() {
                   omega-docs/03-brand/visual-identity.md
                 </a>
                 . Tokens are exported as CSS variables in{" "}
-                <code className="font-mono text-xs text-[var(--foreground)]">
-                  app/globals.css
-                </code>{" "}
-                and re-exposed to Tailwind through the{" "}
-                <code className="font-mono text-xs text-[var(--foreground)]">
-                  @theme inline
-                </code>{" "}
+                <InlineCode>app/globals.css</InlineCode> and re-exposed to
+                Tailwind through the <InlineCode>@theme inline</InlineCode>{" "}
                 block. Any primitive on this page resolves through that chain.
               </p>
             </div>
             <div className="flex flex-col gap-4">
               <ColumnLabel>Class-merge helper</ColumnLabel>
-              <pre className="overflow-x-auto rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--muted)]/40 p-4 font-mono text-[11px] leading-relaxed text-[var(--foreground)]">
-                <code>{`// app/lib/utils.ts
+              <CodeBlock
+                code={`// app/lib/utils.ts
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
-}`}</code>
-              </pre>
+}`}
+              />
               <p className="text-xs leading-relaxed text-[var(--muted-foreground)]">
-                Every primitive here calls <code className="font-mono text-[var(--foreground)]">cn()</code>{" "}
-                to merge variant classes with caller overrides — duplicates collapse,
+                Every primitive here calls <InlineCode>cn()</InlineCode> to merge
+                variant classes with caller overrides — duplicates collapse,
                 later wins.
               </p>
             </div>
@@ -321,8 +327,43 @@ export function cn(...inputs: ClassValue[]) {
         </Section>
 
         <Section
-          id="cards"
+          id="form"
           number="04"
+          label="Form"
+          title={
+            <>
+              react-hook-form + zod.{" "}
+              <span className="font-serif text-[var(--muted-foreground)]">
+                Errors carry what-next.
+              </span>
+            </>
+          }
+          description={
+            <>
+              Form is the shadcn primitive — composed Label, Input, Description,
+              Message — wired to <InlineCode>react-hook-form</InlineCode> and{" "}
+              <InlineCode>zod</InlineCode>. Microcopy follows{" "}
+              <a
+                href="https://github.com/TheChainlessLabs/omega-docs/blob/main/03-brand/messaging.md"
+                className="font-mono text-xs text-[var(--foreground)] underline underline-offset-4 hover:text-[var(--muted-foreground)]"
+              >
+                omega-docs/03-brand/messaging.md
+              </a>{" "}
+              — error format{" "}
+              <span className="font-serif text-[var(--foreground)]">
+                [What happened.] [What to do next.]
+              </span>
+              . Validation defaults: validate on submit, re-validate on blur per
+              field after the first attempt.
+            </>
+          }
+        >
+          <FormShowcase />
+        </Section>
+
+        <Section
+          id="cards"
+          number="05"
           label="Cards"
           title={
             <>
@@ -387,8 +428,132 @@ export function cn(...inputs: ClassValue[]) {
         </Section>
 
         <Section
+          id="glass-variants"
+          number="06"
+          label="Glass"
+          title={
+            <>
+              The same primitives,{" "}
+              <span className="font-serif text-[var(--muted-foreground)]">
+                in glass.
+              </span>
+            </>
+          }
+          description={
+            <>
+              Glass is rare and purposeful — reserved for the order form, modals,
+              sheets, settlement status, and small selection controls (
+              <a
+                href="https://github.com/TheChainlessLabs/omega-docs/blob/main/03-brand/visual-identity.md"
+                className="font-mono text-xs text-[var(--foreground)] underline underline-offset-4 hover:text-[var(--muted-foreground)]"
+              >
+                omega-docs/03-brand/visual-identity.md
+              </a>
+              ). Tables, charts, navbar, body background stay solid.{" "}
+              <span className="font-serif text-[var(--foreground)]">
+                Solid on the left, glass on the right
+              </span>
+              — the glass column refracts a real-data substrate so the material
+              reads honestly. Both fall back to a solid muted surface for{" "}
+              <InlineCode>prefers-reduced-transparency</InlineCode> and missing{" "}
+              <InlineCode>backdrop-filter</InlineCode> support.
+            </>
+          }
+        >
+          <div className="flex flex-col divide-y divide-[var(--border)]">
+            <GlassRow label="Button">
+              <Button variant="default">Submit order</Button>
+              <GlassWell>
+                <Button variant="glass">Submit order</Button>
+              </GlassWell>
+            </GlassRow>
+
+            <GlassRow label="Input">
+              <Input placeholder="Search market…" className="max-w-xs" />
+              <GlassWell>
+                <Input
+                  variant="glass"
+                  placeholder="Search market…"
+                  className="max-w-xs"
+                />
+              </GlassWell>
+            </GlassRow>
+
+            <GlassRow label="Tabs">
+              <Tabs defaultValue="buy" className="w-full max-w-xs">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="buy">Buy</TabsTrigger>
+                  <TabsTrigger value="sell">Sell</TabsTrigger>
+                </TabsList>
+              </Tabs>
+              <GlassWell>
+                <Tabs defaultValue="buy" className="w-full max-w-xs">
+                  <TabsList variant="glass" className="grid w-full grid-cols-2">
+                    <TabsTrigger value="buy">Buy</TabsTrigger>
+                    <TabsTrigger value="sell">Sell</TabsTrigger>
+                  </TabsList>
+                </Tabs>
+              </GlassWell>
+            </GlassRow>
+
+            <GlassRow label="Toggle">
+              <Toggle aria-label="Privacy mode · solid" defaultPressed>
+                <Lock />
+              </Toggle>
+              <GlassWell>
+                <Toggle
+                  variant="glass"
+                  aria-label="Privacy mode · glass"
+                  defaultPressed
+                >
+                  <Lock />
+                </Toggle>
+              </GlassWell>
+            </GlassRow>
+
+            <GlassRow label="Chip">
+              <div className="flex flex-wrap items-center gap-2">
+                <Chip active>USDC/EURC</Chip>
+                <Chip>USDC/USDT</Chip>
+                <Chip>USDT/EURC</Chip>
+              </div>
+              <GlassWell>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Chip variant="glass" active>
+                    USDC/EURC
+                  </Chip>
+                  <Chip variant="glass">USDC/USDT</Chip>
+                  <Chip variant="glass">USDT/EURC</Chip>
+                </div>
+              </GlassWell>
+            </GlassRow>
+
+            <GlassRow label="Card">
+              <Card className="w-full max-w-sm">
+                <CardHeader>
+                  <CardTitle className="text-sm">Settlement status</CardTitle>
+                  <CardDescription className="text-xs">
+                    Batch sealed · awaiting L1 attestation.
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+              <GlassWell>
+                <Card variant="glass" className="w-full max-w-sm">
+                  <CardHeader>
+                    <CardTitle className="text-sm">Settlement status</CardTitle>
+                    <CardDescription className="text-xs">
+                      Batch sealed · awaiting L1 attestation.
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
+              </GlassWell>
+            </GlassRow>
+          </div>
+        </Section>
+
+        <Section
           id="tabs"
-          number="05"
+          number="07"
           label="Tabs"
           title={
             <>
@@ -453,87 +618,6 @@ export function cn(...inputs: ClassValue[]) {
               </Tabs>
             </div>
           </div>
-        </Section>
-
-        <Section
-          id="toggle"
-          number="06"
-          label="Toggle"
-          title={
-            <>
-              Single-state switch.{" "}
-              <span className="font-serif text-[var(--muted-foreground)]">
-                Pressed lights up.
-              </span>
-            </>
-          }
-          description={
-            <>
-              Toggle is the binary control for view-state — alignment, density,{" "}
-              <span className="font-serif text-[var(--foreground)]">privacy mode.</span>{" "}
-              Pair it with an icon; never use it as a form input (use a checkbox).
-            </>
-          }
-        >
-          <div className="flex flex-wrap items-center gap-4">
-            <Toggle aria-label="Align left">
-              <AlignLeft />
-            </Toggle>
-            <Toggle aria-label="Align center" defaultPressed>
-              <AlignCenter />
-            </Toggle>
-            <Toggle aria-label="Align right" disabled>
-              <AlignRight />
-            </Toggle>
-          </div>
-          <p className="mt-4 text-xs text-[var(--muted-foreground)]">
-            Off · on · disabled, left to right.
-          </p>
-        </Section>
-
-        <Section
-          id="dialog"
-          number="07"
-          label="Dialog"
-          title={
-            <>
-              Modal moments.{" "}
-              <span className="font-serif text-[var(--muted-foreground)]">
-                Confirm and move on.
-              </span>
-            </>
-          }
-          description={
-            <>
-              Dialog is for confirmation and short input — destructive actions,
-              wallet disconnect, single-step forms.{" "}
-              <span className="font-serif text-[var(--foreground)]">Don&rsquo;t nest dialogs.</span>{" "}
-              Don&rsquo;t use dialog for navigation.
-            </>
-          }
-        >
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant="outline">Open dialog</Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Cancel order #48,201?</DialogTitle>
-                <DialogDescription>
-                  This order is queued for the next batch. Cancelling now releases
-                  your reserved balance.
-                </DialogDescription>
-              </DialogHeader>
-              <DialogFooter>
-                <DialogClose asChild>
-                  <Button variant="ghost">Keep order</Button>
-                </DialogClose>
-                <DialogClose asChild>
-                  <Button variant="destructive">Cancel order</Button>
-                </DialogClose>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
         </Section>
 
         <Section
@@ -637,8 +721,53 @@ export function cn(...inputs: ClassValue[]) {
         </Section>
 
         <Section
-          id="sheet"
+          id="dialog"
           number="10"
+          label="Dialog"
+          title={
+            <>
+              Modal moments.{" "}
+              <span className="font-serif text-[var(--muted-foreground)]">
+                Confirm and move on.
+              </span>
+            </>
+          }
+          description={
+            <>
+              Dialog is for confirmation and short input — destructive actions,
+              wallet disconnect, single-step forms.{" "}
+              <span className="font-serif text-[var(--foreground)]">Don&rsquo;t nest dialogs.</span>{" "}
+              Don&rsquo;t use dialog for navigation.
+            </>
+          }
+        >
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline">Open dialog</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Cancel order #48,201?</DialogTitle>
+                <DialogDescription>
+                  This order is queued for the next batch. Cancelling now releases
+                  your reserved balance.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button variant="ghost">Keep order</Button>
+                </DialogClose>
+                <DialogClose asChild>
+                  <Button variant="destructive">Cancel order</Button>
+                </DialogClose>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </Section>
+
+        <Section
+          id="sheet"
+          number="11"
           label="Sheet · Drawer"
           title={
             <>
@@ -664,9 +793,7 @@ export function cn(...inputs: ClassValue[]) {
           <div className="grid grid-cols-1 gap-12 md:grid-cols-2">
             {/* Sheet — desktop side panel */}
             <div className="flex flex-col gap-3">
-              <h3 className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
-                Sheet · desktop side panel
-              </h3>
+              <SubsectionLabel>Sheet · desktop side panel</SubsectionLabel>
               <div className="flex flex-wrap gap-2">
                 <Sheet>
                   <SheetTrigger asChild>
@@ -709,19 +836,16 @@ export function cn(...inputs: ClassValue[]) {
                 </Sheet>
               </div>
               <p className="text-xs leading-relaxed text-[var(--muted-foreground)]">
-                Constrained to{" "}
-                <code className="font-mono text-[var(--foreground)]">max-w-[480px]</code>{" "}
-                on left/right; full-width on top/bottom. Soft-surface treatment
+                Constrained to <InlineCode>max-w-[480px]</InlineCode> on
+                left/right; full-width on top/bottom. Soft-surface treatment
                 (no hard hairline border).
               </p>
             </div>
 
             {/* Drawer — mobile bottom, in a phone frame */}
             <div className="flex flex-col gap-3">
-              <h3 className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
-                Drawer · mobile bottom (375 × 667)
-              </h3>
-              <div className="flex justify-center">
+              <SubsectionLabel>Drawer · mobile bottom (375 × 667)</SubsectionLabel>
+              <div className="flex justify-center overflow-x-auto">
                 <PhoneFrame>
                   <DrawerInPhone />
                 </PhoneFrame>
@@ -735,8 +859,44 @@ export function cn(...inputs: ClassValue[]) {
         </Section>
 
         <Section
+          id="toggle"
+          number="12"
+          label="Toggle"
+          title={
+            <>
+              Single-state switch.{" "}
+              <span className="font-serif text-[var(--muted-foreground)]">
+                Pressed lights up.
+              </span>
+            </>
+          }
+          description={
+            <>
+              Toggle is the binary control for view-state — alignment, density,{" "}
+              <span className="font-serif text-[var(--foreground)]">privacy mode.</span>{" "}
+              Pair it with an icon; never use it as a form input (use a checkbox).
+            </>
+          }
+        >
+          <div className="flex flex-wrap items-center gap-4">
+            <Toggle aria-label="Align left">
+              <AlignLeft />
+            </Toggle>
+            <Toggle aria-label="Align center" defaultPressed>
+              <AlignCenter />
+            </Toggle>
+            <Toggle aria-label="Align right" disabled>
+              <AlignRight />
+            </Toggle>
+          </div>
+          <p className="mt-4 text-xs text-[var(--muted-foreground)]">
+            Off · on · disabled, left to right.
+          </p>
+        </Section>
+
+        <Section
           id="toast"
-          number="11"
+          number="13"
           label="Toast"
           title={
             <>
@@ -748,9 +908,8 @@ export function cn(...inputs: ClassValue[]) {
           }
           description={
             <>
-              Toasts use{" "}
-              <code className="font-mono text-xs text-[var(--foreground)]">sonner</code>{" "}
-              and resolve through the popover tokens. One factual sentence —{" "}
+              Toasts use <InlineCode>sonner</InlineCode> and resolve through the
+              popover tokens. One factual sentence —{" "}
               <span className="font-serif text-[var(--foreground)]">no exclamation marks,</span>{" "}
               no emoji. Errors include what failed and what to do next.
             </>
@@ -791,8 +950,42 @@ export function cn(...inputs: ClassValue[]) {
         </Section>
 
         <Section
+          id="status"
+          number="14"
+          label="Status"
+          title={
+            <>
+              Brand-lexicon{" "}
+              <span className="font-serif text-[var(--muted-foreground)]">
+                in a pill.
+              </span>
+            </>
+          }
+          description={
+            <>
+              Status is the brand-aware composition of Badge + Icon. The 10
+              canonical states map directly to{" "}
+              <a
+                href="https://github.com/TheChainlessLabs/omega-docs/blob/main/03-brand/messaging.md"
+                className="font-mono text-xs text-[var(--foreground)] underline underline-offset-4 hover:text-[var(--muted-foreground)]"
+              >
+                omega-docs/03-brand/messaging.md
+              </a>{" "}
+              · Status labels.{" "}
+              <span className="font-serif text-[var(--foreground)]">
+                Reach for Status, not Badge,
+              </span>{" "}
+              when the label is one of the canonical lifecycle / connection
+              states.
+            </>
+          }
+        >
+          <StatusShowcase />
+        </Section>
+
+        <Section
           id="separator"
-          number="12"
+          number="15"
           label="Separator"
           title={
             <>
@@ -839,7 +1032,7 @@ export function cn(...inputs: ClassValue[]) {
 
         <Section
           id="icons"
-          number="13"
+          number="16"
           label="Icons"
           title={
             <>
@@ -851,11 +1044,10 @@ export function cn(...inputs: ClassValue[]) {
           }
           description={
             <>
-              Components reference{" "}
-              <code className="font-mono text-xs text-[var(--foreground)]">Icon.Buy</code>,{" "}
-              <code className="font-mono text-xs text-[var(--foreground)]">Icon.Settled</code>,{" "}
-              <code className="font-mono text-xs text-[var(--foreground)]">Icon.Proof</code>{" "}
-              — never the underlying Lucide glyph. The brand lexicon (
+              Components reference <InlineCode>Icon.Buy</InlineCode>,{" "}
+              <InlineCode>Icon.Settled</InlineCode>,{" "}
+              <InlineCode>Icon.Proof</InlineCode> — never the underlying Lucide
+              glyph. The brand lexicon (
               <a
                 href="https://github.com/TheChainlessLabs/omega-docs/blob/main/03-brand/naming.md"
                 className="font-mono text-xs text-[var(--foreground)] underline underline-offset-4 hover:text-[var(--muted-foreground)]"
@@ -863,16 +1055,16 @@ export function cn(...inputs: ClassValue[]) {
                 omega-docs/03-brand/naming.md
               </a>
               ) drives the alias names; the map in{" "}
-              <code className="font-mono text-xs text-[var(--foreground)]">app/lib/icons.tsx</code>{" "}
-              is the only place{" "}
-              <span className="font-serif text-[var(--foreground)]">lucide-react</span> is imported.
-              When the brand picks a different glyph for a semantic, swap it once there.
+              <InlineCode>app/lib/icons.tsx</InlineCode> is the only place{" "}
+              <span className="font-serif text-[var(--foreground)]">lucide-react</span>{" "}
+              is imported. When the brand picks a different glyph for a
+              semantic, swap it once there.
             </>
           }
         >
           <div className="flex flex-col gap-12">
             <div className="flex flex-col gap-4">
-              <ColumnLabel>Aliases · 24px</ColumnLabel>
+              <SubsectionLabel>Aliases · 24px</SubsectionLabel>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
                 {ICON_ENTRIES.map((entry) => {
                   const I = entry.Component;
@@ -897,7 +1089,7 @@ export function cn(...inputs: ClassValue[]) {
             </div>
 
             <div className="flex flex-col gap-4">
-              <ColumnLabel>Sizes · 12 · 14 · 16 · 20 · 24 · 32</ColumnLabel>
+              <SubsectionLabel>Sizes · 12 · 14 · 16 · 20 · 24 · 32</SubsectionLabel>
               <div className="flex flex-wrap items-end gap-6">
                 {ICON_SIZE_VARIANTS.map((size) => (
                   <div key={size} className="flex flex-col items-center gap-2">
@@ -911,7 +1103,7 @@ export function cn(...inputs: ClassValue[]) {
             </div>
 
             <div className="flex flex-col gap-4">
-              <ColumnLabel>Color contexts</ColumnLabel>
+              <SubsectionLabel>Color contexts</SubsectionLabel>
               <div className="flex flex-wrap items-end gap-6">
                 {ICON_COLOR_CONTEXTS.map((ctx) => (
                   <div key={ctx.label} className="flex flex-col items-center gap-2">
@@ -929,138 +1121,8 @@ export function cn(...inputs: ClassValue[]) {
         </Section>
 
         <Section
-          id="glass-variants"
-          number="14"
-          label="Glass"
-          title={
-            <>
-              The same primitives,{" "}
-              <span className="font-serif text-[var(--muted-foreground)]">
-                in glass.
-              </span>
-            </>
-          }
-          description={
-            <>
-              Glass is rare and purposeful — reserved for the order form, modals,
-              sheets, settlement status, and small selection controls (
-              <a
-                href="https://github.com/TheChainlessLabs/omega-docs/blob/main/03-brand/visual-identity.md"
-                className="font-mono text-xs text-[var(--foreground)] underline underline-offset-4 hover:text-[var(--muted-foreground)]"
-              >
-                omega-docs/03-brand/visual-identity.md
-              </a>
-              ). Tables, charts, navbar, body background stay solid.{" "}
-              <span className="font-serif text-[var(--foreground)]">
-                Solid on the left, glass on the right
-              </span>
-              — the glass column refracts a real-data substrate so the material
-              reads honestly. Both fall back to a solid muted surface for
-              <code className="ml-1 font-mono text-xs text-[var(--foreground)]">
-                prefers-reduced-transparency
-              </code>{" "}
-              and missing{" "}
-              <code className="font-mono text-xs text-[var(--foreground)]">
-                backdrop-filter
-              </code>{" "}
-              support.
-            </>
-          }
-        >
-          <div className="flex flex-col divide-y divide-[var(--border)]">
-            <GlassRow label="Button">
-              <Button variant="default">Submit order</Button>
-              <GlassWell>
-                <Button variant="glass">Submit order</Button>
-              </GlassWell>
-            </GlassRow>
-
-            <GlassRow label="Input">
-              <Input placeholder="Search market…" className="max-w-xs" />
-              <GlassWell>
-                <Input
-                  variant="glass"
-                  placeholder="Search market…"
-                  className="max-w-xs"
-                />
-              </GlassWell>
-            </GlassRow>
-
-            <GlassRow label="Tabs">
-              <Tabs defaultValue="buy" className="w-full max-w-xs">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="buy">Buy</TabsTrigger>
-                  <TabsTrigger value="sell">Sell</TabsTrigger>
-                </TabsList>
-              </Tabs>
-              <GlassWell>
-                <Tabs defaultValue="buy" className="w-full max-w-xs">
-                  <TabsList variant="glass" className="grid w-full grid-cols-2">
-                    <TabsTrigger value="buy">Buy</TabsTrigger>
-                    <TabsTrigger value="sell">Sell</TabsTrigger>
-                  </TabsList>
-                </Tabs>
-              </GlassWell>
-            </GlassRow>
-
-            <GlassRow label="Toggle">
-              <Toggle aria-label="Privacy mode · solid" defaultPressed>
-                <Lock />
-              </Toggle>
-              <GlassWell>
-                <Toggle
-                  variant="glass"
-                  aria-label="Privacy mode · glass"
-                  defaultPressed
-                >
-                  <Lock />
-                </Toggle>
-              </GlassWell>
-            </GlassRow>
-
-            <GlassRow label="Chip">
-              <div className="flex flex-wrap items-center gap-2">
-                <Chip active>USDC/EURC</Chip>
-                <Chip>USDC/USDT</Chip>
-                <Chip>USDT/EURC</Chip>
-              </div>
-              <GlassWell>
-                <div className="flex flex-wrap items-center gap-2">
-                  <Chip variant="glass" active>
-                    USDC/EURC
-                  </Chip>
-                  <Chip variant="glass">USDC/USDT</Chip>
-                  <Chip variant="glass">USDT/EURC</Chip>
-                </div>
-              </GlassWell>
-            </GlassRow>
-
-            <GlassRow label="Card">
-              <Card className="w-full max-w-sm">
-                <CardHeader>
-                  <CardTitle className="text-sm">Settlement status</CardTitle>
-                  <CardDescription className="text-xs">
-                    Batch sealed · awaiting L1 attestation.
-                  </CardDescription>
-                </CardHeader>
-              </Card>
-              <GlassWell>
-                <Card variant="glass" className="w-full max-w-sm">
-                  <CardHeader>
-                    <CardTitle className="text-sm">Settlement status</CardTitle>
-                    <CardDescription className="text-xs">
-                      Batch sealed · awaiting L1 attestation.
-                    </CardDescription>
-                  </CardHeader>
-                </Card>
-              </GlassWell>
-            </GlassRow>
-          </div>
-        </Section>
-
-        <Section
           id="motion"
-          number="15"
+          number="17"
           label="Motion"
           title={
             <>
@@ -1073,10 +1135,8 @@ export function cn(...inputs: ClassValue[]) {
           description={
             <>
               Motion lives behind one primitive —{" "}
-              <code className="font-mono text-xs text-[var(--foreground)]">
-                {"<Animate variant=\"…\">"}
-              </code>
-              . The ladder is locked to{" "}
+              <InlineCode>{`<Animate variant="…">`}</InlineCode>. The ladder is
+              locked to{" "}
               <a
                 href="https://github.com/TheChainlessLabs/omega-docs/blob/main/03-brand/visual-identity.md"
                 className="font-mono text-xs text-[var(--foreground)] underline underline-offset-4 hover:text-[var(--muted-foreground)]"
@@ -1094,96 +1154,25 @@ export function cn(...inputs: ClassValue[]) {
           <MotionShowcase />
         </Section>
 
-        <Section
-          id="status"
-          number="16"
-          label="Status"
-          title={
-            <>
-              Brand-lexicon{" "}
-              <span className="font-serif text-[var(--muted-foreground)]">
-                in a pill.
-              </span>
-            </>
-          }
-          description={
-            <>
-              Status is the brand-aware composition of Badge + Icon. The 10
-              canonical states map directly to{" "}
-              <a
-                href="https://github.com/TheChainlessLabs/omega-docs/blob/main/03-brand/messaging.md"
-                className="font-mono text-xs text-[var(--foreground)] underline underline-offset-4 hover:text-[var(--muted-foreground)]"
-              >
-                omega-docs/03-brand/messaging.md
-              </a>{" "}
-              · Status labels.{" "}
-              <span className="font-serif text-[var(--foreground)]">
-                Reach for Status, not Badge,
-              </span>{" "}
-              when the label is one of the canonical lifecycle / connection
-              states.
-            </>
-          }
-        >
-          <StatusShowcase />
-        </Section>
-
-        <Section
-          id="form"
-          number="17"
-          label="Form"
-          title={
-            <>
-              react-hook-form + zod.{" "}
-              <span className="font-serif text-[var(--muted-foreground)]">
-                Errors carry what-next.
-              </span>
-            </>
-          }
-          description={
-            <>
-              Form is the shadcn primitive — composed Label, Input, Description,
-              Message — wired to{" "}
-              <code className="font-mono text-xs text-[var(--foreground)]">
-                react-hook-form
-              </code>{" "}
-              and{" "}
-              <code className="font-mono text-xs text-[var(--foreground)]">
-                zod
-              </code>
-              . Microcopy follows{" "}
-              <a
-                href="https://github.com/TheChainlessLabs/omega-docs/blob/main/03-brand/messaging.md"
-                className="font-mono text-xs text-[var(--foreground)] underline underline-offset-4 hover:text-[var(--muted-foreground)]"
-              >
-                omega-docs/03-brand/messaging.md
-              </a>{" "}
-              — error format{" "}
-              <span className="font-serif text-[var(--foreground)]">
-                [What happened.] [What to do next.]
-              </span>
-              . Validation defaults: validate on submit, re-validate on blur per
-              field after the first attempt.
-            </>
-          }
-        >
-          <FormShowcase />
-        </Section>
+        <Conventions />
 
         <footer className="border-t border-[var(--border)] py-12">
           <div className="mx-auto flex max-w-6xl flex-col items-start gap-3 px-4 text-xs text-[var(--muted-foreground)] md:px-8">
             <div className="font-mono uppercase tracking-[0.18em]">
               Omega Markets · Design System v1
             </div>
-            <p>
+            <p className="leading-relaxed">
               Anchored to{" "}
               <a
-                href="https://github.com/TheChainlessLabs/omega-docs/blob/main/03-brand/visual-identity.md"
+                href="https://github.com/TheChainlessLabs/omega-docs/blob/main/03-brand"
                 className="underline underline-offset-4 hover:text-[var(--foreground)]"
               >
-                omega-docs/03-brand/visual-identity.md
+                omega-docs/03-brand
               </a>
-              . Tracked under the{" "}
+              . Run isolated states locally with{" "}
+              <InlineCode>pnpm storybook</InlineCode> — every primitive on this
+              page has a matching <InlineCode>*.stories.tsx</InlineCode>.
+              Tracked under the{" "}
               <a
                 href="https://github.com/TheChainlessLabs/omega-interface/milestones"
                 className="underline underline-offset-4 hover:text-[var(--foreground)]"
@@ -1215,7 +1204,7 @@ function Hero() {
           initial={{ opacity: 0, scale: 0.92 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-          className="flex h-14 w-14 items-center justify-center rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--muted)] text-[var(--foreground)]"
+          className="flex h-16 w-16 items-center justify-center rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--muted)] text-[var(--foreground)]"
           aria-hidden
         >
           <OmegaMark size={40} />
@@ -1239,6 +1228,76 @@ function ColumnLabel({ children }: { children: ReactNode }) {
     <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
       {children}
     </span>
+  );
+}
+
+// Subsection label — the consistent <h3> heading used inside every section's
+// inner groups (Aliases / Sizes / Color contexts in Icons, Sheet / Drawer in
+// the modal section, etc). Same visual recipe as ColumnLabel but rendered as
+// a heading element so the page outline reads correctly to AT.
+function SubsectionLabel({ children }: { children: ReactNode }) {
+  return (
+    <h3 className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
+      {children}
+    </h3>
+  );
+}
+
+// Inline code — single-token references like Icon.Buy, --background, cn().
+// Uses the soft `bg-muted/50` + small horizontal padding recipe so the token
+// reads as a chip without dominating the surrounding sentence.
+function InlineCode({ children }: { children: ReactNode }) {
+  return (
+    <code className="rounded bg-[var(--muted)]/50 px-1 font-mono text-xs text-[var(--foreground)]">
+      {children}
+    </code>
+  );
+}
+
+// Code block — multi-line snippet with copy-to-clipboard affordance. Uses the
+// same `pop` motion tap feedback as the Swatch component so the copy gesture
+// reads identically across the page.
+function CodeBlock({
+  code,
+  className,
+}: {
+  code: string;
+  className?: string;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  function copy() {
+    navigator.clipboard.writeText(code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1200);
+  }
+
+  return (
+    <div
+      className={`group relative overflow-hidden rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--muted)]/40 ${className ?? ""}`}
+    >
+      <button
+        type="button"
+        onClick={copy}
+        aria-label={copied ? "Copied" : "Copy to clipboard"}
+        className="absolute right-2 top-2 z-10 inline-flex h-7 items-center gap-1.5 rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--background)]/85 px-2 font-mono text-[10px] uppercase tracking-wider text-[var(--muted-foreground)] opacity-0 backdrop-blur-sm transition-opacity hover:text-[var(--foreground)] focus-visible:opacity-100 group-hover:opacity-100"
+      >
+        {copied ? (
+          <>
+            <Icon.Confirm size={11} className="text-[var(--success)]" aria-hidden />
+            copied
+          </>
+        ) : (
+          <>
+            <Icon.Copy size={11} aria-hidden />
+            copy
+          </>
+        )}
+      </button>
+      <pre className="overflow-x-auto p-4 font-mono text-[11px] leading-relaxed text-[var(--foreground)]">
+        <code>{code}</code>
+      </pre>
+    </div>
   );
 }
 
@@ -1314,8 +1373,8 @@ function MotionShowcase() {
     <div className="flex flex-col gap-8">
       <div className="flex flex-col gap-3">
         <ColumnLabel>API</ColumnLabel>
-        <pre className="overflow-x-auto rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--muted)]/40 p-4 font-mono text-[11px] leading-relaxed text-[var(--foreground)]">
-          <code>{`import { Animate, AnimatePresence } from "@/components/ui/animate";
+        <CodeBlock
+          code={`import { Animate, AnimatePresence } from "@/components/ui/animate";
 
 <Animate variant="enter" delay={0.1}>
   <Card>…</Card>
@@ -1323,8 +1382,8 @@ function MotionShowcase() {
 
 <AnimatePresence>
   {open && <Animate variant="exit" key="x">…</Animate>}
-</AnimatePresence>`}</code>
-        </pre>
+</AnimatePresence>`}
+        />
       </div>
 
       <label className="flex cursor-pointer items-center gap-3 self-start rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--muted)]/30 px-3 py-2 text-xs">
@@ -1458,8 +1517,8 @@ function DrawerDemo() {
           <DrawerTitle>Drawer · spring</DrawerTitle>
           <DrawerDescription>
             Vaul carries the spring physics natively. The{" "}
-            <code className="font-mono text-[var(--foreground)]">drawer</code>{" "}
-            variant is the JS counterpart for non-vaul surfaces.
+            <InlineCode>drawer</InlineCode> variant is the JS counterpart for
+            non-vaul surfaces.
           </DrawerDescription>
         </DrawerHeader>
         <DrawerFooter>
@@ -1539,7 +1598,7 @@ function StatusShowcase() {
   return (
     <div className="flex flex-col gap-12">
       <div className="flex flex-col gap-4">
-        <ColumnLabel>States · 10 canonical</ColumnLabel>
+        <SubsectionLabel>States · 10 canonical</SubsectionLabel>
         <div className="grid grid-cols-1 divide-y divide-[var(--border)] rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--muted)]/30">
           {STATUS_ROWS.map(({ state, description }) => (
             <div
@@ -1559,7 +1618,7 @@ function StatusShowcase() {
       </div>
 
       <div className="flex flex-col gap-4">
-        <ColumnLabel>Glass · for order form & sheets</ColumnLabel>
+        <SubsectionLabel>Glass · for order form & sheets</SubsectionLabel>
         <GlassWell>
           <div className="flex flex-wrap items-center gap-2">
             <Status state="awaiting-signature" glass />
@@ -1572,12 +1631,12 @@ function StatusShowcase() {
       </div>
 
       <div className="flex flex-col gap-4">
-        <ColumnLabel>Live transition · pending → matched → settled</ColumnLabel>
+        <SubsectionLabel>Live transition · pending → matched → settled</SubsectionLabel>
         <StatusTransitionDemo />
       </div>
 
       <div className="flex flex-col gap-4">
-        <ColumnLabel>Badge · generic primitive (no warning yet — tokens)</ColumnLabel>
+        <SubsectionLabel>Badge · generic primitive (no warning yet — tokens)</SubsectionLabel>
         <div className="flex flex-wrap items-center gap-3 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--muted)]/30 p-4">
           <Badge>Default</Badge>
           <Badge variant="outline">Outline</Badge>
@@ -1595,11 +1654,11 @@ function StatusShowcase() {
 
       <div className="flex flex-col gap-3">
         <ColumnLabel>API</ColumnLabel>
-        <pre className="overflow-x-auto rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--muted)]/40 p-4 font-mono text-[11px] leading-relaxed text-[var(--foreground)]">
-          <code>{`<Status state="settled" />
+        <CodeBlock
+          code={`<Status state="settled" />
 <Status state="matched" glass />
-<Badge variant="success">Live</Badge>`}</code>
-        </pre>
+<Badge variant="success">Live</Badge>`}
+        />
       </div>
     </div>
   );
@@ -1716,7 +1775,7 @@ function FormShowcase() {
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_1fr]">
         {/* Live demo */}
         <div className="flex flex-col gap-4">
-          <ColumnLabel>Live demo · pristine → error → submit</ColumnLabel>
+          <SubsectionLabel>Live demo · pristine → error → submit</SubsectionLabel>
           <div className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--muted)]/30 p-6">
             <Form {...form}>
               <form
@@ -1797,15 +1856,15 @@ function FormShowcase() {
           </div>
           <p className="text-xs leading-relaxed text-[var(--muted-foreground)]">
             Try submit-empty to surface errors. Errors render with{" "}
-            <code className="font-mono text-[var(--foreground)]">Icon.Failed</code>{" "}
-            and a soft enter motion. The required indicator on the label is the{" "}
-            Linear-style accent dot, not an asterisk.
+            <InlineCode>Icon.Failed</InlineCode> and a soft enter motion. The
+            required indicator on the label is the Linear-style accent dot,
+            not an asterisk.
           </p>
         </div>
 
         {/* Static state matrix — pristine, focused, error, description, disabled */}
         <div className="flex flex-col gap-4">
-          <ColumnLabel>States · static</ColumnLabel>
+          <SubsectionLabel>States · static</SubsectionLabel>
           <div className="grid grid-cols-1 gap-6 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--muted)]/30 p-6">
             <FormStateExample label="Pristine">
               <Label htmlFor="form-pristine">Wallet address</Label>
@@ -1865,21 +1924,15 @@ function FormShowcase() {
       </div>
 
       <div className="flex flex-col gap-3">
-        <ColumnLabel>API · schema + Form</ColumnLabel>
-        <pre className="overflow-x-auto rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--muted)]/40 p-4 font-mono text-[11px] leading-relaxed text-[var(--foreground)]">
-          <code>{FORM_DEMO_SNIPPET}</code>
-        </pre>
+        <SubsectionLabel>API · schema + Form</SubsectionLabel>
+        <CodeBlock code={FORM_DEMO_SNIPPET} />
         <p className="text-xs leading-relaxed text-[var(--muted-foreground)]">
-          Validation defaults:{" "}
-          <code className="font-mono text-[var(--foreground)]">mode: &quot;onSubmit&quot;</code>{" "}
-          +{" "}
-          <code className="font-mono text-[var(--foreground)]">
-            reValidateMode: &quot;onBlur&quot;
-          </code>
-          . First submit decides per-field whether errors stick; after that,
-          each field re-validates on blur. Override at the{" "}
-          <code className="font-mono text-[var(--foreground)]">useForm()</code>{" "}
-          call site if a surface needs different timing.
+          Validation defaults: <InlineCode>mode: &quot;onSubmit&quot;</InlineCode>{" "}
+          + <InlineCode>reValidateMode: &quot;onBlur&quot;</InlineCode>. First
+          submit decides per-field whether errors stick; after that, each field
+          re-validates on blur. Override at the{" "}
+          <InlineCode>useForm()</InlineCode> call site if a surface needs
+          different timing.
         </p>
       </div>
     </div>
@@ -1903,12 +1956,334 @@ function FormStateExample({
   );
 }
 
+/* —— Section 18 · Conventions ——————————————————————————————————————————
+   Final reference section — the engineer-facing close-out. Every other
+   section demonstrates a primitive; this one consolidates the cross-cutting
+   rules (utility classes, CSS tokens, import paths, doc anchors) in one
+   place so a contributor lands on /system, scrolls once, and has every
+   handle they need to start composing the UI without a second tab.
+*/
+
+const UTILITY_CLASSES: Array<{ name: string; description: ReactNode }> = [
+  {
+    name: ".glass",
+    description:
+      "Liquid-glass surface (24px blur). Order form, modals, sheets, settlement status. Falls back to solid muted under prefers-reduced-transparency.",
+  },
+  {
+    name: ".glass-pill",
+    description:
+      "Tighter-blur (16px) glass for component-scale chrome — pills, chips, ticker badges. Same fallback path as .glass.",
+  },
+  {
+    name: ".surface-soft",
+    description:
+      "Diffuse drop + faint inner ring. Use on compact menus (DropdownMenu, Tooltip, Popover) instead of a hard 1px hairline.",
+  },
+  {
+    name: ".font-tabular",
+    description:
+      "font-variant-numeric: tabular-nums. Lock to numeric columns so digits don't dance.",
+  },
+  {
+    name: ".font-serif",
+    description:
+      "Source Serif 4 italic. Editorial moments only — hero ledes, section ledes, naming italic specimen. Never on data or labels.",
+  },
+];
+
+const COLOR_TOKENS: Array<{ name: string; description: string }> = [
+  { name: "--background", description: "Page surface — zinc-950 / zinc-50." },
+  { name: "--foreground", description: "Primary text — zinc-50 / zinc-950." },
+  { name: "--muted", description: "Quiet panels, disabled chrome — zinc-900 / zinc-100." },
+  { name: "--muted-foreground", description: "Quiet text, captions — zinc-400 / zinc-500." },
+  { name: "--card / --popover", description: "Card / popover surface (= --background in v1)." },
+  { name: "--primary / --primary-foreground", description: "Primary action button fill + label." },
+  { name: "--secondary / --secondary-foreground", description: "Secondary action button fill + label." },
+  { name: "--accent / --accent-foreground", description: "Hover/active accent — same family as --secondary." },
+  { name: "--border / --input", description: "Hairlines + input border. zinc-800 / zinc-200." },
+  { name: "--ring", description: "Focus ring colour — zinc-300 / zinc-950." },
+  { name: "--success", description: "Confirmations, proof-verified, buy side. emerald." },
+  { name: "--destructive", description: "Errors, danger, sell side. red." },
+  { name: "--glass-fill / --glass-edge / --glass-highlight", description: "Glass material RGBA stops." },
+];
+
+const FONT_TOKENS: Array<{ name: string; description: string }> = [
+  { name: "--font-sans", description: "Geist Sans — body, headings, labels." },
+  { name: "--font-mono", description: "Geist Mono — data plane, numerics, captions, tags." },
+  { name: "--font-serif", description: "Source Serif 4 italic — editorial moments only." },
+];
+
+const RADIUS_TOKENS: Array<{ name: string; description: string }> = [
+  { name: "--radius-sm", description: "6px — chips, micro-pills." },
+  { name: "--radius-md", description: "10px — buttons, inputs, code blocks." },
+  { name: "--radius-lg", description: "14px — cards, sheets, larger surfaces." },
+  { name: "--radius-xl", description: "20px — order form, settlement, hero specimen-pieces." },
+  { name: "--radius-2xl", description: "24px — outermost framing on /brand showcase wells (legacy carve-out)." },
+  { name: "--radius-full", description: "9999px — circular controls." },
+];
+
+const MOTION_TOKENS: Array<{ name: string; description: string }> = [
+  { name: "--duration-press", description: "100ms — tap feedback, pop variant." },
+  { name: "--duration-small", description: "150ms — exit, dismissal." },
+  { name: "--duration-medium", description: "200ms — enter, default." },
+  { name: "--duration-large", description: "250ms — expand, accordion." },
+  { name: "--ease-out", description: "cubic-bezier(0.16, 1, 0.3, 1) — entrances." },
+  { name: "--ease-in", description: "cubic-bezier(0.7, 0, 1, 0.5) — dismissals." },
+  { name: "--ease-inout", description: "cubic-bezier(0.4, 0, 0.2, 1) — symmetric transitions." },
+  { name: "--shadow-soft", description: "Diffuse drop — used by .surface-soft, soft-shadow buttons." },
+  { name: "--surface-edge", description: "Inner-ring tint — paired with --shadow-soft on soft surfaces." },
+];
+
+const IMPORT_PATHS: Array<{ path: string; description: ReactNode }> = [
+  {
+    path: '@/components/ui/<name>',
+    description: (
+      <>
+        Every primitive — Button, Input, Card, Tabs, Toggle, Dialog,
+        DropdownMenu, Tooltip, Sheet, Drawer, Toast (sonner), Separator,
+        Chip, Badge, Status, Form, Animate. Each ships beside a{" "}
+        <InlineCode>*.stories.tsx</InlineCode>.
+      </>
+    ),
+  },
+  {
+    path: '@/lib/icons',
+    description: (
+      <>
+        The <InlineCode>Icon</InlineCode> alias map — semantic names over
+        Lucide. Components import from here, never from{" "}
+        <InlineCode>lucide-react</InlineCode>.
+      </>
+    ),
+  },
+  {
+    path: '@/lib/utils',
+    description: (
+      <>
+        The <InlineCode>cn()</InlineCode> class-merge helper —
+        clsx + tailwind-merge, last-wins.
+      </>
+    ),
+  },
+  {
+    path: '@/components/ui/animate',
+    description: (
+      <>
+        <InlineCode>{"<Animate variant=\"…\">"}</InlineCode> + re-exported{" "}
+        <InlineCode>AnimatePresence</InlineCode>. The only sanctioned motion
+        entry-point in design-V2.
+      </>
+    ),
+  },
+];
+
+const WHERE_LIVES: Array<{ name: string; what: ReactNode }> = [
+  {
+    name: "Brand rules",
+    what: (
+      <>
+        Type, motion, glass, palette, voice, naming —{" "}
+        <a
+          href="https://github.com/TheChainlessLabs/omega-docs/blob/main/03-brand"
+          className="font-mono text-xs text-[var(--foreground)] underline underline-offset-4 hover:text-[var(--muted-foreground)]"
+        >
+          omega-docs/03-brand
+        </a>
+        . Upstream source of truth.
+      </>
+    ),
+  },
+  {
+    name: "Tokens",
+    what: (
+      <>
+        Generated CSS variables —{" "}
+        <InlineCode>app/_generated/tokens.css</InlineCode> from{" "}
+        <InlineCode>omega-docs/03-brand/assets/tokens.json</InlineCode> via{" "}
+        <InlineCode>scripts/sync-tokens.mjs</InlineCode>. Don&rsquo;t hand-edit
+        the generated file.
+      </>
+    ),
+  },
+  {
+    name: "Primitives",
+    what: (
+      <>
+        Implementation —{" "}
+        <InlineCode>app/components/ui/&lt;name&gt;.tsx</InlineCode>. Each
+        primitive ships with a co-located{" "}
+        <InlineCode>&lt;name&gt;.stories.tsx</InlineCode>.
+      </>
+    ),
+  },
+  {
+    name: "Brand showcase",
+    what: (
+      <>
+        <InlineCode>/brand</InlineCode> — palette, typography, material, voice,
+        naming. Taste calls live there.
+      </>
+    ),
+  },
+  {
+    name: "Design system showcase",
+    what: (
+      <>
+        <InlineCode>/system</InlineCode> (this page) — every primitive in
+        context, plus this Conventions reference.
+      </>
+    ),
+  },
+  {
+    name: "Storybook",
+    what: (
+      <>
+        <InlineCode>pnpm storybook</InlineCode> — isolated states, controls
+        addon, future visual-regression baseline (M2.6).
+      </>
+    ),
+  },
+];
+
+function Conventions() {
+  return (
+    <Section
+      id="conventions"
+      number="18"
+      label="Conventions"
+      title={
+        <>
+          The handles for{" "}
+          <span className="font-serif text-[var(--muted-foreground)]">
+            composing the UI.
+          </span>
+        </>
+      }
+      description={
+        <>
+          Class utilities, CSS tokens, import paths, and where each layer of
+          the system lives.{" "}
+          <span className="font-serif text-[var(--foreground)]">
+            One screen, every reference.
+          </span>{" "}
+          Bookmark this section.
+        </>
+      }
+    >
+      <div className="flex flex-col gap-12">
+        <div className="flex flex-col gap-4">
+          <SubsectionLabel>Class utilities</SubsectionLabel>
+          <ReferenceTable
+            rows={UTILITY_CLASSES.map((u) => ({
+              key: u.name,
+              name: u.name,
+              description: u.description,
+            }))}
+          />
+        </div>
+
+        <div className="flex flex-col gap-4">
+          <SubsectionLabel>Color tokens</SubsectionLabel>
+          <ReferenceTable
+            rows={COLOR_TOKENS.map((t) => ({
+              key: t.name,
+              name: t.name,
+              description: t.description,
+            }))}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 gap-12 md:grid-cols-2">
+          <div className="flex flex-col gap-4">
+            <SubsectionLabel>Font tokens</SubsectionLabel>
+            <ReferenceTable
+              rows={FONT_TOKENS.map((t) => ({
+                key: t.name,
+                name: t.name,
+                description: t.description,
+              }))}
+            />
+          </div>
+          <div className="flex flex-col gap-4">
+            <SubsectionLabel>Radius tokens</SubsectionLabel>
+            <ReferenceTable
+              rows={RADIUS_TOKENS.map((t) => ({
+                key: t.name,
+                name: t.name,
+                description: t.description,
+              }))}
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-4">
+          <SubsectionLabel>Motion + surface tokens</SubsectionLabel>
+          <ReferenceTable
+            rows={MOTION_TOKENS.map((t) => ({
+              key: t.name,
+              name: t.name,
+              description: t.description,
+            }))}
+          />
+        </div>
+
+        <div className="flex flex-col gap-4">
+          <SubsectionLabel>Import paths</SubsectionLabel>
+          <ReferenceTable
+            rows={IMPORT_PATHS.map((p) => ({
+              key: p.path,
+              name: p.path,
+              description: p.description,
+            }))}
+          />
+        </div>
+
+        <div className="flex flex-col gap-4">
+          <SubsectionLabel>What lives where</SubsectionLabel>
+          <ReferenceTable
+            rows={WHERE_LIVES.map((w) => ({
+              key: w.name,
+              name: w.name,
+              description: w.what,
+            }))}
+          />
+        </div>
+      </div>
+    </Section>
+  );
+}
+
+function ReferenceTable({
+  rows,
+}: {
+  rows: Array<{ key: string; name: string; description: ReactNode }>;
+}) {
+  return (
+    <div className="flex flex-col divide-y divide-[var(--border)] rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--muted)]/30">
+      {rows.map((row) => (
+        <div
+          key={row.key}
+          className="grid grid-cols-1 items-baseline gap-2 px-4 py-3 md:grid-cols-[16rem_1fr] md:gap-6"
+        >
+          <code className="font-mono text-[11px] text-[var(--foreground)]">
+            {row.name}
+          </code>
+          <span className="text-xs leading-relaxed text-[var(--muted-foreground)]">
+            {row.description}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /* —— Phone-shaped frame for showing mobile primitives at actual width —— */
 
 function PhoneFrame({ children }: { children: ReactNode }) {
   return (
     <div
-      className="relative overflow-hidden rounded-[40px] border-[10px] border-[#0a0a0a] bg-[var(--background)] shadow-[0_24px_64px_-12px_rgba(0,0,0,0.5)]"
+      className="relative shrink-0 overflow-hidden rounded-[40px] border-[10px] border-[#0a0a0a] bg-[var(--background)] shadow-[0_24px_64px_-12px_rgba(0,0,0,0.5)]"
       style={{ width: 375, height: 667 }}
       aria-label="Mobile preview frame"
     >
@@ -1975,3 +2350,4 @@ function DrawerInPhone() {
     </div>
   );
 }
+

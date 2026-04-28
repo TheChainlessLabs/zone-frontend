@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { Source_Serif_4 } from "next/font/google";
@@ -20,6 +20,15 @@ const sourceSerif = Source_Serif_4({
 export const metadata: Metadata = {
   title: "Omega Markets — Brand Board",
   description: "Anonymous spot FX. On-chain settlement.",
+};
+
+// Viewport metadata is required so the /system + /brand showcases reflow
+// correctly on phones rather than rendering at desktop width and zooming
+// out. Next.js 14's recommended path is the dedicated `viewport` export
+// rather than a `<meta>` in head.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({

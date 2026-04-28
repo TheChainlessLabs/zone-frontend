@@ -1,11 +1,14 @@
 "use client";
 
 import { motion, useAnimate, useInView, type AnimationOptions } from "motion/react";
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
+  ArrowDown,
+  ArrowUp,
   ArrowUpRight,
   CheckCircle2,
   Lock,
+  Search,
   ShoppingCart,
   Wallet,
   XCircle,
@@ -16,15 +19,11 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { SectionNav } from "@/components/SectionNav";
 import { MidpointTape } from "@/components/MidpointTape";
 import { OmegaMark } from "@/components/OmegaMark";
-import {
-  GlassButton,
-  GlassChip,
-  GlassInput,
-  GlassPillTabs,
-  GlassPriceTicker,
-  GlassPriceTickerDown,
-  GlassToggle,
-} from "@/components/GlassComponents";
+import { Button } from "@/components/ui/button";
+import { Chip } from "@/components/ui/chip";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Toggle } from "@/components/ui/toggle";
 
 const SECTIONS = [
   { id: "positioning", number: "01", label: "Brand" },
@@ -278,39 +277,58 @@ export default function BrandBoard() {
           <div className="relative flex flex-col gap-10 px-6 md:px-12">
             {/* Buttons row */}
             <ComponentRow label="Buttons">
-              <GlassButton intent="primary">Submit order</GlassButton>
-              <GlassButton intent="ghost">Cancel</GlassButton>
-              <GlassButton intent="destructive">Force withdraw</GlassButton>
+              <Button variant="glass">Submit order</Button>
+              <Button variant="glass" className="text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
+                Cancel
+              </Button>
+              <Button variant="glass" className="text-[var(--destructive)]">
+                Force withdraw
+              </Button>
             </ComponentRow>
 
             {/* Tabs / pill switch */}
             <ComponentRow label="Tab switch">
-              <GlassPillTabs />
+              <Tabs defaultValue="market">
+                <TabsList variant="glass">
+                  <TabsTrigger
+                    value="market"
+                    className="text-xs uppercase tracking-[0.14em]"
+                  >
+                    market
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="limit"
+                    className="text-xs uppercase tracking-[0.14em]"
+                  >
+                    limit
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
             </ComponentRow>
 
             {/* Input + toggle */}
             <ComponentRow label="Input · toggle">
               <div className="w-full max-w-sm">
-                <GlassInput />
+                <BrandGlassSearchInput />
               </div>
               <div className="flex items-center gap-3">
                 <span className="text-xs text-[var(--muted-foreground)]">Privacy mode</span>
-                <GlassToggle />
+                <BrandGlassPrivacyToggle />
               </div>
             </ComponentRow>
 
             {/* Chips */}
             <ComponentRow label="Filter chips">
-              <GlassChip active>USDC/EURC</GlassChip>
-              <GlassChip>USDC/USDT</GlassChip>
-              <GlassChip>USDT/EURC</GlassChip>
-              <GlassChip>ETH/USDC</GlassChip>
+              <Chip variant="glass" active>USDC/EURC</Chip>
+              <Chip variant="glass">USDC/USDT</Chip>
+              <Chip variant="glass">USDT/EURC</Chip>
+              <Chip variant="glass">ETH/USDC</Chip>
             </ComponentRow>
 
             {/* Price tickers — ambient brand */}
             <ComponentRow label="Ambient ticker">
-              <GlassPriceTicker />
-              <GlassPriceTickerDown />
+              <BrandPriceTicker direction="up" pair="USDC/EURC" price="0.9213" delta="0.42%" />
+              <BrandPriceTicker direction="down" pair="USDT/EURC" price="0.9211" delta="0.18%" />
             </ComponentRow>
           </div>
         </div>
@@ -847,5 +865,84 @@ function ComponentRow({
       </div>
       <div className="flex flex-wrap items-center gap-3">{children}</div>
     </div>
+  );
+}
+
+/* —— /brand-only composed glass moments ————————————————————————
+   These are display compositions, not new primitives. They reuse the M2.4
+   variant API (Input variant="glass", a small <button> with .glass-pill).
+   Kept inline rather than promoted to ui/ since they're brand-board
+   specimen-pieces, not the production primitive set. */
+
+function BrandGlassSearchInput() {
+  return (
+    <label className="relative flex items-center">
+      <Search
+        size={14}
+        className="pointer-events-none absolute left-4 text-[var(--muted-foreground)]"
+        aria-hidden
+      />
+      <Input
+        variant="glass"
+        type="text"
+        placeholder="Search market…"
+        className="h-12 pl-10 pr-14 text-sm"
+      />
+      <span className="pointer-events-none absolute right-4 font-mono text-[10px] uppercase tracking-wider text-[var(--muted-foreground)]/60">
+        ⌘K
+      </span>
+    </label>
+  );
+}
+
+function BrandGlassPrivacyToggle() {
+  // Switch-style toggle (sliding knob) is a different visual idiom than the
+  // shadcn <Toggle> press-state pill, so we render the substrate directly
+  // here. Both routes through the same .glass-pill utility, so the variant
+  // system is consistent even where the geometry differs.
+  const [on, setOn] = useState(true);
+  return (
+    <button
+      type="button"
+      onClick={() => setOn(!on)}
+      aria-pressed={on}
+      aria-label="Privacy mode"
+      className="glass-pill relative inline-flex h-7 w-12 items-center rounded-full px-1"
+    >
+      <motion.span
+        animate={{ x: on ? 20 : 0 }}
+        transition={{ type: "spring", stiffness: 360, damping: 32, mass: 0.9 }}
+        className="absolute h-5 w-5 rounded-full bg-[var(--foreground)] shadow-md"
+      />
+    </button>
+  );
+}
+
+function BrandPriceTicker({
+  direction,
+  pair,
+  price,
+  delta,
+}: {
+  direction: "up" | "down";
+  pair: string;
+  price: string;
+  delta: string;
+}) {
+  const Arrow = direction === "up" ? ArrowUp : ArrowDown;
+  const tone = direction === "up" ? "text-[var(--success)]" : "text-[var(--destructive)]";
+  return (
+    <motion.div
+      whileHover={{ y: -1 }}
+      transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
+      className="glass-pill inline-flex items-center gap-3 rounded-[var(--radius-lg)] px-4 py-2 font-mono text-xs"
+    >
+      <span className="text-[var(--muted-foreground)]">{pair}</span>
+      <span className="font-tabular tabular-nums">{price}</span>
+      <span className={`inline-flex items-center gap-0.5 ${tone}`}>
+        <Arrow size={10} strokeWidth={2.5} />
+        <span className="font-tabular">{delta}</span>
+      </span>
+    </motion.div>
   );
 }

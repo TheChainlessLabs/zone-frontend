@@ -19,6 +19,13 @@ const buttonVariants = cva(
           "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
+        // Glass variant — backed by the .glass-pill utility in globals.css
+        // (16px blur, scaled component-level glass). Reserved for the order
+        // form, modals, sheets, and small controls per
+        // omega-docs/03-brand/visual-identity.md. Tasteful fallback for
+        // prefers-reduced-transparency / @supports not (backdrop-filter).
+        glass:
+          "glass-pill rounded-[var(--radius-lg)] text-foreground hover:bg-[var(--glass-highlight)]/40",
       },
       size: {
         default: "h-9 px-4 py-2",

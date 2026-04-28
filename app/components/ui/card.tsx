@@ -1,20 +1,38 @@
 import * as React from "react";
+import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
 
-const Card = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn(
-      "rounded-xl border bg-card text-card-foreground shadow",
-      className
-    )}
-    {...props}
-  />
-));
+const cardVariants = cva("rounded-xl text-card-foreground", {
+  variants: {
+    variant: {
+      default: "border bg-card shadow",
+      // Glass variant — used for the order form and settlement status
+      // cards over a real-data substrate (MidpointTape) per
+      // omega-docs/03-brand/visual-identity.md. Uses the surface-scale
+      // .glass utility (24px blur) rather than the component-scale
+      // .glass-pill, since cards are surface-sized.
+      glass: "glass rounded-[var(--radius-xl)]",
+    },
+  },
+  defaultVariants: {
+    variant: "default",
+  },
+});
+
+export interface CardProps
+  extends React.HTMLAttributes<HTMLDivElement>,
+    VariantProps<typeof cardVariants> {}
+
+const Card = React.forwardRef<HTMLDivElement, CardProps>(
+  ({ className, variant, ...props }, ref) => (
+    <div
+      ref={ref}
+      className={cn(cardVariants({ variant, className }))}
+      {...props}
+    />
+  )
+);
 Card.displayName = "Card";
 
 const CardHeader = React.forwardRef<
@@ -80,4 +98,5 @@ export {
   CardTitle,
   CardDescription,
   CardContent,
+  cardVariants,
 };

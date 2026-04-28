@@ -21,7 +21,9 @@ import { Section } from "@/components/Section";
 import { SectionNav } from "@/components/SectionNav";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { OmegaMark } from "@/components/OmegaMark";
+import { MidpointTape } from "@/components/MidpointTape";
 import { Button } from "@/components/ui/button";
+import { Chip } from "@/components/ui/chip";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -86,6 +88,7 @@ const SECTIONS = [
   { id: "toast", number: "11", label: "Toast" },
   { id: "separator", number: "12", label: "Separator" },
   { id: "icons", number: "13", label: "Icons" },
+  { id: "glass-variants", number: "14", label: "Glass" },
 ] as const;
 
 // Semantic-name → Lucide source-name map, used in the /system Icons section
@@ -865,6 +868,136 @@ export function cn(...inputs: ClassValue[]) {
           </div>
         </Section>
 
+        <Section
+          id="glass-variants"
+          number="14"
+          label="Glass"
+          title={
+            <>
+              The same primitives,{" "}
+              <span className="font-serif text-[var(--muted-foreground)]">
+                in glass.
+              </span>
+            </>
+          }
+          description={
+            <>
+              Glass is rare and purposeful — reserved for the order form, modals,
+              sheets, settlement status, and small selection controls (
+              <a
+                href="https://github.com/TheChainlessLabs/omega-docs/blob/main/03-brand/visual-identity.md"
+                className="font-mono text-xs text-[var(--foreground)] underline underline-offset-4 hover:text-[var(--muted-foreground)]"
+              >
+                omega-docs/03-brand/visual-identity.md
+              </a>
+              ). Tables, charts, navbar, body background stay solid.{" "}
+              <span className="font-serif text-[var(--foreground)]">
+                Solid on the left, glass on the right
+              </span>
+              — the glass column refracts a real-data substrate so the material
+              reads honestly. Both fall back to a solid muted surface for
+              <code className="ml-1 font-mono text-xs text-[var(--foreground)]">
+                prefers-reduced-transparency
+              </code>{" "}
+              and missing{" "}
+              <code className="font-mono text-xs text-[var(--foreground)]">
+                backdrop-filter
+              </code>{" "}
+              support.
+            </>
+          }
+        >
+          <div className="flex flex-col divide-y divide-[var(--border)]">
+            <GlassRow label="Button">
+              <Button variant="default">Submit order</Button>
+              <GlassWell>
+                <Button variant="glass">Submit order</Button>
+              </GlassWell>
+            </GlassRow>
+
+            <GlassRow label="Input">
+              <Input placeholder="Search market…" className="max-w-xs" />
+              <GlassWell>
+                <Input
+                  variant="glass"
+                  placeholder="Search market…"
+                  className="max-w-xs"
+                />
+              </GlassWell>
+            </GlassRow>
+
+            <GlassRow label="Tabs">
+              <Tabs defaultValue="buy" className="w-full max-w-xs">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="buy">Buy</TabsTrigger>
+                  <TabsTrigger value="sell">Sell</TabsTrigger>
+                </TabsList>
+              </Tabs>
+              <GlassWell>
+                <Tabs defaultValue="buy" className="w-full max-w-xs">
+                  <TabsList variant="glass" className="grid w-full grid-cols-2">
+                    <TabsTrigger value="buy">Buy</TabsTrigger>
+                    <TabsTrigger value="sell">Sell</TabsTrigger>
+                  </TabsList>
+                </Tabs>
+              </GlassWell>
+            </GlassRow>
+
+            <GlassRow label="Toggle">
+              <Toggle aria-label="Privacy mode · solid" defaultPressed>
+                <Lock />
+              </Toggle>
+              <GlassWell>
+                <Toggle
+                  variant="glass"
+                  aria-label="Privacy mode · glass"
+                  defaultPressed
+                >
+                  <Lock />
+                </Toggle>
+              </GlassWell>
+            </GlassRow>
+
+            <GlassRow label="Chip">
+              <div className="flex flex-wrap items-center gap-2">
+                <Chip active>USDC/EURC</Chip>
+                <Chip>USDC/USDT</Chip>
+                <Chip>USDT/EURC</Chip>
+              </div>
+              <GlassWell>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Chip variant="glass" active>
+                    USDC/EURC
+                  </Chip>
+                  <Chip variant="glass">USDC/USDT</Chip>
+                  <Chip variant="glass">USDT/EURC</Chip>
+                </div>
+              </GlassWell>
+            </GlassRow>
+
+            <GlassRow label="Card">
+              <Card className="w-full max-w-sm">
+                <CardHeader>
+                  <CardTitle className="text-sm">Settlement status</CardTitle>
+                  <CardDescription className="text-xs">
+                    Batch sealed · awaiting L1 attestation.
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+              <GlassWell>
+                <Card variant="glass" className="w-full max-w-sm">
+                  <CardHeader>
+                    <CardTitle className="text-sm">Settlement status</CardTitle>
+                    <CardDescription className="text-xs">
+                      Batch sealed · awaiting L1 attestation.
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
+              </GlassWell>
+            </GlassRow>
+          </div>
+        </Section>
+
         <footer className="border-t border-[var(--border)] py-12">
           <div className="mx-auto flex max-w-6xl flex-col items-start gap-3 px-4 text-xs text-[var(--muted-foreground)] md:px-8">
             <div className="font-mono uppercase tracking-[0.18em]">
@@ -957,6 +1090,46 @@ const VARIANT_DESCRIPTIONS: Record<
   ghost: "Tertiary · toolbar, dense menus",
   link: "Inline navigation · within copy",
 };
+
+function GlassRow({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="grid grid-cols-1 items-start gap-4 py-6 md:grid-cols-[12rem_1fr_1fr]">
+      <div className="flex flex-col gap-1">
+        <ColumnLabel>{label}</ColumnLabel>
+        <span className="text-xs leading-relaxed text-[var(--muted-foreground)]">
+          solid · glass
+        </span>
+      </div>
+      {/* Solid column. Wrapped in a same-shape well so the comparison is
+          honest geometry rather than visual sleight-of-hand. */}
+      <div className="flex min-h-[7rem] flex-wrap items-center gap-3 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--muted)]/30 p-4">
+        {Array.isArray(children)
+          ? (children as ReactNode[])[0]
+          : children}
+      </div>
+      {/* Glass column. The MidpointTape substrate gives the material real
+          data to refract — see omega-docs/03-brand/visual-identity.md. */}
+      {Array.isArray(children) ? (children as ReactNode[])[1] : null}
+    </div>
+  );
+}
+
+function GlassWell({ children }: { children: ReactNode }) {
+  return (
+    <div className="relative isolate min-h-[7rem] overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border)] p-4">
+      <MidpointTape />
+      <div className="relative flex flex-wrap items-center gap-3">
+        {children}
+      </div>
+    </div>
+  );
+}
 
 function ButtonRow({
   variant,

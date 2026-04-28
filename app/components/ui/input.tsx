@@ -1,16 +1,38 @@
 import * as React from "react";
+import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
 
-const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
-  ({ className, type, ...props }, ref) => {
+const inputVariants = cva(
+  "flex h-9 w-full px-3 py-1 text-base transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+  {
+    variants: {
+      variant: {
+        default:
+          "rounded-md border border-input bg-transparent shadow-sm focus-visible:ring-1 focus-visible:ring-ring",
+        // Glass variant — uses .glass-pill substrate. Border collapses into
+        // the glass edge token; focus ring uses the highlight token for the
+        // refraction-feel. See omega-docs/03-brand/visual-identity.md.
+        glass:
+          "glass-pill rounded-[var(--radius-lg)] border-transparent text-foreground focus-visible:ring-1 focus-visible:ring-[var(--glass-highlight)]",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+    },
+  }
+);
+
+export interface InputProps
+  extends Omit<React.ComponentProps<"input">, "size">,
+    VariantProps<typeof inputVariants> {}
+
+const Input = React.forwardRef<HTMLInputElement, InputProps>(
+  ({ className, type, variant, ...props }, ref) => {
     return (
       <input
         type={type}
-        className={cn(
-          "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
-          className
-        )}
+        className={cn(inputVariants({ variant, className }))}
         ref={ref}
         {...props}
       />
@@ -19,4 +41,4 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
 );
 Input.displayName = "Input";
 
-export { Input };
+export { Input, inputVariants };

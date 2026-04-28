@@ -14,6 +14,11 @@ const toggleVariants = cva(
         default: "bg-transparent",
         outline:
           "border border-input bg-transparent shadow-sm hover:bg-accent hover:text-accent-foreground",
+        // Glass variant — see omega-docs/03-brand/visual-identity.md. Off
+        // state shows the .glass-pill substrate; on state lights the
+        // highlight token. Foreground text stays readable in both.
+        glass:
+          "glass-pill rounded-[var(--radius-lg)] text-foreground hover:bg-[var(--glass-highlight)]/30 data-[state=on]:bg-[var(--glass-highlight)] data-[state=on]:text-foreground",
       },
       size: {
         default: "h-9 px-2 min-w-9",

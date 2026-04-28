@@ -1,97 +1,16 @@
 @import "tailwindcss";
 @plugin "tailwindcss-animate";
 
-/* Omega Markets — design tokens (sourced from omega-docs/03-brand/assets/tokens.json).
-   Default mode is dark. Light mode supported via [data-theme="light"]. */
+/* Design tokens — generated from omega-docs/03-brand/assets/tokens.json by
+   scripts/sync-tokens.mjs. Auto-runs before `pnpm dev` and `pnpm build`.
+   Do not hand-edit tokens.css; edit tokens.json upstream and re-sync. */
+@import "./_generated/tokens.css";
 
+/* Legacy radius carve-out: `--radius-2xl` is referenced by /brand but is not
+   yet present in tokens.json. Tracked as an upstream omega-docs follow-up;
+   keep this stub until tokens.json adds the 2xl rung, then delete. */
 :root {
-  --background: #09090b;
-  --foreground: #fafafa;
-  --card: #09090b;
-  --card-foreground: #fafafa;
-  --popover: #09090b;
-  --popover-foreground: #fafafa;
-  --muted: #18181b;
-  --muted-foreground: #a1a1aa;
-  --accent: #27272a;
-  --accent-foreground: #fafafa;
-  --primary: #fafafa;
-  --primary-foreground: #18181b;
-  --secondary: #27272a;
-  --secondary-foreground: #fafafa;
-  --destructive: #ef4444;
-  --destructive-foreground: #fafafa;
-  --success: #10b981;
-  --border: #27272a;
-  --input: #27272a;
-  --ring: #d4d4d8;
-
-  /* Liquid-glass material */
-  --glass-fill: rgba(255, 255, 255, 0.04);
-  --glass-edge: rgba(255, 255, 255, 0.10);
-  --glass-highlight: rgba(255, 255, 255, 0.14);
-  --glass-blur: 24px;
-  --glass-saturate: 1.4;
-
-  /* Radius — slightly rounder than shadcn defaults; restraint is still the rule. */
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 20px;
   --radius-2xl: 24px;
-}
-
-[data-theme="light"] {
-  --background: #fafafa;
-  --foreground: #09090b;
-  --card: #fafafa;
-  --card-foreground: #09090b;
-  --popover: #fafafa;
-  --popover-foreground: #09090b;
-  --muted: #f4f4f5;
-  --muted-foreground: #71717a;
-  --accent: #f4f4f5;
-  --accent-foreground: #18181b;
-  --primary: #18181b;
-  --primary-foreground: #fafafa;
-  --secondary: #f4f4f5;
-  --secondary-foreground: #18181b;
-  --destructive: #dc2626;
-  --destructive-foreground: #fafafa;
-  --success: #059669;
-  --border: #e4e4e7;
-  --input: #e4e4e7;
-  --ring: #09090b;
-
-  --glass-fill: rgba(255, 255, 255, 0.60);
-  --glass-edge: rgba(0, 0, 0, 0.06);
-  --glass-highlight: rgba(255, 255, 255, 0.80);
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
-  --color-success: var(--success);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-serif: var(--font-serif);
 }
 
 body {

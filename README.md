@@ -62,7 +62,16 @@ pnpm dev         # Next.js dev server on the default port
 pnpm build       # Build the app
 pnpm typecheck   # tsc --noEmit
 pnpm test        # Vitest run
+pnpm sync-tokens # Regenerate app/app/_generated/tokens.css from omega-docs
 ```
+
+## Design tokens
+
+Canonical source: `omega-docs/03-brand/assets/tokens.json` (sibling repo). `omega-interface` consumes via `scripts/sync-tokens.mjs`, which writes `app/app/_generated/tokens.css`. Sync runs automatically before `pnpm dev` and `pnpm build`. Do not hand-edit `_generated/tokens.css` — it gets overwritten.
+
+Adding or changing a token: edit `omega-docs/03-brand/assets/tokens.json`, ship via an `omega-docs` PR, then re-run `pnpm sync-tokens` here. The downstream PR cites the upstream omega-docs PR in its Summary. The generated header records the omega-docs source SHA for traceability.
+
+If `omega-docs` is checked out somewhere other than the default sibling location, point the script at it explicitly: `OMEGA_TOKENS_PATH=/abs/path/to/tokens.json pnpm sync-tokens`.
 
 ## Workflow
 

@@ -6,7 +6,11 @@ import { cn } from "@/lib/utils";
 const cardVariants = cva("rounded-xl text-card-foreground", {
   variants: {
     variant: {
-      default: "border bg-card shadow",
+      // Soft-surface treatment per omega-docs visual-identity.md "Surface
+       // treatment": diffuse drop-shadow + faint inner ring instead of a hard
+       // 1 px hairline. Falls back to a 1 px border under
+       // prefers-contrast: more (handled by .surface-soft).
+       default: "surface-soft bg-card",
       // Glass variant — used for the order form and settlement status
       // cards over a real-data substrate (MidpointTape) per
       // omega-docs/03-brand/visual-identity.md. Uses the surface-scale

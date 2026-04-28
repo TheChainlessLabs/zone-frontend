@@ -73,7 +73,7 @@ export function SectionNav({ items }: { items: Item[] }) {
       {/* Mobile: top progress strip */}
       <nav
         aria-label="Brand board sections"
-        className="sticky top-0 z-40 flex overflow-x-auto border-b border-[var(--border)] bg-[var(--background)]/85 backdrop-blur-md lg:hidden"
+        className="sticky top-12 z-40 flex overflow-x-auto border-b border-[var(--border)] bg-[var(--background)]/85 backdrop-blur-md lg:hidden"
         style={{ scrollbarWidth: "none" }}
       >
         <ul className="flex min-w-full gap-0">

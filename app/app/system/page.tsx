@@ -23,7 +23,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Section } from "@/components/Section";
 import { SectionNav } from "@/components/SectionNav";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { ReviewNav } from "@/components/ReviewNav";
 import { OmegaMark } from "@/components/OmegaMark";
 import { MidpointTape } from "@/components/MidpointTape";
 import { Button } from "@/components/ui/button";
@@ -177,6 +177,7 @@ export default function SystemShowcase() {
   return (
     <TooltipProvider delayDuration={150}>
       <main id="top" className="relative min-h-screen pb-32">
+        <ReviewNav />
         <SectionNav items={[...SECTIONS]} />
         <Hero />
 
@@ -1191,9 +1192,6 @@ export function cn(...inputs: ClassValue[]) {
 function Hero() {
   return (
     <header className="relative flex min-h-[60vh] flex-col items-center justify-center overflow-hidden px-4 py-24 md:py-32">
-      <div className="absolute right-4 top-4 md:right-8 md:top-8">
-        <ThemeToggle />
-      </div>
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}

@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { Section } from "@/components/Section";
 import { Swatch } from "@/components/Swatch";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { ReviewNav } from "@/components/ReviewNav";
 import { SectionNav } from "@/components/SectionNav";
 import { MidpointTape } from "@/components/MidpointTape";
 import { OmegaMark } from "@/components/OmegaMark";
@@ -79,6 +79,7 @@ const SEMANTIC_ACCENTS: { name: string; varName: string; description: string }[]
 export default function BrandBoard() {
   return (
     <main id="top" className="relative min-h-screen pb-32">
+      <ReviewNav />
       <SectionNav items={[...SECTIONS]} />
       <Hero />
 
@@ -407,9 +408,6 @@ function Hero() {
   return (
     <header className="relative flex min-h-[80vh] flex-col items-center justify-center overflow-hidden px-4 py-32">
       <BackdropDotGrid />
-      <div className="absolute right-4 top-4 md:right-8 md:top-8">
-        <ThemeToggle />
-      </div>
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}

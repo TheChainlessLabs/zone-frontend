@@ -46,7 +46,7 @@ export default function Variant07DetailAztec({
         Attestation log
       </Link>
 
-      <Card className="grid grid-cols-1 gap-6 p-7 md:grid-cols-[200px_1fr]">
+      <Card className="grid grid-cols-1 gap-6 p-5 md:grid-cols-[200px_1fr] md:p-7">
         <div className="flex flex-col items-center justify-center gap-3">
           <div className="relative">
             <ProofGauge
@@ -142,7 +142,7 @@ export default function Variant07DetailAztec({
         <Stat label="Pairs" value={String((batch.pairs ?? []).length)} />
       </div>
 
-      <Card className="flex flex-col gap-3 p-6">
+      <Card className="flex flex-col gap-3 p-4 md:p-6">
         <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
           Pair aggregate
         </span>
@@ -164,7 +164,7 @@ export default function Variant07DetailAztec({
         </ul>
       </Card>
 
-      <Card className="grid grid-cols-1 gap-3 p-6 sm:grid-cols-2">
+      <Card className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-2 md:p-6">
         <Audit label="Batch root" hash={batch.root} />
         <Audit label="Proof hash" hash={batch.proofRef ?? null} />
         <Audit label="L1 settlement" hash={batch.settlementTx ?? null} />

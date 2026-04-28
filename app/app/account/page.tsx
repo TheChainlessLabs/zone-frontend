@@ -151,7 +151,7 @@ export default function AccountPage() {
               variant="outline"
               size="sm"
               onClick={() => wallet.disconnect()}
-              className="self-start"
+              className="min-h-[44px] self-start md:min-h-0"
             >
               <Icon.Disconnect className="h-3.5 w-3.5" aria-hidden />
               Sign out

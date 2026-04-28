@@ -75,7 +75,9 @@ export const DisconnectedState = React.forwardRef<
       <p className="max-w-[460px] text-sm leading-relaxed text-[var(--muted-foreground)]">
         {description}
       </p>
-      <Button onClick={onAction}>{actionLabel}</Button>
+      <Button onClick={onAction} className="min-h-[44px] md:min-h-0">
+        {actionLabel}
+      </Button>
     </div>
   );
 });

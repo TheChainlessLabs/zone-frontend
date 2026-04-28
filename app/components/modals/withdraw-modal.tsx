@@ -235,11 +235,16 @@ export function WithdrawModal({
               type={state === "failed" ? "button" : "submit"}
               onClick={state === "failed" ? onRetry : undefined}
               disabled={isBusy}
+              className="min-h-[44px] md:min-h-0"
             >
               {state === "failed" ? "Retry" : "Sign withdrawal"}
             </Button>
           ) : (
-            <Button type="button" onClick={onClose}>
+            <Button
+              type="button"
+              onClick={onClose}
+              className="min-h-[44px] md:min-h-0"
+            >
               Done
             </Button>
           )}

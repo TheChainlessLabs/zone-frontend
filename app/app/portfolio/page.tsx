@@ -126,11 +126,20 @@ function PortfolioSkeleton({
         <div className="flex flex-wrap items-center justify-between gap-3">
           <SkeletonBar className="h-8 w-64 rounded-full" />
           <div className="flex gap-2">
-            <Button size="sm" onClick={onDeposit}>
+            <Button
+              size="sm"
+              onClick={onDeposit}
+              className="min-h-[44px] md:min-h-0"
+            >
               <Icon.Wallet aria-hidden />
               Deposit
             </Button>
-            <Button size="sm" variant="outline" onClick={onWithdraw}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={onWithdraw}
+              className="min-h-[44px] md:min-h-0"
+            >
               Withdraw
             </Button>
           </div>
@@ -209,7 +218,12 @@ function ErrorBand({ message }: { message: string }) {
         <Icon.Warning size={14} aria-hidden className="mt-0.5 shrink-0 md:mt-0" />
         <span className="leading-relaxed">{message}</span>
       </div>
-      <Button variant="destructive" size="sm" onClick={() => {}}>
+      <Button
+        variant="destructive"
+        size="sm"
+        onClick={() => {}}
+        className="min-h-[44px] md:min-h-0"
+      >
         Retry
       </Button>
     </div>

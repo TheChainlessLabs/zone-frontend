@@ -168,6 +168,7 @@ export function BatchesListView() {
               onClick={() => {
                 if (typeof window !== "undefined") window.location.reload();
               }}
+              className="min-h-[44px] md:min-h-0"
             >
               Retry
             </Button>
@@ -267,6 +268,7 @@ function Pagination({
         size="sm"
         onClick={onPrev}
         disabled={page <= 1}
+        className="min-h-[44px] md:min-h-0"
       >
         Previous
       </Button>
@@ -278,6 +280,7 @@ function Pagination({
         size="sm"
         onClick={onNext}
         disabled={page >= totalPages}
+        className="min-h-[44px] md:min-h-0"
       >
         Next
       </Button>

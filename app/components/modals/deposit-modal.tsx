@@ -202,14 +202,14 @@ export function DepositModal({
           <div className="flex flex-col gap-2 sm:flex-row">
             <Button
               variant="outline"
-              className="flex-1"
+              className="min-h-[44px] flex-1 md:min-h-0"
               onClick={onSignPermit}
               disabled={permitSigned || state === "approving" || state === "depositing" || state === "pending"}
             >
               {permitSigned ? "Permit signed" : "Sign permit"}
             </Button>
             <Button
-              className="flex-1"
+              className="min-h-[44px] flex-1 md:min-h-0"
               onClick={state === "failed" ? onRetry : onSignDeposit}
               disabled={state === "approving" || state === "depositing" || state === "pending" || !permitSigned && state !== "failed"}
             >
@@ -217,7 +217,9 @@ export function DepositModal({
             </Button>
           </div>
         ) : (
-          <Button onClick={onClose}>Done</Button>
+          <Button onClick={onClose} className="min-h-[44px] md:min-h-0">
+            Done
+          </Button>
         )}
       </div>
     </ModalShell>

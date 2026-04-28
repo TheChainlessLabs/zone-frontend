@@ -64,8 +64,8 @@ export function DisconnectedState({ routeLabel }: { routeLabel?: string }) {
       </div>
       <Button
         variant="outline"
-        size="sm"
         onClick={() => setOpenRequested(true)}
+        className="min-h-[44px] md:min-h-0"
       >
         <Icon.Wallet aria-hidden />
         <span>Connect Wallet</span>
@@ -104,7 +104,7 @@ export function NoNftPassState() {
           does not hold a pass.
         </p>
       </div>
-      <Button asChild variant="outline" size="sm">
+      <Button asChild variant="outline" className="min-h-[44px] md:min-h-0">
         <a href="#nft-pass">
           <span>Learn about the pass</span>
           <Icon.External aria-hidden />
@@ -127,10 +127,10 @@ export function WrongNetworkBanner() {
   return (
     <div
       role="alert"
-      className="sticky top-0 z-50 flex items-center justify-between gap-4 border-b border-[color-mix(in_oklab,var(--destructive)_30%,transparent)] bg-[color-mix(in_oklab,var(--destructive)_10%,transparent)] px-4 py-2 text-[var(--destructive)] md:px-8"
+      className="sticky top-0 z-50 flex flex-col items-stretch gap-2 border-b border-[color-mix(in_oklab,var(--destructive)_30%,transparent)] bg-[color-mix(in_oklab,var(--destructive)_10%,transparent)] px-4 py-2 text-[var(--destructive)] sm:flex-row sm:items-center sm:justify-between sm:gap-4 md:px-8"
     >
-      <div className="flex items-center gap-2 text-xs">
-        <Icon.Warning size={14} aria-hidden />
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+        <Icon.Warning size={14} aria-hidden className="shrink-0" />
         <span className="font-medium">Wrong network.</span>
         <span className="text-[var(--destructive)]/80">
           You're on{" "}
@@ -143,8 +143,10 @@ export function WrongNetworkBanner() {
         size="sm"
         onClick={() => switchNetwork()}
         aria-label="Switch to Ethereum mainnet"
+        className="min-h-[44px] shrink-0 sm:min-h-0"
       >
-        Switch to Ethereum mainnet
+        <span className="sm:hidden">Switch network</span>
+        <span className="hidden sm:inline">Switch to Ethereum mainnet</span>
       </Button>
     </div>
   );

@@ -140,7 +140,11 @@ export function ConnectWalletModal({
           </span>
           {onDisconnect ? (
             <div className="mt-2 flex w-full items-center justify-end gap-2">
-              <Button variant="ghost" onClick={onClose}>
+              <Button
+                variant="ghost"
+                onClick={onClose}
+                className="min-h-[44px] md:min-h-0"
+              >
                 Close
               </Button>
               <Button
@@ -150,6 +154,7 @@ export function ConnectWalletModal({
                   onClose();
                 }}
                 aria-label="Disconnect wallet"
+                className="min-h-[44px] md:min-h-0"
               >
                 <Icon.Disconnect aria-hidden />
                 <span>Disconnect</span>
@@ -164,10 +169,16 @@ export function ConnectWalletModal({
           <Status state="failed" />
           <p className="text-sm text-[var(--foreground)]">{errorMessage}</p>
           <div className="flex justify-end gap-2">
-            <Button variant="ghost" onClick={onClose}>
+            <Button
+              variant="ghost"
+              onClick={onClose}
+              className="min-h-[44px] md:min-h-0"
+            >
               Cancel
             </Button>
-            <Button onClick={onRetry}>Retry</Button>
+            <Button onClick={onRetry} className="min-h-[44px] md:min-h-0">
+              Retry
+            </Button>
           </div>
         </div>
       ) : null}
@@ -180,10 +191,14 @@ export function ConnectWalletModal({
             alpha pass, or join the waitlist to receive one.
           </p>
           <div className="flex justify-end gap-2">
-            <Button variant="ghost" onClick={onClose}>
+            <Button
+              variant="ghost"
+              onClick={onClose}
+              className="min-h-[44px] md:min-h-0"
+            >
               Close
             </Button>
-            <Button asChild>
+            <Button asChild className="min-h-[44px] md:min-h-0">
               <a href="#nft-pass">Join waitlist</a>
             </Button>
           </div>

@@ -93,9 +93,9 @@ export default function Variant11Blended({
               Matched, settled, and proved.
             </p>
           </div>
-          <div className="flex flex-wrap items-end gap-x-4 gap-y-2">
+          <div className="flex flex-wrap items-end gap-x-3 gap-y-2 md:gap-x-4">
             <MonoNum
-              className="text-4xl font-medium leading-none tracking-tight md:text-6xl"
+              className="text-3xl font-medium leading-none tracking-tight sm:text-4xl md:text-6xl"
               aria-label={`Portfolio total $${fixture.totalValueUSD}`}
             >
               ${fixture.totalValueUSD}
@@ -156,11 +156,20 @@ export default function Variant11Blended({
               ))}
             </div>
             <div className="flex gap-2">
-              <Button size="sm" onClick={onDeposit}>
+              <Button
+                size="sm"
+                onClick={onDeposit}
+                className="min-h-[44px] md:min-h-0"
+              >
                 <Icon.Wallet aria-hidden />
                 Deposit
               </Button>
-              <Button size="sm" variant="outline" onClick={onWithdraw}>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={onWithdraw}
+                className="min-h-[44px] md:min-h-0"
+              >
                 Withdraw
               </Button>
             </div>

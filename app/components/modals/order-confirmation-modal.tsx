@@ -136,19 +136,37 @@ export function OrderConfirmationModal({
         <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
           {state !== "failed" ? (
             <>
-              <Button variant="ghost" onClick={onClose} disabled={isBusy}>
+              <Button
+                variant="ghost"
+                onClick={onClose}
+                disabled={isBusy}
+                className="min-h-[44px] md:min-h-0"
+              >
                 Cancel
               </Button>
-              <Button onClick={onConfirm} disabled={isBusy}>
+              <Button
+                onClick={onConfirm}
+                disabled={isBusy}
+                className="min-h-[44px] md:min-h-0"
+              >
                 Confirm order
               </Button>
             </>
           ) : (
             <>
-              <Button variant="ghost" onClick={onClose}>
+              <Button
+                variant="ghost"
+                onClick={onClose}
+                className="min-h-[44px] md:min-h-0"
+              >
                 Cancel
               </Button>
-              <Button onClick={onRetry}>Retry</Button>
+              <Button
+                onClick={onRetry}
+                className="min-h-[44px] md:min-h-0"
+              >
+                Retry
+              </Button>
             </>
           )}
         </div>

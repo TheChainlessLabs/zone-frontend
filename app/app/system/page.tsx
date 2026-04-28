@@ -99,6 +99,16 @@ import { type LucideIcon } from "lucide-react";
 import { Icon } from "@/lib/icons";
 import { DisconnectedState } from "@/components/DisconnectedState";
 import { NotFoundContents } from "@/components/NotFoundContents";
+import {
+  ConnectWalletModal,
+  DepositModal,
+  OrderConfirmationModal,
+  WithdrawModal,
+  type ConnectWalletState,
+  type DepositState,
+  type OrderConfirmationState,
+  type WithdrawState,
+} from "@/components/modals";
 
 // Section ordering follows a deliberate narrative:
 //   - Foundation sets the rules.
@@ -108,6 +118,7 @@ import { NotFoundContents } from "@/components/NotFoundContents";
 //   - Dialog, Sheet/Drawer: modal moments.
 //   - Toggle, Toast, Status: feedback / binary state.
 //   - Separator, Icons, Motion: utilities last.
+//   - Modals: M3.6 production modals composing the M2 primitives.
 //   - Conventions closes the loop with class/token reference.
 const SECTIONS = [
   { id: "foundation", number: "01", label: "Foundation" },
@@ -128,7 +139,8 @@ const SECTIONS = [
   { id: "icons", number: "16", label: "Icons" },
   { id: "motion", number: "17", label: "Motion" },
   { id: "empty-states", number: "18", label: "Empty + 404" },
-  { id: "conventions", number: "19", label: "Conventions" },
+  { id: "modals", number: "19", label: "Modals" },
+  { id: "conventions", number: "20", label: "Conventions" },
 ] as const;
 
 // Semantic-name → Lucide source-name map, used in the /system Icons section
@@ -1184,6 +1196,35 @@ export function cn(...inputs: ClassValue[]) {
           }
         >
           <EmptyStatesShowcase />
+        </Section>
+
+        <Section
+          id="modals"
+          number="19"
+          label="Modals · production"
+          title={
+            <>
+              Four production modals.{" "}
+              <span className="font-serif text-[var(--muted-foreground)]">
+                Every state, picker-driven.
+              </span>
+            </>
+          }
+          description={
+            <>
+              The M3.6 modal set —{" "}
+              <span className="font-serif text-[var(--foreground)]">
+                Connect, Deposit, Withdraw, Order
+              </span>{" "}
+              — composed from the M2 primitives. Pick a state below to walk the
+              modal through its lifecycle. Desktop renders a centered Dialog;
+              mobile (≤ 768&nbsp;px) renders the vaul Drawer automatically. M3.1
+              shell owns the live state machine; here the state is a prop for
+              review.
+            </>
+          }
+        >
+          <ModalsShowcase />
         </Section>
 
         <Conventions />
@@ -2427,5 +2468,207 @@ function EmptyStatesShowcase() {
         />
       </PreviewFrame>
     </div>
+  );
+}
+
+/* —— Modals showcase (M3.6) ——————————————————————————————————————————————
+ * One block per M3.6 modal. Each block exposes a state picker (Tabs · glass)
+ * so the reviewer can cycle through every state without depending on the
+ * M3.1 shell wiring. Modals open via a Button trigger; the picked state is
+ * passed straight into the modal as a prop.
+ * ------------------------------------------------------------------------ */
+
+const CONNECT_STATES: ConnectWalletState[] = [
+  "idle",
+  "connecting",
+  "connected",
+  "failed",
+  "no-nft-pass",
+];
+const DEPOSIT_STATES: DepositState[] = [
+  "idle",
+  "approving",
+  "depositing",
+  "pending",
+  "success",
+  "failed",
+];
+const WITHDRAW_STATES: WithdrawState[] = [
+  "idle",
+  "signing",
+  "pending",
+  "success",
+  "failed",
+];
+const ORDER_STATES: OrderConfirmationState[] = [
+  "idle",
+  "signing",
+  "submitting",
+  "failed",
+];
+
+function ModalsShowcase() {
+  return (
+    <div className="grid grid-cols-1 gap-12 md:grid-cols-2">
+      <ConnectModalDemo />
+      <DepositModalDemo />
+      <WithdrawModalDemo />
+      <OrderModalDemo />
+    </div>
+  );
+}
+
+function ModalDemoCard({
+  title,
+  snippet,
+  states,
+  current,
+  onState,
+  children,
+}: {
+  title: string;
+  snippet: string;
+  states: readonly string[];
+  current: string;
+  onState: (state: string) => void;
+  children: ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-3 rounded-[var(--radius-lg)] border border-[var(--border)] p-4">
+      <div className="flex items-center justify-between">
+        <SubsectionLabel>{title}</SubsectionLabel>
+        <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
+          [{current}]
+        </span>
+      </div>
+      <Tabs value={current} onValueChange={onState}>
+        <TabsList variant="glass" className="flex-wrap">
+          {states.map((s) => (
+            <TabsTrigger key={s} value={s} className="text-[11px]">
+              {s}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
+      {children}
+      <CodeBlock code={snippet} />
+    </div>
+  );
+}
+function ConnectModalDemo() {
+  const [state, setState] = useState<ConnectWalletState>("idle");
+  const [open, setOpen] = useState(false);
+
+  return (
+    <ModalDemoCard
+      title="Connect wallet"
+      current={state}
+      states={CONNECT_STATES}
+      onState={(s) => setState(s as ConnectWalletState)}
+      snippet={`<ConnectWalletModal\n  open\n  state="${state}"\n  onClose={close}\n/>`}
+    >
+      <Button variant="outline" onClick={() => setOpen(true)}>
+        Open Connect modal
+      </Button>
+      <ConnectWalletModal
+        open={open}
+        state={state}
+        activeConnector="MetaMask"
+        onClose={() => setOpen(false)}
+        onSelectConnector={() => setState("connecting")}
+        onRetry={() => setState("connecting")}
+      />
+    </ModalDemoCard>
+  );
+}
+
+function DepositModalDemo() {
+  const [state, setState] = useState<DepositState>("idle");
+  const [open, setOpen] = useState(false);
+  const [amount, setAmount] = useState("1000.00");
+
+  return (
+    <ModalDemoCard
+      title="Deposit"
+      current={state}
+      states={DEPOSIT_STATES}
+      onState={(s) => setState(s as DepositState)}
+      snippet={`<DepositModal\n  open\n  state="${state}"\n  token="USDC"\n  permitSigned={${state !== "idle" && state !== "approving"}}\n  onClose={close}\n/>`}
+    >
+      <Button variant="outline" onClick={() => setOpen(true)}>
+        Open Deposit modal
+      </Button>
+      <DepositModal
+        open={open}
+        state={state}
+        token="USDC"
+        amount={amount}
+        permitSigned={state !== "idle" && state !== "approving"}
+        onAmountChange={setAmount}
+        onClose={() => setOpen(false)}
+        onSignPermit={() => setState("approving")}
+        onSignDeposit={() => setState("depositing")}
+        onRetry={() => setState("depositing")}
+      />
+    </ModalDemoCard>
+  );
+}
+
+function WithdrawModalDemo() {
+  const [state, setState] = useState<WithdrawState>("idle");
+  const [open, setOpen] = useState(false);
+
+  return (
+    <ModalDemoCard
+      title="Withdraw"
+      current={state}
+      states={WITHDRAW_STATES}
+      onState={(s) => setState(s as WithdrawState)}
+      snippet={`<WithdrawModal\n  open\n  state="${state}"\n  token="USDC"\n  onSubmit={submit}\n  onClose={close}\n/>`}
+    >
+      <Button variant="outline" onClick={() => setOpen(true)}>
+        Open Withdraw modal
+      </Button>
+      <WithdrawModal
+        open={open}
+        state={state}
+        token="USDC"
+        onClose={() => setOpen(false)}
+        onSubmit={() => setState("signing")}
+        onRetry={() => setState("signing")}
+      />
+    </ModalDemoCard>
+  );
+}
+
+function OrderModalDemo() {
+  const [state, setState] = useState<OrderConfirmationState>("idle");
+  const [open, setOpen] = useState(false);
+
+  return (
+    <ModalDemoCard
+      title="Order confirmation"
+      current={state}
+      states={ORDER_STATES}
+      onState={(s) => setState(s as OrderConfirmationState)}
+      snippet={`<OrderConfirmationModal\n  open\n  state="${state}"\n  side="buy"\n  pair="USDC/EURC"\n  type="limit"\n  amount="10,000.00"\n  price="0.9213"\n  estReceive="9,213.40"\n  onClose={close}\n/>`}
+    >
+      <Button variant="outline" onClick={() => setOpen(true)}>
+        Open Order modal
+      </Button>
+      <OrderConfirmationModal
+        open={open}
+        state={state}
+        side="buy"
+        pair="USDC/EURC"
+        type="limit"
+        amount="10,000.00"
+        price="0.9213"
+        estReceive="9,213.40"
+        onClose={() => setOpen(false)}
+        onConfirm={() => setState("signing")}
+        onRetry={() => setState("signing")}
+      />
+    </ModalDemoCard>
   );
 }

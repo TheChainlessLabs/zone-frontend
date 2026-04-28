@@ -97,6 +97,8 @@ import { Badge } from "@/components/ui/badge";
 import { Status, type StatusState } from "@/components/ui/status";
 import { type LucideIcon } from "lucide-react";
 import { Icon } from "@/lib/icons";
+import { DisconnectedState } from "@/components/DisconnectedState";
+import { NotFoundContents } from "@/components/NotFoundContents";
 
 // Section ordering follows a deliberate narrative:
 //   - Foundation sets the rules.
@@ -125,7 +127,8 @@ const SECTIONS = [
   { id: "separator", number: "15", label: "Separator" },
   { id: "icons", number: "16", label: "Icons" },
   { id: "motion", number: "17", label: "Motion" },
-  { id: "conventions", number: "18", label: "Conventions" },
+  { id: "empty-states", number: "18", label: "Empty + 404" },
+  { id: "conventions", number: "19", label: "Conventions" },
 ] as const;
 
 // Semantic-name → Lucide source-name map, used in the /system Icons section
@@ -1155,6 +1158,34 @@ export function cn(...inputs: ClassValue[]) {
           <MotionShowcase />
         </Section>
 
+        <Section
+          id="empty-states"
+          number="18"
+          label="Empty + 404"
+          title={
+            <>
+              When the surface has{" "}
+              <span className="font-serif text-[var(--muted-foreground)]">
+                nothing to say.
+              </span>
+            </>
+          }
+          description={
+            <>
+              The 404 route and the auth-gated <InlineCode>DisconnectedState</InlineCode>{" "}
+              share one voice rule:{" "}
+              <span className="font-serif text-[var(--foreground)]">
+                what happened, then what to do next.
+              </span>{" "}
+              Two short sentences, period-terminated. No emoji, no marketing
+              fluff. The 404 page lives at <InlineCode>/not-found</InlineCode> and
+              auto-renders for any unknown route — preview it here.
+            </>
+          }
+        >
+          <EmptyStatesShowcase />
+        </Section>
+
         <Conventions />
 
         <footer className="border-t border-[var(--border)] py-12">
@@ -2148,7 +2179,7 @@ function Conventions() {
   return (
     <Section
       id="conventions"
-      number="18"
+      number="19"
       label="Conventions"
       title={
         <>
@@ -2349,3 +2380,52 @@ function DrawerInPhone() {
   );
 }
 
+/* —— Empty + 404 states (M3.7) —— */
+
+function PreviewFrame({
+  caption,
+  children,
+}: {
+  caption: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-3">
+      <SubsectionLabel>{caption}</SubsectionLabel>
+      <div className="relative flex min-h-[360px] items-center justify-center overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--muted)]/30 p-6">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function EmptyStatesShowcase() {
+  return (
+    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+      <PreviewFrame caption="404 — /not-found">
+        <NotFoundContents />
+      </PreviewFrame>
+      <PreviewFrame caption="DisconnectedState — default">
+        <DisconnectedState onAction={() => toast("Connect Wallet (preview)")} />
+      </PreviewFrame>
+      <PreviewFrame caption="DisconnectedState — wrong network">
+        <DisconnectedState
+          title="Unsupported network"
+          description="Switch to Ethereum to continue."
+          actionLabel="Switch network"
+          icon={Icon.Warning}
+          onAction={() => toast("Switch network (preview)")}
+        />
+      </PreviewFrame>
+      <PreviewFrame caption="DisconnectedState — no alpha pass">
+        <DisconnectedState
+          title="Phase-4 alpha pass required"
+          description="Connect a wallet that holds the alpha pass NFT."
+          actionLabel="Learn more"
+          icon={Icon.Info}
+          onAction={() => toast("Learn more (preview)")}
+        />
+      </PreviewFrame>
+    </div>
+  );
+}

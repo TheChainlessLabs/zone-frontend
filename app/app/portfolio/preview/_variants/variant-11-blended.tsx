@@ -55,8 +55,12 @@ const ROW =
 
 export default function Variant11Blended({
   fixture,
+  onDeposit,
+  onWithdraw,
 }: {
   fixture: PortfolioFixture;
+  onDeposit?: () => void;
+  onWithdraw?: () => void;
 }) {
   const [range, setRange] = React.useState<(typeof RANGES)[number]>("1M");
   const totals = computeTotals(fixture);
@@ -152,11 +156,11 @@ export default function Variant11Blended({
               ))}
             </div>
             <div className="flex gap-2">
-              <Button size="sm">
+              <Button size="sm" onClick={onDeposit}>
                 <Icon.Wallet aria-hidden />
                 Deposit
               </Button>
-              <Button size="sm" variant="outline">
+              <Button size="sm" variant="outline" onClick={onWithdraw}>
                 Withdraw
               </Button>
             </div>

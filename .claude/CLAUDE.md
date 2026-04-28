@@ -1,271 +1,117 @@
-# Omega Interface — Project Instructions
+# Omega Interface — Project Instructions (design-V2)
 
-## Project Overview
-Omega Markets is a TEE-attested CLOB (Central Limit Order Book) for private stablecoin FX trading. Anonymous execution with zero information leakage. Built on TEE attestation for settlement verification on Ethereum L1. This repo is the frontend — a Next.js trading UI that communicates with the `omega-markets` backend via REST and interacts with smart contracts (`omega-core-contracts`) on-chain.
+## Status
 
-## Repo Structure
-pnpm monorepo with 3 packages:
-- `app/` — Next.js 14 (App Router), React 18, Tailwind CSS 4, TypeScript 5.7
-- `landing/` — Astro 5, Tailwind CSS 4
-- `design-system/` — CSS custom properties, Tailwind theme, tokens.json
+This branch (`design-V2`) is a **clean-room rebuild** of the omega-interface frontend. The legacy implementation lives on `main` and is preserved as a reference, but no code from `main` should be ported wholesale into `design-V2` without going through the milestone process below.
 
-## Design System
-- **Aesthetic**: **Institutional Calm.** Steel-blue accent on a matte near-black register, muted institutional semantic colors. The product is a TEE-attested dark-pool FX trading interface for institutional and sophisticated DeFi users — the UI must read as a calm execution surface, not a crypto-DEX demo and not a cyan terminal. Mono-dominant in the data plane. Accent used purposefully (current pair, submit CTA when not buy/sell-tinted, active tab, focus rings). No glow, no glassmorphism scrims, no marketing copy in-product, no fake stats, no public-order-book implication.
-- **Accent**: `#3A6EA5` (calm steel blue) — the default everywhere.
-- **Accent strong**: `#22D3EE` (cyan) — RESERVED for Limit-mode precision surfaces only (price-input focus ring, active LIMIT tab underline, at most one precision label). Never on the CTA, never on the form border, never on the chart line. The page must not slide into a cyan-terminal aesthetic.
-- **Base**: `#0A0A0A` (near-black), Surface: `#141414`, Elevated: `#1C1C1C`, Overlay: `#181818`
-- **Text**: Primary `#F5F5F5`, Secondary `#A1A1A1`, Muted `#6B6B6B`
-- **Semantic**: Success `#4D8C57` (matte institutional green), Error `#A85A5A` (matte institutional red), Warning `#B88746` (matte amber), Info `#3A6EA5` (matches accent)
-- **Borders**: translucent on dark — `rgba(255,255,255,0.14)` default, `rgba(255,255,255,0.08)` subtle
-- **Fonts**: Space Grotesk (display, --font-display), JetBrains Mono (mono, --font-mono). Mono dominates the data plane.
-- **Spacing**: 4px base grid. Component heights: sm 32px, md 40px, lg 48px
-- **Transitions**: fast 100ms, normal 150ms, slow 300ms
-- Tokens live in `design-system/variables.css` and `design-system/tokens.json`
-- Tailwind theme mapping in `design-system/tailwind.theme.css`
-- Use token classes (`bg-bg-surface`, `text-accent`, `border-border`) — never hardcode hex values
-- Reference doc `design-system/palette.md` is currently out of sync with the new tokens; it will be rewritten in a follow-up. Consult `tokens.json` for canonical hex values.
+`design-V2` is the default branch on the remote. All new feature branches cut from `design-V2`. Do **not** branch from `main`.
 
-## Design Context — V1 Action-First Execution Model
+## Product
 
-The trading surface is reorganised around an **action-first execution model**: the order form *is* the product. Reference: Uniswap / CoW Swap dominance and simplicity, with an institutional dark-pool execution feel.
+Omega Markets is a TEE-attested CLOB for private stablecoin FX trading. Anonymous execution with zero information leakage. Settlement on Ethereum L1 via TEE attestation. The frontend is a Next.js trading UI that talks to the `omega-markets` backend over REST and to `omega-core-contracts` on-chain via wagmi/viem.
 
-**Two modes on `/trade`, progressive disclosure, no route change:**
+The product is positioned as **infrastructure, not a bank** — institutional execution surface, not a crypto-degen DEX.
 
-1. **Market (default)** — centred dominant swap card. No chart, no public book, no marquee. A small CoW-Swap-like **Execution Context strip** below the card carries midpoint / estimated received / fee — real values only, never fake. Strictly secondary, never marquee-loud.
-2. **Limit** — same order form remains the visually dominant surface, anchored left at desktop ≥1024px. Chart fades in to the right at lower contrast (steel-blue line, no glow). User-specific fills appear below. **No public order book** — the product is a dark pool. Cyan precision-strong accent appears in **at most three places**: the price-input focus ring, the active LIMIT tab underline, and at most one precision label.
+## Repo structure
 
-**Mode transition:** 200ms `ease-out`. Supporting surfaces fade in with `opacity 0→1` + `translateY(16px)→0`. The order form does NOT animate (trading-critical, must stay anchored). No bouncy easing.
+After the design-V2 wipe, the repo is:
 
-**Hard rules during implementation:**
+```
+omega-interface/
+├── app/                  # Next.js 14 App Router · React 18 · Tailwind 4 · TS 5.7
+│   ├── app/              # routes (currently: layout.tsx + page.tsx scaffold)
+│   ├── public/           # static assets
+│   ├── next.config.mjs
+│   ├── postcss.config.mjs
+│   ├── tsconfig.json
+│   ├── vitest.config.ts
+│   └── package.json
+├── .claude/CLAUDE.md     # this file
+├── .githooks/pre-commit  # typecheck + test + build before every commit
+├── package.json          # workspace root
+├── pnpm-workspace.yaml
+└── README.md
+```
 
-- The chart line uses `--color-accent` (steel blue), never `--color-accent-strong` (cyan), even in Limit mode.
-- The CTA uses `--color-success` for Buy and `--color-error` for Sell — never accent.
-- `OrderBook.tsx` is **unmounted from `/trade`** for V1 (file may stay around as an unused primitive).
-- `BBOMarquee.tsx` is **unmounted from `/trade`** in Market mode and replaced by the quieter `ExecutionContextStrip`.
-- User-fills section uses `useUserOrders()` — never global market trades. If `RecentTrades.tsx` is global, repurpose into `MyFills.tsx`.
-- No public-order-book visual anywhere on the trading surface.
+The legacy `landing/` and `design-system/` packages were removed. Both will be rebuilt in their respective milestones (M2 for the design-system tokens + primitives package, M8 for the landing site).
 
-For the full brief, see `~/.claude/plans/i-think-this-can-fuzzy-fox.md`.
+## Sequential milestones
 
-## App Pages
-- `/trade` — Trading with BBO marquee, pair selector, order form, chart, positions/orders
-- `/portfolio` — Portfolio value, balances with token colors, open positions with PnL
-- `/explorer` — Protocol stats, batch explorer with pagination, batch/tx detail drill-down
-- `/account` — Order management with filter tabs, order detail with pipeline visualization
-- `/funding` — Deposit/withdraw/transfer form, transaction history
-- `/settings` — Horizontal scrollable tabs on mobile, trading preferences consolidated
-- `/trade/pair/[pair]` — Pair detail with stats grid, chart, venue comparison
-- `/not-found` — 404 page with ghost text and navigation buttons
+Brian's directive: build production-grade UI, super-polished. Sequential gates, no shortcuts.
 
-## Key Components
-- `Navbar` — Desktop nav + wallet/deposit buttons, mobile hamburger menu, wired to DepositModal
-- `MobileTabBar` — Fixed bottom tabs (Trade/Portfolio/Explorer), `lg:hidden`
-- `BottomSheet` — Bottom sheet on mobile, centered modal on desktop (spring animation)
-- `DepositModal` — Chain/token/amount selectors, percentage shortcuts, fee summary
-- `WithdrawModal` — Standard/Privacy mode toggle, consent checkbox, fee breakdown
-- `DisconnectedState` — Lock icon, value prop, Connect Wallet CTA, protocol stats
-- `BBOMarquee` — Live venue prices (Wise/OFX/Revolut/Omega Midpoint)
-- `OrderDetail` — Horizontal pipeline on mobile, vertical on desktop, mobile fill cards
-- `BatchDetail` — Timeline with timestamps, Decrypt Mine button, mobile tx cards
-- `TransactionDetail` — 3 execution stat cards (midpoint/savings/slippage), batch info
-- `PairDetail` — 2x2 stat grid mobile, chart with timeframe tabs, venue comparison
-- `WithdrawalDetail` — Privacy/Claimable badges, timeline, privacy proof card with actions
+| # | Milestone | Output |
+|---|---|---|
+| **M1** | Brand system | wordmark, voice, brand palette, type pairing, asset bundle, brand guidelines doc |
+| **M2** | Design system | tokens (color/type/spacing/motion) + primitives (Button/Input/Modal/Toast/Toggle/Tabs/Dropdown/Sheet) + Tailwind theme + Storybook showcase + visual regression baseline + a11y baked in |
+| **M3** | UX wireframes | every page + modal, mobile + desktop, **all states** (default/empty/loading/error/skeleton/disconnected) |
+| **M4** | Visual design | apply M2 to M3 page-by-page; a page is *done* only when every state is shipped |
+| **M5** | Motion + transitions | page/modal/dropdown/tab/microinteractions + reduced-motion fallbacks audited + 60fps verified on mobile |
+| **M6** | Backend integration | wallet → signing → orders → book → portfolio → bridge → explorer + error mapping for every API failure mode + e2e happy + edge paths |
+| **M7** | Production hardening | a11y audit (axe + manual screen reader pass), perf budgets (Lighthouse ≥95, LCP <2.5s, INP <200ms, CLS <0.1, JS ≤200KB gz/route), cross-browser/device QA matrix, error boundaries on every route, Sentry-style client error reporting (privacy-first), CSP + dependency audit, Vercel deploy + custom domain + preview-per-PR, synthetic uptime checks, launch checklist sign-off |
+| **M8** | Landing page | Astro marketing site rebuilt against the M1 brand system, hosted alongside or separately from the app |
 
-## Mobile Patterns
-- Bottom padding `pb-[60px] lg:pb-0` on body for MobileTabBar clearance
-- Responsive padding: `p-4 md:p-6` on all page wrappers
-- Tables → card layouts on mobile with `hidden md:block` / `md:hidden`
-- Bottom sheets use `sheet-enter` animation (translateY, spring cubic-bezier)
-- `no-scrollbar` utility for horizontal tab scrolling
+**Polish thread (across all milestones):** every PR ships with passing axe + visual regression. No surface lands without all states. No motion lands without reduced-motion path. No fetch lands without error/loading/empty mapping.
 
-## Paper MCP Artboards (Design Source of Truth)
-35 artboards total in "Omega Markets" Paper file. Key mobile artboards (390x844):
-- Account Mobile (53V-0), Funding Mobile (56L-0), Settings Mobile (59U-0)
-- Order Detail Mobile (5CP-0), Batch Detail Mobile (5FU-0), Transaction Detail Mobile (5IY-0)
-- Pair Detail Mobile (5LR-0), Withdrawal Detail Mobile (5OA-0)
-- Deposit Modal (5RB-0), Withdraw Modal (5SW-0)
-Desktop: Disconnected State (5UD-0), 404 Error Page (5VH-0)
-Design system reference: Phase 2 (EA-0), Animation Design System (2ZL-0)
+Milestone gating: M2 cannot start until M1 is signed off, M3 until M2, etc. Within a milestone, issues can run in parallel where the dependency graph allows.
 
-## Animation Design System (artboard 2ZL-0)
-- Bottom sheet: spring snap (cubic-bezier 0.32, 0.72, 0, 1)
-- Drill-down: slide 250ms easeInOut
-- Modal: scale+fade 250ms ease-out
-- List stagger: 40ms per item, max 7 items
+## Human-in-the-loop vs subagent-eligible
+
+Mark every issue with one of these labels:
+
+- `human-in-loop` — taste calls. Brian reviews each PR before merge. No auto-merge.
+  - Brand decisions (wordmark, voice, palette generation, type pairing)
+  - UX wireframes (information architecture, hierarchy)
+  - Visual design application (page-by-page aesthetic pass)
+  - Motion timing/choreography decisions (the *feel* of a transition)
+  - Design-system *value* choices (the actual numbers/hexes)
+
+- `subagent-eligible` — mechanical implementation. Can run as parallel subagents.
+  - Token export plumbing (CSS vars / JSON / Tailwind theme wiring once values are decided)
+  - Component primitives (once API is decided, implementation can parallelize)
+  - Backend integration tickets (wallet auth, signing, API wiring, error mapping)
+  - a11y axe runs, perf budget enforcement, error boundary coverage
+  - Observability instrumentation
+  - Test scaffolding and e2e harness
+
+When in doubt, default to `human-in-loop`.
 
 ## Workflow
-User's required workflow: **Design in Paper MCP first → user reviews → implement into code**
-- Each mobile screen = individual 390x844 artboard (not grouped)
-- Follow brand guide (EA-0) and animation design system (2ZL-0)
-- All 12 missing mobile artboards have been designed and approved
-- All 12 designs have been implemented into code
 
-## What's Been Done (This Session)
-1. Created 12 Paper MCP artboards (all mobile screens + desktop states) — APPROVED
-2. Implemented all 12 designs into code:
-   - 404 page + DisconnectedState component
-   - BottomSheet + DepositModal + WithdrawModal (bottom sheet pattern)
-   - Account/Funding/Settings mobile layouts
-   - All 5 detail pages (Order/Batch/TX/Pair/Withdrawal) mobile layouts
-   - Wired DepositModal to Navbar
-3. Updated design system: accent color #3467A1 → #0EA5E9 → #D4A847 → #0EA5E9 → #3A6EA5 (Institutional Calm — calm steel blue base, cyan #22D3EE reserved for Limit-mode precision only)
-4. Added MobileTabBar, BBOMarquee, ProtocolStats, StatusBar components
-5. Responsive padding fixes on all page wrappers
-6. Favicon color updates
-7. Repo renamed from omega-frontends → omega-interface
-8. Added README.md, LICENSE (BSL 1.1), .github PR/issue templates
-9. Updated all package.json with @omega namespace
+Standard for every issue:
 
-## What's Next (Pending)
-- Commit the README/LICENSE/.github files (Bash was broken due to rename)
-- Delete CONTRIBUTING.md (was created then user asked to remove)
-- Set up GitHub remote for omega-interface repo
-- Update GitHub repo description via `gh repo edit`
-- Consider: CI/CD workflows, Vercel deployment config, environment variables
-- Consider: Testing setup (Playwright for e2e, Vitest for unit)
+```
+plan → worktree (under Chainless/worktrees/) → implement → self-test
+     → independent reviewer subagent → open PR → human review (if human-in-loop)
+     → squash-merge → pull design-V2 → clean worktree
+```
 
-## Commands
+- **Branch base:** always `design-V2`. Never `main`. Never another feature branch (no stacked PRs).
+- **Worktrees:** `Chainless/worktrees/<name>/` only.
+- **Commits:** Conventional. No `Co-Authored-By` trailers. No "Generated with Claude Code". No personal-infra references.
+- **Diff size:** ≤400 LOC per PR or split.
+- **Pre-commit:** `pnpm typecheck && pnpm test && pnpm build` runs automatically. Don't bypass with `--no-verify` unless explicitly authorised.
+- **Auto-merge:** allowed for `subagent-eligible` issues only. `human-in-loop` waits for Brian's review.
+
+## Dev commands
+
 ```bash
-pnpm dev:app          # Next.js dev server (port 3001)
-pnpm dev:landing      # Astro dev server
-pnpm build            # Build all packages
-pnpm typecheck        # TypeScript check (app)
-pnpm test             # Run tests (Vitest)
+pnpm dev         # Next.js dev server (app/ on its default port)
+pnpm build       # Build the app
+pnpm typecheck   # tsc --noEmit on app/
+pnpm test        # Vitest run on app/
 ```
 
----
+## Backend & on-chain context (preserved from legacy notes — for M6)
 
-## Backend Integration (omega-markets)
+When M6 begins, the integration surface is:
 
-### API Surface
-Backend runs at `http://localhost:3000`. **No HMAC auth** — pure EIP-712 signing. **No WebSocket** — polling only.
+- Backend: `omega-markets` on `http://localhost:3000`. REST only. EIP-712 signing for all mutations. No WebSocket — polling.
+- EIP-712 domain: `name: "Omega"`, `version: "1"`, `chainId: 31337` (Anvil dev) / `1` (mainnet), `verifyingContract: <OMEGA_BRIDGE_ADDRESS>`.
+- Token math: `BigInt` for all u128 quantities. Prices are 18-decimal fixed-point. USDC/USDT use 6 decimals.
+- Local dev contracts (Anvil 31337):
+  - `OmegaBridge: 0xa513E6E4b8f2a923D98304ec87F64353C4D5C853`
+  - `MockUSDC:    0x9A9f2CCfdE556A7E9Ff0848998Aa4a0CFD8863AE`
+  - `MockUSDT:    0x68B1D87F95878fE05B998F19b66F4baba5De1aed`
+- Backend gaps to expect (still mock-driven in M6 unless backend lands the endpoints first): account balance query, order history, deposit/withdrawal history, REST explorer, oracle price feed, transfer, websocket.
 
-| Method | Path | Auth | Response |
-|--------|------|------|----------|
-| `GET` | `/markets/{market_id}/book` | None | `{ market_id, bids: OrderEntry[], asks: OrderEntry[] }` |
-| `GET` | `/markets/{market_id}/trades` | None | `{ market_id, trades: Trade[] }` |
-| `POST` | `/orders` | EIP-712 (account owner) | `{ order_id }` (201) |
-| `POST` | `/orders/cancel` | EIP-712 (account owner) | 204 |
-| `POST` | `/admin/accounts` | EIP-712 (admin) | `{ account_id }` |
-| `POST` | `/admin/tokens/create` | EIP-712 (admin) | `{ token_id }` |
-| `POST` | `/admin/tokens/issue` | EIP-712 (admin) | 204 |
-| `POST` | `/admin/tokens/burn` | EIP-712 (token owner) | 204 |
-| `POST` | `/admin/markets/create` | EIP-712 (admin) | `{ market_id }` |
-
-### EIP-712 Domain
-```
-name: "Omega"
-version: "1"
-chainId: 31337 (Anvil) / 1 (mainnet)
-verifyingContract: <OMEGA_BRIDGE_ADDRESS>
-```
-
-### EIP-712 Signed Types (must match `omega-markets/crates/core/src/crypto/signature.rs`)
-```solidity
-struct AddLimitOrderRequest { uint64 nonce; uint16 market_id; uint128 price; uint128 quantity; uint8 side; }
-struct AddMarketOrderRequest { uint64 nonce; uint16 market_id; uint128 price; uint128 quantity; uint8 side; uint32 max_slippage_bps; }
-struct AddFlipOrderRequest { uint64 nonce; uint16 market_id; uint128 price; uint128 quantity; uint8 side; uint128 flip_price; }
-struct CancelOrderRequest { uint64 nonce; uint16 market_id; uint64 order_id; }
-struct BurnTokenRequest { address owner; uint128 quantity; uint32 token_id; uint64 nonce; }
-```
-- `side`: 0 = Buy, 1 = Sell
-- All `uint128` values use BigInt in TypeScript, serialize as string for JSON
-
-### Price Encoding
-Prices use 18-decimal fixed-point: `1.0856` → `1_085_600_000_000_000_000`. Quantities use token-specific decimals: USDC/USDT = 6 decimals (`100 USDC` → `100_000_000`).
-
-### Local Dev Contract Addresses (Anvil chainId 31337)
-```
-OmegaBridge:  0xa513E6E4b8f2a923D98304ec87F64353C4D5C853
-MockUSDC:     0x9A9f2CCfdE556A7E9Ff0848998Aa4a0CFD8863AE
-MockUSDT:     0x68B1D87F95878fE05B998F19b66F4baba5De1aed
-```
-
-### Environment Variables
-```
-NEXT_PUBLIC_API_URL=http://localhost:3000
-NEXT_PUBLIC_CHAIN_ID=31337
-NEXT_PUBLIC_BRIDGE_ADDRESS=0xa513E6E4b8f2a923D98304ec87F64353C4D5C853
-NEXT_PUBLIC_USDC_ADDRESS=0x9A9f2CCfdE556A7E9Ff0848998Aa4a0CFD8863AE
-NEXT_PUBLIC_USDT_ADDRESS=0x68B1D87F95878fE05B998F19b66F4baba5De1aed
-```
-
-### What the Backend Does NOT Have (stay on mock data)
-- Account balance query endpoint
-- Order history endpoint (filled/cancelled orders)
-- Deposit/withdrawal history
-- Explorer/batch data via REST (only gRPC)
-- Oracle price feed
-- Transfer endpoint
-- WebSocket / real-time push
-
----
-
-## Architecture IDs (from `.claude/architecture-brief.md`)
-- **PROC-005**: Frontend (this repo)
-- **COMP-033**: BFF Engine Proxy → `app/api/engine/[...path]/route.ts`
-- **COMP-034**: SwapOrderCard → `components/OrderForm.tsx`
-- **COMP-035**: WalletAuth → `components/WalletModal.tsx` + `components/Navbar.tsx`
-- **COMP-036**: ApiClient → `lib/apiClient.ts` (to be created)
-- **COMP-037**: ConfigLoader → `lib/config.ts` (to be created)
-- **COMP-038**: OrderSigning Hook → `lib/hooks/useOrderSigning.ts` (to be created)
-- **COMP-039**: DepositFlow Hook → `lib/hooks/useDeposit.ts` (to be created)
-- **COMP-040**: WithdrawalClaim Hook → `lib/hooks/useClaimWithdrawal.ts` (to be created)
-- **IF-001**: Frontend → Gateway (HTTP REST)
-
----
-
-## Integration Ticket Dependency Graph
-
-```
-FE-001 (Wallet) ─┬─→ FE-003 (Signing) ─┬─→ FE-005 (Order Placement)
-                  │                      └─→ FE-006 (Order Cancel)
-                  ├─→ FE-007 (Deposit) ──┬─→ FE-008 (Withdrawal)
-                  │                      └─→ FE-009 (Portfolio)
-FE-002 (API)  ───┼─→ FE-003, FE-004, FE-005, FE-006, FE-007, FE-008, FE-009
-                  └─→ FE-004 (Live Data) ──→ FE-009 (Portfolio)
-```
-
-Foundation (no deps): FE-001, FE-002
-After foundation: FE-003, FE-004, FE-007 can run in parallel
-After signing: FE-005, FE-006 can run in parallel
-After deposit: FE-008, FE-009 can run in parallel
-
-Ticket bodies: `tasks/linear-tickets/FE-00X-*.md`
-
----
-
-## Coding Conventions
-- Use native `fetch` (not axios) for API calls
-- Use `BigInt` for all u128 price/quantity math — never `Number` for token amounts
-- Hooks in `lib/hooks/`, types in `lib/apiTypes.ts`, config in `lib/config.ts`
-- ABIs in `lib/abis/` — minimal fragments, not full contract ABIs
-- Use token design system classes — never hardcode hex colors
-- Toast via `useToast()` hook for all user-facing feedback
-- Loading states: use existing `Skeleton.tsx` component
-- Error states: graceful degradation, never crash the component
-
-## Symphony Pipeline
-
-This repo is managed by **Symphony** — our Elixir orchestrator that turns Linear tickets into PRs autonomously.
-
-- **Repo:** `github.com/TheChainlessLabs/symphony` (custom fork — NOT `odysseus0/symphony`)
-- **Workflow:** `symphony/workflows/omega-interface.md`
-- **Run:** `cd symphony/elixir && ./bin/symphony ../workflows/omega-interface.md --i-understand-that-this-will-be-running-without-the-usual-guardrails`
-
-### Pipeline
-Planner(Claude) → Builder(Claude) → Reviewer(Codex) → Simplifier(Claude) → Debugger(Claude) → Validator(Claude) → Final Reviewer(Codex) → Human Review
-
-### Verdict Contract
-Every phase must end with a single-line JSON verdict:
-```json
-{"phase":"<name>","verdict":"PASS|FAIL|ESCALATE","summary":"<brief>","details":{}}
-```
-
-### Critical: What NOT to Do
-- Do NOT use `npx skills add` or create `.agents/skills/` directories
-- Do NOT copy WORKFLOW.md into this repo — it stays in the Symphony repo
-- Do NOT reference `odysseus0/symphony` — we use a custom fork
-- Do NOT use `mix setup` or `mix build` — use `mix deps.get` and `mix escript.build`
-
-For full architecture details, see `symphony/docs/architecture.md` and `symphony/docs/agent-instructions.md`.
+Full EIP-712 type definitions and price-encoding details are restored into `app/.claude/CLAUDE.md` as part of M6 kickoff, not here.

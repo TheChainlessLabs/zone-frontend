@@ -9,16 +9,11 @@
   "license": "BUSL-1.1",
   "packageManager": "pnpm@10.33.0",
   "scripts": {
+    "dev": "pnpm --filter @omega/app dev",
     "build": "pnpm -r build",
-    "dev:app": "pnpm --filter app dev",
-    "dev:landing": "pnpm --filter landing dev",
-    "test:e2e": "playwright test",
-    "test:e2e:unit": "playwright test --project=unit-e2e",
-    "test:e2e:integration": "playwright test --project=integration",
-    "test:e2e:headed": "playwright test --headed",
-    "prepare": "git config core.hooksPath .githooks",
+    "typecheck": "pnpm --filter @omega/app exec tsc --noEmit",
     "test": "pnpm --filter @omega/app test",
-    "typecheck": "pnpm --filter @omega/app exec tsc --noEmit"
+    "prepare": "git config core.hooksPath .githooks"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
@@ -29,8 +24,5 @@
   "engines": {
     "node": ">=18",
     "pnpm": ">=9"
-  },
-  "devDependencies": {
-    "@playwright/test": "^1.58.2"
   }
 }

@@ -1,5 +1,7 @@
-import { redirect } from "next/navigation";
-
 export default function Home() {
-  redirect("/trade");
+  return (
+    <main>
+      <p>omega-interface · design-V2 · scaffold</p>
+    </main>
+  );
 }

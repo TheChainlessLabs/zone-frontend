@@ -1,23 +1,53 @@
 # Omega Interface
 
-Open-source frontend for the [Omega Markets](https://omega.markets) protocol — a darkpool for stablecoin FX with anonymous execution at midpoint pricing and zero information leakage.
+Frontend for the [Omega Markets](https://omegamarkets.com) protocol — an institutional-grade darkpool for stablecoin FX with anonymous execution at midpoint pricing and zero information leakage.
 
-## Architecture
+## Status
 
-This is a pnpm monorepo with three packages:
+**This branch (`design-V2`) is a clean-room rebuild.** The legacy V1 implementation lives on `main` and is preserved as a reference. New work here goes through the milestone process below; nothing is ported wholesale from `main`.
 
-| Package | Stack | Description |
-|---------|-------|-------------|
-| [`app`](/app) | Next.js 14, React 18, Tailwind CSS 4 | Trading application (trade, portfolio, explorer, account, funding, settings) |
-| [`landing`](/landing) | Astro 5, Tailwind CSS 4 | Marketing landing page |
-| [`design-system`](/design-system) | CSS custom properties | Shared tokens, variables, and theme configuration |
+## Sequential milestones
 
-## Getting Started
+| # | Milestone | Output |
+|---|---|---|
+| **M1** | Brand system | Wordmark, voice, brand palette, type pairing, asset bundle, brand guidelines doc |
+| **M2** | Design system | Tokens (color/type/spacing/motion) + primitives + Tailwind theme + Storybook + visual regression baseline + a11y baked in |
+| **M3** | UX wireframes | Every page + modal, mobile + desktop, all states (default/empty/loading/error/skeleton/disconnected) |
+| **M4** | Visual design | Apply M2 to M3 page-by-page; a page is *done* only when every state is shipped |
+| **M5** | Motion + transitions | Page/modal/dropdown/tab/microinteractions + reduced-motion fallbacks audited + 60 fps verified on mobile |
+| **M6** | Backend integration | Wallet → signing → orders → book → portfolio → bridge → explorer + error mapping for every API failure mode + e2e happy + edge paths |
+| **M7** | Production hardening | a11y audit, perf budgets (Lighthouse ≥95, LCP <2.5s, INP <200ms, CLS <0.1, JS ≤200KB gz/route), cross-browser matrix, error boundaries, error reporting, CSP + dependency audit, deploy + custom domain + preview-per-PR, synthetic uptime, launch checklist |
+| **M8** | Landing page | Brand-aligned marketing site rebuilt against the M1 brand system |
+
+Milestone gating is sequential. Within a milestone, issues parallelise where the dependency graph allows.
+
+## Repo layout (post-wipe)
+
+```
+omega-interface/
+├── app/                  # Next.js 14 App Router · React 18 · Tailwind 4 · TS 5.7
+│   ├── app/              # routes (currently: layout.tsx + page.tsx scaffold)
+│   ├── public/           # static assets
+│   ├── next.config.mjs
+│   ├── postcss.config.mjs
+│   ├── tsconfig.json
+│   ├── vitest.config.ts
+│   └── package.json
+├── .claude/CLAUDE.md     # project instructions for AI assistants
+├── .githooks/pre-commit  # typecheck + test + build before every commit
+├── package.json          # workspace root
+├── pnpm-workspace.yaml
+└── README.md
+```
+
+The legacy `landing/` and `design-system/` packages were removed. The design-system package is rebuilt in M2; the landing site is rebuilt in M8.
+
+## Getting started
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org/) >= 18
-- [pnpm](https://pnpm.io/) >= 9
+- [Node.js](https://nodejs.org/) ≥ 18
+- [pnpm](https://pnpm.io/) ≥ 9
 
 ### Install
 
@@ -25,128 +55,32 @@ This is a pnpm monorepo with three packages:
 pnpm install
 ```
 
-### Development
+### Develop
 
 ```bash
-# Trading app (Next.js) — http://localhost:3000
-pnpm dev:app
-
-# Landing page (Astro) — http://localhost:4321
-pnpm dev:landing
+pnpm dev         # Next.js dev server on the default port
+pnpm build       # Build the app
+pnpm typecheck   # tsc --noEmit
+pnpm test        # Vitest run
 ```
 
-The trading app requires `NEXT_PUBLIC_API_URL` to point at a running `omega-api`
-instance. For local development with the backend repo in
-`/Users/brianseong/Developer/Omega/omega-markets`, run the backend on a separate
-port and point the frontend at it:
+## Workflow
 
-```bash
-# Backend API from omega-markets
-cd /Users/brianseong/Developer/Omega/omega-markets
-OMEGA_HTTP_BIND="127.0.0.1:3001" cargo run -p omega-api
-
-# Trading app from omega-interface
-cd /Users/brianseong/Developer/Omega/omega-interface-backend-api/app
-NEXT_PUBLIC_API_URL="http://127.0.0.1:3001" pnpm dev
-```
-
-### Build
-
-```bash
-# Build all packages
-pnpm build
-```
-
-## Testing
-
-The `app` package uses [Vitest](https://vitest.dev/) with [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/) for component tests in a jsdom environment.
-
-```bash
-cd app && pnpm test
-```
-
-### Stack
-
-| Tool | Purpose |
-|------|---------|
-| Vitest | Test runner (jsdom environment) |
-| `@vitejs/plugin-react` | JSX/React transform for Vite |
-| `@testing-library/react` | Component rendering + queries |
-| `@testing-library/jest-dom` | DOM assertion matchers (`.toBeInTheDocument()`, etc.) |
-
-### Configuration
-
-- **Config**: [`app/vitest.config.ts`](/app/vitest.config.ts) — jsdom env, React plugin, `@/` path alias
-- **Setup**: [`app/vitest.setup.ts`](/app/vitest.setup.ts) — loads jest-dom matchers globally
-
-### Path Aliases
-
-The `@/` alias resolves to the `app/` package root, matching `tsconfig.json`. Use `import Foo from "@/components/Foo"` in tests.
-
-### Adding a Test
-
-1. Create `app/components/__tests__/YourComponent.test.tsx` (or co-locate as `YourComponent.test.tsx`)
-2. Import `render`/`screen` from `@testing-library/react` and `describe`/`it`/`expect` from `vitest`
-3. Call `afterEach(cleanup)` to prevent DOM leaks
-4. Run with `cd app && pnpm test`
-
-### What Needs Mocks
-
-Components using Next.js internals (`next/image`, `next/link`, `next/navigation`, `next/font/google`) require manual mocks — pure presentational components work out of the box.
-
-## Design System
-
-The design system is built on CSS custom properties and consumed by both `app` and `landing` via Tailwind CSS 4.
-
-**Colors** — Dark-first with `#0EA5E9` electric cyan accent, semantic success/error/warning/info.
-
-**Typography** — [Space Grotesk](https://fonts.google.com/specimen/Space+Grotesk) for display, [JetBrains Mono](https://fonts.google.com/specimen/JetBrains+Mono) for tabular/financial data.
-
-**Spacing** — 4px base grid. Component heights: sm (32px), md (40px), lg (48px).
-
-See [`design-system/variables.css`](/design-system/variables.css) for the full token reference.
-
-## Project Structure
+Standard PR cycle:
 
 ```
-omega-interface/
-├── app/                    # Next.js trading application
-│   ├── app/                # App router pages
-│   │   ├── trade/          # Trading page with BBO feed + order form
-│   │   ├── portfolio/      # Balances, positions, P&L
-│   │   ├── explorer/       # Batch + transaction explorer
-│   │   ├── account/        # Order management
-│   │   ├── funding/        # Deposit, withdraw, transfer
-│   │   └── settings/       # User preferences
-│   ├── components/         # React components
-│   ├── lib/                # Types, hooks, mock data
-│   └── public/             # Static assets
-├── landing/                # Astro marketing site
-├── design-system/          # Shared design tokens
-│   ├── variables.css       # CSS custom properties
-│   ├── tailwind.theme.css  # Tailwind theme mapping
-│   └── tokens.json         # Raw design tokens
-├── pnpm-workspace.yaml
-└── package.json
+plan → worktree → implement → typecheck/test/build
+     → independent reviewer → open PR → human review (when human-in-loop)
+     → squash-merge into design-V2
 ```
 
-## Key Features
+- **Branch base:** always `design-V2`. Never `main`. Never another feature branch.
+- **Worktrees:** under `Chainless/worktrees/<name>/`.
+- **Commits:** Conventional. No `Co-Authored-By` trailers, no AI attribution.
+- **Diff size:** ≤400 LOC per PR or split.
+- **Pre-commit:** `pnpm typecheck && pnpm test && pnpm build` runs automatically.
 
-- **Darkpool trading** — Orders execute privately at the midpoint price with no order book visibility
-- **BBO price feed** — Real-time best bid/offer from Wise, OFX, Revolut, and Omega Midpoint
-- **Pipeline transparency** — Track orders through: Submit → Match → Aggregation → Batch → Settle → Prove
-- **Privacy mode** — ZK-proof-based withdrawals with zero on-chain history leakage
-- **Batch explorer** — Browse settlement batches, transactions, and cryptographic proofs
-- **Mobile-first** — Responsive design with bottom sheet modals and tab navigation
-
-## Tech Stack
-
-- **Framework**: [Next.js 14](https://nextjs.org/) (App Router)
-- **Styling**: [Tailwind CSS 4](https://tailwindcss.com/) with CSS custom properties
-- **Icons**: [Lucide](https://lucide.dev/)
-- **Language**: TypeScript 5.7
-- **Package Manager**: pnpm workspaces
-- **Landing**: [Astro 5](https://astro.build/)
+Issues are tagged `human-in-loop` (taste calls — Brian reviews each PR) or `subagent-eligible` (mechanical work — can run as parallel subagents with auto-merge). Default to `human-in-loop` when in doubt.
 
 ## License
 

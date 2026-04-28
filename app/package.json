@@ -5,21 +5,14 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "build:e2e": "NEXT_PUBLIC_OMEGA_E2E_TEST=true next build",
     "start": "next start",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@tanstack/react-query": "^5.95.2",
-    "lightweight-charts": "^5.1.0",
-    "lucide-react": "^0.475.0 || ^0.556.0",
-    "motion": "^12.38.0",
     "next": "^14.2.0",
     "react": "^18.3.0",
-    "react-dom": "^18.3.0",
-    "viem": "^2.47.6",
-    "wagmi": "^2.19.5"
+    "react-dom": "^18.3.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.0",

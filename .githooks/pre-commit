@@ -11,9 +11,6 @@ echo "🧪 Pre-commit: unit tests"
 pnpm test
 
 echo "🏗️  Pre-commit: build"
-NEXT_PUBLIC_API_URL=http://127.0.0.1:3000 \
-NEXT_PUBLIC_CHAIN_ID=31337 \
-NEXT_PUBLIC_BRIDGE_ADDRESS=0xa513E6E4b8f2a923D98304ec87F64353C4D5C853 \
 pnpm build
 
 echo "✅ All checks passed"

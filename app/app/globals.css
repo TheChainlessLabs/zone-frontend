@@ -29,6 +29,33 @@ body {
   color: var(--foreground);
   font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+  position: relative;
+}
+
+/* Ambient dot-grid background — applies to every route via a fixed-position
+   pseudo-element so it doesn't interfere with body content. Originated on
+   the M3.7 /not-found page; promoted to global brand chrome per Brian's
+   review. The mask fades the grid out toward the edges so it never fights
+   content; pointer-events are off so it can't intercept clicks. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: radial-gradient(circle, var(--border) 1px, transparent 1px);
+  background-size: 24px 24px;
+  background-position: 0 0;
+  -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, #000 30%, transparent 80%);
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, #000 30%, transparent 80%);
+  opacity: 0.7;
+}
+
+@media (prefers-contrast: more) {
+  /* Solid background for high-contrast users; dot grid disappears. */
+  body::before {
+    display: none;
+  }
 }
 
 /* Liquid-glass surface utility. Apply to specific moments only — see

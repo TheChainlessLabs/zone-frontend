@@ -1,13 +1,14 @@
 "use client";
 
-import { motion } from "motion/react";
-import { type ReactNode } from "react";
+import { motion, MotionConfig } from "motion/react";
+import { useState, type ReactNode } from "react";
 import {
   AlignCenter,
   AlignLeft,
   AlignRight,
   ArrowRight,
   Check,
+  ChevronDown,
   Copy,
   Lock,
   LogOut,
@@ -71,6 +72,7 @@ import {
   DrawerTrigger,
 } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
+import { Animate, AnimatePresence } from "@/components/ui/animate";
 import { type LucideIcon } from "lucide-react";
 import { Icon } from "@/lib/icons";
 
@@ -89,6 +91,7 @@ const SECTIONS = [
   { id: "separator", number: "12", label: "Separator" },
   { id: "icons", number: "13", label: "Icons" },
   { id: "glass-variants", number: "14", label: "Glass" },
+  { id: "motion", number: "15", label: "Motion" },
 ] as const;
 
 // Semantic-name → Lucide source-name map, used in the /system Icons section
@@ -998,6 +1001,42 @@ export function cn(...inputs: ClassValue[]) {
           </div>
         </Section>
 
+        <Section
+          id="motion"
+          number="15"
+          label="Motion"
+          title={
+            <>
+              Five variants.{" "}
+              <span className="font-serif text-[var(--muted-foreground)]">
+                One ladder.
+              </span>
+            </>
+          }
+          description={
+            <>
+              Motion lives behind one primitive —{" "}
+              <code className="font-mono text-xs text-[var(--foreground)]">
+                {"<Animate variant=\"…\">"}
+              </code>
+              . The ladder is locked to{" "}
+              <a
+                href="https://github.com/TheChainlessLabs/omega-docs/blob/main/03-brand/visual-identity.md"
+                className="font-mono text-xs text-[var(--foreground)] underline underline-offset-4 hover:text-[var(--muted-foreground)]"
+              >
+                omega-docs/03-brand/visual-identity.md
+              </a>
+              .{" "}
+              <span className="font-serif text-[var(--foreground)]">
+                Reduced motion is a first-class path
+              </span>
+              — toggle the simulator to preview it.
+            </>
+          }
+        >
+          <MotionShowcase />
+        </Section>
+
         <footer className="border-t border-[var(--border)] py-12">
           <div className="mx-auto flex max-w-6xl flex-col items-start gap-3 px-4 text-xs text-[var(--muted-foreground)] md:px-8">
             <div className="font-mono uppercase tracking-[0.18em]">
@@ -1128,6 +1167,175 @@ function GlassWell({ children }: { children: ReactNode }) {
         {children}
       </div>
     </div>
+  );
+}
+
+function MotionShowcase() {
+  // The simulator wraps the demo blocks in <MotionConfig reducedMotion="always">
+  // so designers reviewing the page can flip into reduced-motion without
+  // touching their OS preference. The hook inside <Animate> reads from this
+  // context, so the toggle is real — not a visual fake.
+  const [simulateReduced, setSimulateReduced] = useState(false);
+
+  return (
+    <div className="flex flex-col gap-8">
+      <div className="flex flex-col gap-3">
+        <ColumnLabel>API</ColumnLabel>
+        <pre className="overflow-x-auto rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--muted)]/40 p-4 font-mono text-[11px] leading-relaxed text-[var(--foreground)]">
+          <code>{`import { Animate, AnimatePresence } from "@/components/ui/animate";
+
+<Animate variant="enter" delay={0.1}>
+  <Card>…</Card>
+</Animate>
+
+<AnimatePresence>
+  {open && <Animate variant="exit" key="x">…</Animate>}
+</AnimatePresence>`}</code>
+        </pre>
+      </div>
+
+      <label className="flex cursor-pointer items-center gap-3 self-start rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--muted)]/30 px-3 py-2 text-xs">
+        <input
+          type="checkbox"
+          checked={simulateReduced}
+          onChange={(e) => setSimulateReduced(e.target.checked)}
+          className="accent-[var(--foreground)]"
+        />
+        <span className="font-mono uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
+          Simulate prefers-reduced-motion
+        </span>
+      </label>
+
+      <MotionConfig reducedMotion={simulateReduced ? "always" : "user"}>
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <MotionDemoCard label="enter · 200ms ease-out">
+            <EnterExitDemo />
+          </MotionDemoCard>
+          <MotionDemoCard label="exit · 150ms ease-in">
+            <EnterExitDemo flavor="exit" />
+          </MotionDemoCard>
+          <MotionDemoCard label="expand · 250ms ease-out">
+            <ExpandDemo />
+          </MotionDemoCard>
+          <MotionDemoCard label="pop · 100ms ease-out">
+            <PopDemo />
+          </MotionDemoCard>
+          <MotionDemoCard label="drawer · spring (360/32/0.9)" full>
+            <DrawerDemo />
+          </MotionDemoCard>
+        </div>
+      </MotionConfig>
+    </div>
+  );
+}
+
+function MotionDemoCard({
+  label,
+  full,
+  children,
+}: {
+  label: string;
+  full?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <div
+      className={`flex flex-col gap-4 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--muted)]/40 p-5 ${full ? "md:col-span-2" : ""}`}
+    >
+      <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--foreground)]">
+        {label}
+      </span>
+      <div className="flex min-h-[7rem] items-center justify-center rounded-[var(--radius-md)] bg-[var(--background)] p-4">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function EnterExitDemo({ flavor = "enter" }: { flavor?: "enter" | "exit" }) {
+  const [shown, setShown] = useState(true);
+  return (
+    <div className="flex w-full flex-col items-center gap-4">
+      <Button variant="outline" size="sm" onClick={() => setShown((s) => !s)}>
+        {shown ? "Hide" : "Show"}
+      </Button>
+      <div className="flex h-16 w-full items-center justify-center">
+        <AnimatePresence initial={false} mode="wait">
+          {shown && (
+            <Animate
+              key={flavor}
+              variant={flavor}
+              className="flex h-12 w-40 items-center justify-center rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--card)] font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--foreground)]"
+            >
+              {flavor}
+            </Animate>
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+}
+
+function ExpandDemo() {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="flex w-full flex-col items-stretch gap-3">
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => setOpen((o) => !o)}
+        className="self-start"
+      >
+        <ChevronDown
+          className={`transition-transform ${open ? "rotate-180" : ""}`}
+        />
+        {open ? "Collapse" : "Expand"}
+      </Button>
+      <AnimatePresence initial={false}>
+        {open && (
+          <Animate variant="expand" key="panel">
+            <p className="rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--card)] p-4 text-xs leading-relaxed text-[var(--muted-foreground)]">
+              Match at midpoint. Internal liquidity is matched first inside the
+              TEE; the residual routes to a bonded solver, then to external
+              aggregators if needed.
+            </p>
+          </Animate>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function PopDemo() {
+  return (
+    <Animate variant="pop">
+      <Button>Press me</Button>
+    </Animate>
+  );
+}
+
+function DrawerDemo() {
+  return (
+    <Drawer>
+      <DrawerTrigger asChild>
+        <Button variant="outline">Open drawer</Button>
+      </DrawerTrigger>
+      <DrawerContent>
+        <DrawerHeader>
+          <DrawerTitle>Drawer · spring</DrawerTitle>
+          <DrawerDescription>
+            Vaul carries the spring physics natively. The{" "}
+            <code className="font-mono text-[var(--foreground)]">drawer</code>{" "}
+            variant is the JS counterpart for non-vaul surfaces.
+          </DrawerDescription>
+        </DrawerHeader>
+        <DrawerFooter>
+          <DrawerClose asChild>
+            <Button variant="ghost">Close</Button>
+          </DrawerClose>
+        </DrawerFooter>
+      </DrawerContent>
+    </Drawer>
   );
 }
 

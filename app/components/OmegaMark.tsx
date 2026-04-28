@@ -1,0 +1,36 @@
+/**
+ * OmegaMark — Omega Markets logo, glyph-only variant.
+ *
+ * Source of truth: omega-docs/03-brand/assets/logo/omega-mark-glyph.svg.
+ * Inlined here so the mark inherits currentColor across themes (and so we
+ * avoid an extra HTTP request for a 1.5 KB asset). When the upstream SVG
+ * changes, mirror the updated paths into this component.
+ *
+ * For the framed black-background variant, use the raster from
+ * omega-docs/03-brand/assets/logo/omega-mark.svg or omega-mark.png.
+ */
+export function OmegaMark({
+  size = 24,
+  className,
+  title,
+}: {
+  size?: number;
+  className?: string;
+  title?: string;
+}) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 1024 1024"
+      fill="currentColor"
+      className={className}
+      role={title ? "img" : "presentation"}
+      aria-label={title}
+      aria-hidden={title ? undefined : true}
+    >
+      <path d="M529.133 426.722C573.179 425.646 611.639 435.775 650.022 456.799C650.414 457.737 650.797 458.679 651.174 459.623C666.387 497.142 665.886 539.201 649.783 576.346C633.926 612.657 605.101 639.574 568.351 654.012C567.576 612.188 568.472 570.09 568.202 528.246C568.175 524.053 567.846 519.969 566.911 515.875C558.82 480.451 533.037 463.233 497.374 471.274C474.781 478.151 458.782 496.031 456.715 519.62C455.49 533.602 456.107 549.889 456.109 564.017C456.363 594.173 456.401 624.331 456.223 654.488C437.997 646.728 424.901 639.694 409.918 626.274C387.933 606.205 372.554 579.939 365.812 550.945C364.475 545.41 362.741 537.056 362.554 531.573C361.967 514.279 372.525 495.609 384.276 483.481C414.492 452.293 456.14 435.185 498.615 429.072C509.629 427.487 518.13 427.129 529.133 426.722Z" />
+      <path d="M501.459 366.712C527.941 364.032 561.27 371.885 584.227 384.812C605.483 396.782 630.165 419.097 641.139 440.988C593.699 385.98 518.858 372.421 453.069 400.404C447.467 402.884 441.072 406.27 435.787 409.336C399.742 429.917 373.557 464.206 363.191 504.398C363.206 474.958 380.208 439.335 399.351 417.384C425.442 387.779 462.102 369.585 501.459 366.712Z" />
+    </svg>
+  );
+}

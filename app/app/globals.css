@@ -1,1 +1,159 @@
 @import "tailwindcss";
+
+/* Omega Markets — design tokens (sourced from omega-docs/03-brand/assets/tokens.json).
+   Default mode is dark. Light mode supported via [data-theme="light"]. */
+
+:root {
+  --background: #09090b;
+  --foreground: #fafafa;
+  --card: #09090b;
+  --card-foreground: #fafafa;
+  --muted: #18181b;
+  --muted-foreground: #a1a1aa;
+  --accent: #27272a;
+  --accent-foreground: #fafafa;
+  --primary: #fafafa;
+  --primary-foreground: #18181b;
+  --secondary: #27272a;
+  --secondary-foreground: #fafafa;
+  --destructive: #ef4444;
+  --success: #10b981;
+  --border: #27272a;
+  --input: #27272a;
+  --ring: #d4d4d8;
+
+  /* Liquid-glass material */
+  --glass-fill: rgba(255, 255, 255, 0.04);
+  --glass-edge: rgba(255, 255, 255, 0.10);
+  --glass-highlight: rgba(255, 255, 255, 0.14);
+  --glass-blur: 24px;
+  --glass-saturate: 1.4;
+
+  /* Radius — slightly rounder than shadcn defaults; restraint is still the rule. */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
+}
+
+[data-theme="light"] {
+  --background: #fafafa;
+  --foreground: #09090b;
+  --card: #fafafa;
+  --card-foreground: #09090b;
+  --muted: #f4f4f5;
+  --muted-foreground: #71717a;
+  --accent: #f4f4f5;
+  --accent-foreground: #18181b;
+  --primary: #18181b;
+  --primary-foreground: #fafafa;
+  --secondary: #f4f4f5;
+  --secondary-foreground: #18181b;
+  --destructive: #dc2626;
+  --success: #059669;
+  --border: #e4e4e7;
+  --input: #e4e4e7;
+  --ring: #09090b;
+
+  --glass-fill: rgba(255, 255, 255, 0.60);
+  --glass-edge: rgba(0, 0, 0, 0.06);
+  --glass-highlight: rgba(255, 255, 255, 0.80);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-destructive: var(--destructive);
+  --color-success: var(--success);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-serif: var(--font-serif);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Liquid-glass surface utility. Apply to specific moments only — see
+   omega-docs/03-brand/visual-identity.md for the rules. */
+.glass {
+  background: var(--glass-fill);
+  border: 1px solid var(--glass-edge);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  box-shadow:
+    inset 0 1px 0 0 var(--glass-highlight),
+    0 8px 24px 0 rgba(0, 0, 0, 0.32),
+    0 2px 8px 0 rgba(0, 0, 0, 0.24);
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .glass {
+    background: var(--muted);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .glass {
+    background: var(--muted);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+.font-tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Editorial italic — Source Serif 4. Use for display moments only:
+   hero lede, section ledes, mood paragraph, naming italic specimen.
+   Never for body / data / labels. */
+.font-serif {
+  font-family: var(--font-serif), ui-serif, Georgia, "Times New Roman", serif;
+  font-style: italic;
+}
+
+/* Glass component variants — for buttons, pills, inputs, toggles.
+   Same material rules as .glass, scaled. */
+.glass-pill {
+  background: var(--glass-fill);
+  border: 1px solid var(--glass-edge);
+  backdrop-filter: blur(16px) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(16px) saturate(var(--glass-saturate));
+  box-shadow:
+    inset 0 1px 0 0 var(--glass-highlight),
+    0 1px 4px 0 rgba(0, 0, 0, 0.24);
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .glass-pill {
+    background: var(--muted);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .glass-pill {
+    background: var(--muted);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}

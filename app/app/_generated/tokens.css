@@ -1,7 +1,7 @@
 /* GENERATED FILE — do not edit by hand.
  * Regenerate via `pnpm sync-tokens` (auto-runs before `pnpm dev` and `pnpm build`).
  * Source: omega-docs/03-brand/assets/tokens.json
- * Source SHA: b516079d35d2b9a9dc6e001e4e596bfaaf8e8bc7
+ * Source SHA: cfbdda9b7a7984963e65368f5dea3a87e1984d69
  * Generator: scripts/sync-tokens.mjs
  */
 
@@ -39,10 +39,10 @@
   --glass-saturate: 1.4;
 
   /* Radius scale. */
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
   --radius-full: 9999px;
 
   /* Motion — durations and easing curves. */

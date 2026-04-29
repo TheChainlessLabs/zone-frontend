@@ -4,14 +4,18 @@
  * /account — minimal account surface (M3.5 wireframe, closes #146).
  *
  * Per the PRD (omega-docs#5 Q4) the v0 surface is intentionally narrow:
- * connected wallet info, gas preference, theme, sign out. No public
- * lookup at v0; that ships in v1+. The page is auth-gated — disconnected
+ * connected wallet, gas preference, theme, preferences, sign out. No
+ * public lookup at v0; that ships in v1+. Auth-gated — disconnected
  * viewers see the standard DisconnectedState.
  *
  * The data is wallet-state-driven. The address comes from
  * `useWalletState()` so it matches the navbar pill when the mock flow
  * is in `connected`. The fixture is the fallback for `?walletState=`
  * reviewers that haven't run through the connect flow.
+ *
+ * The user's in-exchange routing identity is derived deterministically
+ * from the L1 wallet's signature inside the matching engine; it isn't
+ * surfaced here because it's internal.
  */
 
 import * as React from "react";
@@ -23,6 +27,8 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Toggle } from "@/components/ui/toggle";
 import { Icon } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 import { accountFixtures } from "@/lib/fixtures";
@@ -33,6 +39,8 @@ import {
 
 const ETHERSCAN_BASE = "https://etherscan.io/address/";
 const GAS_STORAGE_KEY = "omega:gas-preference";
+const REDUCE_MOTION_STORAGE_KEY = "omega:pref:reduce-motion";
+const ADVANCED_ORDERS_STORAGE_KEY = "omega:pref:advanced-orders";
 
 type GasPref = "fast" | "normal" | "slow";
 
@@ -72,12 +80,12 @@ export default function AccountPage() {
   const fixture = accountFixtures.default;
   // wallet.address is set whenever the state is connected / wrong-network /
   // no-nft-pass; fall back to the fixture address for `?walletState=`
-  // overrides that haven't run through the connect flow. The fixture
-  // address is `0x${string} | null` — coerce to a guaranteed string here.
+  // overrides that haven't run through the connect flow.
   const address: string =
     wallet.address ?? fixture.address ?? "0x0000000000000000000000000000000000000000";
   const chainName = wallet.chainName ?? "Ethereum";
   const truncated = truncateAddress(address);
+  const sessionStartedAt = fixture.sessionStartedAt;
 
   return (
     <AppShell route="/account" auth>
@@ -107,6 +115,11 @@ export default function AccountPage() {
                   </a>
                 </Button>
               </div>
+              {sessionStartedAt ? (
+                <span className="font-mono text-[11px] text-[var(--muted-foreground)]">
+                  Connected since {formatSessionStart(sessionStartedAt)}
+                </span>
+              ) : null}
             </div>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
               <Field label="Chain" value={chainName} />
@@ -125,6 +138,10 @@ export default function AccountPage() {
 
         <PageSection title="Gas preference">
           <GasPreferencePicker />
+        </PageSection>
+
+        <PageSection title="Preferences">
+          <PreferencesCard fixture={fixture} />
         </PageSection>
 
         <PageSection title="Theme">
@@ -164,7 +181,7 @@ export default function AccountPage() {
 }
 
 /* ────────────────────────────────────────────────────────────────────────── */
-/*  Sections                                                                  */
+/*  Gas preference — segmented control                                        */
 /* ────────────────────────────────────────────────────────────────────────── */
 
 function GasPreferencePicker() {
@@ -188,49 +205,148 @@ function GasPreferencePicker() {
     }
   }, []);
 
+  const activeHint = GAS_OPTIONS.find((o) => o.value === pref)?.hint ?? "";
+
   return (
-    <Card
-      className="flex flex-col gap-3 p-5 md:p-6"
-      role="radiogroup"
-      aria-label="Gas preference"
-    >
-      {GAS_OPTIONS.map((opt) => {
-        const active = opt.value === pref;
-        return (
-          <button
-            key={opt.value}
-            type="button"
-            role="radio"
-            aria-checked={active}
-            onClick={() => onSelect(opt.value)}
-            className={cn(
-              "flex items-start justify-between gap-4 rounded-[var(--radius-md)] border px-4 py-3 text-left transition-colors",
-              active
-                ? "border-[var(--foreground)] bg-[var(--muted)]/40"
-                : "border-[var(--border)] hover:bg-[var(--muted)]/20",
-            )}
-          >
-            <div className="flex flex-col gap-1">
-              <span className="text-sm font-medium">{opt.label}</span>
-              <span className="text-xs text-[var(--muted-foreground)]">
-                {opt.hint}
-              </span>
-            </div>
-            <span
-              aria-hidden
+    <Card className="flex flex-col gap-3 p-3 md:p-4">
+      <div
+        role="radiogroup"
+        aria-label="Gas preference"
+        className="flex items-center gap-1 rounded-[var(--radius-md)] bg-[var(--muted)]/40 p-1"
+      >
+        {GAS_OPTIONS.map((opt) => {
+          const active = opt.value === pref;
+          return (
+            <button
+              key={opt.value}
+              type="button"
+              role="radio"
+              aria-checked={active}
+              onClick={() => onSelect(opt.value)}
               className={cn(
-                "mt-1 inline-block h-3 w-3 shrink-0 rounded-full border",
+                "flex-1 rounded-[var(--radius-sm)] px-3 py-2 text-sm font-medium transition-colors",
                 active
-                  ? "border-[var(--foreground)] bg-[var(--foreground)]"
-                  : "border-[var(--muted-foreground)]/40",
+                  ? "bg-[var(--foreground)] text-[var(--background)]"
+                  : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]",
               )}
-            />
-          </button>
-        );
-      })}
+            >
+              {opt.label}
+            </button>
+          );
+        })}
+      </div>
+      <p className="px-1 text-xs text-[var(--muted-foreground)]">{activeHint}</p>
     </Card>
   );
 }
+
+/* ────────────────────────────────────────────────────────────────────────── */
+/*  Preferences — toggles                                                     */
+/* ────────────────────────────────────────────────────────────────────────── */
+
+function PreferencesCard({
+  fixture,
+}: {
+  fixture: { preferences: { reduceMotion: boolean; showAdvancedOrderTypes: boolean } };
+}) {
+  const [reduceMotion, setReduceMotion] = useStoredToggle(
+    REDUCE_MOTION_STORAGE_KEY,
+    fixture.preferences.reduceMotion,
+  );
+  const [advanced, setAdvanced] = useStoredToggle(
+    ADVANCED_ORDERS_STORAGE_KEY,
+    fixture.preferences.showAdvancedOrderTypes,
+  );
+
+  return (
+    <Card className="flex flex-col p-5 md:p-6">
+      <PreferenceRow
+        label="Reduce motion"
+        hint="Damp page transitions and microinteractions."
+        ariaLabel="Reduce motion"
+        value={reduceMotion}
+        onChange={setReduceMotion}
+      />
+      <Separator className="my-4" />
+      <PreferenceRow
+        label="Show advanced order types"
+        hint="Surface stop-limit, IOC, FOK, and post-only on the trade form."
+        ariaLabel="Show advanced order types"
+        value={advanced}
+        onChange={setAdvanced}
+      />
+    </Card>
+  );
+}
+
+function PreferenceRow({
+  label,
+  hint,
+  ariaLabel,
+  value,
+  onChange,
+}: {
+  label: string;
+  hint: string;
+  ariaLabel: string;
+  value: boolean;
+  onChange: (next: boolean) => void;
+}) {
+  return (
+    <div className="flex items-start justify-between gap-4">
+      <div className="flex min-w-0 flex-col gap-1">
+        <span className="text-sm font-medium">{label}</span>
+        <span className="text-xs text-[var(--muted-foreground)]">{hint}</span>
+      </div>
+      <Toggle
+        variant="outline"
+        size="sm"
+        pressed={value}
+        onPressedChange={onChange}
+        aria-label={ariaLabel}
+        className="min-h-[32px] shrink-0"
+      >
+        {value ? "On" : "Off"}
+      </Toggle>
+    </div>
+  );
+}
+
+/** Hook: a boolean state persisted to localStorage with the SSR default
+ *  preserved until hydration so the markup doesn't flap. */
+function useStoredToggle(
+  key: string,
+  fallback: boolean,
+): [boolean, (next: boolean) => void] {
+  const [value, setValue] = React.useState(fallback);
+  const hydrated = React.useRef(false);
+
+  React.useEffect(() => {
+    if (hydrated.current) return;
+    hydrated.current = true;
+    if (typeof window === "undefined") return;
+    const raw = window.localStorage.getItem(key);
+    if (raw === "1" || raw === "0") {
+      setValue(raw === "1");
+    }
+  }, [key]);
+
+  const onChange = React.useCallback(
+    (next: boolean) => {
+      setValue(next);
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(key, next ? "1" : "0");
+      }
+    },
+    [key],
+  );
+
+  return [value, onChange];
+}
+
+/* ────────────────────────────────────────────────────────────────────────── */
+/*  Tiny presentational helpers                                               */
+/* ────────────────────────────────────────────────────────────────────────── */
 
 function Field({
   label,
@@ -285,4 +401,20 @@ function CopyButton({ value, label }: { value: string; label: string }) {
       <span className="text-xs">{copied ? "Copied" : "Copy"}</span>
     </Button>
   );
+}
+
+/** Format `2026-04-27T09:00:00Z` → `Apr 27, 2026 · 09:00 UTC`. */
+function formatSessionStart(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  const months = [
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+  ];
+  const mon = months[d.getUTCMonth()];
+  const day = String(d.getUTCDate()).padStart(2, "0");
+  const year = d.getUTCFullYear();
+  const hh = String(d.getUTCHours()).padStart(2, "0");
+  const mm = String(d.getUTCMinutes()).padStart(2, "0");
+  return `${mon} ${day}, ${year} · ${hh}:${mm} UTC`;
 }

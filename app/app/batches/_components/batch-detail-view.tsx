@@ -60,7 +60,7 @@ export function BatchDetailView({ id }: { id: string }) {
       : fixture;
 
   return (
-    <PageLayout width="default">
+    <PageLayout width="wide">
       <Variant07Detail fixture={fixtureForVariant} listHref="/batches" />
       <PrivacyFooter />
     </PageLayout>

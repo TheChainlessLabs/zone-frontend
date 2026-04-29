@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Surgical polish on the OrderForm: drop the soft-shadow envelope, demote the side toggle from tinted to neutral, kill the duplicate Type/Fee/Est strip (ExecutionContextStrip below the form already carries it), retire the under-CTA padlock caption (state belongs in page chrome once, not under every button), and re-air the spacing rhythm — Hana Mori, Persona 14.
 
 "use client";

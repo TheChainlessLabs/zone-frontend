@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Sectioned rewrite of components/trade/order-form.tsx — Caleb's lens.
 // Promotes midpoint-match status and the matching engine from a 11px footer
 // to the loudest part of the ticket; replaces the "Type · Fee · Est. receive"

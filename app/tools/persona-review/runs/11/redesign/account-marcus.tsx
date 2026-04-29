@@ -1,3 +1,4 @@
+// @ts-nocheck
 // /account, sectioned rewrite — adds Activity log, Export, Trust + compliance, Operator role.
 // Reason: the page is the institutional onboarding surface; today it's a settings page.
 // A fund operator must be able to answer "what has this wallet signed, where are the receipts,

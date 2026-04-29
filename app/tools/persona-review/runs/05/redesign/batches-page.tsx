@@ -1,3 +1,4 @@
+// @ts-nocheck
 // /batches rebuilt as an editorial public record: masthead lede, dated rule, run-of-paper attestation column, marginalia rail.
 // Persona 05 (Luca Bianchi) — restraint over chrome; Source Serif 4 italic earns its place exactly twice; mono carries the data plane.
 

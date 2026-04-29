@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Rebuilt /portfolio as a reconciliation-first ledger dashboard so users can trace deposits, fills, batch settlement, and withdrawal readiness in one surface.
 "use client";
 

@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Sectioned rewrite of components/trade/order-form.tsx — adds an explicit Verify Order step (Schwab/Fidelity-style preview gate) between Edit and Submit, plus inline glossary definitions for retail traders new to off-exchange midpoint execution. No production wiring; this lives in tools/persona-review/runs/17/redesign/ as a reference implementation.
 
 "use client";

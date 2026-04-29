@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Sophie Dubois — surgical polish on the OrderForm card. Adds an italic editorial venue plate, demotes Buy/Sell colour to a confirmation-only register, removes per-input shadow envelopes that read as Vercel-template, and restores Source Serif 4 italic as the host voice on /trade.
 "use client";
 

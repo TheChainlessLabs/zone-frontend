@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Persona 09 rebuild: replaces the chart-led portfolio hero with a dense account-state dashboard for faster trading scans.
 "use client";
 

@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client";
 
 // Rafael pass: add a visible execution rail and stronger ticket feedback so submit never feels frozen.

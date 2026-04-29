@@ -79,6 +79,7 @@ export default function PersonasPreviewPage({
           className="mt-6"
         >
           <ContentTabs
+            personaId={active.id}
             critique={artefacts.critique}
             inspirations={artefacts.inspirations}
             redesignSource={artefacts.redesignSource}

@@ -14,14 +14,34 @@
 
   /* Soft surface treatment — diffuse drop + faint inner ring. See
      omega-docs/03-brand/visual-identity.md "Surface treatment". The sync
-     script doesn't emit shadow tokens yet (TODO follow-up); inlined
-     here from tokens.json shadow.{soft,surface-edge}. */
-  --shadow-soft: 0 8px 32px -8px rgba(0, 0, 0, 0.40), 0 2px 8px -2px rgba(0, 0, 0, 0.30);
+     script doesn't emit shadow tokens yet (TODO upstream omega-docs to
+     add shadow tokens); inlined here from tokens.json
+     shadow.{soft,surface-edge}.
+
+     Restraint pass: previous values used 30–40% black drops which read
+     as heavy on dark and ridiculous on light. Replaced with a much
+     subtler envelope; light mode tones down further so the drop on a
+     near-white background isn't the loudest thing on the page. */
+  --shadow-soft:
+    0 2px 10px -2px rgba(0, 0, 0, 0.22),
+    0 1px 2px -1px rgba(0, 0, 0, 0.12);
   --surface-edge: rgba(255, 255, 255, 0.08);
+
+  --glass-shadow:
+    0 4px 16px 0 rgba(0, 0, 0, 0.16),
+    0 1px 3px 0 rgba(0, 0, 0, 0.10);
+  --glass-pill-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.12);
 }
 
 [data-theme="light"] {
   --surface-edge: rgba(0, 0, 0, 0.06);
+  --shadow-soft:
+    0 1px 4px -1px rgba(15, 23, 42, 0.05),
+    0 1px 2px -1px rgba(15, 23, 42, 0.04);
+  --glass-shadow:
+    0 2px 8px 0 rgba(15, 23, 42, 0.05),
+    0 1px 2px 0 rgba(15, 23, 42, 0.04);
+  --glass-pill-shadow: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
 }
 
 body {
@@ -67,8 +87,7 @@ body::before {
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
   box-shadow:
     inset 0 1px 0 0 var(--glass-highlight),
-    0 8px 24px 0 rgba(0, 0, 0, 0.32),
-    0 2px 8px 0 rgba(0, 0, 0, 0.24);
+    var(--glass-shadow);
 }
 
 @supports not (backdrop-filter: blur(1px)) {
@@ -126,7 +145,7 @@ body::before {
   -webkit-backdrop-filter: blur(16px) saturate(var(--glass-saturate));
   box-shadow:
     inset 0 1px 0 0 var(--glass-highlight),
-    0 1px 4px 0 rgba(0, 0, 0, 0.24);
+    var(--glass-pill-shadow);
 }
 
 @supports not (backdrop-filter: blur(1px)) {

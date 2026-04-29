@@ -44,6 +44,20 @@ function defaultPropsFor(target: RenderTarget): Record<string, unknown> {
   return {};
 }
 
+/**
+ * Defer mount to the client. Several agent-produced redesigns use
+ * non-deterministic patterns at render time (`window`, time-of-render
+ * derivations, etc.) that crash on hydration when SSR's HTML doesn't
+ * match the client's. Mounting after hydration sidesteps that — the
+ * variant only ever runs client-side here.
+ */
+function ClientOnly({ children }: { children: React.ReactNode }) {
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => setMounted(true), []);
+  if (!mounted) return null;
+  return <>{children}</>;
+}
+
 class RenderBoundary extends React.Component<
   { children: React.ReactNode; id: string },
   { error: Error | null }
@@ -96,7 +110,9 @@ export default function PersonaRenderPage({
   if (FULL_PAGE_TARGETS.includes(entry.target)) {
     return (
       <RenderBoundary id={entry.id}>
-        <Component {...props} />
+        <ClientOnly>
+          <Component {...props} />
+        </ClientOnly>
       </RenderBoundary>
     );
   }
@@ -105,9 +121,11 @@ export default function PersonaRenderPage({
   // component sits in a context similar to its production home.
   return (
     <RenderBoundary id={entry.id}>
-      <div className="mx-auto max-w-[640px] px-4 py-8 md:py-12">
-        <Component {...props} />
-      </div>
+      <ClientOnly>
+        <div className="mx-auto max-w-[640px] px-4 py-8 md:py-12">
+          <Component {...props} />
+        </div>
+      </ClientOnly>
     </RenderBoundary>
   );
 }

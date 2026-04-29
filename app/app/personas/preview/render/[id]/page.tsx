@@ -16,6 +16,11 @@ import * as React from "react";
 import { notFound } from "next/navigation";
 
 import { Card } from "@/components/ui/card";
+import {
+  batchesDetailFixtures,
+  batchesListFixtures,
+  portfolioFixtures,
+} from "@/lib/fixtures";
 
 import { REGISTRY, type RenderTarget } from "../_registry";
 
@@ -34,13 +39,26 @@ const ORDER_FORM_DEFAULT_PROPS: Record<string, unknown> = {
   loading: false,
 };
 
-const BATCH_DETAIL_DEFAULT_PROPS: Record<string, unknown> = {
-  id: "4821",
-};
-
+/**
+ * Several agent-produced redesigns destructure their fixture data from
+ * props (some take `fixture`, some `data`, some specific shapes). We
+ * pass the canonical fixture under multiple property names so each
+ * variant finds what it expects without being patched individually.
+ */
 function defaultPropsFor(target: RenderTarget): Record<string, unknown> {
   if (target === "order-form") return ORDER_FORM_DEFAULT_PROPS;
-  if (target === "batch-detail") return BATCH_DETAIL_DEFAULT_PROPS;
+  if (target === "batch-detail") {
+    const f = batchesDetailFixtures.verified;
+    return { id: "4821", fixture: f, data: f, batch: f.batch, fills: f.fills };
+  }
+  if (target === "portfolio-page") {
+    const f = portfolioFixtures.default;
+    return { fixture: f, data: f, ...f };
+  }
+  if (target === "batches-page") {
+    const f = batchesListFixtures.default;
+    return { fixture: f, data: f, batches: f.batches };
+  }
   return {};
 }
 

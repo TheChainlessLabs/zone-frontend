@@ -44,20 +44,44 @@
   --glass-pill-shadow: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
 }
 
+/* Per-route surface atmosphere.
+   --------------------------------------------------------------------
+   Product routes (/trade, /portfolio, /batches, /account, …) get a
+   barely-perceptible radial vignette painted directly on `body` — the
+   same Linear / Vercel / Stripe Dashboard cue that says "real product"
+   without the SaaS-template dot-grid wallpaper.
+
+   Brand and review surfaces (`/brand`, `/system`, `/404`) opt back into
+   the legacy ambient dot-grid via `body::before`, since those pages
+   trade as design specimens and benefit from the texture.
+
+   Routing signal: `<RouteAtmosphere>` (rendered in `app/layout.tsx`)
+   sets `data-route` on `<body>` from `usePathname()`. The 404 page
+   renders its own `<RouteAtmosphere route="/404">` because
+   `usePathname()` returns the originally requested URL there, not a
+   stable sentinel. */
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   position: relative;
+  /* Default: vignette product atmosphere. The center stays exactly at
+     `--background` so foreground content sits on the canonical token;
+     edges deepen ~8% toward black, which on dark mode reads as a
+     centered glow and on light mode as a quiet page-edge falloff. */
+  background-image: radial-gradient(
+    ellipse at center,
+    var(--background) 0%,
+    var(--background) 60%,
+    color-mix(in oklab, var(--background) 92%, black) 100%
+  );
+  background-attachment: fixed;
 }
 
-/* Ambient dot-grid background — applies to every route via a fixed-position
-   pseudo-element so it doesn't interfere with body content. Originated on
-   the M3.7 /not-found page; promoted to global brand chrome per Brian's
-   review. The mask fades the grid out toward the edges so it never fights
-   content; pointer-events are off so it can't intercept clicks. */
 body::before {
+  /* Off by default — see route-specific overrides below. */
+  display: none;
   content: "";
   position: fixed;
   inset: 0;
@@ -71,8 +95,29 @@ body::before {
   opacity: 0.7;
 }
 
+/* Brand + review surfaces: re-enable the dot-grid and drop the vignette
+   so the texture isn't fighting the gradient underneath. */
+body[data-route^="/brand"],
+body[data-route^="/system"],
+body[data-route="/404"] {
+  background-image: none;
+}
+
+body[data-route^="/brand"]::before,
+body[data-route^="/system"]::before,
+body[data-route="/404"]::before {
+  display: block;
+}
+
 @media (prefers-contrast: more) {
-  /* Solid background for high-contrast users; dot grid disappears. */
+  /* Solid background for high-contrast users; dot grid disappears and
+     the vignette flattens to the canonical token. */
+  body,
+  body[data-route^="/brand"],
+  body[data-route^="/system"],
+  body[data-route="/404"] {
+    background-image: none;
+  }
   body::before {
     display: none;
   }

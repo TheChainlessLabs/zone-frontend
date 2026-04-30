@@ -1,13 +1,19 @@
 import { NotFoundContents } from "@/components/NotFoundContents";
+import { RouteAtmosphere } from "@/components/shell/RouteAtmosphere";
 
 /**
  * Next.js App Router 404. Triggered by `notFound()` from any server component
  * and as the catch-all for unknown routes. See
  * https://nextjs.org/docs/app/api-reference/file-conventions/not-found.
+ *
+ * The RouteAtmosphere override pins `data-route="/404"` on `<body>` so
+ * global CSS keeps the dot-grid here regardless of the originally
+ * requested URL (which `usePathname()` would otherwise surface).
  */
 export default function NotFound() {
   return (
     <main className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-4 py-24">
+      <RouteAtmosphere route="/404" />
       <BackdropDotGrid />
       <div className="relative">
         <NotFoundContents />

@@ -5,6 +5,7 @@ import { GeistMono } from "geist/font/mono";
 import { Source_Serif_4 } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { WalletStateProvider } from "@/components/shell/WalletStateProvider";
+import { RouteAtmosphere } from "@/components/shell/RouteAtmosphere";
 import "./globals.css";
 
 // Source Serif 4 — Adobe, OFL. Used for italic display moments only:
@@ -46,8 +47,11 @@ export default function RootLayout({
       <body>
         {/* WalletStateProvider reads `?walletState=` via useSearchParams,
             which Next 14 requires to be inside a Suspense boundary so
-            static rendering of /brand and /system stays bailout-free. */}
+            static rendering of /brand and /system stays bailout-free.
+            RouteAtmosphere shares that boundary because usePathname() also
+            triggers client-side navigation reads. */}
         <Suspense fallback={null}>
+          <RouteAtmosphere />
           <WalletStateProvider>{children}</WalletStateProvider>
         </Suspense>
         <Toaster />

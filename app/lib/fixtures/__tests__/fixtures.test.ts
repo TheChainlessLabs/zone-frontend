@@ -72,6 +72,7 @@ it("/batches search exposes results + no-results", () => {
 });
 
 it("/account exposes default + disconnected", () => {
+  expect(accountFixtures.default.email).toBeDefined();
   expect(accountFixtures.default.address).toBeDefined();
   expect(accountFixtures.disconnected.address).toBeNull();
 });

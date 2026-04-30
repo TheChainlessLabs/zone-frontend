@@ -1,21 +1,11 @@
 "use client";
 
 /**
- * /account — minimal account surface (M3.5 wireframe, closes #146).
+ * /account — email-led identity, theme, and session.
  *
- * Per the PRD (omega-docs#5 Q4) the v0 surface is intentionally narrow:
- * connected wallet, gas preference, theme, preferences, sign out. No
- * public lookup at v0; that ships in v1+. Auth-gated — disconnected
- * viewers see the standard DisconnectedState.
- *
- * The data is wallet-state-driven. The address comes from
- * `useWalletState()` so it matches the navbar pill when the mock flow
- * is in `connected`. The fixture is the fallback for `?walletState=`
- * reviewers that haven't run through the connect flow.
- *
- * The user's in-exchange routing identity is derived deterministically
- * from the L1 wallet's signature inside the matching engine; it isn't
- * surfaced here because it's internal.
+ * v0 auth is email-first with a server-managed pre-generated trading
+ * address. The page reflects that model directly: lead with the user's
+ * email, then the trading address used inside the closed alpha.
  */
 
 import * as React from "react";
@@ -28,9 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Toggle } from "@/components/ui/toggle";
 import { Icon } from "@/lib/icons";
-import { cn } from "@/lib/utils";
 import { accountFixtures } from "@/lib/fixtures";
 import {
   truncateAddress,
@@ -38,39 +26,20 @@ import {
 } from "@/components/shell/WalletStateProvider";
 
 const ETHERSCAN_BASE = "https://etherscan.io/address/";
-const GAS_STORAGE_KEY = "omega:gas-preference";
-const REDUCE_MOTION_STORAGE_KEY = "omega:pref:reduce-motion";
-const ADVANCED_ORDERS_STORAGE_KEY = "omega:pref:advanced-orders";
-
-type GasPref = "fast" | "normal" | "slow";
-
-const GAS_OPTIONS: ReadonlyArray<{
-  value: GasPref;
-  label: string;
-  hint: string;
-}> = [
-  { value: "fast", label: "Fast", hint: "Confirms within ~1 block. Higher tip." },
-  {
-    value: "normal",
-    label: "Normal",
-    hint: "Confirms within ~3 blocks. Default for most flows.",
-  },
-  {
-    value: "slow",
-    label: "Slow",
-    hint: "Confirms within ~10 blocks. Lowest tip.",
-  },
-];
 
 export default function AccountPage() {
   const wallet = useWalletState();
 
-  if (wallet.state === "disconnected" || wallet.state === "connecting") {
+  if (
+    wallet.state !== "connected" &&
+    wallet.state !== "wrong-network" &&
+    wallet.state !== "no-nft-pass"
+  ) {
     return (
       <AppShell route="/account" auth>
         <DisconnectedState
           title="Account is private."
-          description="Connect a wallet to view and update your account."
+          description="Sign up with email to view and update your account."
           onAction={() => {}}
         />
       </AppShell>
@@ -78,11 +47,9 @@ export default function AccountPage() {
   }
 
   const fixture = accountFixtures.default;
-  // wallet.address is set whenever the state is connected / wrong-network /
-  // no-nft-pass; fall back to the fixture address for `?walletState=`
-  // overrides that haven't run through the connect flow.
   const address: string =
     wallet.address ?? fixture.address ?? "0x0000000000000000000000000000000000000000";
+  const email = wallet.email ?? fixture.email;
   const chainName = wallet.chainName ?? "Ethereum";
   const truncated = truncateAddress(address);
   const sessionStartedAt = fixture.sessionStartedAt;
@@ -92,13 +59,20 @@ export default function AccountPage() {
       <PageLayout
         width="default"
         title="Account"
-        description="Wallet, preferences, session."
+        description="Identity, theme, session."
       >
-        <PageSection title={<MonoSectionTitle>Connected wallet</MonoSectionTitle>}>
+        <PageSection title={<MonoSectionTitle>Account</MonoSectionTitle>}>
           <Card className="flex flex-col gap-4 p-5 md:p-6">
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-1.5">
               <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
-                Address
+                Email
+              </span>
+              <span className="text-base">{email}</span>
+            </div>
+            <Separator />
+            <div className="flex flex-col gap-1.5">
+              <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
+                Trading address (server-managed)
               </span>
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-mono text-sm">{truncated}</span>
@@ -115,33 +89,29 @@ export default function AccountPage() {
                   </a>
                 </Button>
               </div>
+              <span className="text-[11px] text-[var(--muted-foreground)]">
+                This address holds your seeded testnet balance during the closed
+                alpha. You don&apos;t manage its keys.
+              </span>
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
+                Closed testnet · Private alpha
+              </span>
               {sessionStartedAt ? (
                 <span className="font-mono text-[11px] text-[var(--muted-foreground)]">
                   Connected since {formatSessionStart(sessionStartedAt)}
                 </span>
               ) : null}
             </div>
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+            <div className="grid grid-cols-2 gap-4">
               <Field label="Chain" value={chainName} />
               <Field
                 label="Connector"
                 value={wallet.connector ?? "Browser wallet"}
               />
-              <Field
-                label="NFT pass"
-                value={fixture.hasNftPass ? "Held" : "Not held"}
-                tone={fixture.hasNftPass ? "success" : "muted"}
-              />
             </div>
           </Card>
-        </PageSection>
-
-        <PageSection title={<MonoSectionTitle>Gas preference</MonoSectionTitle>}>
-          <GasPreferencePicker />
-        </PageSection>
-
-        <PageSection title={<MonoSectionTitle>Preferences</MonoSectionTitle>}>
-          <PreferencesCard fixture={fixture} />
         </PageSection>
 
         <PageSection title={<MonoSectionTitle>Theme</MonoSectionTitle>}>
@@ -159,9 +129,10 @@ export default function AccountPage() {
         <PageSection title={<MonoSectionTitle>Session</MonoSectionTitle>}>
           <Card className="flex flex-col gap-4 p-5 md:p-6">
             <div className="flex flex-col gap-1">
-              <span className="text-sm">Sign out of this wallet on this device.</span>
+              <span className="text-sm">Sign out of this device.</span>
               <span className="text-xs text-[var(--muted-foreground)]">
-                Onchain balances are unaffected. Reconnect any time.
+                Your seeded balance and order history remain - sign back in with
+                your email any time.
               </span>
             </div>
             <Button
@@ -194,196 +165,22 @@ function MonoSectionTitle({ children }: { children: React.ReactNode }) {
 }
 
 /* ────────────────────────────────────────────────────────────────────────── */
-/*  Gas preference — segmented control                                        */
-/* ────────────────────────────────────────────────────────────────────────── */
-
-function GasPreferencePicker() {
-  const [pref, setPref] = React.useState<GasPref>("normal");
-  const hydrated = React.useRef(false);
-
-  React.useEffect(() => {
-    if (hydrated.current) return;
-    hydrated.current = true;
-    if (typeof window === "undefined") return;
-    const raw = window.localStorage.getItem(GAS_STORAGE_KEY);
-    if (raw === "fast" || raw === "normal" || raw === "slow") {
-      setPref(raw);
-    }
-  }, []);
-
-  const onSelect = React.useCallback((next: GasPref) => {
-    setPref(next);
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(GAS_STORAGE_KEY, next);
-    }
-  }, []);
-
-  const activeHint = GAS_OPTIONS.find((o) => o.value === pref)?.hint ?? "";
-
-  return (
-    <Card className="flex flex-col gap-3 p-3 md:p-4">
-      <div
-        role="radiogroup"
-        aria-label="Gas preference"
-        className="flex items-center gap-1 rounded-[var(--radius-md)] bg-[var(--muted)]/40 p-1"
-      >
-        {GAS_OPTIONS.map((opt) => {
-          const active = opt.value === pref;
-          return (
-            <button
-              key={opt.value}
-              type="button"
-              role="radio"
-              aria-checked={active}
-              onClick={() => onSelect(opt.value)}
-              className={cn(
-                "flex-1 rounded-[var(--radius-sm)] px-3 py-2 text-sm font-medium transition-colors",
-                active
-                  ? "bg-[var(--foreground)] text-[var(--background)]"
-                  : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]",
-              )}
-            >
-              {opt.label}
-            </button>
-          );
-        })}
-      </div>
-      <p className="px-1 text-xs text-[var(--muted-foreground)]">{activeHint}</p>
-    </Card>
-  );
-}
-
-/* ────────────────────────────────────────────────────────────────────────── */
-/*  Preferences — toggles                                                     */
-/* ────────────────────────────────────────────────────────────────────────── */
-
-function PreferencesCard({
-  fixture,
-}: {
-  fixture: { preferences: { reduceMotion: boolean; showAdvancedOrderTypes: boolean } };
-}) {
-  const [reduceMotion, setReduceMotion] = useStoredToggle(
-    REDUCE_MOTION_STORAGE_KEY,
-    fixture.preferences.reduceMotion,
-  );
-  const [advanced, setAdvanced] = useStoredToggle(
-    ADVANCED_ORDERS_STORAGE_KEY,
-    fixture.preferences.showAdvancedOrderTypes,
-  );
-
-  return (
-    <Card className="flex flex-col p-5 md:p-6">
-      <PreferenceRow
-        label="Reduce motion"
-        hint="Damp page transitions and microinteractions."
-        ariaLabel="Reduce motion"
-        value={reduceMotion}
-        onChange={setReduceMotion}
-      />
-      <Separator className="my-4" />
-      <PreferenceRow
-        label="Show advanced order types"
-        hint="Surface stop-limit, IOC, FOK, and post-only on the trade form."
-        ariaLabel="Show advanced order types"
-        value={advanced}
-        onChange={setAdvanced}
-      />
-    </Card>
-  );
-}
-
-function PreferenceRow({
-  label,
-  hint,
-  ariaLabel,
-  value,
-  onChange,
-}: {
-  label: string;
-  hint: string;
-  ariaLabel: string;
-  value: boolean;
-  onChange: (next: boolean) => void;
-}) {
-  return (
-    <div className="flex items-start justify-between gap-4">
-      <div className="flex min-w-0 flex-col gap-1">
-        <span className="text-sm font-medium">{label}</span>
-        <span className="text-xs text-[var(--muted-foreground)]">{hint}</span>
-      </div>
-      <Toggle
-        variant="outline"
-        size="sm"
-        pressed={value}
-        onPressedChange={onChange}
-        aria-label={ariaLabel}
-        className="min-h-[32px] shrink-0"
-      >
-        {value ? "On" : "Off"}
-      </Toggle>
-    </div>
-  );
-}
-
-/** Hook: a boolean state persisted to localStorage with the SSR default
- *  preserved until hydration so the markup doesn't flap. */
-function useStoredToggle(
-  key: string,
-  fallback: boolean,
-): [boolean, (next: boolean) => void] {
-  const [value, setValue] = React.useState(fallback);
-  const hydrated = React.useRef(false);
-
-  React.useEffect(() => {
-    if (hydrated.current) return;
-    hydrated.current = true;
-    if (typeof window === "undefined") return;
-    const raw = window.localStorage.getItem(key);
-    if (raw === "1" || raw === "0") {
-      setValue(raw === "1");
-    }
-  }, [key]);
-
-  const onChange = React.useCallback(
-    (next: boolean) => {
-      setValue(next);
-      if (typeof window !== "undefined") {
-        window.localStorage.setItem(key, next ? "1" : "0");
-      }
-    },
-    [key],
-  );
-
-  return [value, onChange];
-}
-
-/* ────────────────────────────────────────────────────────────────────────── */
 /*  Tiny presentational helpers                                               */
 /* ────────────────────────────────────────────────────────────────────────── */
 
 function Field({
   label,
   value,
-  tone,
 }: {
   label: string;
   value: string;
-  tone?: "success" | "muted";
 }) {
   return (
     <div className="flex flex-col gap-1">
       <Label className="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
         {label}
       </Label>
-      <span
-        className={cn(
-          "text-sm",
-          tone === "success" && "text-[var(--success)]",
-          tone === "muted" && "text-[var(--muted-foreground)]",
-        )}
-      >
-        {value}
-      </span>
+      <span className="text-sm">{value}</span>
     </div>
   );
 }

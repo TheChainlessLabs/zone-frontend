@@ -218,6 +218,8 @@ export interface BatchesSearchFixture {
 }
 
 export interface AccountFixture {
+  /** Email shown on /account when no provider-backed session email exists. */
+  email: string;
   /** Truncated address (e.g. "0x1234…abcd") — never the full address in fixtures. */
   address: `0x${string}` | null;
   /** Whether the connected wallet holds an Omega NFT pass. */

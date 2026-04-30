@@ -1,8 +1,7 @@
 /**
  * ChartPlaceholder — Limit-mode-only chart slot.
  *
- * The real chart wiring lands in M4/M6. For the wireframe, this renders a
- * branded empty container with a stylised midpoint baseline + sample
+ * Renders a branded container with a stylised midpoint baseline + sample
  * candles drawn in SVG. The substrate stays at low contrast — it's a
  * supporting surface, not the primary action target.
  *
@@ -106,11 +105,6 @@ export function ChartPlaceholder({
             );
           })}
         </svg>
-        <div className="pointer-events-none absolute inset-x-0 bottom-3 flex items-center justify-center">
-          <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]/70">
-            Chart wiring lands in M6
-          </span>
-        </div>
       </div>
     </Card>
   );

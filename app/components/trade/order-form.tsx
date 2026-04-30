@@ -253,7 +253,7 @@ export function OrderForm({
           <div className="flex items-center justify-between">
             <label
               htmlFor="limit-price"
-              className="text-xs font-medium text-[var(--muted-foreground)]"
+              className="font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--muted-foreground)]"
             >
               Limit price
             </label>
@@ -304,7 +304,7 @@ export function OrderForm({
       <div className="flex flex-col gap-2">
         <label
           htmlFor="amount"
-          className="text-xs font-medium text-[var(--muted-foreground)]"
+          className="font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--muted-foreground)]"
         >
           Amount
         </label>

@@ -391,7 +391,9 @@ export default function Variant11Blended({
 
           <Animate variant="enter" delay={0.25}>
             <Card className="flex flex-col gap-4 p-5 md:p-6">
-              <h2 className="text-base font-medium">Transfers</h2>
+              <h2 className="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
+                Transfers
+              </h2>
               {transfers.length === 0 ? (
                 <p className="text-sm text-[var(--muted-foreground)]">No transfers yet.</p>
               ) : (
@@ -503,7 +505,9 @@ function SectionHeader({
 }) {
   return (
     <header className="flex items-center justify-between">
-      <h2 className="text-base font-medium">{title}</h2>
+      <h2 className="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
+        {title}
+      </h2>
       {trailing ?? null}
     </header>
   );

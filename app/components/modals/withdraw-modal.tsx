@@ -125,7 +125,7 @@ export function WithdrawModal({
         >
           {/* Token selector */}
           <div className="flex flex-col gap-2">
-            <Label className="text-xs uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
+            <Label className="font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
               Token
             </Label>
             <div className="flex gap-2">
@@ -148,7 +148,7 @@ export function WithdrawModal({
             render={({ field }) => (
               <FormItem>
                 <div className="flex items-baseline justify-between">
-                  <FormLabel required className="text-xs uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
+                  <FormLabel required className="font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
                     Amount
                   </FormLabel>
                   <span className="font-mono text-xs tabular-nums text-[var(--muted-foreground)]">
@@ -190,7 +190,7 @@ export function WithdrawModal({
             name="recipient"
             render={({ field }) => (
               <FormItem>
-                <FormLabel required className="text-xs uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
+                <FormLabel required className="font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
                   Recipient
                 </FormLabel>
                 <FormControl>

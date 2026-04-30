@@ -36,7 +36,9 @@ export default function Variant07ListAztec({
   return (
     <div className="flex flex-col gap-4">
       <header className="flex flex-col gap-2">
-        <h2 className="text-lg font-medium tracking-tight">Attestation log</h2>
+        <h2 className="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
+          Attestation log
+        </h2>
         <p className="max-w-prose text-sm text-[var(--muted-foreground)]">
           Each row is a sealed batch with its on-chain proof state. Counterparty
           information is by design absent from this surface.

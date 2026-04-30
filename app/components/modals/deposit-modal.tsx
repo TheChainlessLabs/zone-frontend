@@ -98,7 +98,7 @@ export function DepositModal({
       <div className="flex flex-col gap-5">
         {/* Chain selector — locked to Ethereum L1 for v0 */}
         <div className="flex flex-col gap-2">
-          <Label className="text-xs uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
+          <Label className="font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
             Chain
           </Label>
           <button
@@ -119,7 +119,7 @@ export function DepositModal({
 
         {/* Token selector */}
         <div className="flex flex-col gap-2">
-          <Label className="text-xs uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
+          <Label className="font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
             Token
           </Label>
           <div className="flex gap-2">
@@ -140,7 +140,7 @@ export function DepositModal({
           <div className="flex items-baseline justify-between">
             <Label
               htmlFor="deposit-amount"
-              className="text-xs uppercase tracking-[0.14em] text-[var(--muted-foreground)]"
+              className="font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--muted-foreground)]"
             >
               Amount
             </Label>

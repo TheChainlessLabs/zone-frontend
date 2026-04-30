@@ -176,7 +176,9 @@ function PortfolioSkeleton({
             { title: "Transfers", rows: 3 },
           ].map(({ title, rows }) => (
             <Card key={title} className="flex flex-col gap-4 p-5 md:p-6">
-              <h2 className="text-base font-medium">{title}</h2>
+              <h2 className="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
+                {title}
+              </h2>
               <ul className="flex flex-col">
                 {Array.from({ length: rows }).map((_, i) => (
                   <li

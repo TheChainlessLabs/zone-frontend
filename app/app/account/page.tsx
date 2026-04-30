@@ -94,7 +94,7 @@ export default function AccountPage() {
         title="Account"
         description="Wallet, preferences, session."
       >
-        <PageSection title="Connected wallet">
+        <PageSection title={<MonoSectionTitle>Connected wallet</MonoSectionTitle>}>
           <Card className="flex flex-col gap-4 p-5 md:p-6">
             <div className="flex flex-col gap-1">
               <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
@@ -136,15 +136,15 @@ export default function AccountPage() {
           </Card>
         </PageSection>
 
-        <PageSection title="Gas preference">
+        <PageSection title={<MonoSectionTitle>Gas preference</MonoSectionTitle>}>
           <GasPreferencePicker />
         </PageSection>
 
-        <PageSection title="Preferences">
+        <PageSection title={<MonoSectionTitle>Preferences</MonoSectionTitle>}>
           <PreferencesCard fixture={fixture} />
         </PageSection>
 
-        <PageSection title="Theme">
+        <PageSection title={<MonoSectionTitle>Theme</MonoSectionTitle>}>
           <Card className="flex items-center justify-between gap-4 p-5 md:p-6">
             <div className="flex flex-col gap-1">
               <span className="text-sm font-medium">Appearance</span>
@@ -156,7 +156,7 @@ export default function AccountPage() {
           </Card>
         </PageSection>
 
-        <PageSection title="Session">
+        <PageSection title={<MonoSectionTitle>Session</MonoSectionTitle>}>
           <Card className="flex flex-col gap-4 p-5 md:p-6">
             <div className="flex flex-col gap-1">
               <span className="text-sm">Sign out of this wallet on this device.</span>
@@ -177,6 +177,19 @@ export default function AccountPage() {
         </PageSection>
       </PageLayout>
     </AppShell>
+  );
+}
+
+/* ────────────────────────────────────────────────────────────────────────── */
+/*  Section title — mono uppercase tracked, matches eyebrow register on data  */
+/*  surfaces. Page title (PageLayout `title`) stays sans for brand chrome.    */
+/* ────────────────────────────────────────────────────────────────────────── */
+
+function MonoSectionTitle({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
+      {children}
+    </span>
   );
 }
 

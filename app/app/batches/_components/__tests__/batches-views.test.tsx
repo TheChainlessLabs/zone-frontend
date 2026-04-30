@@ -68,6 +68,57 @@ describe("BatchesListView", () => {
     expect(screen.getByText(/Per page/)).toBeDefined();
   });
 
+  it("renders pairs as plain mono text, not bordered chips (M4.21)", async () => {
+    // M4.21 — bordered pair pills were reading as decorative striping per
+    // row. Pairs render as plain comma-separated mono text. Assert that
+    // there is no element matching the previous chip markup (mono+border
+    // wrapping a single pair string like "USDC/EURC").
+    const { container } = await renderList();
+    const pairText = container.textContent ?? "";
+    // At least one fixture row carries a pair list — we expect that to land
+    // somewhere in the rendered output.
+    expect(pairText).toMatch(/[A-Z]{3,4}\/[A-Z]{3,4}/);
+    // No pair string should be wrapped in a bordered chip. The legacy
+    // bordered-pill markup used `border-[var(--border)]` on a span around a
+    // single pair; assert no `span.border` ancestor wraps a lone pair.
+    const borderedChips = container.querySelectorAll(
+      "span.inline-flex.rounded.border, span.inline-flex.items-center.rounded.border",
+    );
+    for (const chip of Array.from(borderedChips)) {
+      expect(chip.textContent ?? "").not.toMatch(/^[A-Z]{3,4}\/[A-Z]{3,4}$/);
+    }
+  });
+
+  it("drops the Proof column from the desktop table (M4.21)", async () => {
+    // M4.21 — proof-hash column is detail-page-only now. The L1 tx column
+    // remains since that's the on-chain anchor a non-engineer actually
+    // clicks. Only `<th>` cells should be inspected for column headers.
+    const { container } = await renderList();
+    const headers = Array.from(container.querySelectorAll("thead th")).map(
+      (el) => (el.textContent ?? "").trim(),
+    );
+    expect(headers).not.toContain("Proof");
+    expect(headers).toContain("L1 tx");
+    expect(headers).toContain("Pairs");
+  });
+
+  it("annotates jargon-y column headers with plain-language tooltips (M4.21)", async () => {
+    const { container } = await renderList();
+    const headers = Array.from(container.querySelectorAll("thead th"));
+    const pairsHeader = headers.find(
+      (el) => (el.textContent ?? "").trim() === "Pairs",
+    );
+    const l1Header = headers.find(
+      (el) => (el.textContent ?? "").trim() === "L1 tx",
+    );
+    expect(pairsHeader?.getAttribute("title")).toBe(
+      "Currency pairs traded in this batch",
+    );
+    expect(l1Header?.getAttribute("title")).toBe(
+      "On-chain Ethereum transaction that settled this batch",
+    );
+  });
+
   it("never surfaces individual fill IDs or order IDs on the list", async () => {
     // Privacy hard rule. The list view renders aggregate metadata only —
     // batch number, status, fills/orders count, volume, pairs. Per-fill and

@@ -266,13 +266,22 @@ function BatchesTable({
           <thead>
             <tr className="border-b border-[var(--border)]">
               <Th className="w-[8%] text-left">Batch</Th>
-              <Th className="w-[10%] text-left">Sealed</Th>
-              <Th className="w-[7%] text-right">Fills</Th>
-              <Th className="w-[12%] text-right">Volume</Th>
-              <Th className="w-[14%] text-left">Pairs</Th>
-              <Th className="w-[10%] text-left">Status</Th>
-              <Th className="w-[19%] text-left">Proof</Th>
-              <Th className="w-[20%] text-left">L1 tx</Th>
+              <Th className="w-[14%] text-left">Sealed</Th>
+              <Th className="w-[8%] text-right">Fills</Th>
+              <Th className="w-[14%] text-right">Volume</Th>
+              <Th
+                className="w-[24%] text-left"
+                title="Currency pairs traded in this batch"
+              >
+                Pairs
+              </Th>
+              <Th className="w-[12%] text-left">Status</Th>
+              <Th
+                className="w-[20%] text-left"
+                title="On-chain Ethereum transaction that settled this batch"
+              >
+                L1 tx
+              </Th>
             </tr>
           </thead>
           <tbody>
@@ -313,15 +322,19 @@ function BatchesTable({
 function Th({
   children,
   className,
+  title,
 }: {
   children: React.ReactNode;
   className?: string;
+  title?: string;
 }) {
   return (
     <th
       scope="col"
+      title={title}
       className={cn(
         "px-4 py-2.5 font-mono text-[10px] font-normal uppercase tracking-[0.18em] text-[var(--muted-foreground)]",
+        title ? "cursor-help" : undefined,
         className,
       )}
     >
@@ -363,13 +376,6 @@ function BatchRow({ batch }: { batch: BatchFixture }) {
           />
           <span className="font-mono text-xs">{status.label}</span>
         </span>
-      </Td>
-      <Td className="text-left">
-        <HashRefCell
-          hash={batch.proofRef}
-          copyLabel={`Copy proof hash for batch #${batch.number}`}
-          fallback="—"
-        />
       </Td>
       <Td className="text-left">
         <HashRefCell
@@ -430,10 +436,21 @@ function BatchRowMobile({ batch }: { batch: BatchFixture }) {
         </span>
       </div>
       <div className="flex items-center justify-between gap-3 font-mono text-[11px] text-[var(--muted-foreground)]">
-        <span className="tabular-nums">
+        <span className="shrink-0 tabular-nums">
           {formatThousands(String(batch.fillCount))} fills
         </span>
-        <PairsCluster pairs={batch.pairs ?? []} max={2} />
+        <span className="min-w-0 flex-1 truncate text-right text-[var(--foreground)]">
+          {(batch.pairs ?? []).length === 0
+            ? "—"
+            : (() => {
+                const pairs = batch.pairs ?? [];
+                const visible = pairs.slice(0, 2);
+                const overflow = pairs.length - visible.length;
+                return overflow > 0
+                  ? `${visible.join(", ")} +${overflow}`
+                  : visible.join(", ");
+              })()}
+        </span>
       </div>
     </Link>
   );
@@ -447,25 +464,22 @@ function PairsCluster({
   max?: number;
 }) {
   if (pairs.length === 0) {
-    return <span className="font-mono text-[11px] text-[var(--muted-foreground)]">—</span>;
+    return (
+      <span className="font-mono text-xs text-[var(--muted-foreground)]">—</span>
+    );
   }
   const visible = pairs.slice(0, max);
   const overflow = pairs.length - visible.length;
+  const label =
+    overflow > 0
+      ? `${visible.join(", ")} +${overflow}`
+      : visible.join(", ");
   return (
-    <span className="flex flex-wrap items-center gap-1">
-      {visible.map((p) => (
-        <span
-          key={p}
-          className="inline-flex items-center rounded border border-[var(--border)] px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-[var(--muted-foreground)]"
-        >
-          {p}
-        </span>
-      ))}
-      {overflow > 0 ? (
-        <span className="inline-flex items-center rounded border border-[var(--border)] px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-[var(--muted-foreground)]">
-          +{overflow}
-        </span>
-      ) : null}
+    <span
+      className="block truncate font-mono text-xs text-[var(--foreground)]"
+      title={pairs.join(", ")}
+    >
+      {label}
     </span>
   );
 }

@@ -2,10 +2,10 @@
 
 import * as React from "react";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Receipt } from "@/components/ui/receipt";
 import { Status } from "@/components/ui/status";
-import { Icon } from "@/lib/icons";
+import { formatAbsoluteTime, formatThousands } from "@/lib/format";
 import { ModalShell } from "./modal-shell";
 
 /**
@@ -47,6 +47,10 @@ export interface OrderConfirmationModalProps {
   midpoint?: string;
   /** Fee summary as a rate, formatted. */
   fee?: string;
+  /** Available balance in the base token, formatted. */
+  available?: string;
+  /** Preview timestamp in ISO-8601 UTC. Defaults to current time. */
+  submittedAt?: string;
   errorMessage?: string;
   onConfirm?: () => void;
   onRetry?: () => void;
@@ -63,23 +67,29 @@ export function OrderConfirmationModal({
   price,
   midpoint,
   fee = "0.005%",
+  available,
+  submittedAt,
   errorMessage = "Wallet rejected the signature. Try again or check your wallet.",
   onConfirm,
   onRetry,
 }: OrderConfirmationModalProps) {
   const isBusy = state === "signing" || state === "submitting";
   const [base, quote] = pair.split("/");
-  const verb = side === "buy" ? "Buy" : "Sell";
-  const executionPrice = mode === "limit" ? price : midpoint;
-  const summary = [
-    "You sign",
-    `${verb} ${amount} ${base}${executionPrice ? ` at ${executionPrice} ${quote}` : ""}`,
-    `Fee ${fee}`,
-    "Settles in next batch",
-    mode === "market"
-      ? "Matches privately at midpoint"
-      : "Matches privately",
-  ].join(" · ");
+  const previewTimestamp = React.useMemo(
+    () => submittedAt ?? new Date().toISOString(),
+    [submittedAt],
+  );
+  const submittedAtLabel = formatAbsoluteTime(previewTimestamp);
+  const amountValue = parseNumeric(amount);
+  const feeRate = parseFeeRate(fee);
+  const feeAmount = amountValue * feeRate;
+  const netAmount = Math.max(amountValue - feeAmount, 0);
+  const amountLabel = `${amount} ${base}`;
+  const availableLabel = `${available ?? amount} ${base}`;
+  const feeLabel = `${formatFixedQuantity(feeAmount)} ${base}`;
+  const netLabel = `${formatFixedQuantity(netAmount)} ${base}`;
+  const typeLabel = mode === "limit" ? "Limit" : "Market";
+  const sideLabel = side === "buy" ? "Buy" : "Sell";
 
   return (
     <ModalShell
@@ -90,51 +100,49 @@ export function OrderConfirmationModal({
       title="Review order"
       description={
         <>
-          <span className="font-mono">{pair}</span> · {mode === "limit" ? "Limit" : "Market"}
+          <span className="font-mono">{pair}</span> · {typeLabel}
         </>
       }
     >
       <div className="flex flex-col gap-5">
-        {/* Side + pair header */}
-        <div className="flex items-center justify-between gap-3 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--muted)]/40 p-3">
-          <div className="flex items-center gap-3">
-            <Badge variant={side === "buy" ? "success" : "destructive"}>
-              {side === "buy" ? (
-                <Icon.Buy size={12} aria-hidden />
-              ) : (
-                <Icon.Sell size={12} aria-hidden />
-              )}
-              {side === "buy" ? "Buy" : "Sell"} {base}
-            </Badge>
-            <span className="font-mono text-xs text-[var(--muted-foreground)]">
-              vs {quote}
-            </span>
-          </div>
-          <span className="font-mono text-xs uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
-            {mode === "limit" ? "Limit" : "Market"}
-          </span>
-        </div>
-
-        <div className="rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--muted)]/30 p-4">
-          <p className="text-sm leading-relaxed text-[var(--foreground)]">
-            {summary}
+        <Receipt cta={undefined}>
+          <Receipt.Header label="ORDER PREVIEW" />
+          <Receipt.Metadata>
+            <Receipt.Row label="Pair" value={pair} />
+            <Receipt.Row label="Side" value={sideLabel} />
+            <Receipt.Row label="Type" value={typeLabel} />
+            <Receipt.Row label="Submitted at" value={submittedAtLabel} />
+            <Receipt.Row label="Available" value={availableLabel} />
+          </Receipt.Metadata>
+          <Receipt.Actions>
+            <Receipt.Action number={1} label="Sign" payload="Wallet approval" />
+            <Receipt.Action number={2} label="Queue" payload="Next batch" />
+            <Receipt.Action
+              number={3}
+              label="Match"
+              payload={
+                mode === "market"
+                  ? "Private midpoint"
+                  : price
+                    ? `${price} ${quote}`
+                    : "Private limit"
+              }
+            />
+            <Receipt.Action
+              number={4}
+              label="Settle"
+              payload="Batch finality"
+            />
+          </Receipt.Actions>
+          <Receipt.Totals>
+            <Receipt.Row label="Amount" value={amountLabel} />
+            <Receipt.Row label="Fee" value={feeLabel} />
+            <Receipt.Row label="Net" value={netLabel} />
+          </Receipt.Totals>
+          <p className="px-4 pb-3 text-xs leading-relaxed text-[var(--muted-foreground)]">
+            Matches privately at midpoint.
           </p>
-        </div>
-
-        <dl className="flex flex-col gap-1.5 rounded-[var(--radius-md)] border border-[var(--border)] p-3 text-xs">
-          <Row label="Amount" value={`${amount} ${base}`} />
-          {mode === "limit" && price ? (
-            <Row label="Price" value={`${price} ${quote}`} />
-          ) : null}
-          {mode === "market" && midpoint ? (
-            <Row label="Indicative midpoint" value={`${midpoint} ${quote}`} />
-          ) : null}
-          <Row label="Fee" value={fee} />
-          <Row
-            label="Settlement"
-            value={mode === "market" ? "Next batch · private midpoint match" : "Next batch · private match"}
-          />
-        </dl>
+        </Receipt>
 
         {/* State surface */}
         <ConfirmationStateSurface state={state} message={errorMessage} />
@@ -182,13 +190,16 @@ export function OrderConfirmationModal({
   );
 }
 
-function Row({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between">
-      <dt className="text-[var(--muted-foreground)]">{label}</dt>
-      <dd className="font-mono tabular-nums">{value}</dd>
-    </div>
-  );
+function parseNumeric(value: string): number {
+  return Number.parseFloat(value.replaceAll(",", "")) || 0;
+}
+
+function parseFeeRate(value: string): number {
+  return (Number.parseFloat(value.replace("%", "")) || 0) / 100;
+}
+
+function formatFixedQuantity(value: number): string {
+  return formatThousands(value.toFixed(2));
 }
 
 function ConfirmationStateSurface({

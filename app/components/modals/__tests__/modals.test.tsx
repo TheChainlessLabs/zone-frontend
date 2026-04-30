@@ -1,6 +1,7 @@
 import { afterEach, expect, it } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { configureAxe } from "vitest-axe";
+import { vi } from "vitest";
 
 import {
   ConnectWalletModal,
@@ -120,6 +121,8 @@ it.each(ORDER_STATES)(
         amount="10,000.00"
         price="0.9213"
         midpoint="0.9213"
+        available="10,000.00"
+        submittedAt="2026-04-30T09:12:44.000Z"
         onClose={() => {}}
       />
     );
@@ -128,3 +131,50 @@ it.each(ORDER_STATES)(
     cleanup();
   }
 );
+
+it("OrderConfirmationModal renders the receipt summary when open", () => {
+  render(
+    <OrderConfirmationModal
+      open
+      state="idle"
+      side="buy"
+      pair="USDC/EURC"
+      mode="limit"
+      amount="10,000.00"
+      price="0.9213"
+      midpoint="0.9213"
+      available="10,000.00"
+      submittedAt="2026-04-30T09:12:44.000Z"
+      onClose={() => {}}
+    />,
+  );
+
+  // Receipt-format content present
+  expect(screen.getByRole("dialog")).toBeDefined();
+  expect(screen.getByText(/ORDER PREVIEW/i)).toBeDefined();
+});
+
+it("OrderConfirmationModal closes on Escape when idle", async () => {
+  const onClose = vi.fn();
+
+  render(
+    <OrderConfirmationModal
+      open
+      state="idle"
+      side="buy"
+      pair="USDC/EURC"
+      mode="limit"
+      amount="10,000.00"
+      price="0.9213"
+      midpoint="0.9213"
+      available="10,000.00"
+      submittedAt="2026-04-30T09:12:44.000Z"
+      onClose={onClose}
+    />,
+  );
+
+  fireEvent.keyDown(document, { key: "Escape" });
+  await waitFor(() => {
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+});

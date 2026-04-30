@@ -1,0 +1,1033 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`matches the snapshot for each receipt story scenario > fill-drilldown 1`] = `
+<div
+  class="w-[420px] max-w-full"
+>
+  <div
+    class="font-mono rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--card)] text-[var(--foreground)] shadow-[inset_0_0_0_1px_var(--surface-edge)]"
+  >
+    <div
+      class="flex items-center justify-between gap-4 border-b border-[var(--border)] px-4 py-3"
+    >
+      <div
+        class="min-w-0 flex-1"
+      >
+        <div
+          class="inline-flex items-center gap-2"
+        >
+          <svg
+            aria-hidden="true"
+            class="shrink-0"
+            fill="currentColor"
+            height="16"
+            role="presentation"
+            viewBox="345 345 320 320"
+            width="16"
+          >
+            <path
+              d="M529.133 426.722C573.179 425.646 611.639 435.775 650.022 456.799C650.414 457.737 650.797 458.679 651.174 459.623C666.387 497.142 665.886 539.201 649.783 576.346C633.926 612.657 605.101 639.574 568.351 654.012C567.576 612.188 568.472 570.09 568.202 528.246C568.175 524.053 567.846 519.969 566.911 515.875C558.82 480.451 533.037 463.233 497.374 471.274C474.781 478.151 458.782 496.031 456.715 519.62C455.49 533.602 456.107 549.889 456.109 564.017C456.363 594.173 456.401 624.331 456.223 654.488C437.997 646.728 424.901 639.694 409.918 626.274C387.933 606.205 372.554 579.939 365.812 550.945C364.475 545.41 362.741 537.056 362.554 531.573C361.967 514.279 372.525 495.609 384.276 483.481C414.492 452.293 456.14 435.185 498.615 429.072C509.629 427.487 518.13 427.129 529.133 426.722Z"
+            />
+            <path
+              d="M501.459 366.712C527.941 364.032 561.27 371.885 584.227 384.812C605.483 396.782 630.165 419.097 641.139 440.988C593.699 385.98 518.858 372.421 453.069 400.404C447.467 402.884 441.072 406.27 435.787 409.336C399.742 429.917 373.557 464.206 363.191 504.398C363.206 474.958 380.208 439.335 399.351 417.384C425.442 387.779 462.102 369.585 501.459 366.712Z"
+            />
+          </svg>
+          <span
+            class="text-xs uppercase tracking-[0.22em] text-[var(--foreground)]"
+          >
+            Omega
+          </span>
+        </div>
+      </div>
+      <span
+        class="shrink-0 text-[10px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]"
+      >
+        FILL DRILLDOWN
+      </span>
+    </div>
+    <dl
+      class="flex flex-col gap-2 px-4 py-3 text-xs"
+    >
+      <div
+        class="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] items-start gap-x-4"
+      >
+        <dt
+          class="text-[var(--muted-foreground)]"
+        >
+          Fill id
+        </dt>
+        <dd
+          class="min-w-0 text-right tabular-nums text-[var(--foreground)] font-medium"
+        >
+          <span
+            class="block truncate"
+          >
+            F-118-04
+          </span>
+        </dd>
+      </div>
+      <div
+        class="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] items-start gap-x-4"
+      >
+        <dt
+          class="text-[var(--muted-foreground)]"
+        >
+          Pair
+        </dt>
+        <dd
+          class="min-w-0 text-right tabular-nums text-[var(--foreground)] font-medium"
+        >
+          <span
+            class="block truncate"
+          >
+            WBTC/USDC
+          </span>
+        </dd>
+      </div>
+      <div
+        class="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] items-start gap-x-4"
+      >
+        <dt
+          class="text-[var(--muted-foreground)]"
+        >
+          Counterparty
+        </dt>
+        <dd
+          class="min-w-0 text-right tabular-nums text-[var(--foreground)] font-medium"
+        >
+          <span
+            class="block truncate"
+          >
+            Internal dark pool
+          </span>
+        </dd>
+      </div>
+      <div
+        class="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] items-start gap-x-4"
+      >
+        <dt
+          class="text-[var(--muted-foreground)]"
+        >
+          Fill tx
+        </dt>
+        <dd
+          class="min-w-0 text-right tabular-nums text-[var(--foreground)] font-medium"
+        >
+          <a
+            class="inline-flex max-w-full items-center justify-end gap-1 truncate underline-offset-4 hover:underline"
+            data-state="closed"
+            href="https://etherscan.io/tx/0x9b88d4c2b65afcc178a0b2a2b5d1570d305607a82b06c85ca9d4b7dced921234"
+            rel="noreferrer"
+            target="_blank"
+          >
+            <span
+              class="truncate"
+            >
+              0x9b88…1234
+            </span>
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-external-link shrink-0"
+              fill="none"
+              height="12"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+              width="12"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M15 3h6v6"
+              />
+              <path
+                d="M10 14 21 3"
+              />
+              <path
+                d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+              />
+            </svg>
+          </a>
+        </dd>
+      </div>
+      <div
+        class="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] items-start gap-x-4"
+      >
+        <dt
+          class="text-[var(--muted-foreground)]"
+        >
+          Settled at
+        </dt>
+        <dd
+          class="min-w-0 text-right tabular-nums text-[var(--foreground)] font-medium"
+        >
+          <span
+            class="block truncate"
+          >
+            2026-04-30 09:28:03 UTC
+          </span>
+        </dd>
+      </div>
+    </dl>
+    <ol
+      class="flex list-none flex-col gap-2 border-t border-[var(--border)] px-4 py-3 text-xs"
+    >
+      <li
+        class="grid grid-cols-[auto_1fr] items-start gap-x-3"
+      >
+        <span
+          class="pt-1 text-[var(--muted-foreground)]"
+        >
+          1
+          .
+        </span>
+        <div
+          class="flex min-w-0 flex-wrap items-center gap-2"
+        >
+          <span
+            class="rounded-[var(--radius-sm)] bg-[var(--muted)]/30 px-2 py-0.5 text-[var(--foreground)]"
+          >
+            Signed
+          </span>
+          <span
+            class="min-w-0 truncate text-[var(--muted-foreground)]"
+          >
+            Maker order
+          </span>
+        </div>
+      </li>
+      <li
+        class="grid grid-cols-[auto_1fr] items-start gap-x-3"
+      >
+        <span
+          class="pt-1 text-[var(--muted-foreground)]"
+        >
+          2
+          .
+        </span>
+        <div
+          class="flex min-w-0 flex-wrap items-center gap-2"
+        >
+          <span
+            class="rounded-[var(--radius-sm)] bg-[var(--muted)]/30 px-2 py-0.5 text-[var(--foreground)]"
+          >
+            Matched
+          </span>
+          <span
+            class="min-w-0 truncate text-[var(--muted-foreground)]"
+          >
+            0.1500 WBTC
+          </span>
+        </div>
+      </li>
+      <li
+        class="grid grid-cols-[auto_1fr] items-start gap-x-3"
+      >
+        <span
+          class="pt-1 text-[var(--muted-foreground)]"
+        >
+          3
+          .
+        </span>
+        <div
+          class="flex min-w-0 flex-wrap items-center gap-2"
+        >
+          <span
+            class="rounded-[var(--radius-sm)] bg-[var(--muted)]/30 px-2 py-0.5 text-[var(--foreground)]"
+          >
+            Settled
+          </span>
+          <span
+            class="min-w-0 truncate text-[var(--muted-foreground)]"
+          >
+            137,250.00 USDC
+          </span>
+        </div>
+      </li>
+      <li
+        class="grid grid-cols-[auto_1fr] items-start gap-x-3"
+      >
+        <span
+          class="pt-1 text-[var(--muted-foreground)]"
+        >
+          4
+          .
+        </span>
+        <div
+          class="flex min-w-0 flex-wrap items-center gap-2"
+        >
+          <span
+            class="rounded-[var(--radius-sm)] px-2 py-0.5 bg-[color-mix(in_oklab,var(--destructive)_12%,transparent)] text-[var(--destructive)]"
+          >
+            Fee charged
+          </span>
+          <span
+            class="min-w-0 truncate text-[var(--muted-foreground)]"
+          >
+            6.86 USDC
+          </span>
+        </div>
+      </li>
+    </ol>
+    <dl
+      class="flex flex-col gap-2 border-t border-[var(--border)] px-4 py-3 text-xs"
+    >
+      <div
+        class="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] items-start gap-x-4"
+      >
+        <dt
+          class="text-[var(--muted-foreground)]"
+        >
+          Fill size
+        </dt>
+        <dd
+          class="min-w-0 text-right tabular-nums text-[var(--foreground)] font-semibold"
+        >
+          <span
+            class="block truncate"
+          >
+            0.1500 WBTC
+          </span>
+        </dd>
+      </div>
+      <div
+        class="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] items-start gap-x-4"
+      >
+        <dt
+          class="text-[var(--muted-foreground)]"
+        >
+          Fee
+        </dt>
+        <dd
+          class="min-w-0 text-right tabular-nums text-[var(--foreground)] font-semibold"
+        >
+          <span
+            class="block truncate"
+          >
+            6.86 USDC
+          </span>
+        </dd>
+      </div>
+      <div
+        class="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] items-start gap-x-4"
+      >
+        <dt
+          class="text-[var(--muted-foreground)]"
+        >
+          Net proceeds
+        </dt>
+        <dd
+          class="min-w-0 text-right tabular-nums text-[var(--foreground)] font-semibold"
+        >
+          <span
+            class="block truncate"
+          >
+            137,243.14 USDC
+          </span>
+        </dd>
+      </div>
+    </dl>
+    <div
+      class="border-t border-[var(--border)] px-4 py-3"
+    >
+      <a
+        class="inline-flex items-center gap-1.5 text-xs text-[var(--foreground)] transition-colors duration-200 hover:text-[var(--muted-foreground)] motion-reduce:transition-none"
+        href="https://etherscan.io/tx/0x9b88d4c2b65afcc178a0b2a2b5d1570d305607a82b06c85ca9d4b7dced921234"
+        rel="noreferrer"
+        target="_blank"
+      >
+        <span>
+          View transaction
+        </span>
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-chevron-right shrink-0"
+          fill="none"
+          height="12"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+          width="12"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="m9 18 6-6-6-6"
+          />
+        </svg>
+      </a>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`matches the snapshot for each receipt story scenario > order-preview 1`] = `
+<div
+  class="w-[420px] max-w-full"
+>
+  <div
+    class="font-mono rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--card)] text-[var(--foreground)] shadow-[inset_0_0_0_1px_var(--surface-edge)]"
+  >
+    <div
+      class="flex items-center justify-between gap-4 border-b border-[var(--border)] px-4 py-3"
+    >
+      <div
+        class="min-w-0 flex-1"
+      >
+        <div
+          class="inline-flex items-center gap-2"
+        >
+          <svg
+            aria-hidden="true"
+            class="shrink-0"
+            fill="currentColor"
+            height="16"
+            role="presentation"
+            viewBox="345 345 320 320"
+            width="16"
+          >
+            <path
+              d="M529.133 426.722C573.179 425.646 611.639 435.775 650.022 456.799C650.414 457.737 650.797 458.679 651.174 459.623C666.387 497.142 665.886 539.201 649.783 576.346C633.926 612.657 605.101 639.574 568.351 654.012C567.576 612.188 568.472 570.09 568.202 528.246C568.175 524.053 567.846 519.969 566.911 515.875C558.82 480.451 533.037 463.233 497.374 471.274C474.781 478.151 458.782 496.031 456.715 519.62C455.49 533.602 456.107 549.889 456.109 564.017C456.363 594.173 456.401 624.331 456.223 654.488C437.997 646.728 424.901 639.694 409.918 626.274C387.933 606.205 372.554 579.939 365.812 550.945C364.475 545.41 362.741 537.056 362.554 531.573C361.967 514.279 372.525 495.609 384.276 483.481C414.492 452.293 456.14 435.185 498.615 429.072C509.629 427.487 518.13 427.129 529.133 426.722Z"
+            />
+            <path
+              d="M501.459 366.712C527.941 364.032 561.27 371.885 584.227 384.812C605.483 396.782 630.165 419.097 641.139 440.988C593.699 385.98 518.858 372.421 453.069 400.404C447.467 402.884 441.072 406.27 435.787 409.336C399.742 429.917 373.557 464.206 363.191 504.398C363.206 474.958 380.208 439.335 399.351 417.384C425.442 387.779 462.102 369.585 501.459 366.712Z"
+            />
+          </svg>
+          <span
+            class="text-xs uppercase tracking-[0.22em] text-[var(--foreground)]"
+          >
+            Omega
+          </span>
+        </div>
+      </div>
+      <span
+        class="shrink-0 text-[10px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]"
+      >
+        ORDER PREVIEW
+      </span>
+    </div>
+    <dl
+      class="flex flex-col gap-2 px-4 py-3 text-xs"
+    >
+      <div
+        class="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] items-start gap-x-4"
+      >
+        <dt
+          class="text-[var(--muted-foreground)]"
+        >
+          Pair
+        </dt>
+        <dd
+          class="min-w-0 text-right tabular-nums text-[var(--foreground)] font-medium"
+        >
+          <span
+            class="block truncate"
+          >
+            USDC/EURC
+          </span>
+        </dd>
+      </div>
+      <div
+        class="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] items-start gap-x-4"
+      >
+        <dt
+          class="text-[var(--muted-foreground)]"
+        >
+          Side
+        </dt>
+        <dd
+          class="min-w-0 text-right tabular-nums text-[var(--foreground)] font-medium"
+        >
+          <span
+            class="block truncate"
+          >
+            Buy
+          </span>
+        </dd>
+      </div>
+      <div
+        class="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] items-start gap-x-4"
+      >
+        <dt
+          class="text-[var(--muted-foreground)]"
+        >
+          Type
+        </dt>
+        <dd
+          class="min-w-0 text-right tabular-nums text-[var(--foreground)] font-medium"
+        >
+          <span
+            class="block truncate"
+          >
+            Limit
+          </span>
+        </dd>
+      </div>
+      <div
+        class="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] items-start gap-x-4"
+      >
+        <dt
+          class="text-[var(--muted-foreground)]"
+        >
+          Submitted at
+        </dt>
+        <dd
+          class="min-w-0 text-right tabular-nums text-[var(--foreground)] font-medium"
+        >
+          <span
+            class="block truncate"
+          >
+            2026-04-30 09:12:44 UTC
+          </span>
+        </dd>
+      </div>
+      <div
+        class="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] items-start gap-x-4"
+      >
+        <dt
+          class="text-[var(--muted-foreground)]"
+        >
+          Available
+        </dt>
+        <dd
+          class="min-w-0 text-right tabular-nums text-[var(--foreground)] font-medium"
+        >
+          <span
+            class="block truncate"
+          >
+            10,000.00 USDC
+          </span>
+        </dd>
+      </div>
+    </dl>
+    <ol
+      class="flex list-none flex-col gap-2 border-t border-[var(--border)] px-4 py-3 text-xs"
+    >
+      <li
+        class="grid grid-cols-[auto_1fr] items-start gap-x-3"
+      >
+        <span
+          class="pt-1 text-[var(--muted-foreground)]"
+        >
+          1
+          .
+        </span>
+        <div
+          class="flex min-w-0 flex-wrap items-center gap-2"
+        >
+          <span
+            class="rounded-[var(--radius-sm)] bg-[var(--muted)]/30 px-2 py-0.5 text-[var(--foreground)]"
+          >
+            Sign
+          </span>
+          <span
+            class="min-w-0 truncate text-[var(--muted-foreground)]"
+          >
+            Wallet approval
+          </span>
+        </div>
+      </li>
+      <li
+        class="grid grid-cols-[auto_1fr] items-start gap-x-3"
+      >
+        <span
+          class="pt-1 text-[var(--muted-foreground)]"
+        >
+          2
+          .
+        </span>
+        <div
+          class="flex min-w-0 flex-wrap items-center gap-2"
+        >
+          <span
+            class="rounded-[var(--radius-sm)] bg-[var(--muted)]/30 px-2 py-0.5 text-[var(--foreground)]"
+          >
+            Queue
+          </span>
+          <span
+            class="min-w-0 truncate text-[var(--muted-foreground)]"
+          >
+            Next batch
+          </span>
+        </div>
+      </li>
+      <li
+        class="grid grid-cols-[auto_1fr] items-start gap-x-3"
+      >
+        <span
+          class="pt-1 text-[var(--muted-foreground)]"
+        >
+          3
+          .
+        </span>
+        <div
+          class="flex min-w-0 flex-wrap items-center gap-2"
+        >
+          <span
+            class="rounded-[var(--radius-sm)] bg-[var(--muted)]/30 px-2 py-0.5 text-[var(--foreground)]"
+          >
+            Match
+          </span>
+          <span
+            class="min-w-0 truncate text-[var(--muted-foreground)]"
+          >
+            Private midpoint
+          </span>
+        </div>
+      </li>
+      <li
+        class="grid grid-cols-[auto_1fr] items-start gap-x-3"
+      >
+        <span
+          class="pt-1 text-[var(--muted-foreground)]"
+        >
+          4
+          .
+        </span>
+        <div
+          class="flex min-w-0 flex-wrap items-center gap-2"
+        >
+          <span
+            class="rounded-[var(--radius-sm)] bg-[var(--muted)]/30 px-2 py-0.5 text-[var(--foreground)]"
+          >
+            Settle
+          </span>
+          <span
+            class="min-w-0 truncate text-[var(--muted-foreground)]"
+          >
+            Batch finality
+          </span>
+        </div>
+      </li>
+    </ol>
+    <dl
+      class="flex flex-col gap-2 border-t border-[var(--border)] px-4 py-3 text-xs"
+    >
+      <div
+        class="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] items-start gap-x-4"
+      >
+        <dt
+          class="text-[var(--muted-foreground)]"
+        >
+          Amount
+        </dt>
+        <dd
+          class="min-w-0 text-right tabular-nums text-[var(--foreground)] font-semibold"
+        >
+          <span
+            class="block truncate"
+          >
+            10,000.00 USDC
+          </span>
+        </dd>
+      </div>
+      <div
+        class="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] items-start gap-x-4"
+      >
+        <dt
+          class="text-[var(--muted-foreground)]"
+        >
+          Fee
+        </dt>
+        <dd
+          class="min-w-0 text-right tabular-nums text-[var(--foreground)] font-semibold"
+        >
+          <span
+            class="block truncate"
+          >
+            0.50 USDC
+          </span>
+        </dd>
+      </div>
+      <div
+        class="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] items-start gap-x-4"
+      >
+        <dt
+          class="text-[var(--muted-foreground)]"
+        >
+          Net
+        </dt>
+        <dd
+          class="min-w-0 text-right tabular-nums text-[var(--foreground)] font-semibold"
+        >
+          <span
+            class="block truncate"
+          >
+            9,999.50 USDC
+          </span>
+        </dd>
+      </div>
+    </dl>
+    <p
+      class="px-4 pb-3 text-xs leading-relaxed text-[var(--muted-foreground)]"
+    >
+      Matches privately at midpoint.
+    </p>
+  </div>
+</div>
+`;
+
+exports[`matches the snapshot for each receipt story scenario > settlement-record 1`] = `
+<div
+  class="w-[420px] max-w-full"
+>
+  <div
+    class="font-mono rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--card)] text-[var(--foreground)] shadow-[inset_0_0_0_1px_var(--surface-edge)]"
+  >
+    <div
+      class="flex items-center justify-between gap-4 border-b border-[var(--border)] px-4 py-3"
+    >
+      <div
+        class="min-w-0 flex-1"
+      >
+        <div
+          class="inline-flex items-center gap-2"
+        >
+          <svg
+            aria-hidden="true"
+            class="shrink-0"
+            fill="currentColor"
+            height="16"
+            role="presentation"
+            viewBox="345 345 320 320"
+            width="16"
+          >
+            <path
+              d="M529.133 426.722C573.179 425.646 611.639 435.775 650.022 456.799C650.414 457.737 650.797 458.679 651.174 459.623C666.387 497.142 665.886 539.201 649.783 576.346C633.926 612.657 605.101 639.574 568.351 654.012C567.576 612.188 568.472 570.09 568.202 528.246C568.175 524.053 567.846 519.969 566.911 515.875C558.82 480.451 533.037 463.233 497.374 471.274C474.781 478.151 458.782 496.031 456.715 519.62C455.49 533.602 456.107 549.889 456.109 564.017C456.363 594.173 456.401 624.331 456.223 654.488C437.997 646.728 424.901 639.694 409.918 626.274C387.933 606.205 372.554 579.939 365.812 550.945C364.475 545.41 362.741 537.056 362.554 531.573C361.967 514.279 372.525 495.609 384.276 483.481C414.492 452.293 456.14 435.185 498.615 429.072C509.629 427.487 518.13 427.129 529.133 426.722Z"
+            />
+            <path
+              d="M501.459 366.712C527.941 364.032 561.27 371.885 584.227 384.812C605.483 396.782 630.165 419.097 641.139 440.988C593.699 385.98 518.858 372.421 453.069 400.404C447.467 402.884 441.072 406.27 435.787 409.336C399.742 429.917 373.557 464.206 363.191 504.398C363.206 474.958 380.208 439.335 399.351 417.384C425.442 387.779 462.102 369.585 501.459 366.712Z"
+            />
+          </svg>
+          <span
+            class="text-xs uppercase tracking-[0.22em] text-[var(--foreground)]"
+          >
+            Omega
+          </span>
+        </div>
+      </div>
+      <span
+        class="shrink-0 text-[10px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]"
+      >
+        SETTLEMENT RECORD
+      </span>
+    </div>
+    <dl
+      class="flex flex-col gap-2 px-4 py-3 text-xs"
+    >
+      <div
+        class="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] items-start gap-x-4"
+      >
+        <dt
+          class="text-[var(--muted-foreground)]"
+        >
+          Batch
+        </dt>
+        <dd
+          class="min-w-0 text-right tabular-nums text-[var(--foreground)] font-medium"
+        >
+          <span
+            class="block truncate"
+          >
+            #2048
+          </span>
+        </dd>
+      </div>
+      <div
+        class="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] items-start gap-x-4"
+      >
+        <dt
+          class="text-[var(--muted-foreground)]"
+        >
+          Pair
+        </dt>
+        <dd
+          class="min-w-0 text-right tabular-nums text-[var(--foreground)] font-medium"
+        >
+          <span
+            class="block truncate"
+          >
+            USDC/EURC
+          </span>
+        </dd>
+      </div>
+      <div
+        class="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] items-start gap-x-4"
+      >
+        <dt
+          class="text-[var(--muted-foreground)]"
+        >
+          Settlement tx
+        </dt>
+        <dd
+          class="min-w-0 text-right tabular-nums text-[var(--foreground)] font-medium"
+        >
+          <a
+            class="inline-flex max-w-full items-center justify-end gap-1 truncate underline-offset-4 hover:underline"
+            data-state="closed"
+            href="https://etherscan.io/tx/0xa26f2dc8ed22d65ad5e5b3acc40295d89c331fd1e79d34b13baa3f6f47b136dc"
+            rel="noreferrer"
+            target="_blank"
+          >
+            <span
+              class="truncate"
+            >
+              0xa26f…36dc
+            </span>
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-external-link shrink-0"
+              fill="none"
+              height="12"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+              width="12"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M15 3h6v6"
+              />
+              <path
+                d="M10 14 21 3"
+              />
+              <path
+                d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+              />
+            </svg>
+          </a>
+        </dd>
+      </div>
+      <div
+        class="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] items-start gap-x-4"
+      >
+        <dt
+          class="text-[var(--muted-foreground)]"
+        >
+          Settled at
+        </dt>
+        <dd
+          class="min-w-0 text-right tabular-nums text-[var(--foreground)] font-medium"
+        >
+          <span
+            class="block truncate"
+          >
+            2026-04-30 09:16:12 UTC
+          </span>
+        </dd>
+      </div>
+      <div
+        class="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] items-start gap-x-4"
+      >
+        <dt
+          class="text-[var(--muted-foreground)]"
+        >
+          Operator
+        </dt>
+        <dd
+          class="min-w-0 text-right tabular-nums text-[var(--foreground)] font-medium"
+        >
+          <span
+            class="block truncate"
+          >
+            Omega Batch 12
+          </span>
+        </dd>
+      </div>
+    </dl>
+    <ol
+      class="flex list-none flex-col gap-2 border-t border-[var(--border)] px-4 py-3 text-xs"
+    >
+      <li
+        class="grid grid-cols-[auto_1fr] items-start gap-x-3"
+      >
+        <span
+          class="pt-1 text-[var(--muted-foreground)]"
+        >
+          1
+          .
+        </span>
+        <div
+          class="flex min-w-0 flex-wrap items-center gap-2"
+        >
+          <span
+            class="rounded-[var(--radius-sm)] bg-[var(--muted)]/30 px-2 py-0.5 text-[var(--foreground)]"
+          >
+            Queued
+          </span>
+          <span
+            class="min-w-0 truncate text-[var(--muted-foreground)]"
+          >
+            Batch 2048
+          </span>
+        </div>
+      </li>
+      <li
+        class="grid grid-cols-[auto_1fr] items-start gap-x-3"
+      >
+        <span
+          class="pt-1 text-[var(--muted-foreground)]"
+        >
+          2
+          .
+        </span>
+        <div
+          class="flex min-w-0 flex-wrap items-center gap-2"
+        >
+          <span
+            class="rounded-[var(--radius-sm)] bg-[var(--muted)]/30 px-2 py-0.5 text-[var(--foreground)]"
+          >
+            Matched
+          </span>
+          <span
+            class="min-w-0 truncate text-[var(--muted-foreground)]"
+          >
+            Midpoint fill
+          </span>
+        </div>
+      </li>
+      <li
+        class="grid grid-cols-[auto_1fr] items-start gap-x-3"
+      >
+        <span
+          class="pt-1 text-[var(--muted-foreground)]"
+        >
+          3
+          .
+        </span>
+        <div
+          class="flex min-w-0 flex-wrap items-center gap-2"
+        >
+          <span
+            class="rounded-[var(--radius-sm)] bg-[var(--muted)]/30 px-2 py-0.5 text-[var(--foreground)]"
+          >
+            Proved
+          </span>
+          <span
+            class="min-w-0 truncate text-[var(--muted-foreground)]"
+          >
+            L2 proof posted
+          </span>
+        </div>
+      </li>
+      <li
+        class="grid grid-cols-[auto_1fr] items-start gap-x-3"
+      >
+        <span
+          class="pt-1 text-[var(--muted-foreground)]"
+        >
+          4
+          .
+        </span>
+        <div
+          class="flex min-w-0 flex-wrap items-center gap-2"
+        >
+          <span
+            class="rounded-[var(--radius-sm)] bg-[var(--muted)]/30 px-2 py-0.5 text-[var(--foreground)]"
+          >
+            Settled
+          </span>
+          <span
+            class="min-w-0 truncate text-[var(--muted-foreground)]"
+          >
+            Anchored on L1
+          </span>
+        </div>
+      </li>
+    </ol>
+    <dl
+      class="flex flex-col gap-2 border-t border-[var(--border)] px-4 py-3 text-xs"
+    >
+      <div
+        class="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] items-start gap-x-4"
+      >
+        <dt
+          class="text-[var(--muted-foreground)]"
+        >
+          Gross
+        </dt>
+        <dd
+          class="min-w-0 text-right tabular-nums text-[var(--foreground)] font-semibold"
+        >
+          <span
+            class="block truncate"
+          >
+            24,500.00 USDC
+          </span>
+        </dd>
+      </div>
+      <div
+        class="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] items-start gap-x-4"
+      >
+        <dt
+          class="text-[var(--muted-foreground)]"
+        >
+          Fee
+        </dt>
+        <dd
+          class="min-w-0 text-right tabular-nums text-[var(--foreground)] font-semibold"
+        >
+          <span
+            class="block truncate"
+          >
+            1.23 USDC
+          </span>
+        </dd>
+      </div>
+      <div
+        class="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] items-start gap-x-4"
+      >
+        <dt
+          class="text-[var(--muted-foreground)]"
+        >
+          Net
+        </dt>
+        <dd
+          class="min-w-0 text-right tabular-nums text-[var(--foreground)] font-semibold"
+        >
+          <span
+            class="block truncate"
+          >
+            24,498.77 USDC
+          </span>
+        </dd>
+      </div>
+    </dl>
+    <div
+      class="border-t border-[var(--border)] px-4 py-3"
+    >
+      <a
+        class="inline-flex items-center gap-1.5 text-xs text-[var(--foreground)] transition-colors duration-200 hover:text-[var(--muted-foreground)] motion-reduce:transition-none"
+        href="https://etherscan.io/tx/0xa26f2dc8ed22d65ad5e5b3acc40295d89c331fd1e79d34b13baa3f6f47b136dc"
+        rel="noreferrer"
+        target="_blank"
+      >
+        <span>
+          View transaction
+        </span>
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-chevron-right shrink-0"
+          fill="none"
+          height="12"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+          width="12"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="m9 18 6-6-6-6"
+          />
+        </svg>
+      </a>
+    </div>
+  </div>
+</div>
+`;

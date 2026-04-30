@@ -406,6 +406,7 @@ export function OrderForm({
           price={pendingOrder.price}
           midpoint={midpoint}
           fee="0.005%"
+          available={formatGroup(MOCK_AVAILABLE)}
           onConfirm={handleConfirm}
         />
       ) : null}

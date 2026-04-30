@@ -137,9 +137,9 @@ it("clicking submit opens the confirmation modal with the order summary", () => 
   fireEvent.click(screen.getByRole("button", { name: /Buy USDC/i }));
 
   expect(screen.getByRole("dialog")).toBeDefined();
-  expect(screen.getByText(/You sign/i)).toBeDefined();
-  expect(screen.getByText(/Buy 100\.00 USDC at 0\.9213 EURC/i)).toBeDefined();
-  expect(screen.getByText(/Fee 0\.005%/i)).toBeDefined();
+  // Receipt-format summary: ORDER PREVIEW header + numbered Sign action + privacy line
+  expect(screen.getByText(/ORDER PREVIEW/i)).toBeDefined();
+  expect(screen.getAllByText(/Sign/i).length).toBeGreaterThan(0);
   expect(screen.getByText(/Matches privately at midpoint/i)).toBeDefined();
 });
 

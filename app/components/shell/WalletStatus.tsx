@@ -3,25 +3,23 @@
 /**
  * WalletStatus — composite right-rail of the production Navbar.
  *
- * Renders one of five branches based on `useWalletState()`:
+ * Renders one of six branches based on `useWalletState()`:
  *
- *   disconnected   → outline "Connect Wallet" button
- *   connecting     → outline button with spinner + "Awaiting signature"
- *   wrong-network  → destructive "Switch network" CTA + warning glyph
- *   no-nft-pass    → outline "Pass required" link to onboarding info
- *   connected      → DropdownMenu with truncated address + chain dot
+ *   disconnected     → outline "Sign up" button (opens EmailSignupModal)
+ *   signing-up /
+ *   magic-link-sent  → outline button with spinner + "Awaiting magic link"
+ *   wrong-network    → destructive "Switch network" CTA + warning glyph
+ *   no-nft-pass      → outline "Pass required" link to onboarding info
+ *   connected        → DropdownMenu with truncated address + chain dot
  *
- * Drives the `ConnectWalletModal` end-to-end:
- *   click Connect Wallet → modal opens at `state="idle"`
- *   pick a connector → wallet.connect() → modal flips to `connecting`
- *   wallet provider mock resolves after 1500ms → modal at `connected`
- *   user clicks Disconnect inside the modal (or "Sign out" / "Wallet
- *   details" in the dropdown) → wallet.disconnect() → state resets
+ * Drives the `EmailSignupModal` end-to-end:
+ *   click Sign up → modal opens at `state="idle"`
+ *   submit valid email → wallet.signUp() → modal flips through
+ *   `submitting` → `sent`. Backend integration replaces the mock at M6.
  *
- * Real wagmi wiring lands in M6 — for now `wallet.connect()` is a mocked
- * delay in WalletStateProvider. The same context shape carries forward.
- *
- * Copy follows omega-docs/03-brand/messaging.md (status lexicon).
+ * Copy follows omega-docs/03-brand/messaging.md (status lexicon). The
+ * connect-wallet flow is preserved in `connect-wallet-modal.tsx` for
+ * Phase-4 self-custody reactivation.
  */
 
 import * as React from "react";
@@ -40,47 +38,28 @@ import { TransitionLink } from "@/components/shell/transition-link";
 import {
   truncateAddress,
   useWalletState,
-  type WalletState,
 } from "@/components/shell/WalletStateProvider";
-import {
-  ConnectWalletModal,
-  type ConnectWalletState,
-} from "@/components/modals";
+import { EmailSignupModal } from "@/components/modals";
 
 const ETHERSCAN_BASE = "https://etherscan.io/address/";
 
-const CONNECTOR_DISPLAY: Record<string, string> = {
-  metamask: "MetaMask",
-  walletconnect: "WalletConnect",
-  coinbase: "Coinbase Wallet",
-  injected: "Browser wallet",
-};
-
-/** Map the wallet-state machine to the modal's state machine.
- *  Returns `null` when the modal has nothing to display (e.g. wrong-network
- *  is handled by the navbar button + WrongNetworkBanner, not the modal). */
-function modalStateFor(walletState: WalletState): ConnectWalletState | null {
-  if (walletState === "connecting") return "connecting";
-  if (walletState === "connected") return "connected";
-  if (walletState === "no-nft-pass") return "no-nft-pass";
-  return null;
-}
-
 export function WalletStatus() {
   const wallet = useWalletState();
-  const { state, address, chainName, connector } = wallet;
+  const { state, address, chainName, email } = wallet;
   const [openRequested, setOpenRequested] = React.useState(false);
 
-  // Auto-open the modal whenever the wallet enters a state the modal owns
-  // (connecting / connected after click). Closes follow the same source of
-  // truth: the user explicitly closes, or the wallet returns to a state the
-  // modal has nothing to show for.
-  const derivedModalState = modalStateFor(state);
-  const modalOpen = openRequested || state === "connecting";
-  const modalState: ConnectWalletState =
-    derivedModalState ?? "idle";
+  // Auto-open the modal whenever the session is mid-sign-up so the user can
+  // see the live state. Closes follow explicit user action.
+  const modalOpen =
+    openRequested || state === "signing-up" || state === "magic-link-sent";
+  const modalState =
+    state === "signing-up"
+      ? ("submitting" as const)
+      : state === "magic-link-sent"
+      ? ("sent" as const)
+      : ("idle" as const);
 
-  const handleConnectClick = React.useCallback(() => {
+  const handleSignUpClick = React.useCallback(() => {
     setOpenRequested(true);
   }, []);
 
@@ -88,22 +67,17 @@ export function WalletStatus() {
     setOpenRequested(false);
   }, []);
 
-  const handleSelectConnector = React.useCallback(
-    (id: string) => {
-      const display = CONNECTOR_DISPLAY[id] ?? id;
-      wallet.connect(display);
+  const handleSubmitEmail = React.useCallback(
+    (nextEmail: string) => {
+      wallet.signUp(nextEmail);
     },
-    [wallet]
+    [wallet],
   );
 
   const handleDisconnect = React.useCallback(() => {
     wallet.disconnect();
     setOpenRequested(false);
   }, [wallet]);
-
-  const handleOpenWalletDetails = React.useCallback(() => {
-    setOpenRequested(true);
-  }, []);
 
   const truncated = address ? truncateAddress(address) : "—";
 
@@ -113,11 +87,26 @@ export function WalletStatus() {
         <Button
           variant="outline"
           size="sm"
-          onClick={handleConnectClick}
-          aria-label="Connect wallet"
+          onClick={handleSignUpClick}
+          aria-label="Sign up"
         >
-          <Icon.Wallet aria-hidden />
-          <span>Connect Wallet</span>
+          <Icon.Mail aria-hidden />
+          <span>Sign up</span>
+        </Button>
+      ) : null}
+
+      {state === "signing-up" || state === "magic-link-sent" ? (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleSignUpClick}
+          aria-label="Awaiting magic link"
+          aria-busy="true"
+        >
+          <ConnectingSpinner />
+          <span>
+            {state === "signing-up" ? "Sending..." : "Magic link sent"}
+          </span>
         </Button>
       ) : null}
 
@@ -125,7 +114,7 @@ export function WalletStatus() {
         <Button
           variant="outline"
           size="sm"
-          onClick={handleConnectClick}
+          onClick={handleSignUpClick}
           aria-label="Awaiting wallet signature"
           aria-busy="true"
         >
@@ -186,10 +175,6 @@ export function WalletStatus() {
               </span>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={handleOpenWalletDetails}>
-              <Icon.Wallet aria-hidden />
-              <span>Wallet details</span>
-            </DropdownMenuItem>
             <DropdownMenuItem
               onSelect={() => {
                 if (
@@ -245,14 +230,12 @@ export function WalletStatus() {
         </DropdownMenu>
       ) : null}
 
-      <ConnectWalletModal
+      <EmailSignupModal
         open={modalOpen}
         state={modalState}
-        activeConnector={connector}
-        address={address ? truncated : undefined}
+        email={email}
         onClose={handleClose}
-        onSelectConnector={handleSelectConnector}
-        onDisconnect={state === "connected" ? handleDisconnect : undefined}
+        onSubmit={handleSubmitEmail}
       />
     </>
   );

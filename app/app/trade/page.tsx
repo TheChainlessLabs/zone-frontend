@@ -68,10 +68,8 @@ function TradeSurface() {
     return (
       <PageLayout width="narrow" bare>
         <DisconnectedState
-          title="Connect a wallet to trade"
-          description="Omega is read-only until your wallet signs in. No data leaves the page until you authorise."
-          actionLabel="Connect Wallet"
-          icon={Icon.Wallet}
+          title="Sign up to trade"
+          description="Omega is read-only until you sign in with email. We'll send a magic link to activate your account."
           onAction={() => {}}
         />
       </PageLayout>

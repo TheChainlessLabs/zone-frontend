@@ -12,17 +12,19 @@ it("renders the default copy + CTA when no props are passed", () => {
     screen.getByText("Anonymous spot FX. On-chain settlement."),
   ).toBeDefined();
   expect(
-    screen.getByText("Connect a wallet to access trading and account screens."),
+    screen.getByText(
+      "Sign up with email to access trading and account screens.",
+    ),
   ).toBeDefined();
   expect(
-    screen.getByRole("button", { name: "Connect Wallet" }),
+    screen.getByRole("button", { name: "Sign up" }),
   ).toBeDefined();
 });
 
 it("invokes onAction when the CTA is clicked", () => {
   const onAction = vi.fn();
   render(<DisconnectedState onAction={onAction} />);
-  fireEvent.click(screen.getByRole("button", { name: "Connect Wallet" }));
+  fireEvent.click(screen.getByRole("button", { name: "Sign up" }));
   expect(onAction).toHaveBeenCalledOnce();
 });
 

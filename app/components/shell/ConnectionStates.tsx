@@ -18,29 +18,26 @@ import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/lib/icons";
 import { useWalletState } from "@/components/shell/WalletStateProvider";
-import {
-  ConnectWalletModal,
-  type ConnectWalletState,
-} from "@/components/modals";
-
-const CONNECTOR_DISPLAY: Record<string, string> = {
-  metamask: "MetaMask",
-  walletconnect: "WalletConnect",
-  coinbase: "Coinbase Wallet",
-  injected: "Browser wallet",
-};
+import { EmailSignupModal } from "@/components/modals";
 
 export function DisconnectedState({ routeLabel }: { routeLabel?: string }) {
   const wallet = useWalletState();
   const [openRequested, setOpenRequested] = React.useState(false);
 
-  // Mirror the WalletStatus modal-derivation logic: open when the user asks,
-  // or implicitly while we're mid-connect from this surface. Closes when the
-  // user dismisses, when the wallet returns to disconnected, or when the
-  // wallet finishes connecting (the AppShell will swap this surface out).
-  const modalOpen = openRequested || wallet.state === "connecting";
-  const modalState: ConnectWalletState =
-    wallet.state === "connecting" ? "connecting" : "idle";
+  // Mirror the WalletStatus modal-derivation logic: open when the user asks
+  // or implicitly while we're mid-sign-up. Closes when the user dismisses,
+  // or when the session lands on `connected` (AppShell swaps this surface
+  // out automatically).
+  const modalOpen =
+    openRequested ||
+    wallet.state === "signing-up" ||
+    wallet.state === "magic-link-sent";
+  const modalState =
+    wallet.state === "signing-up"
+      ? ("submitting" as const)
+      : wallet.state === "magic-link-sent"
+      ? ("sent" as const)
+      : ("idle" as const);
 
   return (
     <main className="mx-auto flex min-h-[calc(100vh-14rem)] max-w-xl flex-col items-center justify-center gap-6 px-4 py-16 text-center">
@@ -48,18 +45,18 @@ export function DisconnectedState({ routeLabel }: { routeLabel?: string }) {
         aria-hidden
         className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--border)] text-[var(--muted-foreground)]"
       >
-        <Icon.Wallet size={18} />
+        <Icon.Mail size={18} />
       </span>
       <div className="flex flex-col gap-2">
         <h1 className="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
-          {routeLabel ?? "Wallet required"}
+          {routeLabel ?? "Sign in required"}
         </h1>
         <p className="text-2xl font-medium tracking-tight md:text-3xl">
-          Connect a wallet to continue
+          Sign up to continue
         </p>
         <p className="mx-auto max-w-md text-sm leading-relaxed text-[var(--muted-foreground)]">
-          Omega is read-only until your wallet signs in. No data leaves the
-          page until you authorise.
+          Omega is read-only until you sign in with email. We'll send a
+          magic link to activate your account.
         </p>
       </div>
       <Button
@@ -67,17 +64,15 @@ export function DisconnectedState({ routeLabel }: { routeLabel?: string }) {
         onClick={() => setOpenRequested(true)}
         className="min-h-[44px] md:min-h-0"
       >
-        <Icon.Wallet aria-hidden />
-        <span>Connect Wallet</span>
+        <Icon.Mail aria-hidden />
+        <span>Sign up</span>
       </Button>
-      <ConnectWalletModal
+      <EmailSignupModal
         open={modalOpen}
         state={modalState}
-        activeConnector={wallet.connector}
+        email={wallet.email}
         onClose={() => setOpenRequested(false)}
-        onSelectConnector={(id) =>
-          wallet.connect(CONNECTOR_DISPLAY[id] ?? id)
-        }
+        onSubmit={(nextEmail) => wallet.signUp(nextEmail)}
       />
     </main>
   );

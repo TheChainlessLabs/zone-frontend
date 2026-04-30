@@ -15,6 +15,11 @@
  * Mobile collapses cleanly: the summary card lifts above the
  * scrollable sections so the quick-glance signal stays visible
  * after the chart instead of being buried under the lists.
+ *
+ * M4.17: rows became receipt-format drill-down triggers. Click
+ * (or Enter / Space) opens a Sheet on desktop / Drawer on mobile
+ * carrying the full receipt for that row. The earlier M4.15
+ * inline accordion is gone.
  */
 
 import * as React from "react";
@@ -24,7 +29,10 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Status } from "@/components/ui/status";
 import { LifecyclePip } from "@/components/portfolio/lifecycle-pip";
-import { ExpandableRow } from "@/components/portfolio/expandable-row";
+import {
+  PortfolioDrilldownSheet,
+  type PortfolioDrilldownPayload,
+} from "@/components/portfolio/drilldown-sheet";
 import { Icon } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 import { copyForStatusState } from "@/lib/lifecycle-copy";
@@ -44,11 +52,6 @@ import {
   TOKEN_TONE,
   type PortfolioFixture,
 } from "./_shared";
-import {
-  OpenPositionExpanded,
-  RecentFillExpanded,
-  TransferExpanded,
-} from "./_expanded-panels";
 
 const RANGES = ["1D", "1W", "1M", "3M", "1Y", "All"] as const;
 const POINTS: Record<(typeof RANGES)[number], number> = {
@@ -67,6 +70,8 @@ export default function Variant11Blended({
   onWithdraw?: () => void;
 }) {
   const [range, setRange] = React.useState<(typeof RANGES)[number]>("1M");
+  const [drilldown, setDrilldown] =
+    React.useState<PortfolioDrilldownPayload | null>(null);
   const totals = computeTotals(fixture);
   const allocations = computeAllocations(fixture);
   const transfers = combinedTransfers(fixture).slice(0, 4);
@@ -297,45 +302,45 @@ export default function Variant11Blended({
                 <ul className="flex flex-col" data-testid="open-positions-list">
                   {fixture.openOrders.map((o) => (
                     <li key={o.id}>
-                      <ExpandableRow
-                        id={`order-${o.id}`}
-                        ariaLabel={`Order ${o.id} ${o.pair} ${o.side} ${o.type}, ${o.amount} at ${o.price}`}
-                        summary={
-                          <span className="flex flex-col gap-1 md:flex-row md:items-center md:justify-between md:gap-4">
-                            <span className="flex min-w-0 items-center gap-2">
-                              <span className="font-mono font-medium">
-                                {o.pair}
-                              </span>
-                              <SidePill side={o.side} />
-                              <span
-                                className={cn(
-                                  PILL,
-                                  "text-[var(--muted-foreground)]",
-                                )}
-                              >
-                                {o.type}
-                              </span>
+                      <DrilldownRowButton
+                        ariaLabel={`Order ${o.id} ${o.pair} ${o.side} ${o.type}, ${o.amount} at ${o.price}. Open receipt`}
+                        onActivate={() =>
+                          setDrilldown({ kind: "order", order: o })
+                        }
+                      >
+                        <span className="flex flex-col gap-1 md:flex-row md:items-center md:justify-between md:gap-4">
+                          <span className="flex min-w-0 items-center gap-2">
+                            <span className="font-mono font-medium">
+                              {o.pair}
                             </span>
-                            <span className="flex flex-wrap items-center gap-3 md:gap-4">
-                              <MonoNum>{o.amount}</MonoNum>
-                              <MonoNum className="text-[var(--muted-foreground)]">
-                                @ {o.price}
-                              </MonoNum>
-                              <MonoNum className="text-xs text-[var(--muted-foreground)]">
-                                {o.filledPercent}%
-                              </MonoNum>
-                              <Status
-                                state={o.status as never}
-                                tooltip={
-                                  copyForStatusState(o.status as never) ??
-                                  undefined
-                                }
-                              />
+                            <SidePill side={o.side} />
+                            <span
+                              className={cn(
+                                PILL,
+                                "text-[var(--muted-foreground)]",
+                              )}
+                            >
+                              {o.type}
                             </span>
                           </span>
-                        }
-                        detail={<OpenPositionExpanded order={o} />}
-                      />
+                          <span className="flex flex-wrap items-center gap-3 md:gap-4">
+                            <MonoNum>{o.amount}</MonoNum>
+                            <MonoNum className="text-[var(--muted-foreground)]">
+                              @ {o.price}
+                            </MonoNum>
+                            <MonoNum className="text-xs text-[var(--muted-foreground)]">
+                              {o.filledPercent}%
+                            </MonoNum>
+                            <Status
+                              state={o.status as never}
+                              tooltip={
+                                copyForStatusState(o.status as never) ??
+                                undefined
+                              }
+                            />
+                          </span>
+                        </span>
+                      </DrilldownRowButton>
                     </li>
                   ))}
                 </ul>
@@ -359,29 +364,29 @@ export default function Variant11Blended({
                 <ul className="flex flex-col" data-testid="recent-fills-list">
                   {fixture.recentFills.map((f) => (
                     <li key={f.id}>
-                      <ExpandableRow
-                        id={`fill-${f.id}`}
-                        ariaLabel={`Fill ${f.id} ${f.pair} ${f.side}, ${f.amount} at ${f.price}`}
-                        summary={
-                          <span className="flex flex-col gap-1 md:flex-row md:items-center md:justify-between md:gap-4">
-                            <span className="flex items-center gap-2 font-mono">
-                              <span className="font-medium">{f.pair}</span>
-                              <SidePill side={f.side} />
-                            </span>
-                            <span className="flex flex-wrap items-center gap-3 text-xs">
-                              <MonoNum className="text-sm">{f.amount}</MonoNum>
-                              <MonoNum className="text-[var(--muted-foreground)]">
-                                @ {f.price}
-                              </MonoNum>
-                              <LifecyclePip status={f.status} />
-                              <MonoNum className="text-[var(--muted-foreground)]">
-                                {formatTime(f.matchedAt)}
-                              </MonoNum>
-                            </span>
-                          </span>
+                      <DrilldownRowButton
+                        ariaLabel={`Fill ${f.id} ${f.pair} ${f.side}, ${f.amount} at ${f.price}. Open receipt`}
+                        onActivate={() =>
+                          setDrilldown({ kind: "fill", fill: f })
                         }
-                        detail={<RecentFillExpanded fill={f} />}
-                      />
+                      >
+                        <span className="flex flex-col gap-1 md:flex-row md:items-center md:justify-between md:gap-4">
+                          <span className="flex items-center gap-2 font-mono">
+                            <span className="font-medium">{f.pair}</span>
+                            <SidePill side={f.side} />
+                          </span>
+                          <span className="flex flex-wrap items-center gap-3 text-xs">
+                            <MonoNum className="text-sm">{f.amount}</MonoNum>
+                            <MonoNum className="text-[var(--muted-foreground)]">
+                              @ {f.price}
+                            </MonoNum>
+                            <LifecyclePip status={f.status} />
+                            <MonoNum className="text-[var(--muted-foreground)]">
+                              {formatTime(f.matchedAt)}
+                            </MonoNum>
+                          </span>
+                        </span>
+                      </DrilldownRowButton>
                     </li>
                   ))}
                 </ul>
@@ -399,11 +404,11 @@ export default function Variant11Blended({
               ) : (
                 <ul className="flex flex-col" data-testid="transfers-list">
                   {transfers.map((t) => {
-                    const transferDetail =
+                    const payload: PortfolioDrilldownPayload =
                       t.kind === "withdrawal"
-                        ? ({
+                        ? {
                             kind: "withdrawal",
-                            row: {
+                            withdrawal: {
                               id: t.id,
                               token: t.token,
                               amount: t.amount,
@@ -411,10 +416,10 @@ export default function Variant11Blended({
                               initiatedAt: t.initiatedAt,
                               txHash: t.txHash,
                             },
-                          } as const)
-                        : ({
+                          }
+                        : {
                             kind: "deposit",
-                            row: {
+                            deposit: {
                               id: t.id,
                               token: t.token,
                               amount: t.amount,
@@ -422,51 +427,47 @@ export default function Variant11Blended({
                               initiatedAt: t.initiatedAt,
                               txHash: t.txHash,
                             },
-                          } as const);
+                          };
                     return (
                       <li key={`${t.kind}-${t.id}`}>
-                        <ExpandableRow
-                          id={`transfer-${t.kind}-${t.id}`}
-                          ariaLabel={`${t.kind === "deposit" ? "Deposit" : "Withdrawal"} ${t.token}, ${t.amount}`}
-                          summary={
-                            <span className="flex flex-col gap-1 md:flex-row md:items-center md:justify-between md:gap-4">
-                              <span className="flex items-center gap-2">
-                                <span
-                                  className={cn(
-                                    PILL,
-                                    t.kind === "deposit"
-                                      ? "text-[var(--success)]"
-                                      : "text-[var(--muted-foreground)]",
-                                  )}
-                                >
-                                  {t.kind === "deposit"
-                                    ? "Deposit"
-                                    : "Withdrawal"}
-                                </span>
-                                <span className="font-mono">{t.token}</span>
+                        <DrilldownRowButton
+                          ariaLabel={`${t.kind === "deposit" ? "Deposit" : "Withdrawal"} ${t.token}, ${t.amount}. Open receipt`}
+                          onActivate={() => setDrilldown(payload)}
+                        >
+                          <span className="flex flex-col gap-1 md:flex-row md:items-center md:justify-between md:gap-4">
+                            <span className="flex items-center gap-2">
+                              <span
+                                className={cn(
+                                  PILL,
+                                  t.kind === "deposit"
+                                    ? "text-[var(--success)]"
+                                    : "text-[var(--muted-foreground)]",
+                                )}
+                              >
+                                {t.kind === "deposit"
+                                  ? "Deposit"
+                                  : "Withdrawal"}
                               </span>
-                              <span className="flex flex-wrap items-center gap-3 text-xs">
-                                <MonoNum className="text-sm">
-                                  {t.amount}
-                                </MonoNum>
-                                <Status
-                                  state={t.status as never}
-                                  tooltip={
-                                    copyForStatusState(
-                                      t.status as never,
-                                      t.kind === "withdrawal"
-                                        ? "withdrawal"
-                                        : "deposit",
-                                    ) ?? undefined
-                                  }
-                                />
-                              </span>
+                              <span className="font-mono">{t.token}</span>
                             </span>
-                          }
-                          detail={
-                            <TransferExpanded transfer={transferDetail} />
-                          }
-                        />
+                            <span className="flex flex-wrap items-center gap-3 text-xs">
+                              <MonoNum className="text-sm">
+                                {t.amount}
+                              </MonoNum>
+                              <Status
+                                state={t.status as never}
+                                tooltip={
+                                  copyForStatusState(
+                                    t.status as never,
+                                    t.kind === "withdrawal"
+                                      ? "withdrawal"
+                                      : "deposit",
+                                  ) ?? undefined
+                                }
+                              />
+                            </span>
+                          </span>
+                        </DrilldownRowButton>
                       </li>
                     );
                   })}
@@ -476,7 +477,47 @@ export default function Variant11Blended({
           </Animate>
         </div>
       </div>
+
+      <PortfolioDrilldownSheet
+        open={drilldown !== null}
+        onOpenChange={(next) => {
+          if (!next) setDrilldown(null);
+        }}
+        payload={drilldown}
+      />
     </div>
+  );
+}
+
+interface DrilldownRowButtonProps {
+  ariaLabel: string;
+  onActivate: () => void;
+  children: React.ReactNode;
+}
+
+/**
+ * Whole-row button trigger for a portfolio drilldown. Inherits row baseline
+ * (border-top, padding, hover) from the M4.15 row chrome but loses the
+ * chevron + accordion plumbing — the receipt opens in a Sheet/Drawer now.
+ */
+function DrilldownRowButton({
+  ariaLabel,
+  onActivate,
+  children,
+}: DrilldownRowButtonProps) {
+  return (
+    <button
+      type="button"
+      aria-label={ariaLabel}
+      onClick={onActivate}
+      className={cn(
+        "flex w-full items-center gap-3 border-t border-[var(--border)] py-3 text-left text-sm transition-colors first:border-t-0 motion-reduce:transition-none",
+        "hover:bg-[color-mix(in_oklab,var(--foreground)_3%,transparent)]",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)]",
+      )}
+    >
+      <span className="flex-1 min-w-0">{children}</span>
+    </button>
   );
 }
 

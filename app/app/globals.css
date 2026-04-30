@@ -207,3 +207,37 @@ body[data-route="/404"]::before {
     -webkit-backdrop-filter: none;
   }
 }
+
+/* OrderPipeline (M4.12) — 200ms tinted pulse on stage transition. The
+   keyframes ride the same fill colour the lozenge already uses so the
+   transition reads as "tighter, brighter, then settle". Reduced-motion
+   suppresses the keyframes entirely (handled by the data attribute on
+   the lozenge — these classes are only attached when motion is allowed). */
+@keyframes omega-pipeline-pulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--foreground) 28%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 6px color-mix(in oklab, var(--foreground) 0%, transparent);
+  }
+}
+@keyframes omega-pipeline-pulse-fail {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--destructive) 32%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 6px color-mix(in oklab, var(--destructive) 0%, transparent);
+  }
+}
+.omega-pipeline-pulse {
+  animation: omega-pipeline-pulse 200ms ease-out;
+}
+.omega-pipeline-pulse-fail {
+  animation: omega-pipeline-pulse-fail 200ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .omega-pipeline-pulse,
+  .omega-pipeline-pulse-fail {
+    animation: none;
+  }
+}

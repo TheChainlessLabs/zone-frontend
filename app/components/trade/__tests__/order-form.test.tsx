@@ -1,10 +1,25 @@
-import { afterEach, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+
+// next/navigation's `useSearchParams` is mocked at module scope so the
+// in-ticket execution rail's `?simulateFailure=true` branch can be exercised.
+let currentParams = new URLSearchParams();
+vi.mock("next/navigation", () => ({
+  useSearchParams: () => currentParams,
+}));
 
 import { OrderForm } from "@/components/trade";
 import { DEFAULT_PAIR } from "@/lib/fixtures/pairs";
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  currentParams = new URLSearchParams();
+  vi.useRealTimers();
+});
+
+beforeEach(() => {
+  currentParams = new URLSearchParams();
+});
 
 it("renders Market mode by default with Buy/Sell + percentage shortcuts", () => {
   render(
@@ -233,4 +248,110 @@ it("hotkey B/S toggles side; M sets price to midpoint in limit mode", () => {
   fireEvent.change(priceInput, { target: { value: "" } });
   fireEvent.keyDown(form, { key: "m" });
   expect(priceInput.value).toBe("0.9213");
+});
+
+it("renders the OrderPipeline in idle state by default", () => {
+  render(
+    <OrderForm
+      pair={DEFAULT_PAIR}
+      mode="market"
+      onModeChange={() => {}}
+      midpoint="0.9213"
+    />,
+  );
+  expect(
+    screen.getByRole("group", { name: /Order execution pipeline/i }),
+  ).toBeDefined();
+  expect(screen.getByText("Order pipeline · idle")).toBeDefined();
+  ["sign", "queued", "matched", "settling", "settled"].forEach((s) => {
+    expect(document.querySelector(`[data-stage="${s}"]`)).not.toBeNull();
+  });
+});
+
+it("advances the pipeline through Sign → Queued → Matched → Settling → Settled on submit", () => {
+  vi.useFakeTimers();
+  render(
+    <OrderForm
+      pair={DEFAULT_PAIR}
+      mode="market"
+      onModeChange={() => {}}
+      midpoint="0.9213"
+    />,
+  );
+  fireEvent.change(screen.getByLabelText("Amount"), {
+    target: { value: "100" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: /Submit/ }));
+
+  // Submit lands the user on `sign` immediately.
+  expect(
+    document.querySelector('[data-stage="sign"]')?.getAttribute("data-state"),
+  ).toBe("current");
+
+  const expected: Array<[string, string]> = [
+    ["queued", "current"],
+    ["matched", "current"],
+    ["settling", "current"],
+    ["settled", "current"],
+  ];
+  for (const [stage, state] of expected) {
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+    expect(
+      document.querySelector(`[data-stage="${stage}"]`)?.getAttribute("data-state"),
+    ).toBe(state);
+  }
+
+  // Idle caption is gone once the pipeline starts.
+  expect(screen.queryByText("Order pipeline · idle")).toBeNull();
+});
+
+it("surfaces the failure banner + Simulate failure trigger when ?simulateFailure=true", () => {
+  vi.useFakeTimers();
+  currentParams = new URLSearchParams("simulateFailure=true");
+  render(
+    <OrderForm
+      pair={DEFAULT_PAIR}
+      mode="market"
+      onModeChange={() => {}}
+      midpoint="0.9213"
+    />,
+  );
+  fireEvent.change(screen.getByLabelText("Amount"), {
+    target: { value: "100" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: /Submit/ }));
+
+  // Tick to settling so the failure lands at a representative late stage.
+  // Separate `act` blocks so each render flush queues the next effect's timer
+  // before the next advance.
+  act(() => {
+    vi.advanceTimersByTime(1000);
+  });
+  act(() => {
+    vi.advanceTimersByTime(1000);
+  });
+  act(() => {
+    vi.advanceTimersByTime(1000);
+  });
+  expect(
+    document
+      .querySelector('[data-stage="settling"]')
+      ?.getAttribute("data-state"),
+  ).toBe("current");
+
+  fireEvent.click(
+    screen.getByRole("button", { name: /Simulate failure at current stage/i }),
+  );
+
+  expect(
+    document.querySelector('[data-stage="settling"]')?.getAttribute("data-state"),
+  ).toBe("failed");
+  expect(
+    screen.getByText(/Settlement reverted on L1\./),
+  ).toBeDefined();
+  expect(
+    screen.getByRole("link", { name: /View your fills/i }),
+  ).toBeDefined();
 });

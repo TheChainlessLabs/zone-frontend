@@ -11,3 +11,9 @@ export {
 } from "./execution-context-strip";
 export { ChartPlaceholder, type ChartPlaceholderProps } from "./chart-placeholder";
 export { YourFills, type YourFillsProps } from "./your-fills";
+export {
+  OrderPipeline,
+  type OrderPipelineProps,
+  type PipelineStage,
+  type ActiveStage,
+} from "./order-pipeline";

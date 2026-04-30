@@ -13,6 +13,7 @@
  *   • Amount input (large mono tabular; same side-locked ring)
  *   • Percentage shortcuts (25 / 50 / 75 / MAX)
  *   • "You receive" estimate row
+ *   • OrderPipeline (Sign → Queued → Matched → Settling → Settled) — M4.12
  *   • Submit CTA carrying the literal order summary the user is signing,
  *     with the privacy claim baked into the copy
  *     (`Submit · Buy 1,000 USDC at 0.9213 EURC · privately matched`)
@@ -25,10 +26,13 @@
  * exclamations, no "approve" (use "Sign").
  *
  * State: form state is local (useState). Submit fires `onSubmit({...})`,
- * which the page wires to OrderConfirmationModal.
+ * which the page wires to OrderConfirmationModal. The pipeline stage is
+ * also local — synthesised for v0 (M4.12); M6 wires real backend events.
  */
 
 import * as React from "react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,6 +47,21 @@ import { Icon } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 import type { LaunchPair } from "@/lib/fixtures/pairs";
 import type { Side } from "@/lib/fixtures/types";
+import {
+  OrderPipeline,
+  type ActiveStage,
+  type PipelineStage,
+} from "./order-pipeline";
+
+/** Synthetic stage progression cadence (v0). M6 replaces with backend events. */
+const PIPELINE_STEP_MS = 1000;
+const PIPELINE_SEQUENCE: ReadonlyArray<ActiveStage> = [
+  "sign",
+  "queued",
+  "matched",
+  "settling",
+  "settled",
+];
 
 export type OrderMode = "market" | "limit";
 
@@ -96,6 +115,18 @@ export function OrderForm({
   const [amount, setAmount] = React.useState<string>("");
   const [price, setPrice] = React.useState<string>(midpoint || "");
 
+  // M4.12 — execution rail. Stage drives the OrderPipeline. Default `idle`
+  // (all five lozenges outlined, "Order pipeline · idle" caption). Submit
+  // kicks off the synthetic 1s-per-stage progression; M6 wires real events.
+  const [stage, setStage] = React.useState<PipelineStage>("idle");
+  const [failedAt, setFailedAt] = React.useState<ActiveStage | undefined>(
+    undefined,
+  );
+
+  // `?simulateFailure=true` enables a dev-only Simulate failure trigger.
+  const searchParams = useSearchParams();
+  const simulateFailureEnabled = searchParams?.get("simulateFailure") === "true";
+
   // Sync the limit-price input default whenever the midpoint or mode shifts —
   // the user can still override. Empty midpoint stays empty.
   React.useEffect(() => {
@@ -103,6 +134,31 @@ export function OrderForm({
       setPrice(midpoint);
     }
   }, [mode, midpoint, price]);
+
+  // Synthetic stage progression. Each active stage schedules the next one
+  // `PIPELINE_STEP_MS` later; the chain stops at terminal states.
+  React.useEffect(() => {
+    if (stage === "idle" || stage === "failed" || stage === "settled") return;
+    const idx = PIPELINE_SEQUENCE.indexOf(stage as ActiveStage);
+    if (idx === -1 || idx === PIPELINE_SEQUENCE.length - 1) return;
+    const next = PIPELINE_SEQUENCE[idx + 1]!;
+    const id = window.setTimeout(() => setStage(next), PIPELINE_STEP_MS);
+    return () => window.clearTimeout(id);
+  }, [stage]);
+
+  // Esc resets the rail back to idle, but only from terminal states. Mid-flight
+  // Esc is reserved for OrderConfirmationModal and the form-level clear-amount
+  // handler below — capturing it here would race those.
+  React.useEffect(() => {
+    if (stage !== "failed" && stage !== "settled") return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      setStage("idle");
+      setFailedAt(undefined);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [stage]);
 
   const numericAmount = parseFloat(amount || "0");
   const numericPrice = parseFloat(
@@ -116,9 +172,11 @@ export function OrderForm({
       ? (numericAmount * numericPrice).toFixed(2)
       : "";
 
+  const inFlight = stage !== "idle" && stage !== "failed" && stage !== "settled";
   const submitDisabled =
     loading || !!errorMessage || numericAmount <= 0 ||
-    (mode === "limit" && numericPrice <= 0);
+    (mode === "limit" && numericPrice <= 0) ||
+    inFlight;
 
   const handlePct = (factor: number) => {
     const base = parseFloat(MOCK_AVAILABLE);
@@ -129,12 +187,25 @@ export function OrderForm({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (submitDisabled) return;
+    setStage("sign");
+    setFailedAt(undefined);
     onSubmit?.({
       mode,
       side,
       amount,
       price: mode === "limit" ? price : undefined,
     });
+  };
+
+  const handleSimulateFailure = () => {
+    if (!inFlight) return;
+    setFailedAt(stage as ActiveStage);
+    setStage("failed");
+  };
+
+  const handleResetPipeline = () => {
+    setStage("idle");
+    setFailedAt(undefined);
   };
 
   // Keyboard hotkeys at form level. Match TWS / Bloomberg ticket-pad muscle
@@ -193,6 +264,45 @@ export function OrderForm({
       className="flex flex-col gap-5 rounded-[var(--radius-xl)] surface-soft bg-[var(--card)] p-5"
       aria-label="Order entry"
     >
+      {/* Failure banner — surfaces only after a settlement reverts on L1.
+          Subtle destructive-tinted background + full border (no left-stripe
+          per the brand anti-pattern). */}
+      {stage === "failed" ? (
+        <div
+          role="alert"
+          className="flex items-start justify-between gap-3 rounded-[var(--radius-md)] border p-3 text-xs leading-relaxed"
+          style={{
+            backgroundColor:
+              "color-mix(in oklab, var(--destructive) 8%, transparent)",
+            borderColor:
+              "color-mix(in oklab, var(--destructive) 30%, transparent)",
+            color: "var(--destructive)",
+          }}
+        >
+          <div className="flex items-start gap-2">
+            <Icon.Failed size={14} aria-hidden className="mt-0.5 shrink-0" />
+            <span>
+              Settlement reverted on L1. Fills remain valid offchain — no
+              action required.{" "}
+              <Link
+                href="/portfolio"
+                className="underline underline-offset-2 hover:text-[var(--foreground)]"
+              >
+                View your fills
+              </Link>
+              .
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={handleResetPipeline}
+            className="font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+          >
+            Dismiss
+          </button>
+        </div>
+      ) : null}
+
       {/* Top-line execution summary — Bloomberg/EMSX-style ticket head.
           Side · Pair · Midpoint · Available, all on one row, mono tabular.
           Available balance is promoted out of the 10px label tracker. */}
@@ -361,6 +471,23 @@ export function OrderForm({
           That data lives in <ExecutionContextStrip /> below the form on the
           page. One home for execution metadata. */}
 
+      {/* Execution rail (M4.12) — Sign → Queued → Matched → Settling → Settled.
+          Idle by default; advances on Submit. Always rendered so the user has
+          a stable "what-happens-next" reference, even pre-submit. */}
+      <OrderPipeline stage={stage} failedAt={failedAt} />
+
+      {/* Dev-only: synthetic-failure trigger, gated on `?simulateFailure=true`.
+          Visible mid-flow so reviewers can fail at the current stage. */}
+      {simulateFailureEnabled && inFlight ? (
+        <button
+          type="button"
+          onClick={handleSimulateFailure}
+          className="self-start font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--muted-foreground)] underline underline-offset-2 hover:text-[var(--destructive)]"
+        >
+          Simulate failure at current stage
+        </button>
+      ) : null}
+
       {/* Error tile or submit CTA. CTA carries the explicit order summary
           including the privacy claim — no separate 11px footer. */}
       {errorMessage ? (
@@ -387,14 +514,36 @@ export function OrderForm({
           )}
           title="Press Enter to submit"
         >
-          <span className="truncate font-mono">{ctaLabel}</span>
-          <span className="ml-2 inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-current/30 px-1.5 font-mono text-[9px] uppercase tracking-[0.14em] opacity-80">
-            ↵
+          <span className="truncate font-mono">
+            {inFlight ? `${stageLabel(stage)}…` : ctaLabel}
           </span>
+          {!inFlight ? (
+            <span className="ml-2 inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-current/30 px-1.5 font-mono text-[9px] uppercase tracking-[0.14em] opacity-80">
+              ↵
+            </span>
+          ) : null}
         </Button>
       )}
     </form>
   );
+}
+
+/** Render-friendly stage label for the in-flight CTA. */
+function stageLabel(stage: PipelineStage): string {
+  switch (stage) {
+    case "sign":
+      return "Signing";
+    case "queued":
+      return "Queued";
+    case "matched":
+      return "Matched";
+    case "settling":
+      return "Settling";
+    case "settled":
+      return "Settled";
+    default:
+      return "Submitting";
+  }
 }
 
 // ----------------------------------------------------------------------------

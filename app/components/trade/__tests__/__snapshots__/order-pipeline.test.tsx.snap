@@ -1,0 +1,445 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`matches the snapshot for each canonical state > current-matched 1`] = `
+<div
+  aria-label="Order execution pipeline"
+  class="flex flex-col gap-2"
+  role="group"
+>
+  <div
+    class="-mx-1 overflow-x-auto px-1 pb-1"
+  >
+    <ol
+      aria-live="polite"
+      class="flex min-w-max items-center gap-1"
+    >
+      <li
+        class="shrink-0"
+      >
+        <button
+          aria-label="Sign stage"
+          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-200 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] border-[var(--foreground)]/40 bg-[color-mix(in_oklab,var(--foreground)_8%,transparent)] text-[var(--foreground)]"
+          data-pulse="off"
+          data-stage="sign"
+          data-state="completed"
+          tabindex="0"
+          type="button"
+        >
+          Sign
+        </button>
+      </li>
+      <li
+        aria-hidden="true"
+        class="h-px w-2 shrink-0 transition-colors duration-200 motion-reduce:transition-none sm:w-3 bg-[var(--foreground)]"
+      />
+      <li
+        class="shrink-0"
+      >
+        <button
+          aria-label="Queued stage"
+          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-200 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] border-[var(--foreground)]/40 bg-[color-mix(in_oklab,var(--foreground)_8%,transparent)] text-[var(--foreground)]"
+          data-pulse="off"
+          data-stage="queued"
+          data-state="completed"
+          tabindex="0"
+          type="button"
+        >
+          Queued
+        </button>
+      </li>
+      <li
+        aria-hidden="true"
+        class="h-px w-2 shrink-0 transition-colors duration-200 motion-reduce:transition-none sm:w-3 bg-[var(--foreground)]"
+      />
+      <li
+        class="shrink-0"
+      >
+        <button
+          aria-label="Matched stage"
+          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-200 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] text-[var(--foreground)] omega-pipeline-pulse"
+          data-pulse="on"
+          data-stage="matched"
+          data-state="current"
+          style="border-color: color-mix(in oklab, var(--foreground) 55%, transparent); background-color: color-mix(in oklab, var(--foreground) 16%, transparent);"
+          tabindex="0"
+          type="button"
+        >
+          Matched
+        </button>
+      </li>
+      <li
+        aria-hidden="true"
+        class="h-px w-2 shrink-0 transition-colors duration-200 motion-reduce:transition-none sm:w-3 bg-[var(--border)]"
+      />
+      <li
+        class="shrink-0"
+      >
+        <button
+          aria-label="Settling stage"
+          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-200 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] border-[var(--border)] bg-transparent text-[var(--muted-foreground)]"
+          data-pulse="off"
+          data-stage="settling"
+          data-state="future"
+          tabindex="0"
+          type="button"
+        >
+          Settling
+        </button>
+      </li>
+      <li
+        aria-hidden="true"
+        class="h-px w-2 shrink-0 transition-colors duration-200 motion-reduce:transition-none sm:w-3 bg-[var(--border)]"
+      />
+      <li
+        class="shrink-0"
+      >
+        <button
+          aria-label="Settled stage"
+          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-200 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] border-[var(--border)] bg-transparent text-[var(--muted-foreground)]"
+          data-pulse="off"
+          data-stage="settled"
+          data-state="future"
+          tabindex="0"
+          type="button"
+        >
+          Settled
+        </button>
+      </li>
+    </ol>
+  </div>
+</div>
+`;
+
+exports[`matches the snapshot for each canonical state > current-sign 1`] = `
+<div
+  aria-label="Order execution pipeline"
+  class="flex flex-col gap-2"
+  role="group"
+>
+  <div
+    class="-mx-1 overflow-x-auto px-1 pb-1"
+  >
+    <ol
+      aria-live="polite"
+      class="flex min-w-max items-center gap-1"
+    >
+      <li
+        class="shrink-0"
+      >
+        <button
+          aria-label="Sign stage"
+          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-200 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] text-[var(--foreground)] omega-pipeline-pulse"
+          data-pulse="on"
+          data-stage="sign"
+          data-state="current"
+          style="border-color: color-mix(in oklab, var(--foreground) 55%, transparent); background-color: color-mix(in oklab, var(--foreground) 16%, transparent);"
+          tabindex="0"
+          type="button"
+        >
+          Sign
+        </button>
+      </li>
+      <li
+        aria-hidden="true"
+        class="h-px w-2 shrink-0 transition-colors duration-200 motion-reduce:transition-none sm:w-3 bg-[var(--border)]"
+      />
+      <li
+        class="shrink-0"
+      >
+        <button
+          aria-label="Queued stage"
+          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-200 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] border-[var(--border)] bg-transparent text-[var(--muted-foreground)]"
+          data-pulse="off"
+          data-stage="queued"
+          data-state="future"
+          tabindex="0"
+          type="button"
+        >
+          Queued
+        </button>
+      </li>
+      <li
+        aria-hidden="true"
+        class="h-px w-2 shrink-0 transition-colors duration-200 motion-reduce:transition-none sm:w-3 bg-[var(--border)]"
+      />
+      <li
+        class="shrink-0"
+      >
+        <button
+          aria-label="Matched stage"
+          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-200 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] border-[var(--border)] bg-transparent text-[var(--muted-foreground)]"
+          data-pulse="off"
+          data-stage="matched"
+          data-state="future"
+          tabindex="0"
+          type="button"
+        >
+          Matched
+        </button>
+      </li>
+      <li
+        aria-hidden="true"
+        class="h-px w-2 shrink-0 transition-colors duration-200 motion-reduce:transition-none sm:w-3 bg-[var(--border)]"
+      />
+      <li
+        class="shrink-0"
+      >
+        <button
+          aria-label="Settling stage"
+          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-200 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] border-[var(--border)] bg-transparent text-[var(--muted-foreground)]"
+          data-pulse="off"
+          data-stage="settling"
+          data-state="future"
+          tabindex="0"
+          type="button"
+        >
+          Settling
+        </button>
+      </li>
+      <li
+        aria-hidden="true"
+        class="h-px w-2 shrink-0 transition-colors duration-200 motion-reduce:transition-none sm:w-3 bg-[var(--border)]"
+      />
+      <li
+        class="shrink-0"
+      >
+        <button
+          aria-label="Settled stage"
+          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-200 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] border-[var(--border)] bg-transparent text-[var(--muted-foreground)]"
+          data-pulse="off"
+          data-stage="settled"
+          data-state="future"
+          tabindex="0"
+          type="button"
+        >
+          Settled
+        </button>
+      </li>
+    </ol>
+  </div>
+</div>
+`;
+
+exports[`matches the snapshot for each canonical state > failed-at-settling 1`] = `
+<div
+  aria-label="Order execution pipeline"
+  class="flex flex-col gap-2"
+  role="group"
+>
+  <div
+    class="-mx-1 overflow-x-auto px-1 pb-1"
+  >
+    <ol
+      aria-live="polite"
+      class="flex min-w-max items-center gap-1"
+    >
+      <li
+        class="shrink-0"
+      >
+        <button
+          aria-label="Sign stage"
+          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-200 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] border-[var(--foreground)]/40 bg-[color-mix(in_oklab,var(--foreground)_8%,transparent)] text-[var(--foreground)]"
+          data-pulse="off"
+          data-stage="sign"
+          data-state="completed"
+          tabindex="0"
+          type="button"
+        >
+          Sign
+        </button>
+      </li>
+      <li
+        aria-hidden="true"
+        class="h-px w-2 shrink-0 transition-colors duration-200 motion-reduce:transition-none sm:w-3 bg-[var(--foreground)]"
+      />
+      <li
+        class="shrink-0"
+      >
+        <button
+          aria-label="Queued stage"
+          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-200 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] border-[var(--foreground)]/40 bg-[color-mix(in_oklab,var(--foreground)_8%,transparent)] text-[var(--foreground)]"
+          data-pulse="off"
+          data-stage="queued"
+          data-state="completed"
+          tabindex="0"
+          type="button"
+        >
+          Queued
+        </button>
+      </li>
+      <li
+        aria-hidden="true"
+        class="h-px w-2 shrink-0 transition-colors duration-200 motion-reduce:transition-none sm:w-3 bg-[var(--foreground)]"
+      />
+      <li
+        class="shrink-0"
+      >
+        <button
+          aria-label="Matched stage"
+          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-200 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] border-[var(--foreground)]/40 bg-[color-mix(in_oklab,var(--foreground)_8%,transparent)] text-[var(--foreground)]"
+          data-pulse="off"
+          data-stage="matched"
+          data-state="completed"
+          tabindex="0"
+          type="button"
+        >
+          Matched
+        </button>
+      </li>
+      <li
+        aria-hidden="true"
+        class="h-px w-2 shrink-0 transition-colors duration-200 motion-reduce:transition-none sm:w-3 bg-[var(--border)]"
+      />
+      <li
+        class="shrink-0"
+      >
+        <button
+          aria-label="Settling stage"
+          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-200 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] border-[color-mix(in_oklab,var(--destructive)_45%,transparent)] bg-[color-mix(in_oklab,var(--destructive)_14%,transparent)] text-[var(--destructive)] omega-pipeline-pulse-fail"
+          data-pulse="on"
+          data-stage="settling"
+          data-state="failed"
+          tabindex="0"
+          type="button"
+        >
+          Settling
+        </button>
+      </li>
+      <li
+        aria-hidden="true"
+        class="h-px w-2 shrink-0 transition-colors duration-200 motion-reduce:transition-none sm:w-3 bg-[var(--border)]"
+      />
+      <li
+        class="shrink-0"
+      >
+        <button
+          aria-label="Settled stage"
+          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-200 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] border-[var(--border)] bg-transparent text-[var(--muted-foreground)]"
+          data-pulse="off"
+          data-stage="settled"
+          data-state="future"
+          tabindex="0"
+          type="button"
+        >
+          Settled
+        </button>
+      </li>
+    </ol>
+  </div>
+</div>
+`;
+
+exports[`matches the snapshot for each canonical state > idle 1`] = `
+<div
+  aria-label="Order execution pipeline"
+  class="flex flex-col gap-2"
+  role="group"
+>
+  <span
+    class="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]"
+    data-testid="pipeline-idle-label"
+  >
+    Order pipeline · idle
+  </span>
+  <div
+    class="-mx-1 overflow-x-auto px-1 pb-1"
+  >
+    <ol
+      aria-live="polite"
+      class="flex min-w-max items-center gap-1"
+    >
+      <li
+        class="shrink-0"
+      >
+        <button
+          aria-label="Sign stage"
+          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-200 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] border-[var(--border)] bg-transparent text-[var(--muted-foreground)]"
+          data-pulse="off"
+          data-stage="sign"
+          data-state="idle"
+          tabindex="0"
+          type="button"
+        >
+          Sign
+        </button>
+      </li>
+      <li
+        aria-hidden="true"
+        class="h-px w-2 shrink-0 transition-colors duration-200 motion-reduce:transition-none sm:w-3 bg-[var(--border)]"
+      />
+      <li
+        class="shrink-0"
+      >
+        <button
+          aria-label="Queued stage"
+          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-200 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] border-[var(--border)] bg-transparent text-[var(--muted-foreground)]"
+          data-pulse="off"
+          data-stage="queued"
+          data-state="idle"
+          tabindex="0"
+          type="button"
+        >
+          Queued
+        </button>
+      </li>
+      <li
+        aria-hidden="true"
+        class="h-px w-2 shrink-0 transition-colors duration-200 motion-reduce:transition-none sm:w-3 bg-[var(--border)]"
+      />
+      <li
+        class="shrink-0"
+      >
+        <button
+          aria-label="Matched stage"
+          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-200 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] border-[var(--border)] bg-transparent text-[var(--muted-foreground)]"
+          data-pulse="off"
+          data-stage="matched"
+          data-state="idle"
+          tabindex="0"
+          type="button"
+        >
+          Matched
+        </button>
+      </li>
+      <li
+        aria-hidden="true"
+        class="h-px w-2 shrink-0 transition-colors duration-200 motion-reduce:transition-none sm:w-3 bg-[var(--border)]"
+      />
+      <li
+        class="shrink-0"
+      >
+        <button
+          aria-label="Settling stage"
+          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-200 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] border-[var(--border)] bg-transparent text-[var(--muted-foreground)]"
+          data-pulse="off"
+          data-stage="settling"
+          data-state="idle"
+          tabindex="0"
+          type="button"
+        >
+          Settling
+        </button>
+      </li>
+      <li
+        aria-hidden="true"
+        class="h-px w-2 shrink-0 transition-colors duration-200 motion-reduce:transition-none sm:w-3 bg-[var(--border)]"
+      />
+      <li
+        class="shrink-0"
+      >
+        <button
+          aria-label="Settled stage"
+          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-200 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] border-[var(--border)] bg-transparent text-[var(--muted-foreground)]"
+          data-pulse="off"
+          data-stage="settled"
+          data-state="idle"
+          tabindex="0"
+          type="button"
+        >
+          Settled
+        </button>
+      </li>
+    </ol>
+  </div>
+</div>
+`;

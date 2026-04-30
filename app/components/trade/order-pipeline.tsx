@@ -158,7 +158,7 @@ export function OrderPipeline({ stage, failedAt }: OrderPipelineProps) {
                     <li
                       aria-hidden
                       className={cn(
-                        "h-px w-2 shrink-0 transition-colors duration-200 motion-reduce:transition-none sm:w-3",
+                        "h-px w-2 shrink-0 transition-colors duration-150 motion-reduce:transition-none sm:w-3",
                         connectorActive
                           ? "bg-[var(--foreground)]"
                           : "bg-[var(--border)]",
@@ -194,7 +194,7 @@ function StageLozenge({
   // "SETTLING", "SETTLED" legible at 9px tracking. The rail still falls back
   // to horizontal scroll on viewports below ~360px wide.
   const baseClass =
-    "inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-200 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)]";
+    "inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-150 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)]";
 
   const stateClass = (() => {
     switch (state) {

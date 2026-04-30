@@ -24,6 +24,7 @@
   --duration-75: 75ms;
   --duration-100: 100ms;
   --duration-150: 150ms;
+  --duration-300: 300ms;
   --duration-500: 500ms;
 
   /* Soft surface treatment — diffuse drop + faint inner ring. See

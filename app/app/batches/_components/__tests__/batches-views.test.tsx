@@ -158,6 +158,26 @@ describe("BatchesListView", () => {
     expect(screen.getByRole("button", { name: "Retry" })).toBeDefined();
   });
 
+  it("Button primitive carries the press-down baseline (M5.3)", async () => {
+    // M5.3 — every <Button> ships the press-down nudge for free via the
+    // primitive's base classes. The error-state Retry button is a default
+    // <Button> instance, so its rendered class list must include
+    // `press-down`.
+    await renderList({ state: "error" });
+    const retry = screen.getByRole("button", { name: "Retry" });
+    expect(retry.className).toMatch(/(^|\s)press-down(\s|$)/);
+  });
+
+  it("desktop batch row uses the 75ms tempo hover (M5.3)", async () => {
+    const { container } = await renderList();
+    const tr = container.querySelector("tbody tr");
+    expect(tr).not.toBeNull();
+    const cls = tr?.className ?? "";
+    expect(cls).toMatch(/duration-75/);
+    expect(cls).toMatch(/hover:-mt-px/);
+    expect(cls).toMatch(/hover:border-t/);
+  });
+
   it("search-no-results echoes the query and offers next steps", async () => {
     await renderList({ search: "no-results" });
     expect(screen.getByText('No batches match "0xdead".')).toBeDefined();

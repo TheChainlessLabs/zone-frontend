@@ -1,15 +1,21 @@
 "use client";
 
 import * as React from "react";
-import { Button } from "@/components/ui/button";
 import { Icon } from "@/lib/icons";
 import { cn } from "@/lib/utils";
+import { useCopyToClipboard } from "@/lib/hooks/use-copy-to-clipboard";
 
 /**
  * CopyButton — single-purpose icon button that copies a string to the
- * clipboard and surfaces a transient "Copied" affirmation. Stays under
+ * clipboard and surfaces a transient "copied" affirmation. Stays under
  * 24 px square so it can sit inline with monospace hashes without
  * disrupting the row baseline.
+ *
+ * Visual feedback (M5.3 — #226): a tiny mono "copied" label appears
+ * absolutely-positioned next to the button for 2 s on success. No fade,
+ * no checkmark swap, no toast — `@starting-style` handles the entry
+ * easing. Reduced-motion is respected via the global motion override
+ * shipped in M5.1.
  *
  * Falls back to a no-op when `navigator.clipboard` is unavailable
  * (older browsers, SSR). The button still renders so the layout stays
@@ -23,46 +29,38 @@ export interface CopyButtonProps {
 }
 
 export function CopyButton({ value, label, className }: CopyButtonProps) {
-  const [copied, setCopied] = React.useState(false);
-  const timer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  React.useEffect(() => {
-    return () => {
-      if (timer.current) clearTimeout(timer.current);
-    };
-  }, []);
+  const { copied, copy } = useCopyToClipboard({ timeout: 2000 });
 
   function handleClick(event: React.MouseEvent<HTMLButtonElement>) {
     event.preventDefault();
     event.stopPropagation();
-    if (typeof navigator === "undefined" || !navigator.clipboard) return;
-    navigator.clipboard
-      .writeText(value)
-      .then(() => {
-        setCopied(true);
-        if (timer.current) clearTimeout(timer.current);
-        timer.current = setTimeout(() => setCopied(false), 1500);
-      })
-      .catch(() => {
-        // Silent fail — clipboard permission denied, surface unchanged.
-      });
+    void copy(value);
   }
 
   return (
-    <Button
-      variant="ghost"
-      size="sm"
-      type="button"
-      aria-label={label}
-      title={copied ? "Copied" : label}
-      onClick={handleClick}
-      className={cn("h-6 w-6 p-0 text-[var(--muted-foreground)] hover:text-[var(--foreground)]", className)}
-    >
-      {copied ? (
-        <Icon.Confirm className="h-3.5 w-3.5" aria-hidden />
-      ) : (
+    <span className={cn("relative inline-flex", className)}>
+      <button
+        type="button"
+        aria-label={label}
+        title={copied ? "Copied" : label}
+        onClick={handleClick}
+        className={cn(
+          "press-down inline-flex h-6 w-6 items-center justify-center rounded-[var(--radius-sm)] p-0 text-[var(--muted-foreground)] transition-colors hover:text-[var(--foreground)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]",
+        )}
+      >
         <Icon.Copy className="h-3.5 w-3.5" aria-hidden />
-      )}
-    </Button>
+      </button>
+      <span
+        aria-live="polite"
+        aria-atomic="true"
+        className="pointer-events-none absolute left-full top-1/2 ml-2 -translate-y-1/2 select-none whitespace-nowrap"
+      >
+        {copied ? (
+          <span className="origin-left font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--muted-foreground)] transition-[opacity,scale] duration-[80ms] starting:opacity-0 starting:scale-[0.97]">
+            copied
+          </span>
+        ) : null}
+      </span>
+    </span>
   );
 }

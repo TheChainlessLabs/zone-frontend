@@ -332,7 +332,7 @@ exports[`matches the snapshot for each receipt story scenario > fill-drilldown 1
       class="border-t border-[var(--border)] px-4 py-3"
     >
       <a
-        class="inline-flex items-center gap-1.5 text-xs text-[var(--foreground)] transition-colors duration-200 hover:text-[var(--muted-foreground)] motion-reduce:transition-none"
+        class="inline-flex items-center gap-1.5 text-xs text-[var(--foreground)] transition-colors duration-150 hover:text-[var(--muted-foreground)] motion-reduce:transition-none"
         href="https://etherscan.io/tx/0x9b88d4c2b65afcc178a0b2a2b5d1570d305607a82b06c85ca9d4b7dced921234"
         rel="noreferrer"
         target="_blank"
@@ -1001,7 +1001,7 @@ exports[`matches the snapshot for each receipt story scenario > settlement-recor
       class="border-t border-[var(--border)] px-4 py-3"
     >
       <a
-        class="inline-flex items-center gap-1.5 text-xs text-[var(--foreground)] transition-colors duration-200 hover:text-[var(--muted-foreground)] motion-reduce:transition-none"
+        class="inline-flex items-center gap-1.5 text-xs text-[var(--foreground)] transition-colors duration-150 hover:text-[var(--muted-foreground)] motion-reduce:transition-none"
         href="https://etherscan.io/tx/0xa26f2dc8ed22d65ad5e5b3acc40295d89c331fd1e79d34b13baa3f6f47b136dc"
         rel="noreferrer"
         target="_blank"

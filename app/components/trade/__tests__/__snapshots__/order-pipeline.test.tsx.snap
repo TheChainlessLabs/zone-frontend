@@ -18,7 +18,7 @@ exports[`matches the snapshot for each canonical state > current-matched 1`] = `
       >
         <button
           aria-label="Sign stage"
-          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-200 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] border-[var(--foreground)]/40 bg-[color-mix(in_oklab,var(--foreground)_8%,transparent)] text-[var(--foreground)]"
+          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-150 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] border-[var(--foreground)]/40 bg-[color-mix(in_oklab,var(--foreground)_8%,transparent)] text-[var(--foreground)]"
           data-pulse="off"
           data-stage="sign"
           data-state="completed"
@@ -30,14 +30,14 @@ exports[`matches the snapshot for each canonical state > current-matched 1`] = `
       </li>
       <li
         aria-hidden="true"
-        class="h-px w-2 shrink-0 transition-colors duration-200 motion-reduce:transition-none sm:w-3 bg-[var(--foreground)]"
+        class="h-px w-2 shrink-0 transition-colors duration-150 motion-reduce:transition-none sm:w-3 bg-[var(--foreground)]"
       />
       <li
         class="shrink-0"
       >
         <button
           aria-label="Queued stage"
-          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-200 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] border-[var(--foreground)]/40 bg-[color-mix(in_oklab,var(--foreground)_8%,transparent)] text-[var(--foreground)]"
+          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-150 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] border-[var(--foreground)]/40 bg-[color-mix(in_oklab,var(--foreground)_8%,transparent)] text-[var(--foreground)]"
           data-pulse="off"
           data-stage="queued"
           data-state="completed"
@@ -49,14 +49,14 @@ exports[`matches the snapshot for each canonical state > current-matched 1`] = `
       </li>
       <li
         aria-hidden="true"
-        class="h-px w-2 shrink-0 transition-colors duration-200 motion-reduce:transition-none sm:w-3 bg-[var(--foreground)]"
+        class="h-px w-2 shrink-0 transition-colors duration-150 motion-reduce:transition-none sm:w-3 bg-[var(--foreground)]"
       />
       <li
         class="shrink-0"
       >
         <button
           aria-label="Matched stage"
-          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-200 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] text-[var(--foreground)] omega-pipeline-pulse"
+          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-150 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] text-[var(--foreground)] omega-pipeline-pulse"
           data-pulse="on"
           data-stage="matched"
           data-state="current"
@@ -69,14 +69,14 @@ exports[`matches the snapshot for each canonical state > current-matched 1`] = `
       </li>
       <li
         aria-hidden="true"
-        class="h-px w-2 shrink-0 transition-colors duration-200 motion-reduce:transition-none sm:w-3 bg-[var(--border)]"
+        class="h-px w-2 shrink-0 transition-colors duration-150 motion-reduce:transition-none sm:w-3 bg-[var(--border)]"
       />
       <li
         class="shrink-0"
       >
         <button
           aria-label="Settling stage"
-          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-200 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] border-[var(--border)] bg-transparent text-[var(--muted-foreground)]"
+          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-150 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] border-[var(--border)] bg-transparent text-[var(--muted-foreground)]"
           data-pulse="off"
           data-stage="settling"
           data-state="future"
@@ -88,14 +88,14 @@ exports[`matches the snapshot for each canonical state > current-matched 1`] = `
       </li>
       <li
         aria-hidden="true"
-        class="h-px w-2 shrink-0 transition-colors duration-200 motion-reduce:transition-none sm:w-3 bg-[var(--border)]"
+        class="h-px w-2 shrink-0 transition-colors duration-150 motion-reduce:transition-none sm:w-3 bg-[var(--border)]"
       />
       <li
         class="shrink-0"
       >
         <button
           aria-label="Settled stage"
-          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-200 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] border-[var(--border)] bg-transparent text-[var(--muted-foreground)]"
+          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-150 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] border-[var(--border)] bg-transparent text-[var(--muted-foreground)]"
           data-pulse="off"
           data-stage="settled"
           data-state="future"
@@ -128,7 +128,7 @@ exports[`matches the snapshot for each canonical state > current-sign 1`] = `
       >
         <button
           aria-label="Sign stage"
-          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-200 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] text-[var(--foreground)] omega-pipeline-pulse"
+          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-150 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] text-[var(--foreground)] omega-pipeline-pulse"
           data-pulse="on"
           data-stage="sign"
           data-state="current"
@@ -141,14 +141,14 @@ exports[`matches the snapshot for each canonical state > current-sign 1`] = `
       </li>
       <li
         aria-hidden="true"
-        class="h-px w-2 shrink-0 transition-colors duration-200 motion-reduce:transition-none sm:w-3 bg-[var(--border)]"
+        class="h-px w-2 shrink-0 transition-colors duration-150 motion-reduce:transition-none sm:w-3 bg-[var(--border)]"
       />
       <li
         class="shrink-0"
       >
         <button
           aria-label="Queued stage"
-          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-200 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] border-[var(--border)] bg-transparent text-[var(--muted-foreground)]"
+          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-150 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] border-[var(--border)] bg-transparent text-[var(--muted-foreground)]"
           data-pulse="off"
           data-stage="queued"
           data-state="future"
@@ -160,14 +160,14 @@ exports[`matches the snapshot for each canonical state > current-sign 1`] = `
       </li>
       <li
         aria-hidden="true"
-        class="h-px w-2 shrink-0 transition-colors duration-200 motion-reduce:transition-none sm:w-3 bg-[var(--border)]"
+        class="h-px w-2 shrink-0 transition-colors duration-150 motion-reduce:transition-none sm:w-3 bg-[var(--border)]"
       />
       <li
         class="shrink-0"
       >
         <button
           aria-label="Matched stage"
-          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-200 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] border-[var(--border)] bg-transparent text-[var(--muted-foreground)]"
+          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-150 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] border-[var(--border)] bg-transparent text-[var(--muted-foreground)]"
           data-pulse="off"
           data-stage="matched"
           data-state="future"
@@ -179,14 +179,14 @@ exports[`matches the snapshot for each canonical state > current-sign 1`] = `
       </li>
       <li
         aria-hidden="true"
-        class="h-px w-2 shrink-0 transition-colors duration-200 motion-reduce:transition-none sm:w-3 bg-[var(--border)]"
+        class="h-px w-2 shrink-0 transition-colors duration-150 motion-reduce:transition-none sm:w-3 bg-[var(--border)]"
       />
       <li
         class="shrink-0"
       >
         <button
           aria-label="Settling stage"
-          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-200 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] border-[var(--border)] bg-transparent text-[var(--muted-foreground)]"
+          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-150 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] border-[var(--border)] bg-transparent text-[var(--muted-foreground)]"
           data-pulse="off"
           data-stage="settling"
           data-state="future"
@@ -198,14 +198,14 @@ exports[`matches the snapshot for each canonical state > current-sign 1`] = `
       </li>
       <li
         aria-hidden="true"
-        class="h-px w-2 shrink-0 transition-colors duration-200 motion-reduce:transition-none sm:w-3 bg-[var(--border)]"
+        class="h-px w-2 shrink-0 transition-colors duration-150 motion-reduce:transition-none sm:w-3 bg-[var(--border)]"
       />
       <li
         class="shrink-0"
       >
         <button
           aria-label="Settled stage"
-          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-200 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] border-[var(--border)] bg-transparent text-[var(--muted-foreground)]"
+          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-150 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] border-[var(--border)] bg-transparent text-[var(--muted-foreground)]"
           data-pulse="off"
           data-stage="settled"
           data-state="future"
@@ -238,7 +238,7 @@ exports[`matches the snapshot for each canonical state > failed-at-settling 1`] 
       >
         <button
           aria-label="Sign stage"
-          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-200 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] border-[var(--foreground)]/40 bg-[color-mix(in_oklab,var(--foreground)_8%,transparent)] text-[var(--foreground)]"
+          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-150 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] border-[var(--foreground)]/40 bg-[color-mix(in_oklab,var(--foreground)_8%,transparent)] text-[var(--foreground)]"
           data-pulse="off"
           data-stage="sign"
           data-state="completed"
@@ -250,14 +250,14 @@ exports[`matches the snapshot for each canonical state > failed-at-settling 1`] 
       </li>
       <li
         aria-hidden="true"
-        class="h-px w-2 shrink-0 transition-colors duration-200 motion-reduce:transition-none sm:w-3 bg-[var(--foreground)]"
+        class="h-px w-2 shrink-0 transition-colors duration-150 motion-reduce:transition-none sm:w-3 bg-[var(--foreground)]"
       />
       <li
         class="shrink-0"
       >
         <button
           aria-label="Queued stage"
-          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-200 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] border-[var(--foreground)]/40 bg-[color-mix(in_oklab,var(--foreground)_8%,transparent)] text-[var(--foreground)]"
+          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-150 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] border-[var(--foreground)]/40 bg-[color-mix(in_oklab,var(--foreground)_8%,transparent)] text-[var(--foreground)]"
           data-pulse="off"
           data-stage="queued"
           data-state="completed"
@@ -269,14 +269,14 @@ exports[`matches the snapshot for each canonical state > failed-at-settling 1`] 
       </li>
       <li
         aria-hidden="true"
-        class="h-px w-2 shrink-0 transition-colors duration-200 motion-reduce:transition-none sm:w-3 bg-[var(--foreground)]"
+        class="h-px w-2 shrink-0 transition-colors duration-150 motion-reduce:transition-none sm:w-3 bg-[var(--foreground)]"
       />
       <li
         class="shrink-0"
       >
         <button
           aria-label="Matched stage"
-          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-200 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] border-[var(--foreground)]/40 bg-[color-mix(in_oklab,var(--foreground)_8%,transparent)] text-[var(--foreground)]"
+          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-150 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] border-[var(--foreground)]/40 bg-[color-mix(in_oklab,var(--foreground)_8%,transparent)] text-[var(--foreground)]"
           data-pulse="off"
           data-stage="matched"
           data-state="completed"
@@ -288,14 +288,14 @@ exports[`matches the snapshot for each canonical state > failed-at-settling 1`] 
       </li>
       <li
         aria-hidden="true"
-        class="h-px w-2 shrink-0 transition-colors duration-200 motion-reduce:transition-none sm:w-3 bg-[var(--border)]"
+        class="h-px w-2 shrink-0 transition-colors duration-150 motion-reduce:transition-none sm:w-3 bg-[var(--border)]"
       />
       <li
         class="shrink-0"
       >
         <button
           aria-label="Settling stage"
-          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-200 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] border-[color-mix(in_oklab,var(--destructive)_45%,transparent)] bg-[color-mix(in_oklab,var(--destructive)_14%,transparent)] text-[var(--destructive)] omega-pipeline-pulse-fail"
+          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-150 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] border-[color-mix(in_oklab,var(--destructive)_45%,transparent)] bg-[color-mix(in_oklab,var(--destructive)_14%,transparent)] text-[var(--destructive)] omega-pipeline-pulse-fail"
           data-pulse="on"
           data-stage="settling"
           data-state="failed"
@@ -307,14 +307,14 @@ exports[`matches the snapshot for each canonical state > failed-at-settling 1`] 
       </li>
       <li
         aria-hidden="true"
-        class="h-px w-2 shrink-0 transition-colors duration-200 motion-reduce:transition-none sm:w-3 bg-[var(--border)]"
+        class="h-px w-2 shrink-0 transition-colors duration-150 motion-reduce:transition-none sm:w-3 bg-[var(--border)]"
       />
       <li
         class="shrink-0"
       >
         <button
           aria-label="Settled stage"
-          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-200 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] border-[var(--border)] bg-transparent text-[var(--muted-foreground)]"
+          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-150 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] border-[var(--border)] bg-transparent text-[var(--muted-foreground)]"
           data-pulse="off"
           data-stage="settled"
           data-state="future"
@@ -353,7 +353,7 @@ exports[`matches the snapshot for each canonical state > idle 1`] = `
       >
         <button
           aria-label="Sign stage"
-          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-200 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] border-[var(--border)] bg-transparent text-[var(--muted-foreground)]"
+          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-150 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] border-[var(--border)] bg-transparent text-[var(--muted-foreground)]"
           data-pulse="off"
           data-stage="sign"
           data-state="idle"
@@ -365,14 +365,14 @@ exports[`matches the snapshot for each canonical state > idle 1`] = `
       </li>
       <li
         aria-hidden="true"
-        class="h-px w-2 shrink-0 transition-colors duration-200 motion-reduce:transition-none sm:w-3 bg-[var(--border)]"
+        class="h-px w-2 shrink-0 transition-colors duration-150 motion-reduce:transition-none sm:w-3 bg-[var(--border)]"
       />
       <li
         class="shrink-0"
       >
         <button
           aria-label="Queued stage"
-          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-200 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] border-[var(--border)] bg-transparent text-[var(--muted-foreground)]"
+          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-150 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] border-[var(--border)] bg-transparent text-[var(--muted-foreground)]"
           data-pulse="off"
           data-stage="queued"
           data-state="idle"
@@ -384,14 +384,14 @@ exports[`matches the snapshot for each canonical state > idle 1`] = `
       </li>
       <li
         aria-hidden="true"
-        class="h-px w-2 shrink-0 transition-colors duration-200 motion-reduce:transition-none sm:w-3 bg-[var(--border)]"
+        class="h-px w-2 shrink-0 transition-colors duration-150 motion-reduce:transition-none sm:w-3 bg-[var(--border)]"
       />
       <li
         class="shrink-0"
       >
         <button
           aria-label="Matched stage"
-          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-200 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] border-[var(--border)] bg-transparent text-[var(--muted-foreground)]"
+          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-150 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] border-[var(--border)] bg-transparent text-[var(--muted-foreground)]"
           data-pulse="off"
           data-stage="matched"
           data-state="idle"
@@ -403,14 +403,14 @@ exports[`matches the snapshot for each canonical state > idle 1`] = `
       </li>
       <li
         aria-hidden="true"
-        class="h-px w-2 shrink-0 transition-colors duration-200 motion-reduce:transition-none sm:w-3 bg-[var(--border)]"
+        class="h-px w-2 shrink-0 transition-colors duration-150 motion-reduce:transition-none sm:w-3 bg-[var(--border)]"
       />
       <li
         class="shrink-0"
       >
         <button
           aria-label="Settling stage"
-          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-200 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] border-[var(--border)] bg-transparent text-[var(--muted-foreground)]"
+          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-150 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] border-[var(--border)] bg-transparent text-[var(--muted-foreground)]"
           data-pulse="off"
           data-stage="settling"
           data-state="idle"
@@ -422,14 +422,14 @@ exports[`matches the snapshot for each canonical state > idle 1`] = `
       </li>
       <li
         aria-hidden="true"
-        class="h-px w-2 shrink-0 transition-colors duration-200 motion-reduce:transition-none sm:w-3 bg-[var(--border)]"
+        class="h-px w-2 shrink-0 transition-colors duration-150 motion-reduce:transition-none sm:w-3 bg-[var(--border)]"
       />
       <li
         class="shrink-0"
       >
         <button
           aria-label="Settled stage"
-          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-200 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] border-[var(--border)] bg-transparent text-[var(--muted-foreground)]"
+          class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 font-mono text-[9px] uppercase tracking-[0.12em] transition-colors duration-150 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] border-[var(--border)] bg-transparent text-[var(--muted-foreground)]"
           data-pulse="off"
           data-stage="settled"
           data-state="idle"

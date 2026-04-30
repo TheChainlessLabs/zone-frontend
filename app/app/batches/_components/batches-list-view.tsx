@@ -346,7 +346,7 @@ function Th({
 function BatchRow({ batch }: { batch: BatchFixture }) {
   const status = STATUS_DOT[batch.status];
   return (
-    <tr className="group border-b border-[var(--border)] transition-colors last:border-b-0 hover:bg-[var(--muted)]/30">
+    <tr className="group border-b border-[var(--border)] transition-[background-color] duration-75 ease-[var(--ease-standard)] last:border-b-0 hover:bg-[var(--muted)]/30 hover:-mt-px hover:border-t hover:border-[var(--border)]">
       <Td className="text-left">
         <Link
           href={`/batches/${batch.number}`}
@@ -686,7 +686,7 @@ function PagerButton({
       disabled={disabled}
       aria-label={ariaLabel}
       className={cn(
-        "inline-flex h-7 min-w-[28px] items-center justify-center rounded font-mono text-xs text-[var(--muted-foreground)] transition-colors",
+        "press-down inline-flex h-7 min-w-[28px] items-center justify-center rounded font-mono text-xs text-[var(--muted-foreground)] transition-colors",
         "hover:text-[var(--foreground)] hover:bg-[var(--muted)]/40",
         "disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-[var(--muted-foreground)]",
       )}

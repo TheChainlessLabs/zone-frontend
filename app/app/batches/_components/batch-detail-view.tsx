@@ -344,7 +344,7 @@ function ActionRow({
   return (
     <div
       id={id}
-      className="grid grid-cols-1 gap-1.5 border-b border-dashed border-[var(--border)] py-3 last:border-b-0 sm:grid-cols-[150px_minmax(0,1fr)] sm:gap-4"
+      className="grid grid-cols-1 gap-1.5 rounded-[var(--radius-sm)] border-b border-dashed border-[var(--border)] py-3 transition-[background-color,color] duration-100 ease-[var(--ease-standard)] last:border-b-0 hover:bg-[var(--muted)]/20 motion-reduce:transition-none sm:grid-cols-[150px_minmax(0,1fr)] sm:gap-4"
     >
       <div className="flex flex-col gap-1">
         <span className={`font-mono text-[11px] uppercase tracking-[0.16em] ${labelClassName}`}>

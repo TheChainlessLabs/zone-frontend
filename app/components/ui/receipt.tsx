@@ -209,7 +209,7 @@ function ReceiptFooter({ label, href, className }: ReceiptFooterProps) {
         href={href}
         target="_blank"
         rel="noreferrer"
-        className="inline-flex items-center gap-1.5 text-xs text-[var(--foreground)] transition-colors duration-200 hover:text-[var(--muted-foreground)] motion-reduce:transition-none"
+        className="inline-flex items-center gap-1.5 text-xs text-[var(--foreground)] transition-colors duration-150 hover:text-[var(--muted-foreground)] motion-reduce:transition-none"
       >
         <span>{label}</span>
         <Icon.Caret.Right size={12} aria-hidden className="shrink-0" />
@@ -291,7 +291,7 @@ function ReceiptHashValue({ value }: { value: ReceiptLinkedValue }) {
           <button
             type="button"
             onClick={handleCopy}
-            className="inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.14em] text-[var(--background)]/80 transition-colors duration-200 hover:text-[var(--background)] motion-reduce:transition-none"
+            className="inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.14em] text-[var(--background)]/80 transition-colors duration-150 hover:text-[var(--background)] motion-reduce:transition-none"
           >
             <Icon.Copy size={12} aria-hidden className="shrink-0" />
             {copied ? "Copied" : "Copy"}

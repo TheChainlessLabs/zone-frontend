@@ -23,6 +23,7 @@ import { Animate } from "@/components/ui/animate";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Status } from "@/components/ui/status";
+import { LifecyclePip } from "@/components/portfolio/lifecycle-pip";
 import { Icon } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 import { copyForStatusState } from "@/lib/lifecycle-copy";
@@ -344,12 +345,7 @@ export default function Variant11Blended({
                       <span className="flex flex-wrap items-center gap-3 text-xs">
                         <MonoNum className="text-sm">{f.amount}</MonoNum>
                         <MonoNum className="text-[var(--muted-foreground)]">@ {f.price}</MonoNum>
-                        <Status
-                          state={f.status as never}
-                          tooltip={
-                            copyForStatusState(f.status as never) ?? undefined
-                          }
-                        />
+                        <LifecyclePip status={f.status} />
                         <MonoNum className="text-[var(--muted-foreground)]">
                           {formatTime(f.matchedAt)}
                         </MonoNum>

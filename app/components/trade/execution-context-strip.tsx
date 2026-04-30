@@ -43,7 +43,7 @@ export function ExecutionContextStrip({
 function Cell({ label, value }: { label: string; value?: string }) {
   return (
     <div className="flex flex-col gap-1 bg-[var(--background)] px-3 py-2.5">
-      <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
+      <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
         {label}
       </span>
       <span className="font-mono text-sm tabular-nums text-[var(--foreground)]">

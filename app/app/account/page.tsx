@@ -97,7 +97,7 @@ export default function AccountPage() {
         <PageSection title="Connected wallet">
           <Card className="flex flex-col gap-4 p-5 md:p-6">
             <div className="flex flex-col gap-1">
-              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
+              <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
                 Address
               </span>
               <div className="flex flex-wrap items-center gap-2">
@@ -359,7 +359,7 @@ function Field({
 }) {
   return (
     <div className="flex flex-col gap-1">
-      <Label className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
+      <Label className="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
         {label}
       </Label>
       <span

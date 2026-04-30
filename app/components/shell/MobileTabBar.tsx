@@ -63,7 +63,7 @@ export function MobileTabBar() {
                   />
                 )}
                 <TabIcon size={18} aria-hidden />
-                <span className="font-mono text-[10px] uppercase tracking-[0.16em]">
+                <span className="font-mono text-[11px] uppercase tracking-[0.16em]">
                   {tab.label}
                 </span>
               </Link>

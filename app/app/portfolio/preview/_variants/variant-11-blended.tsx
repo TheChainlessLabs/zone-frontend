@@ -33,7 +33,6 @@ import {
   computeAllocations,
   computeTotals,
   deriveDayDelta,
-  Donut,
   fmtSignedPct,
   fmtSignedUsd,
   formatTime,
@@ -86,14 +85,14 @@ export default function Variant11Blended({
           aria-label="Portfolio overview"
           className="flex flex-col gap-3"
         >
-          <div className="flex flex-col gap-1.5">
-            <span className={cn(PILL, "text-[var(--muted-foreground)]")}>
-              Portfolio
-            </span>
-            <p className="font-serif italic text-base leading-snug text-[var(--muted-foreground)]">
-              Matched, settled, and proved.
-            </p>
-          </div>
+          <span
+            className={cn(
+              PILL,
+              "text-[11px] text-[var(--muted-foreground)]",
+            )}
+          >
+            Portfolio
+          </span>
           <div className="flex flex-wrap items-end gap-x-3 gap-y-2 md:gap-x-4">
             <MonoNum
               className="text-3xl font-medium leading-none tracking-tight sm:text-4xl md:text-6xl"
@@ -182,7 +181,12 @@ export default function Variant11Blended({
         <aside className="flex flex-col gap-4 lg:order-2 lg:sticky lg:top-24 lg:self-start">
           <Animate variant="enter" delay={0.1}>
             <Card variant="glass" className="flex flex-col gap-4 p-5 md:p-6">
-              <span className={cn(PILL, "text-[var(--muted-foreground)]")}>
+              <span
+                className={cn(
+                  PILL,
+                  "text-[11px] text-[var(--muted-foreground)]",
+                )}
+              >
                 Summary
               </span>
               <div className="flex flex-col gap-2">
@@ -205,14 +209,38 @@ export default function Variant11Blended({
                 <SummaryRow label="Available" value={`$${totals.available.toFixed(2)}`} />
                 <SummaryRow label="Locked" value={`$${totals.locked.toFixed(2)}`} />
               </div>
-              <div className="flex items-center gap-4 border-t border-[var(--border)] pt-4">
-                <Donut
-                  allocations={allocations}
-                  size={96}
-                  thickness={14}
-                  ariaLabel={`Allocation across ${allocations.length} tokens`}
-                />
-                <ul className="flex flex-1 flex-col gap-1.5 text-xs">
+              <div className="flex flex-col gap-3 border-t border-[var(--border)] pt-4">
+                <div className="flex items-center justify-between text-xs text-[var(--muted-foreground)]">
+                  <span>Allocation</span>
+                  <MonoNum>{allocations.length} tokens</MonoNum>
+                </div>
+                {allocations.length > 0 ? (
+                  <div
+                    role="img"
+                    aria-label={`Allocation across ${allocations.length} tokens: ${allocations
+                      .map((a) => `${a.token} ${(a.share * 100).toFixed(1)} percent`)
+                      .join(", ")}`}
+                    className="flex h-2 w-full overflow-hidden rounded-full bg-[var(--muted)]"
+                  >
+                    {allocations.map((a) => (
+                      <span
+                        key={a.token}
+                        aria-hidden
+                        className="block h-full"
+                        style={{
+                          width: `${(a.share * 100).toFixed(2)}%`,
+                          background: TOKEN_TONE[a.token],
+                        }}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div
+                    aria-hidden
+                    className="h-2 w-full rounded-full bg-[var(--muted)]"
+                  />
+                )}
+                <ul className="flex flex-col gap-1.5 text-xs">
                   {allocations.map((a) => {
                     const balance = fixture.balances.find((b) => b.token === a.token);
                     const usd = balance ? parseNum(balance.total) : 0;
@@ -221,7 +249,7 @@ export default function Variant11Blended({
                         key={a.token}
                         className="flex items-center justify-between gap-3"
                       >
-                        <span className="inline-flex items-center gap-2">
+                        <span className="inline-flex min-w-0 items-center gap-2">
                           <span
                             aria-hidden
                             className="inline-block h-2 w-2 rounded-full"
@@ -229,9 +257,14 @@ export default function Variant11Blended({
                           />
                           <span className="font-medium">{a.token}</span>
                         </span>
-                        <MonoNum className="text-[var(--muted-foreground)]">
-                          ${usd.toFixed(2)}
-                        </MonoNum>
+                        <span className="flex items-center gap-3">
+                          <MonoNum className="text-[var(--muted-foreground)]">
+                            ${usd.toFixed(2)}
+                          </MonoNum>
+                          <MonoNum className="w-12 text-right text-[var(--muted-foreground)]">
+                            {(a.share * 100).toFixed(1)}%
+                          </MonoNum>
+                        </span>
                       </li>
                     );
                   })}
@@ -380,7 +413,14 @@ export default function Variant11Blended({
 function SummaryRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between">
-      <span className={cn(PILL, "text-[var(--muted-foreground)]")}>{label}</span>
+      <span
+        className={cn(
+          PILL,
+          "text-[11px] text-[var(--muted-foreground)]",
+        )}
+      >
+        {label}
+      </span>
       <MonoNum>{value}</MonoNum>
     </div>
   );

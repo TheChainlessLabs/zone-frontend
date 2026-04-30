@@ -47,12 +47,19 @@ async function renderDetail(
 describe("BatchesListView", () => {
   it("renders the page title + description", async () => {
     await renderList();
-    expect(screen.getByText("Batches")).toBeDefined();
+    // "Batches" appears on the page title and the table card header — both
+    // are intentional after the M4.20 tempo restyle.
+    expect(screen.getAllByText("Batches").length).toBeGreaterThan(0);
     expect(
       screen.getByText(
         "Sealed settlement batches with on-chain attestation. Public, verifiable.",
       ),
     ).toBeDefined();
+  });
+
+  it("renders the tempo-style table header with a Live indicator", async () => {
+    await renderList();
+    expect(screen.getByLabelText("Live")).toBeDefined();
   });
 
   it("default state surfaces the search affordance and per-page selector", async () => {

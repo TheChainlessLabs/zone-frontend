@@ -1,10 +1,12 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
 import { PageLayout } from "@/components/shell/PageLayout";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
@@ -14,14 +16,22 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Icon } from "@/lib/icons";
+import { cn } from "@/lib/utils";
+import {
+  formatRelativeTime,
+  formatThousands,
+  formatUSD,
+  truncateHash,
+} from "@/lib/format";
 import {
   batchesListFixtures,
   batchesSearchFixtures,
   usePageState,
 } from "@/lib/fixtures";
-import type { BatchFixture } from "@/lib/fixtures/types";
+import type { BatchFixture, BatchStatus } from "@/lib/fixtures/types";
 
-import Variant07List from "../preview/_variants/variant-07-aztec-proof-hero/list";
+import { CopyButton } from "./copy-button";
+import { EtherscanTxLink } from "./etherscan-link";
 
 /**
  * BatchesListView — the public settlement explorer.
@@ -32,14 +42,24 @@ import Variant07List from "../preview/_variants/variant-07-aztec-proof-hero/list
  * regardless of wallet state — privacy hard rule: NO counterparty IDs
  * anywhere on this surface.
  *
- * Row rendering is delegated to the Aztec-proof-hero variant (status-tone
- * leading band per row + proof reference inline). The chrome around it —
- * search box, per-page selector, pagination, state-machine forks — lives
- * here.
+ * Visual register: tempo-explorer flat-table (M4.20). Single card with a
+ * 1px border, mono everywhere inside the table, hairline row dividers,
+ * compact ~40px rows, status as dot+label (not a pill). Mobile collapses
+ * to a card-stack but keeps the mono register.
  */
 
 const PAGE_SIZE_OPTIONS = [25, 50, 100] as const;
 type PageSize = (typeof PAGE_SIZE_OPTIONS)[number];
+
+// `--warning` is intentionally absent from the v1 token set (see
+// components/ui/badge.tsx); the existing batches surface uses
+// `--muted-foreground` for the pending tone — match that here so the
+// register stays consistent with the receipt detail page.
+const STATUS_DOT: Record<BatchStatus, { color: string; label: string }> = {
+  verified: { color: "var(--success)", label: "Verified" },
+  pending: { color: "var(--muted-foreground)", label: "Pending" },
+  failed: { color: "var(--destructive)", label: "Failed" },
+};
 
 export function BatchesListView() {
   const state = usePageState();
@@ -80,6 +100,8 @@ export function BatchesListView() {
   const safePage = Math.min(page, totalPages);
   const pageStart = (safePage - 1) * pageSize;
   const pageRows = rows.slice(pageStart, pageStart + pageSize);
+  const rangeStart = rows.length === 0 ? 0 : pageStart + 1;
+  const rangeEnd = pageStart + pageRows.length;
 
   return (
     <PageLayout
@@ -102,7 +124,7 @@ export function BatchesListView() {
             }}
             placeholder="Search by batch ID or tx hash"
             aria-label="Search batches"
-            className="pl-9 pr-16"
+            className="pl-9 pr-16 font-mono"
           />
           {search ? (
             <Button
@@ -156,7 +178,7 @@ export function BatchesListView() {
           description="Try a different ID or hash."
         />
       ) : isLoading ? (
-        <SkeletonRows rows={6} />
+        <SkeletonTable rows={8} />
       ) : error ? (
         <ListMessage
           title="Failed to load batches."
@@ -180,20 +202,324 @@ export function BatchesListView() {
           description="Check back after the first market open."
         />
       ) : (
-        <>
-          <Variant07List
-            fixture={{ batches: pageRows }}
-            buildHref={(n) => `/batches/${n}`}
-          />
-          <Pagination
-            page={safePage}
-            totalPages={totalPages}
-            onPrev={() => setPage((p) => Math.max(1, p - 1))}
-            onNext={() => setPage((p) => Math.min(totalPages, p + 1))}
-          />
-        </>
+        <BatchesTable
+          rows={pageRows}
+          totalCount={rows.length}
+          rangeStart={rangeStart}
+          rangeEnd={rangeEnd}
+          page={safePage}
+          totalPages={totalPages}
+          onPrev={() => setPage((p) => Math.max(1, p - 1))}
+          onNext={() => setPage((p) => Math.min(totalPages, p + 1))}
+          onFirst={() => setPage(1)}
+          onLast={() => setPage(totalPages)}
+        />
       )}
     </PageLayout>
+  );
+}
+
+/* ────────────────────────────────────────────────────────────────────────── */
+/*  Table                                                                     */
+/* ────────────────────────────────────────────────────────────────────────── */
+
+interface BatchesTableProps {
+  rows: BatchFixture[];
+  totalCount: number;
+  rangeStart: number;
+  rangeEnd: number;
+  page: number;
+  totalPages: number;
+  onPrev: () => void;
+  onNext: () => void;
+  onFirst: () => void;
+  onLast: () => void;
+}
+
+function BatchesTable({
+  rows,
+  totalCount,
+  rangeStart,
+  rangeEnd,
+  page,
+  totalPages,
+  onPrev,
+  onNext,
+  onFirst,
+  onLast,
+}: BatchesTableProps) {
+  return (
+    <Card className="overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--card)] p-0 shadow-none">
+      <header className="flex items-center justify-between gap-4 border-b border-[var(--border)] px-4 py-3 sm:px-5">
+        <h2 className="flex items-baseline gap-2 font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
+          <span>Batches</span>
+          <span className="text-[var(--muted-foreground)]/70">
+            ({formatThousands(String(totalCount))})
+          </span>
+        </h2>
+        <LiveIndicator />
+      </header>
+
+      {/* Desktop: flat table */}
+      <div className="hidden md:block">
+        <table className="w-full border-collapse">
+          <thead>
+            <tr className="border-b border-[var(--border)]">
+              <Th className="w-[8%] text-left">Batch</Th>
+              <Th className="w-[10%] text-left">Sealed</Th>
+              <Th className="w-[7%] text-right">Fills</Th>
+              <Th className="w-[12%] text-right">Volume</Th>
+              <Th className="w-[14%] text-left">Pairs</Th>
+              <Th className="w-[10%] text-left">Status</Th>
+              <Th className="w-[19%] text-left">Proof</Th>
+              <Th className="w-[20%] text-left">L1 tx</Th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((batch) => (
+              <BatchRow key={batch.number} batch={batch} />
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Mobile: card-stack with mono register */}
+      <ul className="flex flex-col md:hidden" aria-label="Batches">
+        {rows.map((batch) => (
+          <li
+            key={batch.number}
+            className="border-b border-[var(--border)] last:border-b-0"
+          >
+            <BatchRowMobile batch={batch} />
+          </li>
+        ))}
+      </ul>
+
+      <Pagination
+        rangeStart={rangeStart}
+        rangeEnd={rangeEnd}
+        totalCount={totalCount}
+        page={page}
+        totalPages={totalPages}
+        onPrev={onPrev}
+        onNext={onNext}
+        onFirst={onFirst}
+        onLast={onLast}
+      />
+    </Card>
+  );
+}
+
+function Th({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <th
+      scope="col"
+      className={cn(
+        "px-4 py-2.5 font-mono text-[10px] font-normal uppercase tracking-[0.18em] text-[var(--muted-foreground)]",
+        className,
+      )}
+    >
+      {children}
+    </th>
+  );
+}
+
+function BatchRow({ batch }: { batch: BatchFixture }) {
+  const status = STATUS_DOT[batch.status];
+  return (
+    <tr className="group border-b border-[var(--border)] transition-colors last:border-b-0 hover:bg-[var(--muted)]/30">
+      <Td className="text-left">
+        <Link
+          href={`/batches/${batch.number}`}
+          className="font-mono text-sm tabular-nums text-[var(--foreground)] underline-offset-4 hover:underline"
+        >
+          #{batch.number}
+        </Link>
+      </Td>
+      <Td className="text-left text-[var(--muted-foreground)]">
+        {formatRelativeTime(batch.sealedAt)}
+      </Td>
+      <Td className="text-right tabular-nums">
+        {formatThousands(String(batch.fillCount))}
+      </Td>
+      <Td className="text-right tabular-nums">
+        {batch.volumeUsd ? formatUSD(batch.volumeUsd) : "—"}
+      </Td>
+      <Td className="text-left">
+        <PairsCluster pairs={batch.pairs ?? []} />
+      </Td>
+      <Td className="text-left">
+        <span className="inline-flex items-center gap-2">
+          <span
+            aria-hidden
+            className="inline-block h-1.5 w-1.5 shrink-0 rounded-full"
+            style={{ backgroundColor: status.color }}
+          />
+          <span className="font-mono text-xs">{status.label}</span>
+        </span>
+      </Td>
+      <Td className="text-left">
+        <HashRefCell
+          hash={batch.proofRef}
+          copyLabel={`Copy proof hash for batch #${batch.number}`}
+          fallback="—"
+        />
+      </Td>
+      <Td className="text-left">
+        <HashRefCell
+          hash={batch.settlementTx}
+          copyLabel={`Copy settlement tx for batch #${batch.number}`}
+          fallback="pending"
+        />
+      </Td>
+    </tr>
+  );
+}
+
+function Td({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <td
+      className={cn(
+        "h-[40px] px-4 py-1.5 align-middle font-mono text-xs text-[var(--foreground)]",
+        className,
+      )}
+    >
+      {children}
+    </td>
+  );
+}
+
+function BatchRowMobile({ batch }: { batch: BatchFixture }) {
+  const status = STATUS_DOT[batch.status];
+  return (
+    <Link
+      href={`/batches/${batch.number}`}
+      className="flex flex-col gap-2 px-4 py-3 transition-colors hover:bg-[var(--muted)]/30"
+    >
+      <div className="flex items-center justify-between gap-3">
+        <span className="font-mono text-sm tabular-nums text-[var(--foreground)]">
+          #{batch.number}
+        </span>
+        <span className="inline-flex items-center gap-2">
+          <span
+            aria-hidden
+            className="inline-block h-1.5 w-1.5 shrink-0 rounded-full"
+            style={{ backgroundColor: status.color }}
+          />
+          <span className="font-mono text-xs text-[var(--muted-foreground)]">
+            {status.label}
+          </span>
+        </span>
+      </div>
+      <div className="flex items-center justify-between gap-3 font-mono text-[11px] text-[var(--muted-foreground)]">
+        <span>{formatRelativeTime(batch.sealedAt)}</span>
+        <span className="tabular-nums text-[var(--foreground)]">
+          {batch.volumeUsd ? formatUSD(batch.volumeUsd) : "—"}
+        </span>
+      </div>
+      <div className="flex items-center justify-between gap-3 font-mono text-[11px] text-[var(--muted-foreground)]">
+        <span className="tabular-nums">
+          {formatThousands(String(batch.fillCount))} fills
+        </span>
+        <PairsCluster pairs={batch.pairs ?? []} max={2} />
+      </div>
+    </Link>
+  );
+}
+
+function PairsCluster({
+  pairs,
+  max = 3,
+}: {
+  pairs: readonly string[];
+  max?: number;
+}) {
+  if (pairs.length === 0) {
+    return <span className="font-mono text-[11px] text-[var(--muted-foreground)]">—</span>;
+  }
+  const visible = pairs.slice(0, max);
+  const overflow = pairs.length - visible.length;
+  return (
+    <span className="flex flex-wrap items-center gap-1">
+      {visible.map((p) => (
+        <span
+          key={p}
+          className="inline-flex items-center rounded border border-[var(--border)] px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-[var(--muted-foreground)]"
+        >
+          {p}
+        </span>
+      ))}
+      {overflow > 0 ? (
+        <span className="inline-flex items-center rounded border border-[var(--border)] px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-[var(--muted-foreground)]">
+          +{overflow}
+        </span>
+      ) : null}
+    </span>
+  );
+}
+
+function HashRefCell({
+  hash,
+  copyLabel,
+  fallback,
+}: {
+  hash: string | null | undefined;
+  copyLabel: string;
+  fallback: string;
+}) {
+  if (!hash) {
+    return (
+      <span className="font-mono text-xs text-[var(--muted-foreground)]">
+        {fallback}
+      </span>
+    );
+  }
+  return (
+    <span
+      className="inline-flex items-center gap-1"
+      onClick={(event) => event.stopPropagation()}
+    >
+      <EtherscanTxLink hash={hash} label={truncateHash(hash, 8, 6)} />
+      <CopyButton value={hash} label={copyLabel} className="h-5 w-5" />
+    </span>
+  );
+}
+
+/* ────────────────────────────────────────────────────────────────────────── */
+/*  Live indicator                                                            */
+/* ────────────────────────────────────────────────────────────────────────── */
+
+function LiveIndicator() {
+  return (
+    <span
+      role="status"
+      aria-label="Live"
+      className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]"
+    >
+      <span className="relative inline-flex h-1.5 w-1.5">
+        <span
+          aria-hidden
+          className="absolute inline-flex h-full w-full rounded-full bg-[var(--success)] opacity-60 motion-safe:animate-ping"
+        />
+        <span
+          aria-hidden
+          className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[var(--success)]"
+        />
+      </span>
+      Live
+    </span>
   );
 }
 
@@ -201,29 +527,36 @@ export function BatchesListView() {
 /*  Loading + empty + error                                                   */
 /* ────────────────────────────────────────────────────────────────────────── */
 
-function SkeletonRows({ rows }: { rows: number }) {
+function SkeletonTable({ rows }: { rows: number }) {
   return (
-    <ul className="flex flex-col gap-3" aria-hidden>
-      {Array.from({ length: rows }).map((_, idx) => (
-        <li
-          key={idx}
-          className="flex items-stretch gap-4 overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--card)]"
-        >
-          <div className="w-1 shrink-0 bg-[var(--muted)]" />
-          <div className="flex flex-1 items-center justify-between gap-3 px-4 py-4">
-            <div className="flex items-center gap-3">
-              <div className="h-5 w-20 animate-pulse rounded-full bg-[var(--muted)]" />
-              <div className="h-3 w-24 animate-pulse rounded bg-[var(--muted)]" />
+    <Card
+      aria-hidden
+      className="overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--card)] p-0 shadow-none"
+    >
+      <div className="flex items-center justify-between gap-4 border-b border-[var(--border)] px-4 py-3 sm:px-5">
+        <div className="h-3 w-24 animate-pulse rounded bg-[var(--muted)]" />
+        <div className="h-3 w-12 animate-pulse rounded bg-[var(--muted)]" />
+      </div>
+      <ul className="flex flex-col">
+        {Array.from({ length: rows }).map((_, idx) => (
+          <li
+            key={idx}
+            className="flex h-[40px] items-center justify-between gap-4 border-b border-[var(--border)] px-4 last:border-b-0"
+          >
+            <div className="flex items-center gap-4">
+              <div className="h-3 w-12 animate-pulse rounded bg-[var(--muted)]" />
+              <div className="h-3 w-14 animate-pulse rounded bg-[var(--muted)]" />
             </div>
-            <div className="hidden items-center gap-3 md:flex">
-              <div className="h-3 w-16 animate-pulse rounded bg-[var(--muted)]" />
+            <div className="hidden items-center gap-4 md:flex">
+              <div className="h-3 w-10 animate-pulse rounded bg-[var(--muted)]" />
               <div className="h-3 w-20 animate-pulse rounded bg-[var(--muted)]" />
-              <div className="h-3 w-28 animate-pulse rounded bg-[var(--muted)]" />
+              <div className="h-3 w-24 animate-pulse rounded bg-[var(--muted)]" />
+              <div className="h-3 w-32 animate-pulse rounded bg-[var(--muted)]" />
             </div>
-          </div>
-        </li>
-      ))}
-    </ul>
+          </li>
+        ))}
+      </ul>
+    </Card>
   );
 }
 
@@ -250,41 +583,102 @@ function ListMessage({
   );
 }
 
+/* ────────────────────────────────────────────────────────────────────────── */
+/*  Pagination                                                                */
+/* ────────────────────────────────────────────────────────────────────────── */
+
 function Pagination({
+  rangeStart,
+  rangeEnd,
+  totalCount,
   page,
   totalPages,
   onPrev,
   onNext,
+  onFirst,
+  onLast,
 }: {
+  rangeStart: number;
+  rangeEnd: number;
+  totalCount: number;
   page: number;
   totalPages: number;
   onPrev: () => void;
   onNext: () => void;
+  onFirst: () => void;
+  onLast: () => void;
+}) {
+  const atFirst = page <= 1;
+  const atLast = page >= totalPages;
+  return (
+    <div className="flex flex-col gap-3 border-t border-[var(--border)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+      <div className="flex items-center gap-1">
+        <PagerButton
+          onClick={onFirst}
+          disabled={atFirst}
+          ariaLabel="First page"
+        >
+          <span aria-hidden>{"⏮"}</span>
+        </PagerButton>
+        <PagerButton
+          onClick={onPrev}
+          disabled={atFirst}
+          ariaLabel="Previous page"
+        >
+          <span aria-hidden>{"◀"}</span>
+        </PagerButton>
+        <span className="px-2 font-mono text-xs tabular-nums text-[var(--muted-foreground)]">
+          #{formatThousands(String(rangeStart))}
+          {"–"}
+          #{formatThousands(String(rangeEnd))}
+        </span>
+        <PagerButton
+          onClick={onNext}
+          disabled={atLast}
+          ariaLabel="Next page"
+        >
+          <span aria-hidden>{"▶"}</span>
+        </PagerButton>
+        <PagerButton
+          onClick={onLast}
+          disabled={atLast}
+          ariaLabel="Last page"
+        >
+          <span aria-hidden>{"⏭"}</span>
+        </PagerButton>
+      </div>
+      <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
+        {formatThousands(String(totalCount))} batches
+      </span>
+    </div>
+  );
+}
+
+function PagerButton({
+  onClick,
+  disabled,
+  ariaLabel,
+  children,
+}: {
+  onClick: () => void;
+  disabled: boolean;
+  ariaLabel: string;
+  children: React.ReactNode;
 }) {
   return (
-    <div className="mt-6 flex items-center justify-between gap-3">
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={onPrev}
-        disabled={page <= 1}
-        className="min-h-[44px] md:min-h-0"
-      >
-        Previous
-      </Button>
-      <span className="font-mono text-xs text-[var(--muted-foreground)] tabular-nums">
-        {page} / {totalPages}
-      </span>
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={onNext}
-        disabled={page >= totalPages}
-        className="min-h-[44px] md:min-h-0"
-      >
-        Next
-      </Button>
-    </div>
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={ariaLabel}
+      className={cn(
+        "inline-flex h-7 min-w-[28px] items-center justify-center rounded font-mono text-xs text-[var(--muted-foreground)] transition-colors",
+        "hover:text-[var(--foreground)] hover:bg-[var(--muted)]/40",
+        "disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-[var(--muted-foreground)]",
+      )}
+    >
+      {children}
+    </button>
   );
 }
 

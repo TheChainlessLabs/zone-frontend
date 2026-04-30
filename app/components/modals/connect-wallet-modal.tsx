@@ -9,7 +9,10 @@ import { cn } from "@/lib/utils";
 import { ModalShell } from "./modal-shell";
 
 /**
- * ConnectWalletModal — Phase-4 alpha entry point.
+ * ConnectWalletModal — Phase 4 mechanism. Preserved for reactivation when
+ * self-custody applies. Not mounted in v0 production routes; only `/system`
+ * references it as a design-system specimen. v0 entry uses
+ * `email-signup-modal.tsx` per omega-docs#5 PRD + Decision #12.
  *
  * States:
  *   idle         — connector picker

@@ -4,6 +4,11 @@ export {
   type ConnectWalletState,
 } from "./connect-wallet-modal";
 export {
+  EmailSignupModal,
+  type EmailSignupModalProps,
+  type EmailSignupState,
+} from "./email-signup-modal";
+export {
   DepositModal,
   type DepositModalProps,
   type DepositState,

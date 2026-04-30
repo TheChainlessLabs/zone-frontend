@@ -102,10 +102,12 @@ import { NotFoundContents } from "@/components/NotFoundContents";
 import {
   ConnectWalletModal,
   DepositModal,
+  EmailSignupModal,
   OrderConfirmationModal,
   WithdrawModal,
   type ConnectWalletState,
   type DepositState,
+  type EmailSignupState,
   type OrderConfirmationState,
   type WithdrawState,
 } from "@/components/modals";
@@ -2447,7 +2449,7 @@ function EmptyStatesShowcase() {
         <NotFoundContents />
       </PreviewFrame>
       <PreviewFrame caption="DisconnectedState — default">
-        <DisconnectedState onAction={() => toast("Connect Wallet (preview)")} />
+        <DisconnectedState onAction={() => toast("Sign up (preview)")} />
       </PreviewFrame>
       <PreviewFrame caption="DisconnectedState — wrong network">
         <DisconnectedState
@@ -2506,10 +2508,20 @@ const ORDER_STATES: OrderConfirmationState[] = [
   "submitting",
   "failed",
 ];
+const EMAIL_SIGNUP_STATES: EmailSignupState[] = [
+  "idle",
+  "submitting",
+  "sent",
+  "expired",
+  "invalid",
+  "already-claimed",
+  "not-on-allowlist",
+];
 
 function ModalsShowcase() {
   return (
     <div className="grid grid-cols-1 gap-12 md:grid-cols-2">
+      <EmailSignupModalDemo />
       <ConnectModalDemo />
       <DepositModalDemo />
       <WithdrawModalDemo />
@@ -2555,6 +2567,32 @@ function ModalDemoCard({
     </div>
   );
 }
+function EmailSignupModalDemo() {
+  const [state, setState] = useState<EmailSignupState>("idle");
+  const [open, setOpen] = useState(false);
+
+  return (
+    <ModalDemoCard
+      title="Email signup (v0)"
+      current={state}
+      states={EMAIL_SIGNUP_STATES}
+      onState={(s) => setState(s as EmailSignupState)}
+      snippet={`<EmailSignupModal\n  open\n  state="${state}"\n  email="alpha@omegamarkets.com"\n  onClose={close}\n/>`}
+    >
+      <Button variant="outline" onClick={() => setOpen(true)}>
+        Open Email signup modal
+      </Button>
+      <EmailSignupModal
+        open={open}
+        state={state}
+        email="alpha@omegamarkets.com"
+        onClose={() => setOpen(false)}
+        onSubmit={() => setState("sent")}
+      />
+    </ModalDemoCard>
+  );
+}
+
 function ConnectModalDemo() {
   const [state, setState] = useState<ConnectWalletState>("idle");
   const [open, setOpen] = useState(false);

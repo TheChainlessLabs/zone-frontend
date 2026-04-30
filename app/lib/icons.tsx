@@ -18,6 +18,7 @@ import {
   AlertTriangle,
   ArrowDown,
   ArrowDownLeft,
+  ArrowRight,
   ArrowUp,
   ArrowUpRight,
   Bell,
@@ -34,6 +35,7 @@ import {
   Info,
   Lock,
   LogOut,
+  Mail,
   Menu,
   Moon,
   Search,
@@ -64,6 +66,8 @@ export const Icon = {
   Sign: Lock,
   Disconnect: LogOut,
   Unauthorised: Lock,
+  Mail,
+  ArrowRight,
 
   // Privacy + status
   Private: Lock,

@@ -63,6 +63,18 @@ const CASES: Array<{
     chain: "",
   },
   {
+    param: "signing-up",
+    expected: "signing-up",
+    hasAddress: false,
+    chain: "Ethereum",
+  },
+  {
+    param: "magic-link-sent",
+    expected: "magic-link-sent",
+    hasAddress: false,
+    chain: "Ethereum",
+  },
+  {
     param: "connecting",
     expected: "connecting",
     hasAddress: false,
@@ -118,6 +130,38 @@ describe("WalletStateProvider — interactive flow", () => {
 
   afterEach(() => {
     vi.useRealTimers();
+  });
+
+  it("signUp() transitions disconnected → signing-up → magic-link-sent, activateMagicLink() lands at connected", () => {
+    let captured: WalletStateContextValue | null = null;
+
+    render(
+      <WalletStateProvider>
+        <Probe capture={(ctx) => (captured = ctx)} />
+      </WalletStateProvider>
+    );
+
+    expect(captured!.state).toBe("disconnected");
+
+    act(() => {
+      captured!.signUp("alpha@omegamarkets.com");
+    });
+    expect(captured!.state).toBe("signing-up");
+    expect(captured!.email).toBe("alpha@omegamarkets.com");
+
+    act(() => {
+      vi.advanceTimersByTime(700);
+    });
+    expect(captured!.state).toBe("magic-link-sent");
+
+    act(() => {
+      captured!.activateMagicLink();
+    });
+    expect(captured!.state).toBe("connected");
+    expect(captured!.email).toBe("alpha@omegamarkets.com");
+    expect(captured!.address).toBe(
+      "0xa513e6e4b8f2a923d98304ec87f64353c4d5c853"
+    );
   });
 
   it("connect() transitions disconnected → connecting → connected", () => {

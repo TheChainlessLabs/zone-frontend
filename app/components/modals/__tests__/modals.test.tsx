@@ -6,10 +6,12 @@ import { vi } from "vitest";
 import {
   ConnectWalletModal,
   DepositModal,
+  EmailSignupModal,
   OrderConfirmationModal,
   WithdrawModal,
   type ConnectWalletState,
   type DepositState,
+  type EmailSignupState,
   type OrderConfirmationState,
   type WithdrawState,
 } from "@/components/modals";
@@ -59,6 +61,15 @@ const ORDER_STATES: OrderConfirmationState[] = [
   "submitting",
   "failed",
 ];
+const EMAIL_SIGNUP_STATES: EmailSignupState[] = [
+  "idle",
+  "submitting",
+  "sent",
+  "expired",
+  "invalid",
+  "already-claimed",
+  "not-on-allowlist",
+];
 
 it.each(CONNECT_STATES)(
   "ConnectWalletModal — no a11y violations · %s",
@@ -68,6 +79,23 @@ it.each(CONNECT_STATES)(
         open
         state={state}
         activeConnector="MetaMask"
+        onClose={() => {}}
+      />
+    );
+    expect(screen.getByRole("dialog")).toBeTruthy();
+    await expectNoViolations();
+    cleanup();
+  }
+);
+
+it.each(EMAIL_SIGNUP_STATES)(
+  "EmailSignupModal — no a11y violations · %s",
+  async (state) => {
+    render(
+      <EmailSignupModal
+        open
+        state={state}
+        email="alpha@omegamarkets.com"
         onClose={() => {}}
       />
     );

@@ -60,7 +60,7 @@ export function AppShell({ route, auth = false, children }: AppShellProps) {
     <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
       <WrongNetworkBanner />
       <Navbar />
-      <div className="pb-[60px] md:pb-0">{content}</div>
+      <div className="pb-[calc(60px+env(safe-area-inset-bottom)+16px)] md:pb-0">{content}</div>
       <MobileTabBar />
     </div>
   );

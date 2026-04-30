@@ -8,8 +8,9 @@
  * above the home indicator on iOS.
  *
  * Hidden on ≥ md; the desktop Navbar renders the same tabs in its center
- * slot. AppShell adds `pb-[60px] md:pb-0` to the page wrapper so route
- * content does not slide under the bar.
+ * slot. AppShell adds `pb-[calc(60px+env(safe-area-inset-bottom)+16px)]
+ * md:pb-0` to the page wrapper so route content clears the bar (and the
+ * iOS home-indicator safe-area inset) on every authenticated route.
  */
 
 import Link from "next/link";

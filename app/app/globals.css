@@ -267,6 +267,24 @@ body[data-route="/404"]::before {
   }
 }
 
+/* M5.5 (#228) — hash deep-link ring choreography. The `useHashHighlight`
+   hook toggles these classes on the element targeted by `window.location
+   .hash` so a shared link like `/batches/4821#sealed` visibly lands on its
+   row. The active class paints a 1px accent ring with a 3px background
+   halo (so the ring reads cleanly against any surface tone); the fade
+   class transitions the same shadow to fully transparent before the hook
+   strips both. Reduced-motion is handled by the global override below —
+   the `box-shadow` transition collapses to instant, leaving a brief
+   outline flash. */
+.hash-highlight-active {
+  box-shadow: 0 0 0 1px var(--accent), 0 0 0 3px var(--background);
+  transition: box-shadow var(--duration-500) var(--ease-standard);
+}
+.hash-highlight-fade {
+  box-shadow: 0 0 0 1px transparent, 0 0 0 3px transparent;
+  transition: box-shadow var(--duration-500) var(--ease-standard);
+}
+
 /* M5.1 (#224) — global reduced-motion override. Collapses any animation,
    transition, or smooth-scroll on the page to effectively-instant when the
    user has expressed `prefers-reduced-motion: reduce`. Component-level paths

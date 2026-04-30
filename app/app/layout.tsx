@@ -6,6 +6,7 @@ import { Source_Serif_4 } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { WalletStateProvider } from "@/components/shell/WalletStateProvider";
 import { RouteAtmosphere } from "@/components/shell/RouteAtmosphere";
+import { HashHighlightMount } from "@/components/shell/HashHighlightMount";
 import "./globals.css";
 
 // Source Serif 4 — Adobe, OFL. Used for italic display moments only:
@@ -52,6 +53,7 @@ export default function RootLayout({
             triggers client-side navigation reads. */}
         <Suspense fallback={null}>
           <RouteAtmosphere />
+          <HashHighlightMount />
           <WalletStateProvider>{children}</WalletStateProvider>
         </Suspense>
         <Toaster />

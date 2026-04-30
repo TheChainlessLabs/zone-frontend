@@ -181,6 +181,7 @@ function ReceiptDetail({ fixture }: { fixture: BatchesDetailFixture }) {
               </p>
             </div>
             <ActionRow
+              id="queued"
               index={1}
               label="Queued"
               timestamp={queuedAt}
@@ -188,6 +189,7 @@ function ReceiptDetail({ fixture }: { fixture: BatchesDetailFixture }) {
               detail={null}
             />
             <ActionRow
+              id="sealed"
               index={2}
               label="Sealed"
               timestamp={batch.sealedAt}
@@ -197,19 +199,23 @@ function ReceiptDetail({ fixture }: { fixture: BatchesDetailFixture }) {
               }
             />
             <ActionRow
+              id="proven"
               index={3}
               label="Proven"
               timestamp={batch.status === "pending" ? null : provenAt}
               meaning={BATCH_STAGE_MEANING.proven}
               detail={
                 batch.proofRef ? (
-                  <HashLine hash={batch.proofRef} copyLabel="Copy proof hash" />
+                  <div id="proof-hash">
+                    <HashLine hash={batch.proofRef} copyLabel="Copy proof hash" />
+                  </div>
                 ) : (
                   <MutedMono>pending</MutedMono>
                 )
               }
             />
             <ActionRow
+              id="settled"
               index={4}
               label="Settled"
               timestamp={settledAt}
@@ -217,10 +223,12 @@ function ReceiptDetail({ fixture }: { fixture: BatchesDetailFixture }) {
               meaning={BATCH_STAGE_MEANING.settled}
               detail={
                 batch.settlementTx ? (
-                  <HashLine
-                    hash={batch.settlementTx}
-                    copyLabel="Copy settlement transaction hash"
-                  />
+                  <div id="settlement-tx">
+                    <HashLine
+                      hash={batch.settlementTx}
+                      copyLabel="Copy settlement transaction hash"
+                    />
+                  </div>
                 ) : (
                   <MutedMono>pending</MutedMono>
                 )
@@ -312,6 +320,7 @@ function MutedMono({ children }: { children: React.ReactNode }) {
 }
 
 function ActionRow({
+  id,
   index,
   label,
   timestamp,
@@ -319,6 +328,7 @@ function ActionRow({
   meaning,
   tone = "default",
 }: {
+  id?: string;
   index: number;
   label: string;
   timestamp: string | null;
@@ -332,7 +342,10 @@ function ActionRow({
       : "text-[var(--foreground)]";
 
   return (
-    <div className="grid grid-cols-1 gap-1.5 border-b border-dashed border-[var(--border)] py-3 last:border-b-0 sm:grid-cols-[150px_minmax(0,1fr)] sm:gap-4">
+    <div
+      id={id}
+      className="grid grid-cols-1 gap-1.5 border-b border-dashed border-[var(--border)] py-3 last:border-b-0 sm:grid-cols-[150px_minmax(0,1fr)] sm:gap-4"
+    >
       <div className="flex flex-col gap-1">
         <span className={`font-mono text-[11px] uppercase tracking-[0.16em] ${labelClassName}`}>
           {index}. {label}

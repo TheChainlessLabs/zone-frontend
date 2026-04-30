@@ -186,10 +186,14 @@ describe("BatchesListView", () => {
 });
 
 describe("BatchDetailView", () => {
-  it("renders the verified-batch receipt header and privacy footer", async () => {
+  it("renders the page header with batch number, status, and privacy footer", async () => {
     await renderDetail("4821");
-    expect(screen.getByText("Batch #4821")).toBeDefined();
-    expect(screen.getByText("Settlement record")).toBeDefined();
+    // Batch number is the H1 of the page header strip (M4.23).
+    expect(
+      screen.getByRole("heading", { level: 1, name: "Batch #4821" }),
+    ).toBeDefined();
+    // Verified status label rendered inline next to the title.
+    expect(screen.getByText("Verified")).toBeDefined();
     expect(
       screen.getByText(/Counterparty information is by design absent/i),
     ).toBeDefined();
@@ -228,16 +232,21 @@ describe("BatchDetailView", () => {
     expect(link.getAttribute("href")).toBe("/portfolio");
   });
 
-  it("renders pair aggregate and totals sections", async () => {
+  it("renders pair distribution and lifecycle sections (M4.23 compressed)", async () => {
     await renderDetail("4821");
-    expect(screen.getByText(/Pair aggregate/i)).toBeDefined();
-    expect(screen.getByText(/Totals/i)).toBeDefined();
+    expect(screen.getByText(/Pair distribution/i)).toBeDefined();
+    expect(screen.getByText(/Lifecycle/i)).toBeDefined();
   });
 
-  it("renders the consumer-friendly lead sentences above metadata + actions", async () => {
-    await renderDetail("4821");
-    expect(screen.getByText("Settlement details.")).toBeDefined();
-    expect(screen.getByText(/Here.s what happened to your batch\./)).toBeDefined();
+  it("preserves M5.5 hash deep-link IDs on the compressed lifecycle rows", async () => {
+    const { container } = await renderDetail("4821");
+    // Each lifecycle row anchor target stays addressable.
+    expect(container.querySelector("#queued")).not.toBeNull();
+    expect(container.querySelector("#sealed")).not.toBeNull();
+    expect(container.querySelector("#proven")).not.toBeNull();
+    expect(container.querySelector("#settled")).not.toBeNull();
+    expect(container.querySelector("#proof-hash")).not.toBeNull();
+    expect(container.querySelector("#settlement-tx")).not.toBeNull();
   });
 
   it('renders a "what this means" subtitle for each numbered action', async () => {

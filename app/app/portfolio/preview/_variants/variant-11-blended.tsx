@@ -119,7 +119,7 @@ export default function Variant11Blended({
         </div>
       </section>
 
-      <Card className="flex flex-col gap-4 p-4 md:p-6">
+      <Card variant="glass" className="flex flex-col gap-4 p-4 md:p-6">
           <div
             role="img"
             aria-label={`Portfolio value over ${range}, current $${fixture.totalValueUSD}`}
@@ -179,7 +179,7 @@ export default function Variant11Blended({
               </Button>
             </div>
           </div>
-        </Card>
+      </Card>
 
       <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[1.6fr_1fr]">
         <aside className="flex flex-col gap-4 lg:order-2 lg:sticky lg:top-24 lg:self-start">

@@ -31,6 +31,7 @@ import * as React from "react";
 
 import { OrderConfirmationModal } from "@/components/modals";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Tabs,
@@ -192,175 +193,176 @@ export function OrderForm({
 
   return (
     <>
-      <form
-        onSubmit={handleSubmit}
-        onKeyDown={handleKeyDown}
-        className="flex flex-col gap-5 rounded-[var(--radius-xl)] surface-soft bg-[var(--card)] p-5"
-        aria-label="Order entry"
-      >
-        {/* Top-line execution summary — Bloomberg/EMSX-style ticket head.
-            Side · Pair · Midpoint · Available, all on one row, mono tabular.
-            Available balance is promoted out of the 10px label tracker. */}
-        <ExecSummaryRow
-          side={side}
-          pair={pair}
-          midpoint={midpoint}
-          available={MOCK_AVAILABLE}
-          loading={loading}
-        />
+      <Card variant="glass" className="p-5">
+        <form
+          onSubmit={handleSubmit}
+          onKeyDown={handleKeyDown}
+          className="flex flex-col gap-5"
+          aria-label="Order entry"
+        >
+          {/* Top-line execution summary — Bloomberg/EMSX-style ticket head.
+              Side · Pair · Midpoint · Available, all on one row, mono tabular.
+              Available balance is promoted out of the 10px label tracker. */}
+          <ExecSummaryRow
+            side={side}
+            pair={pair}
+            midpoint={midpoint}
+            available={MOCK_AVAILABLE}
+            loading={loading}
+          />
 
-      {/* Tabs: Market / Limit */}
-      <Tabs
-        value={mode}
-        onValueChange={(v) => onModeChange(v as OrderMode)}
-        className="w-full"
-      >
-        <TabsList className="grid h-9 w-full grid-cols-2">
-          <TabsTrigger value="market">Market</TabsTrigger>
-          <TabsTrigger value="limit">Limit</TabsTrigger>
-        </TabsList>
-        <TabsContent value="market" className="mt-0" />
-        <TabsContent value="limit" className="mt-0" />
-      </Tabs>
+          {/* Tabs: Market / Limit */}
+          <Tabs
+            value={mode}
+            onValueChange={(v) => onModeChange(v as OrderMode)}
+            className="w-full"
+          >
+            <TabsList className="grid h-9 w-full grid-cols-2">
+              <TabsTrigger value="market">Market</TabsTrigger>
+              <TabsTrigger value="limit">Limit</TabsTrigger>
+            </TabsList>
+            <TabsContent value="market" className="mt-0" />
+            <TabsContent value="limit" className="mt-0" />
+          </Tabs>
 
-      {/* Buy / Sell segmented toggle. Hotkey badge inline so the affordance
-          is discoverable. */}
-      <div
-        role="radiogroup"
-        aria-label="Side"
-        className="grid grid-cols-2 gap-2"
-      >
-        <SideButton
-          side="buy"
-          active={side === "buy"}
-          onClick={() => setSide("buy")}
-          disabled={loading}
-          hotkey="B"
-        />
-        <SideButton
-          side="sell"
-          active={side === "sell"}
-          onClick={() => setSide("sell")}
-          disabled={loading}
-          hotkey="S"
-        />
-      </div>
+          {/* Buy / Sell segmented toggle. Hotkey badge inline so the affordance
+              is discoverable. */}
+          <div
+            role="radiogroup"
+            aria-label="Side"
+            className="grid grid-cols-2 gap-2"
+          >
+            <SideButton
+              side="buy"
+              active={side === "buy"}
+              onClick={() => setSide("buy")}
+              disabled={loading}
+              hotkey="B"
+            />
+            <SideButton
+              side="sell"
+              active={side === "sell"}
+              onClick={() => setSide("sell")}
+              disabled={loading}
+              hotkey="S"
+            />
+          </div>
 
-      {/* Limit price (limit only) — side-locked ring + border tint.
-          Use-midpoint promoted from a 10px text shortcut to a real chip. */}
-      {mode === "limit" ? (
-        <Animate variant="enter" className="flex flex-col gap-2">
-          <div className="flex items-center justify-between">
+          {/* Limit price (limit only) — side-locked ring + border tint.
+              Use-midpoint promoted from a 10px text shortcut to a real chip. */}
+          {mode === "limit" ? (
+            <Animate variant="enter" className="flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <label
+                  htmlFor="limit-price"
+                  className="font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--muted-foreground)]"
+                >
+                  Limit price
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setPrice(midpoint)}
+                  disabled={!midpoint}
+                  className={cn(
+                    "inline-flex h-6 items-center rounded-[var(--radius-sm)] border border-[var(--border)] px-2",
+                    "font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--muted-foreground)]",
+                    "transition-colors hover:text-[var(--foreground)] hover:border-[var(--foreground)]",
+                    "disabled:opacity-50",
+                  )}
+                  aria-keyshortcuts="M"
+                  title="Set limit price to current midpoint (M)"
+                >
+                  Use midpoint
+                  <span className="ml-2 font-mono text-[9px] opacity-60">M</span>
+                </button>
+              </div>
+              <div className="relative">
+                <Input
+                  id="limit-price"
+                  type="text"
+                  inputMode="decimal"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                  placeholder={midpoint || "0.0000"}
+                  disabled={loading}
+                  className={cn(
+                    "h-12 pr-16 font-mono text-base tabular-nums",
+                    "focus-visible:ring-1",
+                  )}
+                  style={{
+                    ["--tw-ring-color" as string]: sideTone,
+                    borderColor: `color-mix(in oklab, ${sideTone} 30%, var(--border))`,
+                  }}
+                />
+                <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center font-mono text-xs uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
+                  {pair.quote}
+                </span>
+              </div>
+            </Animate>
+          ) : null}
+
+          {/* Amount input — primary cell, side-locked focus ring.
+              Available balance is now in the top-line ExecSummaryRow, not here. */}
+          <div className="flex flex-col gap-2">
             <label
-              htmlFor="limit-price"
+              htmlFor="amount"
               className="font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--muted-foreground)]"
             >
-              Limit price
+              Amount
             </label>
-            <button
-              type="button"
-              onClick={() => setPrice(midpoint)}
-              disabled={!midpoint}
-              className={cn(
-                "inline-flex h-6 items-center rounded-[var(--radius-sm)] border border-[var(--border)] px-2",
-                "font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--muted-foreground)]",
-                "transition-colors hover:text-[var(--foreground)] hover:border-[var(--foreground)]",
-                "disabled:opacity-50",
+            <div className="relative">
+              {loading ? (
+                <Skeleton className="h-14 w-full rounded-[var(--radius-md)]" />
+              ) : (
+                <Input
+                  id="amount"
+                  type="text"
+                  inputMode="decimal"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder="0.00"
+                  disabled={loading}
+                  className="h-14 pr-20 font-mono text-2xl tabular-nums focus-visible:ring-1"
+                  style={{
+                    ["--tw-ring-color" as string]: sideTone,
+                    borderColor: `color-mix(in oklab, ${sideTone} 30%, var(--border))`,
+                  }}
+                />
               )}
-              aria-keyshortcuts="M"
-              title="Set limit price to current midpoint (M)"
-            >
-              Use midpoint
-              <span className="ml-2 font-mono text-[9px] opacity-60">M</span>
-            </button>
+              {!loading ? (
+                <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center font-mono text-sm uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
+                  {pair.base}
+                </span>
+              ) : null}
+            </div>
           </div>
-          <div className="relative">
-            <Input
-              id="limit-price"
-              type="text"
-              inputMode="decimal"
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              placeholder={midpoint || "0.0000"}
-              disabled={loading}
-              className={cn(
-                "h-12 pr-16 font-mono text-base tabular-nums",
-                "focus-visible:ring-1",
-              )}
-              style={{
-                ["--tw-ring-color" as string]: sideTone,
-                borderColor: `color-mix(in oklab, ${sideTone} 30%, var(--border))`,
-              }}
-            />
-            <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center font-mono text-xs uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
-              {pair.quote}
+
+          {/* Percentage shortcuts */}
+          <div className="grid grid-cols-4 gap-2">
+            {PCT_SHORTCUTS.map((s) => (
+              <Button
+                key={s.label}
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => handlePct(s.value)}
+                disabled={loading}
+                className="h-9 font-mono text-[11px] uppercase tracking-[0.14em]"
+              >
+                {s.label}
+              </Button>
+            ))}
+          </div>
+
+          {/* You receive — restated at submit weight. */}
+          <div className="flex items-baseline justify-between rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--muted)]/40 px-3 py-3">
+            <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
+              You receive
+            </span>
+            <span className="font-mono text-lg tabular-nums text-[var(--foreground)]">
+              {estReceive ? `${formatGroup(estReceive)} ${pair.quote}` : "—"}
             </span>
           </div>
-        </Animate>
-      ) : null}
-
-      {/* Amount input — primary cell, side-locked focus ring.
-          Available balance is now in the top-line ExecSummaryRow, not here. */}
-      <div className="flex flex-col gap-2">
-        <label
-          htmlFor="amount"
-          className="font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--muted-foreground)]"
-        >
-          Amount
-        </label>
-        <div className="relative">
-          {loading ? (
-            <Skeleton className="h-14 w-full rounded-[var(--radius-md)]" />
-          ) : (
-            <Input
-              id="amount"
-              type="text"
-              inputMode="decimal"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder="0.00"
-              disabled={loading}
-              className="h-14 pr-20 font-mono text-2xl tabular-nums focus-visible:ring-1"
-              style={{
-                ["--tw-ring-color" as string]: sideTone,
-                borderColor: `color-mix(in oklab, ${sideTone} 30%, var(--border))`,
-              }}
-            />
-          )}
-          {!loading ? (
-            <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center font-mono text-sm uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
-              {pair.base}
-            </span>
-          ) : null}
-        </div>
-      </div>
-
-      {/* Percentage shortcuts */}
-      <div className="grid grid-cols-4 gap-2">
-        {PCT_SHORTCUTS.map((s) => (
-          <Button
-            key={s.label}
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => handlePct(s.value)}
-            disabled={loading}
-            className="h-9 font-mono text-[11px] uppercase tracking-[0.14em]"
-          >
-            {s.label}
-          </Button>
-        ))}
-      </div>
-
-      {/* You receive — restated at submit weight. */}
-      <div className="flex items-baseline justify-between rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--muted)]/40 px-3 py-3">
-        <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
-          You receive
-        </span>
-        <span className="font-mono text-lg tabular-nums text-[var(--foreground)]">
-          {estReceive ? `${formatGroup(estReceive)} ${pair.quote}` : "—"}
-        </span>
-      </div>
 
         {errorMessage ? (
           <div
@@ -392,7 +394,8 @@ export function OrderForm({
             </span>
           </Button>
         )}
-      </form>
+        </form>
+      </Card>
 
       {pendingOrder ? (
         <OrderConfirmationModal

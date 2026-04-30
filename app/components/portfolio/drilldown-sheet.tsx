@@ -180,7 +180,7 @@ export function PortfolioDrilldownSheet({
         <SheetContent
           side="right"
           aria-label={ariaLabel}
-          className="border-l border-[var(--border)] p-0"
+          className="glass border-l border-[var(--border)] bg-background/0 p-0"
         >
           <div className="flex h-full flex-col gap-3 overflow-y-auto px-6 pb-8 pt-6">
             <SheetHeader className="text-left">
@@ -202,7 +202,7 @@ export function PortfolioDrilldownSheet({
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent
         aria-label={ariaLabel}
-        className="h-[100dvh] max-h-[100dvh] rounded-t-[var(--radius-xl)] pb-[max(env(safe-area-inset-bottom),1rem)]"
+        className="glass h-[100dvh] max-h-[100dvh] rounded-t-[var(--radius-xl)] bg-background/0 pb-[max(env(safe-area-inset-bottom),1rem)]"
       >
         <DrawerHeader className="text-left">
           <DrawerTitle className="font-mono text-sm uppercase tracking-[0.18em]">

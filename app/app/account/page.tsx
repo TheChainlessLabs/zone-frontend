@@ -62,7 +62,7 @@ export default function AccountPage() {
         description="Identity, theme, session."
       >
         <PageSection title={<MonoSectionTitle>Account</MonoSectionTitle>}>
-          <Card className="flex flex-col gap-4 p-5 md:p-6">
+          <Card variant="glass" className="flex flex-col gap-4 p-5 md:p-6">
             <div className="flex flex-col gap-1.5">
               <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
                 Email

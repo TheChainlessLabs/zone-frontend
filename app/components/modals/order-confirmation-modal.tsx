@@ -29,7 +29,7 @@ export type OrderConfirmationState =
   | "failed";
 
 export type OrderSide = "buy" | "sell";
-export type OrderType = "limit" | "midpoint";
+export type OrderMode = "market" | "limit";
 
 export interface OrderConfirmationModalProps {
   open: boolean;
@@ -38,15 +38,15 @@ export interface OrderConfirmationModalProps {
   side: OrderSide;
   /** Pair in BASE/QUOTE token-ticker form, e.g. `USDC/EURC`. */
   pair: string;
-  type: OrderType;
+  mode: OrderMode;
   /** Order amount in the base token, formatted. */
   amount: string;
-  /** Limit price (only used when type === "limit"), formatted. */
+  /** Limit price (only used when mode === "limit"), formatted. */
   price?: string;
-  /** Estimated receive in the quote token, formatted. */
-  estReceive: string;
-  /** Fee summary in USD, formatted. */
-  feeUsd?: string;
+  /** Indicative midpoint, formatted. */
+  midpoint?: string;
+  /** Fee summary as a rate, formatted. */
+  fee?: string;
   errorMessage?: string;
   onConfirm?: () => void;
   onRetry?: () => void;
@@ -58,17 +58,28 @@ export function OrderConfirmationModal({
   state,
   side,
   pair,
-  type,
+  mode,
   amount,
   price,
-  estReceive,
-  feeUsd = "$0.42",
+  midpoint,
+  fee = "0.005%",
   errorMessage = "Wallet rejected the signature. Try again or check your wallet.",
   onConfirm,
   onRetry,
 }: OrderConfirmationModalProps) {
   const isBusy = state === "signing" || state === "submitting";
   const [base, quote] = pair.split("/");
+  const verb = side === "buy" ? "Buy" : "Sell";
+  const executionPrice = mode === "limit" ? price : midpoint;
+  const summary = [
+    "You sign",
+    `${verb} ${amount} ${base}${executionPrice ? ` at ${executionPrice} ${quote}` : ""}`,
+    `Fee ${fee}`,
+    "Settles in next batch",
+    mode === "market"
+      ? "Matches privately at midpoint"
+      : "Matches privately",
+  ].join(" · ");
 
   return (
     <ModalShell
@@ -79,7 +90,7 @@ export function OrderConfirmationModal({
       title="Review order"
       description={
         <>
-          <span className="font-mono">{pair}</span> · {type === "limit" ? "Limit" : "Midpoint"}
+          <span className="font-mono">{pair}</span> · {mode === "limit" ? "Limit" : "Market"}
         </>
       }
     >
@@ -100,33 +111,29 @@ export function OrderConfirmationModal({
             </span>
           </div>
           <span className="font-mono text-xs uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
-            {type === "limit" ? "Limit" : "Midpoint"}
+            {mode === "limit" ? "Limit" : "Market"}
           </span>
         </div>
 
-        {/* Midpoint warning */}
-        {type === "midpoint" ? (
-          <div className="flex items-start gap-2 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--muted)]/40 p-3 text-xs leading-relaxed text-[var(--muted-foreground)]">
-            <Icon.Info
-              size={14}
-              aria-hidden
-              className="mt-0.5 shrink-0 text-[var(--foreground)]"
-            />
-            <span>
-              Midpoint orders match against the live midpoint at batch seal.
-              Final fill price may differ slightly from the indicative quote.
-            </span>
-          </div>
-        ) : null}
+        <div className="rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--muted)]/30 p-4">
+          <p className="text-sm leading-relaxed text-[var(--foreground)]">
+            {summary}
+          </p>
+        </div>
 
-        {/* Order details */}
         <dl className="flex flex-col gap-1.5 rounded-[var(--radius-md)] border border-[var(--border)] p-3 text-xs">
           <Row label="Amount" value={`${amount} ${base}`} />
-          {type === "limit" && price ? (
+          {mode === "limit" && price ? (
             <Row label="Price" value={`${price} ${quote}`} />
           ) : null}
-          <Row label="Estimated receive" value={`${estReceive} ${quote}`} />
-          <Row label="Network fee" value={feeUsd} />
+          {mode === "market" && midpoint ? (
+            <Row label="Indicative midpoint" value={`${midpoint} ${quote}`} />
+          ) : null}
+          <Row label="Fee" value={fee} />
+          <Row
+            label="Settlement"
+            value={mode === "market" ? "Next batch · private midpoint match" : "Next batch · private match"}
+          />
         </dl>
 
         {/* State surface */}

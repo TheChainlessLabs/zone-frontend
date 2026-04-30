@@ -1,24 +1,11 @@
-import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
-
-// next/navigation's `useSearchParams` is mocked at module scope so the
-// in-ticket execution rail's `?simulateFailure=true` branch can be exercised.
-let currentParams = new URLSearchParams();
-vi.mock("next/navigation", () => ({
-  useSearchParams: () => currentParams,
-}));
+import { afterEach, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 
 import { OrderForm } from "@/components/trade";
 import { DEFAULT_PAIR } from "@/lib/fixtures/pairs";
 
 afterEach(() => {
   cleanup();
-  currentParams = new URLSearchParams();
-  vi.useRealTimers();
-});
-
-beforeEach(() => {
-  currentParams = new URLSearchParams();
 });
 
 it("renders Market mode by default with Buy/Sell + percentage shortcuts", () => {
@@ -34,7 +21,6 @@ it("renders Market mode by default with Buy/Sell + percentage shortcuts", () => 
   expect(screen.getByRole("tab", { name: "Limit" })).toBeDefined();
   expect(screen.getByRole("radio", { name: /Buy/ })).toBeDefined();
   expect(screen.getByRole("radio", { name: /Sell/ })).toBeDefined();
-  // Percentage shortcuts (4 outline buttons).
   expect(screen.getByRole("button", { name: "25" })).toBeDefined();
   expect(screen.getByRole("button", { name: "50" })).toBeDefined();
   expect(screen.getByRole("button", { name: "75" })).toBeDefined();
@@ -51,7 +37,6 @@ it("renders the top-line execution summary with side, pair, midpoint, and availa
     />,
   );
   const summary = screen.getByLabelText("Order summary");
-  // Default side is Buy.
   expect(summary.textContent).toContain("BUY");
   expect(summary.textContent).toContain(`${DEFAULT_PAIR.base}/${DEFAULT_PAIR.quote}`);
   expect(summary.textContent).toContain("0.9213");
@@ -93,13 +78,12 @@ it("CTA falls back to a generic verb+base when amount is empty (Buy)", () => {
       midpoint="0.9213"
     />,
   );
-  // Fallback label: `Buy USDC` (no amount entered yet).
   expect(
     screen.getByRole("button", { name: new RegExp(`Buy ${DEFAULT_PAIR.base}`) }),
   ).toBeDefined();
 });
 
-it("CTA carries the order summary with privacy claim once amount is valid (Buy)", () => {
+it("CTA stays a simple verb + token label once amount is valid", () => {
   render(
     <OrderForm
       pair={DEFAULT_PAIR}
@@ -111,15 +95,15 @@ it("CTA carries the order summary with privacy claim once amount is valid (Buy)"
   fireEvent.change(screen.getByLabelText("Amount"), {
     target: { value: "1000" },
   });
-  // CTA: `Submit · Buy 1,000.00 USDC at 0.9213 EURC · privately matched`.
-  const cta = screen.getByRole("button", { name: /Submit/ });
-  expect(cta.textContent).toContain("Submit");
-  expect(cta.textContent).toContain(`Buy 1,000.00 ${DEFAULT_PAIR.base}`);
-  expect(cta.textContent).toContain(`0.9213 ${DEFAULT_PAIR.quote}`);
-  expect(cta.textContent).toContain("privately matched");
+  const cta = screen.getByRole("button", {
+    name: new RegExp(`Buy ${DEFAULT_PAIR.base}`),
+  });
+  expect(cta.textContent).toContain(`Buy ${DEFAULT_PAIR.base}`);
+  expect(cta.textContent).not.toContain("Submit");
+  expect(cta.textContent).not.toContain("privately matched");
 });
 
-it("CTA shows the Sell-side summary copy after toggling to Sell", () => {
+it("CTA flips to the Sell label after toggling side", () => {
   render(
     <OrderForm
       pair={DEFAULT_PAIR}
@@ -132,12 +116,34 @@ it("CTA shows the Sell-side summary copy after toggling to Sell", () => {
   fireEvent.change(screen.getByLabelText("Amount"), {
     target: { value: "500" },
   });
-  const cta = screen.getByRole("button", { name: /Submit/ });
-  expect(cta.textContent).toContain(`Sell 500.00 ${DEFAULT_PAIR.base}`);
-  expect(cta.textContent).toContain("privately matched");
+  const cta = screen.getByRole("button", {
+    name: new RegExp(`Sell ${DEFAULT_PAIR.base}`),
+  });
+  expect(cta.textContent).toContain(`Sell ${DEFAULT_PAIR.base}`);
 });
 
-it("submits the form with the entered amount + side", () => {
+it("clicking submit opens the confirmation modal with the order summary", () => {
+  render(
+    <OrderForm
+      pair={DEFAULT_PAIR}
+      mode="market"
+      onModeChange={() => {}}
+      midpoint="0.9213"
+    />,
+  );
+  fireEvent.change(screen.getByLabelText("Amount"), {
+    target: { value: "100" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: /Buy USDC/i }));
+
+  expect(screen.getByRole("dialog")).toBeDefined();
+  expect(screen.getByText(/You sign/i)).toBeDefined();
+  expect(screen.getByText(/Buy 100\.00 USDC at 0\.9213 EURC/i)).toBeDefined();
+  expect(screen.getByText(/Fee 0\.005%/i)).toBeDefined();
+  expect(screen.getByText(/Matches privately at midpoint/i)).toBeDefined();
+});
+
+it("confirming in the modal calls onSubmit and closes the modal", () => {
   const onSubmit = vi.fn();
   render(
     <OrderForm
@@ -151,13 +157,40 @@ it("submits the form with the entered amount + side", () => {
   fireEvent.change(screen.getByLabelText("Amount"), {
     target: { value: "100" },
   });
-  fireEvent.click(screen.getByRole("button", { name: /Submit/ }));
+  fireEvent.click(screen.getByRole("button", { name: /Buy USDC/i }));
+  fireEvent.click(screen.getByRole("button", { name: /Confirm order/i }));
+
   expect(onSubmit).toHaveBeenCalledOnce();
   expect(onSubmit.mock.calls[0]?.[0]).toMatchObject({
     mode: "market",
     side: "buy",
     amount: "100",
   });
+  expect(screen.queryByRole("dialog")).toBeNull();
+  expect((screen.getByLabelText("Amount") as HTMLInputElement).value).toBe("");
+});
+
+it("cancelling the modal keeps the form state intact", () => {
+  render(
+    <OrderForm
+      pair={DEFAULT_PAIR}
+      mode="limit"
+      onModeChange={() => {}}
+      midpoint="0.9213"
+    />,
+  );
+  fireEvent.change(screen.getByLabelText("Amount"), {
+    target: { value: "250" },
+  });
+  fireEvent.change(screen.getByLabelText("Limit price"), {
+    target: { value: "0.9300" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: /Buy USDC/i }));
+  fireEvent.click(screen.getByRole("button", { name: /Cancel/i }));
+
+  expect(screen.queryByRole("dialog")).toBeNull();
+  expect((screen.getByLabelText("Amount") as HTMLInputElement).value).toBe("250");
+  expect((screen.getByLabelText("Limit price") as HTMLInputElement).value).toBe("0.9300");
 });
 
 it("renders error tile in place of the CTA when errorMessage is set", () => {
@@ -188,7 +221,6 @@ it("disables submit when amount is zero/empty", () => {
       onSubmit={onSubmit}
     />,
   );
-  // Fallback CTA label is `Buy USDC` when amount is empty.
   const cta = screen.getByRole("button", {
     name: new RegExp(`Buy ${DEFAULT_PAIR.base}`),
   });
@@ -206,7 +238,6 @@ it("does not render the legacy 11px privacy footer line", () => {
       midpoint="0.9213"
     />,
   );
-  // M4.11: privacy claim moved into CTA copy.
   expect(
     screen.queryByText("Orders match privately at midpoint."),
   ).toBeNull();
@@ -221,7 +252,6 @@ it("does not render the in-form Type/Fee/Est. receive strip", () => {
       midpoint="0.9213"
     />,
   );
-  // M4.8: removed; that data lives in <ExecutionContextStrip /> below the form.
   expect(screen.queryByText("Type")).toBeNull();
   expect(screen.queryByText("Fee")).toBeNull();
   expect(screen.queryByText("Est. receive")).toBeNull();
@@ -237,20 +267,17 @@ it("hotkey B/S toggles side; M sets price to midpoint in limit mode", () => {
     />,
   );
   const form = screen.getByLabelText("Order entry");
-  // Press S → flips to Sell.
   fireEvent.keyDown(form, { key: "s" });
   expect(screen.getByLabelText("Order summary").textContent).toContain("SELL");
-  // Press B → flips back to Buy.
   fireEvent.keyDown(form, { key: "b" });
   expect(screen.getByLabelText("Order summary").textContent).toContain("BUY");
-  // Clear price, press M → restores midpoint.
   const priceInput = screen.getByLabelText("Limit price") as HTMLInputElement;
   fireEvent.change(priceInput, { target: { value: "" } });
   fireEvent.keyDown(form, { key: "m" });
   expect(priceInput.value).toBe("0.9213");
 });
 
-it("renders the OrderPipeline in idle state by default", () => {
+it("does not render the in-form order pipeline rail", () => {
   render(
     <OrderForm
       pair={DEFAULT_PAIR}
@@ -260,98 +287,6 @@ it("renders the OrderPipeline in idle state by default", () => {
     />,
   );
   expect(
-    screen.getByRole("group", { name: /Order execution pipeline/i }),
-  ).toBeDefined();
-  expect(screen.getByText("Order pipeline · idle")).toBeDefined();
-  ["sign", "queued", "matched", "settling", "settled"].forEach((s) => {
-    expect(document.querySelector(`[data-stage="${s}"]`)).not.toBeNull();
-  });
-});
-
-it("advances the pipeline through Sign → Queued → Matched → Settling → Settled on submit", () => {
-  vi.useFakeTimers();
-  render(
-    <OrderForm
-      pair={DEFAULT_PAIR}
-      mode="market"
-      onModeChange={() => {}}
-      midpoint="0.9213"
-    />,
-  );
-  fireEvent.change(screen.getByLabelText("Amount"), {
-    target: { value: "100" },
-  });
-  fireEvent.click(screen.getByRole("button", { name: /Submit/ }));
-
-  // Submit lands the user on `sign` immediately.
-  expect(
-    document.querySelector('[data-stage="sign"]')?.getAttribute("data-state"),
-  ).toBe("current");
-
-  const expected: Array<[string, string]> = [
-    ["queued", "current"],
-    ["matched", "current"],
-    ["settling", "current"],
-    ["settled", "current"],
-  ];
-  for (const [stage, state] of expected) {
-    act(() => {
-      vi.advanceTimersByTime(1000);
-    });
-    expect(
-      document.querySelector(`[data-stage="${stage}"]`)?.getAttribute("data-state"),
-    ).toBe(state);
-  }
-
-  // Idle caption is gone once the pipeline starts.
-  expect(screen.queryByText("Order pipeline · idle")).toBeNull();
-});
-
-it("surfaces the failure banner + Simulate failure trigger when ?simulateFailure=true", () => {
-  vi.useFakeTimers();
-  currentParams = new URLSearchParams("simulateFailure=true");
-  render(
-    <OrderForm
-      pair={DEFAULT_PAIR}
-      mode="market"
-      onModeChange={() => {}}
-      midpoint="0.9213"
-    />,
-  );
-  fireEvent.change(screen.getByLabelText("Amount"), {
-    target: { value: "100" },
-  });
-  fireEvent.click(screen.getByRole("button", { name: /Submit/ }));
-
-  // Tick to settling so the failure lands at a representative late stage.
-  // Separate `act` blocks so each render flush queues the next effect's timer
-  // before the next advance.
-  act(() => {
-    vi.advanceTimersByTime(1000);
-  });
-  act(() => {
-    vi.advanceTimersByTime(1000);
-  });
-  act(() => {
-    vi.advanceTimersByTime(1000);
-  });
-  expect(
-    document
-      .querySelector('[data-stage="settling"]')
-      ?.getAttribute("data-state"),
-  ).toBe("current");
-
-  fireEvent.click(
-    screen.getByRole("button", { name: /Simulate failure at current stage/i }),
-  );
-
-  expect(
-    document.querySelector('[data-stage="settling"]')?.getAttribute("data-state"),
-  ).toBe("failed");
-  expect(
-    screen.getByText(/Settlement reverted on L1\./),
-  ).toBeDefined();
-  expect(
-    screen.getByRole("link", { name: /View your fills/i }),
-  ).toBeDefined();
+    screen.queryByRole("group", { name: /Order execution pipeline/i }),
+  ).toBeNull();
 });

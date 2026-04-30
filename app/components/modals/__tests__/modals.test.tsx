@@ -116,10 +116,10 @@ it.each(ORDER_STATES)(
         state={state}
         side="buy"
         pair="USDC/EURC"
-        type="limit"
+        mode="limit"
         amount="10,000.00"
         price="0.9213"
-        estReceive="9,213.40"
+        midpoint="0.9213"
         onClose={() => {}}
       />
     );

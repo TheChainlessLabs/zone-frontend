@@ -2651,7 +2651,7 @@ function OrderModalDemo() {
       current={state}
       states={ORDER_STATES}
       onState={(s) => setState(s as OrderConfirmationState)}
-      snippet={`<OrderConfirmationModal\n  open\n  state="${state}"\n  side="buy"\n  pair="USDC/EURC"\n  type="limit"\n  amount="10,000.00"\n  price="0.9213"\n  estReceive="9,213.40"\n  onClose={close}\n/>`}
+      snippet={`<OrderConfirmationModal\n  open\n  state="${state}"\n  side="buy"\n  pair="USDC/EURC"\n  mode="limit"\n  amount="10,000.00"\n  price="0.9213"\n  midpoint="0.9213"\n  onClose={close}\n/>`}
     >
       <Button variant="outline" onClick={() => setOpen(true)}>
         Open Order modal
@@ -2661,10 +2661,10 @@ function OrderModalDemo() {
         state={state}
         side="buy"
         pair="USDC/EURC"
-        type="limit"
+        mode="limit"
         amount="10,000.00"
         price="0.9213"
-        estReceive="9,213.40"
+        midpoint="0.9213"
         onClose={() => setOpen(false)}
         onConfirm={() => setState("signing")}
         onRetry={() => setState("signing")}

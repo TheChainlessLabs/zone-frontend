@@ -23,16 +23,13 @@ import * as React from "react";
 import { AppShell } from "@/components/shell/AppShell";
 import { PageLayout } from "@/components/shell/PageLayout";
 import { DisconnectedState } from "@/components/DisconnectedState";
-import { OrderConfirmationModal } from "@/components/modals";
 import { Animate } from "@/components/ui/animate";
 import { Icon } from "@/lib/icons";
 import {
   ChartPlaceholder,
-  ExecutionContextStrip,
   OrderForm,
   PairSwitcher,
   YourFills,
-  type OrderFormSubmitPayload,
   type OrderMode,
 } from "@/components/trade";
 import {
@@ -64,34 +61,6 @@ function TradeSurface() {
 
   const launchPair: LaunchPair =
     LAUNCH_PAIRS.find((p) => p.pair === pair) ?? DEFAULT_PAIR;
-
-  // Wireframe-default: confirm-before-submit is on so the modal triggers.
-  const confirmBeforeSubmit = true;
-  const [pendingOrder, setPendingOrder] =
-    React.useState<OrderFormSubmitPayload | null>(null);
-  const [modalState, setModalState] = React.useState<
-    "idle" | "signing" | "submitting" | "failed"
-  >("idle");
-
-  const handleSubmit = (payload: OrderFormSubmitPayload) => {
-    setPendingOrder(payload);
-    setModalState("idle");
-  };
-
-  const handleConfirm = () => {
-    setModalState("signing");
-    // Stub through the lifecycle for the wireframe — backend lands in M6.
-    window.setTimeout(() => setModalState("submitting"), 600);
-    window.setTimeout(() => {
-      setPendingOrder(null);
-      setModalState("idle");
-    }, 1400);
-  };
-
-  const handleCloseModal = () => {
-    setPendingOrder(null);
-    setModalState("idle");
-  };
 
   // Page-state-driven gate surfaces. Wallet-state-driven gates live in
   // AppShell — both paths must render cleanly for review.
@@ -147,15 +116,7 @@ function TradeSurface() {
         midpoint={midpoint}
         loading={isLoading}
         errorMessage={errorMessage}
-        onSubmit={
-          confirmBeforeSubmit ? handleSubmit : (p) => handleSubmit(p)
-        }
-      />
-      <ExecutionContextStrip
-        midpoint={midpoint}
-        estimatedReceive={midpoint ? `mid · ${launchPair.quote}` : undefined}
-        fee={midpoint ? "0.005%" : undefined}
-        settlement={midpoint ? "Ethereum L1" : undefined}
+        onSubmit={() => {}}
       />
     </div>
   );
@@ -188,36 +149,6 @@ function TradeSurface() {
         </PageLayout>
       )}
 
-      {pendingOrder ? (
-        <OrderConfirmationModal
-          open
-          state={modalState}
-          side={pendingOrder.side}
-          pair={pair}
-          type={pendingOrder.mode === "limit" ? "limit" : "midpoint"}
-          amount={`${pendingOrder.amount} ${launchPair.base}`}
-          price={pendingOrder.price}
-          estReceive={
-            estimateReceive(pendingOrder, midpoint) || `— ${launchPair.quote}`
-          }
-          onClose={handleCloseModal}
-          onConfirm={handleConfirm}
-          onRetry={handleConfirm}
-        />
-      ) : null}
     </>
   );
-}
-
-function estimateReceive(
-  payload: OrderFormSubmitPayload,
-  midpoint: string,
-): string {
-  const amount = parseFloat(payload.amount || "0");
-  const price = parseFloat(
-    (payload.mode === "limit" ? payload.price : midpoint) || "0",
-  );
-  if (!Number.isFinite(amount) || !Number.isFinite(price)) return "";
-  if (amount <= 0 || price <= 0) return "";
-  return (amount * price).toFixed(2);
 }

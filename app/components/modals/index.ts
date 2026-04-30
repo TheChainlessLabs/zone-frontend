@@ -19,7 +19,7 @@ export {
   OrderConfirmationModal,
   type OrderConfirmationModalProps,
   type OrderConfirmationState,
+  type OrderMode,
   type OrderSide,
-  type OrderType,
 } from "./order-confirmation-modal";
 export { ModalShell, type ModalShellProps } from "./modal-shell";

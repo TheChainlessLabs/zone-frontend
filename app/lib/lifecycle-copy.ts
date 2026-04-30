@@ -112,3 +112,20 @@ export function copyForBatchStage(
 ): string {
   return LIFECYCLE_COPY[key];
 }
+
+/**
+ * Plain-language "what this means" subtitle for each numbered action on
+ * the batch-detail receipt (M4.22). One sentence per stage, written for a
+ * non-engineer reading the receipt cold. The technical labels above
+ * (`Queued`, `Sealed`, `Proven`, `Settled`) stay canonical — these
+ * sentences sit under each action's payload row to translate the term.
+ */
+export const BATCH_STAGE_MEANING: Record<
+  "queued" | "sealed" | "proven" | "settled",
+  string
+> = {
+  queued: "We received your trade and grouped it with others for privacy.",
+  sealed: "The batch was finalized inside the secure execution environment.",
+  proven: "A cryptographic proof of correct execution was generated.",
+  settled: "The batch landed on Ethereum L1 and is now publicly verifiable.",
+};

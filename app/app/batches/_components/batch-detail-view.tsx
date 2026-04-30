@@ -10,11 +10,11 @@ import { Icon } from "@/lib/icons";
 import { batchesDetailFixtures } from "@/lib/fixtures";
 import type { BatchesDetailFixture } from "@/lib/fixtures/types";
 import {
-  formatAbsoluteTime,
-  formatRelativeTime,
+  formatTimestampWithRelative,
   formatUSD,
   truncateHash,
 } from "@/lib/format";
+import { BATCH_STAGE_MEANING } from "@/lib/lifecycle-copy";
 import {
   aggregateByPair,
   fmtCompactUsd,
@@ -128,17 +128,22 @@ function ReceiptDetail({ fixture }: { fixture: BatchesDetailFixture }) {
           </Receipt.Row>
 
           <Receipt.Section aria-label="Metadata">
+            <div className="pb-2">
+              <p className="text-sm leading-relaxed text-[var(--muted-foreground)]">
+                Settlement details.
+              </p>
+            </div>
             <Receipt.Row>
               <Receipt.RowLabel>Sealed at</Receipt.RowLabel>
               <Receipt.RowValue>
-                <ValueMono>{formatAbsoluteTime(batch.sealedAt)}</ValueMono>
+                <ValueText>{formatTimestampWithRelative(batch.sealedAt)}</ValueText>
               </Receipt.RowValue>
             </Receipt.Row>
             <Receipt.Row>
               <Receipt.RowLabel>Settled at</Receipt.RowLabel>
               <Receipt.RowValue>
                 {settledAt ? (
-                  <ValueMono>{formatAbsoluteTime(settledAt)}</ValueMono>
+                  <ValueText>{formatTimestampWithRelative(settledAt)}</ValueText>
                 ) : (
                   <MutedMono>pending</MutedMono>
                 )}
@@ -169,19 +174,24 @@ function ReceiptDetail({ fixture }: { fixture: BatchesDetailFixture }) {
           </Receipt.Section>
 
           <Receipt.Section aria-label="Actions" className="pt-5">
-            <div className="pb-2">
+            <div className="flex flex-col gap-1 pb-2">
               <Receipt.Label>Actions</Receipt.Label>
+              <p className="text-sm leading-relaxed text-[var(--muted-foreground)]">
+                Here&apos;s what happened to your batch.
+              </p>
             </div>
             <ActionRow
               index={1}
               label="Queued"
               timestamp={queuedAt}
-              detail={<MutedMono>{formatRelativeTime(queuedAt, new Date(batch.sealedAt))}</MutedMono>}
+              meaning={BATCH_STAGE_MEANING.queued}
+              detail={null}
             />
             <ActionRow
               index={2}
               label="Sealed"
               timestamp={batch.sealedAt}
+              meaning={BATCH_STAGE_MEANING.sealed}
               detail={
                 <HashLine hash={batch.root} copyLabel="Copy batch root hash" />
               }
@@ -190,6 +200,7 @@ function ReceiptDetail({ fixture }: { fixture: BatchesDetailFixture }) {
               index={3}
               label="Proven"
               timestamp={batch.status === "pending" ? null : provenAt}
+              meaning={BATCH_STAGE_MEANING.proven}
               detail={
                 batch.proofRef ? (
                   <HashLine hash={batch.proofRef} copyLabel="Copy proof hash" />
@@ -203,6 +214,7 @@ function ReceiptDetail({ fixture }: { fixture: BatchesDetailFixture }) {
               label="Settled"
               timestamp={settledAt}
               tone={batch.status === "failed" ? "destructive" : "default"}
+              meaning={BATCH_STAGE_MEANING.settled}
               detail={
                 batch.settlementTx ? (
                   <HashLine
@@ -285,6 +297,12 @@ function ValueMono({ children }: { children: React.ReactNode }) {
   );
 }
 
+function ValueText({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="text-sm text-[var(--foreground)]">{children}</span>
+  );
+}
+
 function MutedMono({ children }: { children: React.ReactNode }) {
   return (
     <span className="font-mono text-sm text-[var(--muted-foreground)]">
@@ -298,12 +316,14 @@ function ActionRow({
   label,
   timestamp,
   detail,
+  meaning,
   tone = "default",
 }: {
   index: number;
   label: string;
   timestamp: string | null;
   detail: React.ReactNode;
+  meaning?: string;
   tone?: "default" | "destructive";
 }) {
   const labelClassName =
@@ -317,11 +337,18 @@ function ActionRow({
         <span className={`font-mono text-[11px] uppercase tracking-[0.16em] ${labelClassName}`}>
           {index}. {label}
         </span>
-        <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--muted-foreground)]">
-          {timestamp ? formatAbsoluteTime(timestamp) : "pending"}
+        <span className="text-xs text-[var(--muted-foreground)]">
+          {timestamp ? formatTimestampWithRelative(timestamp) : "pending"}
         </span>
       </div>
-      <div className="min-w-0">{detail}</div>
+      <div className="flex min-w-0 flex-col gap-1">
+        {detail}
+        {meaning ? (
+          <p className="text-xs leading-relaxed text-[var(--muted-foreground)]">
+            {meaning}
+          </p>
+        ) : null}
+      </div>
     </div>
   );
 }

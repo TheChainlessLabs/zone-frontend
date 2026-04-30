@@ -203,4 +203,42 @@ describe("BatchDetailView", () => {
     expect(screen.getByText(/Pair aggregate/i)).toBeDefined();
     expect(screen.getByText(/Totals/i)).toBeDefined();
   });
+
+  it("renders the consumer-friendly lead sentences above metadata + actions", async () => {
+    await renderDetail("4821");
+    expect(screen.getByText("Settlement details.")).toBeDefined();
+    expect(screen.getByText(/Here.s what happened to your batch\./)).toBeDefined();
+  });
+
+  it('renders a "what this means" subtitle for each numbered action', async () => {
+    await renderDetail("4821");
+    expect(
+      screen.getByText(
+        "We received your trade and grouped it with others for privacy.",
+      ),
+    ).toBeDefined();
+    expect(
+      screen.getByText(
+        "The batch was finalized inside the secure execution environment.",
+      ),
+    ).toBeDefined();
+    expect(
+      screen.getByText(
+        "A cryptographic proof of correct execution was generated.",
+      ),
+    ).toBeDefined();
+    expect(
+      screen.getByText(
+        "The batch landed on Ethereum L1 and is now publicly verifiable.",
+      ),
+    ).toBeDefined();
+  });
+
+  it("renders timestamps as a single human-readable string with relative-ago", async () => {
+    // The verified fixture seals at a known UTC timestamp; the new format
+    // joins the absolute UTC clock to a relative-ago hint via interpunct.
+    const { container } = await renderDetail("4821");
+    const text = container.textContent ?? "";
+    expect(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} UTC · /.test(text)).toBe(true);
+  });
 });

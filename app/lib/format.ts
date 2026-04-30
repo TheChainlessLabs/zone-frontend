@@ -55,6 +55,23 @@ export function formatAbsoluteTime(iso: string): string {
 }
 
 /**
+ * Single human-readable timestamp: absolute UTC clock time joined to the
+ * relative-ago hint by an interpunct, e.g. `2026-04-30 02:14:18 UTC · 2 hours
+ * ago`. Used on the consumer-facing batch detail surface where dual UTC/UNIX
+ * timestamps read as engineer noise. `now` is injectable for deterministic
+ * tests.
+ */
+export function formatTimestampWithRelative(
+  iso: string,
+  now: Date = new Date(),
+): string {
+  const absolute = formatAbsoluteTime(iso);
+  const relative = formatRelativeTime(iso, now);
+  if (absolute === iso || relative === "—") return absolute;
+  return `${absolute} · ${relative}`;
+}
+
+/**
  * Cluster the integer part of a number with thousands separators. Decimal
  * portion is preserved as-typed so fixed-point precision survives the round-
  * trip.

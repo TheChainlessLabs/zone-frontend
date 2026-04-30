@@ -13,10 +13,10 @@
  * iOS home-indicator safe-area inset) on every authenticated route.
  */
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, useReducedMotion } from "motion/react";
 import { Icon } from "@/lib/icons";
+import { TransitionLink as Link } from "@/components/shell/transition-link";
 
 const MOBILE_TABS = [
   { href: "/trade", label: "Trade", icon: Icon.Buy },

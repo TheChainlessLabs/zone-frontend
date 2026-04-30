@@ -15,10 +15,10 @@
  * instead and the wallet status collapses to the right of the wordmark.
  */
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, useReducedMotion } from "motion/react";
 import { OmegaMark } from "@/components/OmegaMark";
+import { TransitionLink as Link } from "@/components/shell/transition-link";
 import { WalletStatus } from "@/components/shell/WalletStatus";
 
 const PRIMARY_TABS = [

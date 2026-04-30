@@ -23,6 +23,16 @@ function mockSearchParams(entries: Record<string, string> = {}) {
     return {
       useSearchParams: () => new URLSearchParams(entries),
       usePathname: () => "/batches",
+      // <TransitionLink> reads `useRouter` to drive the navigation inside the
+      // View Transitions wrapper — stub it so the row links render under jsdom.
+      useRouter: () => ({
+        push: () => {},
+        replace: () => {},
+        prefetch: () => {},
+        back: () => {},
+        forward: () => {},
+        refresh: () => {},
+      }),
     };
   });
 }

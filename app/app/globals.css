@@ -285,6 +285,24 @@ body[data-route="/404"]::before {
   transition: box-shadow var(--duration-500) var(--ease-standard);
 }
 
+/* M5.4 (#227) — View Transitions cross-fade on route changes.
+   `@view-transition { navigation: auto }` opts the document into the API
+   so same-document navigations (driven by `<TransitionLink>` in
+   `components/shell/transition-link.tsx`) animate the root snapshot pair.
+   The 200ms duration with `--ease-standard` matches the M5.1 motion ladder.
+   Reduced-motion is handled by the global override below — it collapses
+   any `animation-duration`, including the view-transition keyframes, to
+   effectively-instant. Chromium-only today; Safari/Firefox simply ignore
+   these rules and the wrapper falls back to standard `next/link` clicks. */
+@view-transition {
+  navigation: auto;
+}
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 200ms;
+  animation-timing-function: var(--ease-standard);
+}
+
 /* M5.1 (#224) — global reduced-motion override. Collapses any animation,
    transition, or smooth-scroll on the page to effectively-instant when the
    user has expressed `prefers-reduced-motion: reduce`. Component-level paths

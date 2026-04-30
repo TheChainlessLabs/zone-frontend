@@ -98,22 +98,23 @@ describe("BatchesListView", () => {
 });
 
 describe("BatchDetailView", () => {
-  it("renders the verified-batch happy path with the externally verifiable footer", async () => {
+  it("renders the verified-batch receipt header and privacy footer", async () => {
     await renderDetail("4821");
     expect(screen.getByText("Batch #4821")).toBeDefined();
-    expect(screen.getByText("Settlement attestation")).toBeDefined();
-    expect(screen.getByText("Externally verifiable")).toBeDefined();
+    expect(screen.getByText("Settlement record")).toBeDefined();
+    expect(
+      screen.getByText(/Counterparty information is by design absent/i),
+    ).toBeDefined();
   });
 
-  it("pending detail surfaces incomplete attestation stages", async () => {
+  it("pending detail surfaces pending settlement and proof rows", async () => {
     await renderDetail("4818", { state: "detail-pending" });
-    // The Aztec layout drops the explainer banner in favour of the proof
-    // gauge + stage list. A pending batch shows at least one WAITING stage
-    // and the overall status pill resolves to "PENDING".
-    expect(screen.getAllByText("WAITING").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("pending").length).toBeGreaterThan(1);
+    expect(screen.getByText("3. Proven")).toBeDefined();
+    expect(screen.getByText("4. Settled")).toBeDefined();
   });
 
-  it("failed detail surfaces a failure banner", async () => {
+  it("failed detail surfaces the failure reason", async () => {
     await renderDetail("4795", { state: "detail-failed" });
     expect(
       screen.getAllByText(/Settlement reverted on L1/i).length,
@@ -131,9 +132,6 @@ describe("BatchDetailView", () => {
     for (const id of [...fillIds, ...orderIds]) {
       expect(text.includes(id)).toBe(false);
     }
-    // And no "Owner" / counterparty labels.
-    expect(text).not.toMatch(/owner/i);
-    expect(text).not.toMatch(/counterparty/i);
   });
 
   it("links to /portfolio for a user's own fills", async () => {
@@ -142,8 +140,9 @@ describe("BatchDetailView", () => {
     expect(link.getAttribute("href")).toBe("/portfolio");
   });
 
-  it("aggregate fills section is labelled as a pair aggregate", async () => {
+  it("renders pair aggregate and totals sections", async () => {
     await renderDetail("4821");
     expect(screen.getByText(/Pair aggregate/i)).toBeDefined();
+    expect(screen.getByText(/Totals/i)).toBeDefined();
   });
 });

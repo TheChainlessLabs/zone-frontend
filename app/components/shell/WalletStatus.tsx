@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Icon } from "@/lib/icons";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { TransitionLink } from "@/components/shell/transition-link";
 import {
   truncateAddress,
   useWalletState,
@@ -214,10 +215,10 @@ export function WalletStatus() {
               </a>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <a href="/account">
+              <TransitionLink href="/account">
                 <Icon.Settings aria-hidden />
                 <span>Account</span>
-              </a>
+              </TransitionLink>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem

@@ -24,7 +24,6 @@
 
 import * as React from "react";
 
-import { Animate } from "@/components/ui/animate";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Status } from "@/components/ui/status";
@@ -89,41 +88,38 @@ export default function Variant11Blended({
 
   return (
     <div className="flex flex-col gap-6">
-      <Animate variant="enter">
-        <section
-          aria-label="Portfolio overview"
-          className="flex flex-col gap-3"
+      <section
+        aria-label="Portfolio overview"
+        className="flex flex-col gap-3"
+      >
+        <span
+          className={cn(
+            PILL,
+            "text-[11px] text-[var(--muted-foreground)]",
+          )}
         >
-          <span
-            className={cn(
-              PILL,
-              "text-[11px] text-[var(--muted-foreground)]",
-            )}
+          Portfolio
+        </span>
+        <div className="flex flex-wrap items-end gap-x-3 gap-y-2 md:gap-x-4">
+          <MonoNum
+            className="text-3xl font-medium leading-none tracking-tight sm:text-4xl md:text-6xl"
+            aria-label={`Portfolio total $${fixture.totalValueUSD}`}
           >
-            Portfolio
-          </span>
-          <div className="flex flex-wrap items-end gap-x-3 gap-y-2 md:gap-x-4">
-            <MonoNum
-              className="text-3xl font-medium leading-none tracking-tight sm:text-4xl md:text-6xl"
-              aria-label={`Portfolio total $${fixture.totalValueUSD}`}
-            >
-              ${fixture.totalValueUSD}
+            ${fixture.totalValueUSD}
+          </MonoNum>
+          <span
+            className={cn("inline-flex items-center gap-2 pb-1.5 text-xs", tone)}
+            aria-label={`Day change ${fmtSignedUsd(delta.absolute)} (${fmtSignedPct(delta.percent)})`}
+          >
+            <MonoNum>
+              {fmtSignedUsd(delta.absolute)} · {fmtSignedPct(delta.percent)}
             </MonoNum>
-            <span
-              className={cn("inline-flex items-center gap-2 pb-1.5 text-xs", tone)}
-              aria-label={`Day change ${fmtSignedUsd(delta.absolute)} (${fmtSignedPct(delta.percent)})`}
-            >
-              <MonoNum>
-                {fmtSignedUsd(delta.absolute)} · {fmtSignedPct(delta.percent)}
-              </MonoNum>
-              <span className="text-[var(--muted-foreground)]">today</span>
-            </span>
-          </div>
-        </section>
-      </Animate>
+            <span className="text-[var(--muted-foreground)]">today</span>
+          </span>
+        </div>
+      </section>
 
-      <Animate variant="enter" delay={0.05}>
-        <Card className="flex flex-col gap-4 p-4 md:p-6">
+      <Card className="flex flex-col gap-4 p-4 md:p-6">
           <div
             role="img"
             aria-label={`Portfolio value over ${range}, current $${fixture.totalValueUSD}`}
@@ -184,12 +180,10 @@ export default function Variant11Blended({
             </div>
           </div>
         </Card>
-      </Animate>
 
       <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[1.6fr_1fr]">
         <aside className="flex flex-col gap-4 lg:order-2 lg:sticky lg:top-24 lg:self-start">
-          <Animate variant="enter" delay={0.1}>
-            <Card variant="glass" className="flex flex-col gap-4 p-5 md:p-6">
+          <Card variant="glass" className="flex flex-col gap-4 p-5 md:p-6">
               <span
                 className={cn(
                   PILL,
@@ -280,11 +274,9 @@ export default function Variant11Blended({
                 </ul>
               </div>
             </Card>
-          </Animate>
         </aside>
 
         <div className="flex flex-col gap-6 lg:order-1">
-          <Animate variant="enter" delay={0.15}>
             <Card className="flex flex-col gap-4 p-5 md:p-6">
               <SectionHeader
                 title="Open positions"
@@ -346,9 +338,7 @@ export default function Variant11Blended({
                 </ul>
               )}
             </Card>
-          </Animate>
 
-          <Animate variant="enter" delay={0.2}>
             <Card className="flex flex-col gap-4 p-5 md:p-6">
               <SectionHeader
                 title="Recent fills"
@@ -392,9 +382,7 @@ export default function Variant11Blended({
                 </ul>
               )}
             </Card>
-          </Animate>
 
-          <Animate variant="enter" delay={0.25}>
             <Card className="flex flex-col gap-4 p-5 md:p-6">
               <h2 className="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
                 Transfers
@@ -474,7 +462,6 @@ export default function Variant11Blended({
                 </ul>
               )}
             </Card>
-          </Animate>
         </div>
       </div>
 

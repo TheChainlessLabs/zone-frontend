@@ -25,6 +25,7 @@ import { Card } from "@/components/ui/card";
 import { Status } from "@/components/ui/status";
 import { Icon } from "@/lib/icons";
 import { cn } from "@/lib/utils";
+import { copyForStatusState } from "@/lib/lifecycle-copy";
 import { CopyButton } from "@/app/batches/_components/copy-button";
 import { EtherscanTxLink } from "@/app/batches/_components/etherscan-link";
 
@@ -306,7 +307,12 @@ export default function Variant11Blended({
                         <MonoNum className="text-xs text-[var(--muted-foreground)]">
                           {o.filledPercent}%
                         </MonoNum>
-                        <Status state={o.status as never} />
+                        <Status
+                          state={o.status as never}
+                          tooltip={
+                            copyForStatusState(o.status as never) ?? undefined
+                          }
+                        />
                       </div>
                     </li>
                   ))}
@@ -338,7 +344,12 @@ export default function Variant11Blended({
                       <span className="flex flex-wrap items-center gap-3 text-xs">
                         <MonoNum className="text-sm">{f.amount}</MonoNum>
                         <MonoNum className="text-[var(--muted-foreground)]">@ {f.price}</MonoNum>
-                        <Status state={f.status as never} />
+                        <Status
+                          state={f.status as never}
+                          tooltip={
+                            copyForStatusState(f.status as never) ?? undefined
+                          }
+                        />
                         <MonoNum className="text-[var(--muted-foreground)]">
                           {formatTime(f.matchedAt)}
                         </MonoNum>
@@ -385,7 +396,17 @@ export default function Variant11Blended({
                       </span>
                       <span className="flex flex-wrap items-center gap-3 text-xs">
                         <MonoNum className="text-sm">{t.amount}</MonoNum>
-                        <Status state={t.status as never} />
+                        <Status
+                          state={t.status as never}
+                          tooltip={
+                            copyForStatusState(
+                              t.status as never,
+                              t.kind === "withdrawal"
+                                ? "withdrawal"
+                                : "deposit",
+                            ) ?? undefined
+                          }
+                        />
                         {t.txHash ? (
                           <span className="inline-flex items-center gap-0.5">
                             <EtherscanTxLink hash={t.txHash} />

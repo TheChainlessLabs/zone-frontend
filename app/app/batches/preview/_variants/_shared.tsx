@@ -17,6 +17,12 @@
 
 import * as React from "react";
 
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import type {
   BatchFixture,
@@ -26,6 +32,10 @@ import type {
   FillFixture,
   MarketPair,
 } from "@/lib/fixtures/types";
+import {
+  copyForBatchStage,
+  copyForBatchStatus,
+} from "@/lib/lifecycle-copy";
 
 /* ────────────────────────────────────────────────────────────────────────── */
 /*  Constants                                                                 */
@@ -591,9 +601,48 @@ export function MonoNum({
   );
 }
 
+/**
+ * BatchStageTooltip — wraps a stage label in the lifecycle tooltip
+ * primitive so users get the [what happened] [what to do next] string
+ * for each Queued / Sealed / Proven / Settled stage. Used by the
+ * production batch-detail variant (Aztec-proof-hero).
+ */
+export function BatchStageTooltip({
+  stageKey,
+  children,
+}: {
+  stageKey: StateStep["key"];
+  children: React.ReactElement;
+}) {
+  const reactId = React.useId();
+  const describedById = `batch-stage-tooltip-${reactId}`;
+  const tooltip = copyForBatchStage(stageKey);
+  const trigger = React.cloneElement(children, {
+    "aria-describedby": describedById,
+    tabIndex: 0,
+  } as React.HTMLAttributes<HTMLElement>);
+  return (
+    <TooltipProvider delayDuration={150}>
+      <Tooltip>
+        <TooltipTrigger asChild>{trigger}</TooltipTrigger>
+        <TooltipContent
+          id={describedById}
+          role="tooltip"
+          className="max-w-[260px] text-xs leading-relaxed"
+        >
+          {tooltip}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
 export function StatusPill({ status }: { status: BatchStatus }) {
   const tone = STATUS_TONE[status];
-  return (
+  const reactId = React.useId();
+  const describedById = `status-pill-tooltip-${reactId}`;
+  const tooltip = copyForBatchStatus(status);
+  const pill = (
     <span
       className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-medium"
       style={{
@@ -601,6 +650,8 @@ export function StatusPill({ status }: { status: BatchStatus }) {
         backgroundColor: tone.bg,
         borderColor: tone.border,
       }}
+      tabIndex={0}
+      aria-describedby={describedById}
     >
       <span
         aria-hidden
@@ -609,6 +660,20 @@ export function StatusPill({ status }: { status: BatchStatus }) {
       />
       {tone.label}
     </span>
+  );
+  return (
+    <TooltipProvider delayDuration={150}>
+      <Tooltip>
+        <TooltipTrigger asChild>{pill}</TooltipTrigger>
+        <TooltipContent
+          id={describedById}
+          role="tooltip"
+          className="max-w-[260px] text-xs leading-relaxed"
+        >
+          {tooltip}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
 

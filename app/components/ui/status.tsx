@@ -5,6 +5,12 @@ import { type LucideIcon } from "lucide-react";
 
 import { Animate } from "@/components/ui/animate";
 import { Badge, type BadgeProps } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Icon } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 
@@ -72,24 +78,37 @@ export interface StatusProps
   /** Use the glass substrate. Reserved for the order form and other glass
    *  surfaces per omega-docs/03-brand/visual-identity.md. */
   glass?: boolean;
+  /**
+   * Plain-language tooltip copy that bridges the technical label to a
+   * non-crypto operator (M4.10). When set, the badge becomes a tooltip
+   * trigger and exposes the same string through `aria-describedby` so
+   * screen-reader users get the same context. Source the string from
+   * `app/lib/lifecycle-copy.ts` so future surfaces stay aligned.
+   */
+  tooltip?: string;
 }
 
 const Status = React.forwardRef<HTMLSpanElement, StatusProps>(
-  ({ state, label, glass = false, className, ...rest }, ref) => {
+  ({ state, label, glass = false, tooltip, className, ...rest }, ref) => {
     const spec = STATE_SPECS[state];
     const variant: Variant = glass ? "glass" : spec.variant;
     const text = label ?? spec.label;
     const IconCmp = spec.icon;
+    // Stable id so aria-describedby resolves to the same node the
+    // tooltip portal renders. React's `useId` is SSR-safe.
+    const reactId = React.useId();
+    const describedById = tooltip ? `status-tooltip-${reactId}` : undefined;
 
     // Tiny pop on transition. The `state` prop drives the key so React
     // remounts the Animate node when the state actually changes — keeping
     // it from popping on every parent rerender.
-    return (
+    const badge = (
       <Badge
         ref={ref}
         data-status={state}
         variant={variant}
         className={cn(className)}
+        aria-describedby={describedById}
         {...rest}
       >
         <Animate
@@ -105,6 +124,23 @@ const Status = React.forwardRef<HTMLSpanElement, StatusProps>(
           <span>{text}</span>
         </Animate>
       </Badge>
+    );
+
+    if (!tooltip) return badge;
+
+    return (
+      <TooltipProvider delayDuration={150}>
+        <Tooltip>
+          <TooltipTrigger asChild>{badge}</TooltipTrigger>
+          <TooltipContent
+            id={describedById}
+            role="tooltip"
+            className="max-w-[260px] text-xs leading-relaxed"
+          >
+            {tooltip}
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     );
   }
 );

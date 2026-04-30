@@ -19,6 +19,7 @@ import { truncateHash } from "@/lib/format";
 
 import {
   aggregateByPair,
+  BatchStageTooltip,
   batchStateSteps,
   fmtCompactUsd,
   formatStampUtc,
@@ -92,18 +93,20 @@ export default function Variant07DetailAztec({
                 className="flex items-center justify-between gap-3 border-b border-[var(--border)] py-1.5 last:border-b-0"
               >
                 <div className="flex flex-col gap-0.5">
-                  <span
-                    className="font-mono text-[10px] uppercase tracking-[0.18em]"
-                    style={{
-                      color: s.failed
-                        ? "var(--destructive)"
-                        : s.reached
-                          ? "var(--success)"
-                          : "var(--muted-foreground)",
-                    }}
-                  >
-                    {s.label}
-                  </span>
+                  <BatchStageTooltip stageKey={s.key}>
+                    <span
+                      className="cursor-help font-mono text-[10px] uppercase tracking-[0.18em]"
+                      style={{
+                        color: s.failed
+                          ? "var(--destructive)"
+                          : s.reached
+                            ? "var(--success)"
+                            : "var(--muted-foreground)",
+                      }}
+                    >
+                      {s.label}
+                    </span>
+                  </BatchStageTooltip>
                   <span className="text-[11px] text-[var(--muted-foreground)]">
                     {s.hint}
                   </span>

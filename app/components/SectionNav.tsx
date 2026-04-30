@@ -54,11 +54,10 @@ export function SectionNav({ items }: { items: Item[] }) {
                 >
                   <span className="relative inline-block h-px w-8">
                     <span className="absolute inset-y-0 left-0 right-0 bg-[var(--border)]" />
-                    <motion.span
-                      animate={{ scaleX: isActive ? 1 : 0.25 }}
-                      transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-                      style={{ transformOrigin: "left" }}
-                      className="absolute inset-y-0 left-0 right-0 bg-[var(--foreground)]"
+                    <span
+                      className={`absolute inset-y-0 left-0 right-0 origin-left bg-[var(--foreground)] transition-transform duration-150 ease-[var(--ease-standard)] ${
+                        isActive ? "scale-x-100" : "scale-x-[0.25]"
+                      }`}
                     />
                   </span>
                   <span className={isActive ? "text-[var(--foreground)]" : ""}>{it.number}</span>

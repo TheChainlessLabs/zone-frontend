@@ -33,7 +33,6 @@
  */
 
 import * as React from "react";
-import { useReducedMotion } from "motion/react";
 
 import {
   Tooltip,
@@ -42,6 +41,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
 import { LIFECYCLE_COPY as SHARED_LIFECYCLE_COPY } from "@/lib/lifecycle-copy";
 
 export type PipelineStage =
@@ -110,7 +110,7 @@ function classifyStage(
 }
 
 export function OrderPipeline({ stage, failedAt }: OrderPipelineProps) {
-  const reduce = useReducedMotion() ?? false;
+  const reduce = useReducedMotion();
   const isIdle = stage === "idle";
 
   return (

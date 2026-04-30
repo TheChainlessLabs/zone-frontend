@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "motion/react";
 import { Check, Copy } from "lucide-react";
 
 export function Swatch({
@@ -35,12 +34,10 @@ export function Swatch({
   }[size];
 
   return (
-    <motion.button
-      whileHover={{ y: -2 }}
-      whileTap={{ scale: 0.99 }}
-      transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
+    <button
+      type="button"
       onClick={copy}
-      className="group flex w-full flex-col gap-2 text-left"
+      className="press-down group flex w-full flex-col gap-2 text-left transition-transform duration-150 ease-[var(--ease-standard)] hover:-translate-y-0.5"
       aria-label={`Copy ${variableName ?? value}`}
     >
       <div
@@ -63,6 +60,6 @@ export function Swatch({
           {description}
         </span>
       ) : null}
-    </motion.button>
+    </button>
   );
 }

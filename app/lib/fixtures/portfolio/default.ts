@@ -52,6 +52,8 @@ export const portfolioDefault: PortfolioFixture = {
       price: "0.9213",
       matchedAt: "2026-04-27T14:02:11Z",
       status: "settled",
+      txHash:
+        "0x7f3c2d1b8a9e5d4c3b2a1f0e9d8c7b6a5f4e3d2c1b0a9f8e7d6c5b4a3f2e1d0c",
     },
     {
       id: "f-2899",
@@ -62,6 +64,8 @@ export const portfolioDefault: PortfolioFixture = {
       price: "0.9214",
       matchedAt: "2026-04-27T11:18:42Z",
       status: "proven",
+      txHash:
+        "0xa1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90",
     },
   ],
   deposits: [

@@ -13,13 +13,15 @@ import Link from "next/link";
 
 import { Card } from "@/components/ui/card";
 import { Icon } from "@/lib/icons";
+import { CopyButton } from "@/app/batches/_components/copy-button";
+import { EtherscanTxLink } from "@/app/batches/_components/etherscan-link";
+import { truncateHash } from "@/lib/format";
 
 import {
   aggregateByPair,
   batchStateSteps,
   fmtCompactUsd,
   formatStampUtc,
-  HashCell,
   MonoNum,
   parseNum,
   ProofGauge,
@@ -200,7 +202,14 @@ function Audit({
         {label}
       </span>
       {hash ? (
-        <HashCell hash={hash} lead={10} tail={8} />
+        <span className="inline-flex items-center gap-0.5">
+          <EtherscanTxLink
+            hash={hash}
+            label={truncateHash(hash, 10, 8)}
+            aria-label={`${label} ${hash} — open on Etherscan`}
+          />
+          <CopyButton value={hash} label={`Copy ${label.toLowerCase()}`} />
+        </span>
       ) : (
         <span className="font-mono text-xs text-[var(--muted-foreground)]">
           {fallback ?? "pending"}

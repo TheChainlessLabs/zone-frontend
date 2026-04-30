@@ -12,11 +12,12 @@ import * as React from "react";
 import Link from "next/link";
 
 import { Card } from "@/components/ui/card";
+import { CopyButton } from "@/app/batches/_components/copy-button";
+import { EtherscanTxLink } from "@/app/batches/_components/etherscan-link";
 
 import {
   ageVs,
   fmtCompactUsd,
-  HashCell,
   latestSealedAt,
   MonoNum,
   PairChip,
@@ -47,58 +48,65 @@ export default function Variant07ListAztec({
           const tone = STATUS_TONE[batch.status];
           return (
             <li key={batch.number}>
-              <Link href={buildHref(batch.number)} className="block">
-                <Card className="flex items-stretch gap-4 overflow-hidden p-0 transition-colors hover:bg-[var(--muted)]/20">
-                  <div
-                    aria-hidden
-                    className="w-1 shrink-0"
-                    style={{ backgroundColor: tone.fg }}
-                  />
-                  <div className="flex flex-1 flex-col gap-2 px-4 py-3">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div className="flex items-center gap-3">
-                        <StatusPill status={batch.status} />
-                        <MonoNum className="text-base font-medium">
-                          Batch #{batch.number}
-                        </MonoNum>
-                      </div>
-                      <span className="font-mono text-xs text-[var(--muted-foreground)]">
-                        {ageVs(reference, batch.sealedAt)} · sealed
-                      </span>
+              <Card className="relative flex items-stretch gap-4 overflow-hidden p-0 transition-colors hover:bg-[var(--muted)]/20">
+                <Link
+                  href={buildHref(batch.number)}
+                  className="absolute inset-0 z-0"
+                  aria-label={`Open batch #${batch.number}`}
+                />
+                <div
+                  aria-hidden
+                  className="w-1 shrink-0"
+                  style={{ backgroundColor: tone.fg }}
+                />
+                <div className="flex flex-1 flex-col gap-2 px-4 py-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-3">
+                      <StatusPill status={batch.status} />
+                      <MonoNum className="text-base font-medium">
+                        Batch #{batch.number}
+                      </MonoNum>
                     </div>
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
-                      <span className="font-mono tabular-nums text-[var(--foreground)]">
-                        {batch.fillCount} fills
-                      </span>
-                      <span className="font-mono tabular-nums text-[var(--muted-foreground)]">
-                        {batch.orderCount} orders
-                      </span>
-                      <span className="font-mono tabular-nums text-[var(--muted-foreground)]">
-                        {batch.volumeUsd
-                          ? fmtCompactUsd(parseNum(batch.volumeUsd))
-                          : "—"}
-                      </span>
-                      <span className="flex flex-wrap items-center gap-1">
-                        {(batch.pairs ?? []).slice(0, 3).map((p) => (
-                          <PairChip key={p} pair={p} />
-                        ))}
-                      </span>
-                      <span className="ml-auto flex items-center gap-2 font-mono text-[11px] text-[var(--muted-foreground)]">
-                        {batch.proofRef ? (
-                          <span className="inline-flex items-center gap-1">
-                            <span className="font-mono text-[10px] uppercase tracking-[0.18em]">
-                              proof
-                            </span>
-                            <HashCell hash={batch.proofRef} lead={6} tail={4} />
-                          </span>
-                        ) : (
-                          <span>proof pending</span>
-                        )}
-                      </span>
-                    </div>
+                    <span className="font-mono text-xs text-[var(--muted-foreground)]">
+                      {ageVs(reference, batch.sealedAt)} · sealed
+                    </span>
                   </div>
-                </Card>
-              </Link>
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
+                    <span className="font-mono tabular-nums text-[var(--foreground)]">
+                      {batch.fillCount} fills
+                    </span>
+                    <span className="font-mono tabular-nums text-[var(--muted-foreground)]">
+                      {batch.orderCount} orders
+                    </span>
+                    <span className="font-mono tabular-nums text-[var(--muted-foreground)]">
+                      {batch.volumeUsd
+                        ? fmtCompactUsd(parseNum(batch.volumeUsd))
+                        : "—"}
+                    </span>
+                    <span className="flex flex-wrap items-center gap-1">
+                      {(batch.pairs ?? []).slice(0, 3).map((p) => (
+                        <PairChip key={p} pair={p} />
+                      ))}
+                    </span>
+                    <span className="ml-auto flex items-center gap-2 font-mono text-[11px] text-[var(--muted-foreground)]">
+                      {batch.proofRef ? (
+                        <span className="relative z-10 inline-flex items-center gap-1">
+                          <span className="font-mono text-[10px] uppercase tracking-[0.18em]">
+                            proof
+                          </span>
+                          <EtherscanTxLink hash={batch.proofRef} />
+                          <CopyButton
+                            value={batch.proofRef}
+                            label={`Copy proof hash for batch #${batch.number}`}
+                          />
+                        </span>
+                      ) : (
+                        <span>proof pending</span>
+                      )}
+                    </span>
+                  </div>
+                </div>
+              </Card>
             </li>
           );
         })}

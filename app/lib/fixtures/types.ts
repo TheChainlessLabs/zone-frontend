@@ -71,6 +71,11 @@ export interface FillFixture {
   matchedAt: string;
   /** Settlement state — drives the badge in the timeline. */
   status: Extract<StatusState, "matched" | "settled" | "proven">;
+  /**
+   * L1 settlement tx hash for the batch this fill was sealed into. `null`
+   * (or absent) while the batch is still matched-but-not-settled.
+   */
+  txHash?: `0x${string}` | null;
 }
 
 export type BatchStatus = "pending" | "verified" | "failed";

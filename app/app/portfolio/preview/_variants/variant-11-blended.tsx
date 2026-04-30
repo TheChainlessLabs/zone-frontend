@@ -25,6 +25,8 @@ import { Card } from "@/components/ui/card";
 import { Status } from "@/components/ui/status";
 import { Icon } from "@/lib/icons";
 import { cn } from "@/lib/utils";
+import { CopyButton } from "@/app/batches/_components/copy-button";
+import { EtherscanTxLink } from "@/app/batches/_components/etherscan-link";
 
 import {
   combinedTransfers,
@@ -40,7 +42,6 @@ import {
   Sparkline,
   syntheticSeries,
   TOKEN_TONE,
-  truncateHash,
   type PortfolioFixture,
 } from "./_shared";
 
@@ -308,6 +309,17 @@ export default function Variant11Blended({
                         <MonoNum className="text-[var(--muted-foreground)]">
                           {formatTime(f.matchedAt)}
                         </MonoNum>
+                        {f.txHash ? (
+                          <span className="inline-flex items-center gap-0.5">
+                            <EtherscanTxLink hash={f.txHash} />
+                            <CopyButton
+                              value={f.txHash}
+                              label={`Copy settlement tx for ${f.pair} fill`}
+                            />
+                          </span>
+                        ) : (
+                          <span className="font-mono text-[var(--muted-foreground)]">—</span>
+                        )}
                       </span>
                     </li>
                   ))}
@@ -342,15 +354,13 @@ export default function Variant11Blended({
                         <MonoNum className="text-sm">{t.amount}</MonoNum>
                         <Status state={t.status as never} />
                         {t.txHash ? (
-                          <a
-                            href={`https://etherscan.io/tx/${t.txHash}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 font-mono underline-offset-4 hover:underline"
-                          >
-                            {truncateHash(t.txHash)}
-                            <Icon.External size={12} aria-hidden />
-                          </a>
+                          <span className="inline-flex items-center gap-0.5">
+                            <EtherscanTxLink hash={t.txHash} />
+                            <CopyButton
+                              value={t.txHash}
+                              label={`Copy ${t.kind} tx hash`}
+                            />
+                          </span>
                         ) : (
                           <span className="font-mono text-[var(--muted-foreground)]">—</span>
                         )}

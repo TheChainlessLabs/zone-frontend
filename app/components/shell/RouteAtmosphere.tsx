@@ -2,10 +2,9 @@
 
 /**
  * RouteAtmosphere — sets `data-route` on `<body>` so global CSS can render a
- * per-route surface treatment. Product routes (`/trade`, `/portfolio`, …)
- * fall through to a subtle radial vignette on the body itself; brand and
- * review routes (`/brand`, `/system`, `/404`) re-enable the legacy
- * dot-grid via `body::before`. See `app/globals.css`.
+ * per-route surface treatment. `app/globals.css` reads the attribute to
+ * calibrate the ambient dot-grid per route family, keeping product
+ * surfaces lighter than brand/review pages.
  *
  * The not-found page renders this with `route="/404"` explicitly because
  * `usePathname()` returns the originally requested URL (anything that

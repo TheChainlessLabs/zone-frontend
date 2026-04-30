@@ -22,7 +22,7 @@ export function ReviewNav() {
   const pathname = usePathname();
 
   return (
-    <header className="sticky top-0 z-50 flex h-12 items-center justify-between gap-4 border-b border-[var(--border)] bg-[var(--background)]/85 px-4 backdrop-blur-md md:px-8">
+    <header className="sticky top-0 z-50 flex h-12 items-center justify-between gap-4 border-b border-[var(--border)] bg-[var(--background)]/55 px-4 backdrop-blur-xl backdrop-saturate-[1.4] before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-[color-mix(in_oklab,var(--foreground)_8%,transparent)] md:px-8 relative">
       {/* Wordmark */}
       <Link
         href="/brand"

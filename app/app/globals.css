@@ -61,14 +61,9 @@
 
 /* Per-route surface atmosphere.
    --------------------------------------------------------------------
-   Product routes (/trade, /portfolio, /batches, /account, …) get a
-   barely-perceptible radial vignette painted directly on `body` — the
-   same Linear / Vercel / Stripe Dashboard cue that says "real product"
-   without the SaaS-template dot-grid wallpaper.
-
-   Brand and review surfaces (`/brand`, `/system`, `/404`) opt back into
-   the legacy ambient dot-grid via `body::before`, since those pages
-   trade as design specimens and benefit from the texture.
+   The ambient dot-grid is now the shared backdrop across product and
+   review surfaces, with lighter/wider calibration on dense product
+   routes so it reads as texture rather than a wallpaper.
 
    Routing signal: `<RouteAtmosphere>` (rendered in `app/layout.tsx`)
    sets `data-route` on `<body>` from `usePathname()`. The 404 page
@@ -81,58 +76,42 @@ body {
   font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   position: relative;
-  /* Default: vignette product atmosphere. The center stays exactly at
-     `--background` so foreground content sits on the canonical token;
-     edges deepen ~8% toward black, which on dark mode reads as a
-     centered glow and on light mode as a quiet page-edge falloff. */
-  background-image: radial-gradient(
-    ellipse at center,
-    var(--background) 0%,
-    var(--background) 60%,
-    color-mix(in oklab, var(--background) 92%, black) 100%
-  );
-  background-attachment: fixed;
+  background-image: none;
+  --route-dot-grid-size: 24px;
+  --route-dot-grid-opacity: 0.7;
 }
 
 body::before {
-  /* Off by default — see route-specific overrides below. */
-  display: none;
   content: "";
   position: fixed;
   inset: 0;
   z-index: -1;
   pointer-events: none;
   background-image: radial-gradient(circle, var(--border) 1px, transparent 1px);
-  background-size: 24px 24px;
+  background-size: var(--route-dot-grid-size) var(--route-dot-grid-size);
   background-position: 0 0;
   -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, #000 30%, transparent 80%);
   mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, #000 30%, transparent 80%);
-  opacity: 0.7;
+  opacity: var(--route-dot-grid-opacity);
 }
 
-/* Brand + review surfaces: re-enable the dot-grid and drop the vignette
-   so the texture isn't fighting the gradient underneath. */
+body[data-route^="/trade"],
+body[data-route^="/portfolio"],
+body[data-route^="/batches"],
+body[data-route^="/account"] {
+  --route-dot-grid-size: 28px;
+  --route-dot-grid-opacity: 0.42;
+}
+
 body[data-route^="/brand"],
 body[data-route^="/system"],
 body[data-route="/404"] {
-  background-image: none;
-}
-
-body[data-route^="/brand"]::before,
-body[data-route^="/system"]::before,
-body[data-route="/404"]::before {
-  display: block;
+  --route-dot-grid-size: 24px;
+  --route-dot-grid-opacity: 0.7;
 }
 
 @media (prefers-contrast: more) {
-  /* Solid background for high-contrast users; dot grid disappears and
-     the vignette flattens to the canonical token. */
-  body,
-  body[data-route^="/brand"],
-  body[data-route^="/system"],
-  body[data-route="/404"] {
-    background-image: none;
-  }
+  /* Solid background for high-contrast users; dot grid disappears. */
   body::before {
     display: none;
   }

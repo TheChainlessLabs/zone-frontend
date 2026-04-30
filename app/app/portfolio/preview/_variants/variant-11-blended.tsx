@@ -24,11 +24,10 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Status } from "@/components/ui/status";
 import { LifecyclePip } from "@/components/portfolio/lifecycle-pip";
+import { ExpandableRow } from "@/components/portfolio/expandable-row";
 import { Icon } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 import { copyForStatusState } from "@/lib/lifecycle-copy";
-import { CopyButton } from "@/app/batches/_components/copy-button";
-import { EtherscanTxLink } from "@/app/batches/_components/etherscan-link";
 
 import {
   combinedTransfers,
@@ -45,6 +44,11 @@ import {
   TOKEN_TONE,
   type PortfolioFixture,
 } from "./_shared";
+import {
+  OpenPositionExpanded,
+  RecentFillExpanded,
+  TransferExpanded,
+} from "./_expanded-panels";
 
 const RANGES = ["1D", "1W", "1M", "3M", "1Y", "All"] as const;
 const POINTS: Record<(typeof RANGES)[number], number> = {
@@ -52,8 +56,6 @@ const POINTS: Record<(typeof RANGES)[number], number> = {
 };
 const PILL =
   "font-mono text-[10px] uppercase tracking-[0.18em]";
-const ROW =
-  "flex flex-col gap-1 border-t border-[var(--border)] py-3 text-sm first:border-t-0 md:flex-row md:items-center md:justify-between";
 
 export default function Variant11Blended({
   fixture,
@@ -292,29 +294,48 @@ export default function Variant11Blended({
                   No open positions.
                 </p>
               ) : (
-                <ul className="flex flex-col">
+                <ul className="flex flex-col" data-testid="open-positions-list">
                   {fixture.openOrders.map((o) => (
-                    <li key={o.id} className={ROW}>
-                      <div className="flex min-w-0 items-center gap-2">
-                        <span className="font-mono font-medium">{o.pair}</span>
-                        <SidePill side={o.side} />
-                        <span className={cn(PILL, "text-[var(--muted-foreground)]")}>
-                          {o.type}
-                        </span>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-3 md:gap-4">
-                        <MonoNum>{o.amount}</MonoNum>
-                        <MonoNum className="text-[var(--muted-foreground)]">@ {o.price}</MonoNum>
-                        <MonoNum className="text-xs text-[var(--muted-foreground)]">
-                          {o.filledPercent}%
-                        </MonoNum>
-                        <Status
-                          state={o.status as never}
-                          tooltip={
-                            copyForStatusState(o.status as never) ?? undefined
-                          }
-                        />
-                      </div>
+                    <li key={o.id}>
+                      <ExpandableRow
+                        id={`order-${o.id}`}
+                        ariaLabel={`Order ${o.id} ${o.pair} ${o.side} ${o.type}, ${o.amount} at ${o.price}`}
+                        summary={
+                          <span className="flex flex-col gap-1 md:flex-row md:items-center md:justify-between md:gap-4">
+                            <span className="flex min-w-0 items-center gap-2">
+                              <span className="font-mono font-medium">
+                                {o.pair}
+                              </span>
+                              <SidePill side={o.side} />
+                              <span
+                                className={cn(
+                                  PILL,
+                                  "text-[var(--muted-foreground)]",
+                                )}
+                              >
+                                {o.type}
+                              </span>
+                            </span>
+                            <span className="flex flex-wrap items-center gap-3 md:gap-4">
+                              <MonoNum>{o.amount}</MonoNum>
+                              <MonoNum className="text-[var(--muted-foreground)]">
+                                @ {o.price}
+                              </MonoNum>
+                              <MonoNum className="text-xs text-[var(--muted-foreground)]">
+                                {o.filledPercent}%
+                              </MonoNum>
+                              <Status
+                                state={o.status as never}
+                                tooltip={
+                                  copyForStatusState(o.status as never) ??
+                                  undefined
+                                }
+                              />
+                            </span>
+                          </span>
+                        }
+                        detail={<OpenPositionExpanded order={o} />}
+                      />
                     </li>
                   ))}
                 </ul>
@@ -335,32 +356,32 @@ export default function Variant11Blended({
               {fixture.recentFills.length === 0 ? (
                 <p className="text-sm text-[var(--muted-foreground)]">No fills yet.</p>
               ) : (
-                <ul className="flex flex-col">
+                <ul className="flex flex-col" data-testid="recent-fills-list">
                   {fixture.recentFills.map((f) => (
-                    <li key={f.id} className={ROW}>
-                      <span className="flex items-center gap-2 font-mono">
-                        <span className="font-medium">{f.pair}</span>
-                        <SidePill side={f.side} />
-                      </span>
-                      <span className="flex flex-wrap items-center gap-3 text-xs">
-                        <MonoNum className="text-sm">{f.amount}</MonoNum>
-                        <MonoNum className="text-[var(--muted-foreground)]">@ {f.price}</MonoNum>
-                        <LifecyclePip status={f.status} />
-                        <MonoNum className="text-[var(--muted-foreground)]">
-                          {formatTime(f.matchedAt)}
-                        </MonoNum>
-                        {f.txHash ? (
-                          <span className="inline-flex items-center gap-0.5">
-                            <EtherscanTxLink hash={f.txHash} />
-                            <CopyButton
-                              value={f.txHash}
-                              label={`Copy settlement tx for ${f.pair} fill`}
-                            />
+                    <li key={f.id}>
+                      <ExpandableRow
+                        id={`fill-${f.id}`}
+                        ariaLabel={`Fill ${f.id} ${f.pair} ${f.side}, ${f.amount} at ${f.price}`}
+                        summary={
+                          <span className="flex flex-col gap-1 md:flex-row md:items-center md:justify-between md:gap-4">
+                            <span className="flex items-center gap-2 font-mono">
+                              <span className="font-medium">{f.pair}</span>
+                              <SidePill side={f.side} />
+                            </span>
+                            <span className="flex flex-wrap items-center gap-3 text-xs">
+                              <MonoNum className="text-sm">{f.amount}</MonoNum>
+                              <MonoNum className="text-[var(--muted-foreground)]">
+                                @ {f.price}
+                              </MonoNum>
+                              <LifecyclePip status={f.status} />
+                              <MonoNum className="text-[var(--muted-foreground)]">
+                                {formatTime(f.matchedAt)}
+                              </MonoNum>
+                            </span>
                           </span>
-                        ) : (
-                          <span className="font-mono text-[var(--muted-foreground)]">—</span>
-                        )}
-                      </span>
+                        }
+                        detail={<RecentFillExpanded fill={f} />}
+                      />
                     </li>
                   ))}
                 </ul>
@@ -374,49 +395,79 @@ export default function Variant11Blended({
               {transfers.length === 0 ? (
                 <p className="text-sm text-[var(--muted-foreground)]">No transfers yet.</p>
               ) : (
-                <ul className="flex flex-col">
-                  {transfers.map((t) => (
-                    <li key={`${t.kind}-${t.id}`} className={ROW}>
-                      <span className="flex items-center gap-2">
-                        <span
-                          className={cn(
-                            PILL,
-                            t.kind === "deposit"
-                              ? "text-[var(--success)]"
-                              : "text-[var(--muted-foreground)]",
-                          )}
-                        >
-                          {t.kind === "deposit" ? "Deposit" : "Withdrawal"}
-                        </span>
-                        <span className="font-mono">{t.token}</span>
-                      </span>
-                      <span className="flex flex-wrap items-center gap-3 text-xs">
-                        <MonoNum className="text-sm">{t.amount}</MonoNum>
-                        <Status
-                          state={t.status as never}
-                          tooltip={
-                            copyForStatusState(
-                              t.status as never,
-                              t.kind === "withdrawal"
-                                ? "withdrawal"
-                                : "deposit",
-                            ) ?? undefined
+                <ul className="flex flex-col" data-testid="transfers-list">
+                  {transfers.map((t) => {
+                    const transferDetail =
+                      t.kind === "withdrawal"
+                        ? ({
+                            kind: "withdrawal",
+                            row: {
+                              id: t.id,
+                              token: t.token,
+                              amount: t.amount,
+                              status: t.status,
+                              initiatedAt: t.initiatedAt,
+                              txHash: t.txHash,
+                            },
+                          } as const)
+                        : ({
+                            kind: "deposit",
+                            row: {
+                              id: t.id,
+                              token: t.token,
+                              amount: t.amount,
+                              status: t.status,
+                              initiatedAt: t.initiatedAt,
+                              txHash: t.txHash,
+                            },
+                          } as const);
+                    return (
+                      <li key={`${t.kind}-${t.id}`}>
+                        <ExpandableRow
+                          id={`transfer-${t.kind}-${t.id}`}
+                          ariaLabel={`${t.kind === "deposit" ? "Deposit" : "Withdrawal"} ${t.token}, ${t.amount}`}
+                          summary={
+                            <span className="flex flex-col gap-1 md:flex-row md:items-center md:justify-between md:gap-4">
+                              <span className="flex items-center gap-2">
+                                <span
+                                  className={cn(
+                                    PILL,
+                                    t.kind === "deposit"
+                                      ? "text-[var(--success)]"
+                                      : "text-[var(--muted-foreground)]",
+                                  )}
+                                >
+                                  {t.kind === "deposit"
+                                    ? "Deposit"
+                                    : "Withdrawal"}
+                                </span>
+                                <span className="font-mono">{t.token}</span>
+                              </span>
+                              <span className="flex flex-wrap items-center gap-3 text-xs">
+                                <MonoNum className="text-sm">
+                                  {t.amount}
+                                </MonoNum>
+                                <Status
+                                  state={t.status as never}
+                                  tooltip={
+                                    copyForStatusState(
+                                      t.status as never,
+                                      t.kind === "withdrawal"
+                                        ? "withdrawal"
+                                        : "deposit",
+                                    ) ?? undefined
+                                  }
+                                />
+                              </span>
+                            </span>
+                          }
+                          detail={
+                            <TransferExpanded transfer={transferDetail} />
                           }
                         />
-                        {t.txHash ? (
-                          <span className="inline-flex items-center gap-0.5">
-                            <EtherscanTxLink hash={t.txHash} />
-                            <CopyButton
-                              value={t.txHash}
-                              label={`Copy ${t.kind} tx hash`}
-                            />
-                          </span>
-                        ) : (
-                          <span className="font-mono text-[var(--muted-foreground)]">—</span>
-                        )}
-                      </span>
-                    </li>
-                  ))}
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
             </Card>

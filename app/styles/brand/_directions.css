@@ -114,6 +114,16 @@ body:has(main[data-brand-direction="1"])::before {
   color: var(--fg-muted-1);
 }
 
+[data-brand-direction="1"] .brand-direction-1-wordmark {
+  font-family: var(--brand-display);
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: var(--fg-primary);
+  text-transform: none;
+}
+
 [data-brand-direction="1"] .eyebrow,
 [data-brand-direction="1"] [data-eyebrow] {
   font-family: var(--font-geist-sans);

@@ -2,6 +2,7 @@
 
 import { CheckCircle2, Download, ShieldCheck, WifiOff } from "lucide-react";
 import type { PropsWithChildren } from "react";
+import { OmegaMark } from "@/components/OmegaMark";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Chip } from "@/components/ui/chip";
@@ -18,14 +19,17 @@ export function Direction1Specimen() {
         <Fixture title="Navbar mockup">
           <div data-testid="fixture-navbar" className="space-y-5">
             <div className="brand-direction-1-navbar mx-auto flex max-w-lg items-center justify-between gap-3 px-3 py-2">
-              <span className="brand-direction-1-eyebrow eyebrow">Omega Markets</span>
+              <span className="flex items-center gap-2">
+                <OmegaMark size={22} aria-hidden />
+                <span className="brand-direction-1-wordmark">Omega Markets</span>
+              </span>
               <div className="flex items-center gap-1">
                 {["Trade", "Batches", "Account"].map((item) => (
                   <button
                     key={item}
                     type="button"
                     data-active={item === "Trade"}
-                    className={`brand-direction-1-nav-item px-3 py-1 text-[11px] ${
+                    className={`brand-direction-1-nav-item px-3 py-1 text-sm ${
                       item === "Trade" ? "text-[var(--foreground)]" : "text-[var(--muted-foreground)]"
                     }`}
                   >

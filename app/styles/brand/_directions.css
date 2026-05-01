@@ -114,6 +114,57 @@ body:has(main[data-brand-direction="1"])::before {
   color: var(--fg-muted-1);
 }
 
+[data-brand-direction="1"] .brand-direction-1-eyebrow,
+[data-brand-direction="1"] .brand-direction-1-receipt-header > span,
+[data-brand-direction="1"] .brand-direction-1-nav-item {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-muted-1);
+}
+
+[data-brand-direction="1"] .brand-direction-1-chip {
+  border-color: var(--fg-muted-2);
+  background: transparent;
+  color: var(--fg-muted-1);
+}
+
+[data-brand-direction="1"] .brand-direction-1-chip[data-active="true"] {
+  background: color-mix(in srgb, var(--brand-accent) 14%, transparent);
+  border-color: color-mix(in srgb, var(--brand-accent) 36%, var(--bg-base));
+  color: var(--fg-primary);
+}
+
+[data-brand-direction="1"] .brand-direction-1-chip[data-active="true"][data-side="buy"] {
+  background: color-mix(in srgb, var(--color-side-buy) 14%, transparent);
+  border-color: color-mix(in srgb, var(--color-side-buy) 36%, var(--bg-base));
+}
+
+[data-brand-direction="1"] .brand-direction-1-chip[data-active="true"][data-side="sell"] {
+  background: color-mix(in srgb, var(--color-side-sell) 14%, transparent);
+  border-color: color-mix(in srgb, var(--color-side-sell) 36%, var(--bg-base));
+}
+
+[data-brand-direction="1"] .brand-direction-1-chip[data-active="false"] {
+  background: transparent;
+  color: var(--fg-muted-1);
+  border-color: var(--fg-muted-2);
+}
+
+[data-brand-direction="1"] .brand-direction-1-chip[data-active="true"] svg {
+  color: currentColor;
+}
+
+[data-brand-direction="1"] .brand-direction-1-chip[data-active="true"][data-side="buy"] svg {
+  color: var(--color-side-buy);
+}
+
+[data-brand-direction="1"] .brand-direction-1-chip[data-active="true"][data-side="sell"] svg {
+  color: var(--color-side-sell);
+}
+
 @keyframes direction-1-scanline-settle {
   0% {
     transform: translateX(-125%);

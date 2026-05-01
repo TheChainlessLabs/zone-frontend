@@ -31,7 +31,6 @@ import {
   WrongNetworkBanner,
 } from "@/components/shell/ConnectionStates";
 import { useWalletState } from "@/components/shell/WalletStateProvider";
-import { ThemeSwitcherFAB } from "@/components/shell/theme-switcher-fab";
 
 export interface AppShellProps {
   /** The route path, used as a label hint for guard surfaces. */
@@ -63,7 +62,6 @@ export function AppShell({ route, auth = false, children }: AppShellProps) {
       <Navbar />
       <div className="pb-[calc(60px+env(safe-area-inset-bottom)+16px)] md:pb-0">{content}</div>
       <MobileTabBar />
-      <ThemeSwitcherFAB />
     </div>
   );
 }

@@ -5,9 +5,6 @@
    scripts/sync-tokens.mjs. Auto-runs before `pnpm dev` and `pnpm build`.
    Do not hand-edit tokens.css; edit tokens.json upstream and re-sync. */
 @import "./_generated/tokens.css";
-@import "../styles/brand/_fonts-global.css";
-@import "../styles/brand/_fonts-directions.css";
-@import "../styles/brand/_directions.css";
 
 /* Legacy radius carve-out: `--radius-2xl` is referenced by /brand but is not
    yet present in tokens.json. Tracked as an upstream omega-docs follow-up;
@@ -55,28 +52,6 @@
   --glass-saturate: 1.55;
 }
 
-/* Production design tokens — Direction 1 (Proofline Blue), promoted
-   2026-05-01. Phase 1 of 6 in the dir=1 -> production migration. */
-:root {
-  --bg-base: #04060A;
-  --bg-surface: #0B0F18;
-  --bg-elevated: #11161F;
-  --fg-primary: #F2F5FA;
-  --fg-muted-1: #A5B0C2;
-  --fg-muted-2: #6B7587;
-  --brand-accent: #6FA8FF;
-  --color-side-buy: #67D6C3;
-  --color-side-sell: #C7A77A;
-  --color-success: #52C7A5;
-  --color-error: #E17E8A;
-  --color-warning: #D7A85B;
-  --color-info: #7CB9FF;
-  --brand-display: "Cabinet Grotesk", var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-geist-sans: "Satoshi", ui-sans-serif, system-ui, sans-serif;
-  --font-geist-mono: "Commit Mono", ui-monospace, SFMono-Regular, monospace;
-  --font-serif: "Source Serif 4", ui-serif, Georgia, serif;
-}
-
 [data-theme="light"] {
   --surface-edge: rgba(0, 0, 0, 0.06);
   --shadow-soft:
@@ -118,7 +93,7 @@ body::before {
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background-image: radial-gradient(circle, var(--border) 1px, transparent 1px);
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.18) 1px, transparent 1px);
   background-size: var(--route-dot-grid-size) var(--route-dot-grid-size);
   background-position: 0 0;
   -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, #000 30%, transparent 80%);

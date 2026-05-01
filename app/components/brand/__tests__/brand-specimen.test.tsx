@@ -17,4 +17,11 @@ describe("BrandSpecimen", () => {
       expect(screen.getByTestId(fixture)).toBeDefined();
     }
   });
+
+  it("renders the direction 2 voice card", () => {
+    render(<BrandSpecimen direction={2} />);
+    const voiceCard = screen.getByTestId("fixture-direction-2-voice");
+    expect(voiceCard).toBeDefined();
+    expect(voiceCard.textContent).toContain("Submit ticket");
+  });
 });

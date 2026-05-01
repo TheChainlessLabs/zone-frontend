@@ -1,13 +1,11 @@
+/* Direction font imports land in M4.32-M4.35. */
+
 @font-face {
   font-family: "Neue Montreal";
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src:
-    local("PP Neue Montreal"),
-    local("Neue Montreal"),
-    url("https://reflexsalesgroup.com/wp-content/uploads/2024/06/NeueMontreal-Regular.woff2")
-      format("woff2");
+  src: local("PP Neue Montreal"), local("Neue Montreal"), url("https://reflexsalesgroup.com/wp-content/uploads/2024/06/NeueMontreal-Regular.woff2") format("woff2");
 }
 
 @font-face {
@@ -15,11 +13,7 @@
   font-style: normal;
   font-weight: 500;
   font-display: swap;
-  src:
-    local("PP Neue Montreal Medium"),
-    local("Neue Montreal Medium"),
-    url("https://reflexsalesgroup.com/wp-content/uploads/2024/06/NeueMontreal-Medium.woff2")
-      format("woff2");
+  src: local("PP Neue Montreal Medium"), local("Neue Montreal Medium"), url("https://reflexsalesgroup.com/wp-content/uploads/2024/06/NeueMontreal-Medium.woff2") format("woff2");
 }
 
 @font-face {
@@ -27,11 +21,7 @@
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src:
-    local("Azeret Mono Regular"),
-    local("Azeret Mono"),
-    url("https://fonts.gstatic.com/s/azeretmono/v21/3XF5ErsiyJsY9O_Gepph-FvtTQgMQUdNekSfnPVh0g.ttf")
-      format("truetype");
+  src: local("Azeret Mono Regular"), local("Azeret Mono"), url("https://fonts.gstatic.com/s/azeretmono/v21/3XF5ErsiyJsY9O_Gepph-FvtTQgMQUdNekSfnPVh0g.ttf") format("truetype");
 }
 
 @font-face {
@@ -39,10 +29,7 @@
   font-style: normal;
   font-weight: 500;
   font-display: swap;
-  src:
-    local("Azeret Mono Medium"),
-    url("https://fonts.gstatic.com/s/azeretmono/v21/3XF5ErsiyJsY9O_Gepph-FvtTQgMQUdNekSfrvVh0g.ttf")
-      format("truetype");
+  src: local("Azeret Mono Medium"), url("https://fonts.gstatic.com/s/azeretmono/v21/3XF5ErsiyJsY9O_Gepph-FvtTQgMQUdNekSfrvVh0g.ttf") format("truetype");
 }
 
 @font-face {
@@ -50,10 +37,7 @@
   font-style: normal;
   font-weight: 600;
   font-display: swap;
-  src:
-    local("Azeret Mono SemiBold"),
-    url("https://fonts.gstatic.com/s/azeretmono/v21/3XF5ErsiyJsY9O_Gepph-FvtTQgMQUdNekSfQvJh0g.ttf")
-      format("truetype");
+  src: local("Azeret Mono SemiBold"), url("https://fonts.gstatic.com/s/azeretmono/v21/3XF5ErsiyJsY9O_Gepph-FvtTQgMQUdNekSfQvJh0g.ttf") format("truetype");
 }
 
 @font-face {
@@ -61,10 +45,7 @@
   font-style: italic;
   font-weight: 300;
   font-display: swap;
-  src:
-    local("Source Serif 4 Light Italic"),
-    url("https://fonts.gstatic.com/s/sourceserif4/v14/vEF02_tTDB4M7-auWDN0ahZJW1ge6NmXpVAHV83Bfb_US2D2QYxoUKIkn98pGF9dCw.ttf")
-      format("truetype");
+  src: local("Source Serif 4 Light Italic"), url("https://fonts.gstatic.com/s/sourceserif4/v14/vEF02_tTDB4M7-auWDN0ahZJW1ge6NmXpVAHV83Bfb_US2D2QYxoUKIkn98pGF9dCw.ttf") format("truetype");
 }
 
 @font-face {
@@ -72,8 +53,43 @@
   font-style: italic;
   font-weight: 400;
   font-display: swap;
-  src:
-    local("Source Serif 4 Italic"),
-    url("https://fonts.gstatic.com/s/sourceserif4/v14/vEF02_tTDB4M7-auWDN0ahZJW1ge6NmXpVAHV83Bfb_US2D2QYxoUKIkn98pRl9dCw.ttf")
-      format("truetype");
+  src: local("Source Serif 4 Italic"), url("https://fonts.gstatic.com/s/sourceserif4/v14/vEF02_tTDB4M7-auWDN0ahZJW1ge6NmXpVAHV83Bfb_US2D2QYxoUKIkn98pRl9dCw.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "Albert Sans";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("https://fonts.gstatic.com/s/albertsans/v4/i7dZIFdwYjGaAMFtZd_QA3xXSKZqhr-TenSHq5P_rA.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "Albert Sans";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("https://fonts.gstatic.com/s/albertsans/v4/i7dZIFdwYjGaAMFtZd_QA3xXSKZqhr-TenSHdZT_rA.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "League Gothic";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("https://fonts.gstatic.com/s/leaguegothic/v13/qFdR35CBi4tvBz81xy7WG7ep-BQAY7Krj7feObpH_-am.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "Iosevka";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("https://cdn.jsdelivr.net/npm/@fontsource/iosevka@5.2.5/files/iosevka-latin-400-normal.woff2") format("woff2");
+}
+
+:root {
+  --font-direction-4-display: "League Gothic", "Arial Narrow", "Helvetica Neue Condensed", sans-serif;
+  --font-direction-4-sans: "Albert Sans", var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-direction-4-mono: "Iosevka", var(--font-geist-mono), ui-monospace, monospace;
 }

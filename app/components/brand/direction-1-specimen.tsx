@@ -18,7 +18,7 @@ export function Direction1Specimen() {
         <Fixture title="Navbar mockup">
           <div data-testid="fixture-navbar" className="space-y-5">
             <div className="brand-direction-1-navbar mx-auto flex max-w-lg items-center justify-between gap-3 px-3 py-2">
-              <span className="brand-direction-1-eyebrow text-[11px]">Omega desk</span>
+              <span className="brand-direction-1-eyebrow eyebrow text-[11px]">Omega desk</span>
               <div className="flex items-center gap-1">
                 {["Trade", "Batches", "Account"].map((item) => (
                   <button
@@ -36,7 +36,7 @@ export function Direction1Specimen() {
               <span className="h-2.5 w-2.5 rounded-full border border-[var(--border)] bg-[var(--brand-accent)] shadow-[0_0_10px_color-mix(in_oklab,var(--brand-accent)_60%,transparent)]" />
             </div>
             <div className="space-y-3">
-              <p className="brand-direction-1-eyebrow text-[11px]">Proofline Blue</p>
+              <p className="brand-direction-1-eyebrow eyebrow text-[11px]">Proofline Blue</p>
               <h1 className="text-[clamp(3rem,6vw,4rem)] leading-[1.06] tracking-[-0.03em] text-[var(--foreground)]" style={{ fontFamily: "var(--brand-display)" }}>Darkpool FX.</h1>
               <p className="brand-direction-1-strapline">Quiet authority, attestation blue, and one evidence-like serif note under the line of trade.</p>
             </div>
@@ -93,7 +93,7 @@ export function Direction1Specimen() {
         <Fixture title="Verified batch row">
           <div data-testid="fixture-verified-batch" className="brand-direction-1-card flex items-center justify-between px-4 py-3">
             <div>
-              <p className="brand-direction-1-eyebrow text-xs">Batch #2048</p>
+              <p className="brand-direction-1-eyebrow eyebrow text-xs">Batch #4821</p>
               <p className="text-sm text-[var(--muted-foreground)]">USDC/EURC · 12 fills · 2026-05-01 09:16 UTC</p>
             </div>
             <Status state="proven" className="brand-direction-1-scanline" />
@@ -103,7 +103,7 @@ export function Direction1Specimen() {
         <Fixture title="Pending batch row">
           <div data-testid="fixture-pending-batch" className="brand-direction-1-card flex items-center justify-between px-4 py-3">
             <div>
-              <p className="brand-direction-1-eyebrow text-xs">Batch #2049</p>
+              <p className="brand-direction-1-eyebrow eyebrow text-xs">Batch #2049</p>
               <p className="text-sm text-[var(--muted-foreground)]">USDC/EURC · queued for next proof window</p>
             </div>
             <Status state="pending" />
@@ -115,7 +115,7 @@ export function Direction1Specimen() {
         <Fixture title="Receipt/export panel">
           <div data-testid="fixture-receipt-export">
             <Receipt cta={{ label: "Export receipt", href: "#" }}>
-              <Receipt.Header className="brand-direction-1-receipt-header" label="SETTLEMENT RECORD" />
+              <Receipt.Header className="brand-direction-1-receipt-header" label="Settlement record" />
               <Receipt.Metadata>
                 <Receipt.Row label="Pair" value="USDC/EURC" />
                 <Receipt.Row label="Side" value="Buy" />
@@ -138,8 +138,11 @@ export function Direction1Specimen() {
           >
             <div className="mb-4 flex items-center justify-between">
               <div>
-                <p className="brand-direction-1-eyebrow text-[10px]">
-                  Order preview
+                <p className="brand-direction-1-eyebrow eyebrow text-[10px]">
+                  <span className="eyebrow" data-variant="route">
+                    /TRADE
+                  </span>
+                  <span className="eyebrow ml-2">Order preview</span>
                 </p>
                 <h3 className="mt-2 text-lg text-[var(--foreground)]" style={{ fontFamily: "var(--brand-display)" }}>
                   Route USDC/EURC ticket
@@ -170,7 +173,7 @@ export function Direction1Specimen() {
         <div data-testid="fixture-voice-card" className="brand-direction-1-card grid gap-3 p-4 md:grid-cols-2 xl:grid-cols-5">
           {VOICE_SAMPLES.map(([label, copy]) => (
             <div key={label} className="rounded-[10px] border border-[var(--border)] bg-[color-mix(in_oklab,var(--background)_36%,var(--card)_64%)] px-3 py-3">
-              <p className="brand-direction-1-eyebrow text-[10px]">{label}</p>
+              <p className="brand-direction-1-eyebrow eyebrow text-[10px]">{label}</p>
               <p className="mt-2 text-sm leading-6 text-[var(--foreground)]">{copy}</p>
             </div>
           ))}
@@ -184,7 +187,7 @@ function Fixture({ title, children }: PropsWithChildren<{ title: string }>) {
   return (
     <Card className="brand-direction-1-card shadow-none">
       <CardHeader className="pb-3">
-        <CardTitle className="brand-direction-1-eyebrow text-[11px]">
+        <CardTitle className="brand-direction-1-eyebrow eyebrow text-[11px]">
           {title}
         </CardTitle>
       </CardHeader>

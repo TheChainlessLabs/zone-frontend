@@ -114,15 +114,24 @@ body:has(main[data-brand-direction="1"])::before {
   color: var(--fg-muted-1);
 }
 
-[data-brand-direction="1"] .brand-direction-1-eyebrow,
-[data-brand-direction="1"] .brand-direction-1-receipt-header > span,
-[data-brand-direction="1"] .brand-direction-1-nav-item {
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-weight: 400;
-  letter-spacing: 0.08em;
+[data-brand-direction="1"] .eyebrow,
+[data-brand-direction="1"] [data-eyebrow] {
+  font-family: var(--font-geist-sans);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  text-transform: none;
+  color: hsl(var(--muted-foreground) / 0.78);
+}
+
+/* route-slug eyebrows keep mono-caps as the affordance */
+[data-brand-direction="1"] .eyebrow[data-variant="route"] {
+  font-family: var(--font-geist-mono);
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--fg-muted-1);
 }
 
 [data-brand-direction="1"] .brand-direction-1-chip {

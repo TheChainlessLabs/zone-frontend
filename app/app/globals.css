@@ -106,7 +106,7 @@ body[data-route^="/portfolio"],
 body[data-route^="/batches"],
 body[data-route^="/account"] {
   --route-dot-grid-size: 28px;
-  --route-dot-grid-opacity: 0.42;
+  --route-dot-grid-opacity: 0.7;
 }
 
 body[data-route^="/brand"],

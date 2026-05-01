@@ -1,4 +1,4 @@
-[data-brand-direction="1"] {
+html[data-brand-direction="1"] {
   --bg-base: #04060A;
   --bg-surface: #0B0F18;
   --bg-elevated: #11161F;
@@ -40,7 +40,7 @@
   font-family: var(--font-geist-sans);
 }
 
-[data-brand-direction="1"] {
+html[data-brand-direction="1"] {
   --background: var(--bg-base);
   --foreground: var(--fg-primary);
   --card: var(--bg-surface);
@@ -231,7 +231,7 @@ body:has(main[data-brand-direction="1"])::before {
   }
 }
 
-[data-brand-direction="2"] {
+html[data-brand-direction="2"] {
   --bg-base: #0c0c0e;
   --bg-surface: #151517;
   --bg-elevated: #1d1e21;
@@ -280,7 +280,7 @@ body:has(main[data-brand-direction="1"])::before {
   background-color: var(--background);
 }
 
-[data-brand-direction="2"] {
+html[data-brand-direction="2"] {
   --background: var(--bg-base);
   --foreground: var(--fg-primary);
   --card: var(--bg-surface);
@@ -297,7 +297,7 @@ body:has(main[data-brand-direction="1"])::before {
   --destructive: var(--color-side-sell);
 }
 
-[data-brand-direction="2"] body {
+html[data-brand-direction="2"] body {
   font-family: var(--font-geist-sans);
 }
 
@@ -454,7 +454,7 @@ body:has(main[data-brand-direction="1"])::before {
     transition: opacity var(--duration-75) var(--ease-standard);
   }
 }
-[data-brand-direction="3"] {
+html[data-brand-direction="3"] {
   --bg-base: #050505;
   --bg-surface: #0e0e0f;
   --bg-elevated: #17181a;
@@ -500,7 +500,7 @@ body:has(main[data-brand-direction="1"])::before {
   --glass-saturate: 1.1;
 }
 
-[data-brand-direction="3"] {
+html[data-brand-direction="3"] {
   --background: var(--bg-base);
   --foreground: var(--fg-primary);
   --card: var(--bg-surface);
@@ -517,7 +517,7 @@ body:has(main[data-brand-direction="1"])::before {
   --destructive: var(--color-side-sell);
 }
 
-[data-brand-direction="3"] body {
+html[data-brand-direction="3"] body {
   font-family: var(--font-geist-sans);
 }
 
@@ -654,7 +654,7 @@ body:has(main[data-brand-direction="1"])::before {
     animation: none !important;
   }
 }
-[data-brand-direction="4"] {
+html[data-brand-direction="4"] {
   --background: #0a0a0d;
   --foreground: #f2f0ea;
   --card: #121317;
@@ -695,7 +695,7 @@ body:has(main[data-brand-direction="1"])::before {
   isolation: isolate;
 }
 
-[data-brand-direction="4"] {
+html[data-brand-direction="4"] {
   --bg-base: #0a0a0d;
   --bg-surface: #121317;
   --bg-elevated: #1c1e25;
@@ -718,7 +718,7 @@ body:has(main[data-brand-direction="1"])::before {
   --destructive: var(--color-side-sell);
 }
 
-[data-brand-direction="4"] body {
+html[data-brand-direction="4"] body {
   font-family: var(--font-direction-4-sans);
 }
 

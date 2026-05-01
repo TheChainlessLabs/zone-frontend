@@ -11,12 +11,14 @@ import { Input } from "@/components/ui/input";
 import { Receipt } from "@/components/ui/receipt";
 import { Status } from "@/components/ui/status";
 import { Direction2Specimen } from "@/components/brand/direction-2-specimen";
+import { Direction3Specimen } from "@/components/brand/direction-3-specimen";
 
 export function BrandSpecimen({ direction }: { direction: 1 | 2 | 3 | 4 }) {
   if (direction === 1) {
     return <Direction1Specimen />;
   }
 
+  if (direction === 3) return <Direction3Specimen />;
   const submitLabel = direction === 2 ? "Submit ticket" : "Submit order";
 
   return (

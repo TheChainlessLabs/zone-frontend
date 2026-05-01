@@ -2,6 +2,7 @@
 
 import { CheckCircle2, Download, ShieldCheck, WifiOff } from "lucide-react";
 import type { PropsWithChildren } from "react";
+import { Direction1Specimen } from "@/components/brand/direction-1-specimen";
 import { Button } from "@/components/ui/button";
 import { Direction4Specimen } from "@/components/brand/direction-4-specimen";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +13,10 @@ import { Status } from "@/components/ui/status";
 import { Direction2Specimen } from "@/components/brand/direction-2-specimen";
 
 export function BrandSpecimen({ direction }: { direction: 1 | 2 | 3 | 4 }) {
+  if (direction === 1) {
+    return <Direction1Specimen />;
+  }
+
   const submitLabel = direction === 2 ? "Submit ticket" : "Submit order";
 
   return (

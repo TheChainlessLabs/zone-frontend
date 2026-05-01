@@ -46,6 +46,12 @@ export default function RootLayout({
       className={`${GeistSans.variable} ${GeistMono.variable} ${sourceSerif.variable}`}
     >
       <body>
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "(function(){try{var d=localStorage.getItem('omega:theme-direction');if(d&&d!=='0')document.documentElement.setAttribute('data-brand-direction',d);}catch(e){}})()",
+          }}
+        />
         {/* WalletStateProvider reads `?walletState=` via useSearchParams,
             which Next 14 requires to be inside a Suspense boundary so
             static rendering of /brand and /system stays bailout-free.

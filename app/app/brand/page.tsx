@@ -26,6 +26,7 @@ import { Chip } from "@/components/ui/chip";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Toggle } from "@/components/ui/toggle";
+import { ThemeSwitcherFAB } from "@/components/shell/theme-switcher-fab";
 import { getBrandDirection } from "@/lib/brand-directions";
 
 const SECTIONS = [
@@ -85,10 +86,13 @@ export default function BrandBoard() {
 
   if (direction) {
     return (
-      <main id="top" data-brand-direction={direction} className="relative min-h-screen pb-20">
-        <ReviewNav />
-        <BrandSpecimen direction={direction} />
-      </main>
+      <>
+        <main id="top" data-brand-direction={direction} className="relative min-h-screen pb-20">
+          <ReviewNav />
+          <BrandSpecimen direction={direction} />
+        </main>
+        <ThemeSwitcherFAB />
+      </>
     );
   }
 
@@ -97,10 +101,11 @@ export default function BrandBoard() {
 
 function BrandBoardDefault({ direction = 0 }: { direction?: number }) {
   return (
-    <main id="top" data-brand-direction={direction} className="relative min-h-screen pb-32">
-      <ReviewNav />
-      <SectionNav items={[...SECTIONS]} />
-      <Hero />
+    <>
+      <main id="top" data-brand-direction={direction} className="relative min-h-screen pb-32">
+        <ReviewNav />
+        <SectionNav items={[...SECTIONS]} />
+        <Hero />
 
       <Section
         id="positioning"
@@ -419,7 +424,9 @@ function BrandBoardDefault({ direction = 0 }: { direction?: number }) {
           </p>
         </div>
       </footer>
-    </main>
+      </main>
+      <ThemeSwitcherFAB />
+    </>
   );
 }
 

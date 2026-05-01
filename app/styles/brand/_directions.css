@@ -40,6 +40,27 @@
   font-family: var(--font-geist-sans);
 }
 
+[data-brand-direction="1"] {
+  --background: var(--bg-base);
+  --foreground: var(--fg-primary);
+  --card: var(--bg-surface);
+  --popover: var(--bg-surface);
+  --secondary: var(--bg-elevated);
+  --primary: var(--brand-accent);
+  --accent: var(--brand-accent);
+  --muted: var(--bg-elevated);
+  --muted-foreground: var(--fg-muted-1);
+  --border: color-mix(in srgb, var(--fg-muted-2) 20%, transparent);
+  --input: var(--bg-elevated);
+  --ring: var(--brand-accent);
+  --success: var(--color-side-buy);
+  --destructive: var(--color-side-sell);
+}
+
+[data-brand-direction="1"] body {
+  font-family: var(--font-geist-sans);
+}
+
 body:has(main[data-brand-direction="1"])::before {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cg stroke='rgba(111,168,255,0.18)' stroke-width='1'%3E%3Cpath d='M16 12V20M12 16H20'/%3E%3C/g%3E%3C/svg%3E");
   background-size: 32px 32px;
@@ -259,6 +280,27 @@ body:has(main[data-brand-direction="1"])::before {
   background-color: var(--background);
 }
 
+[data-brand-direction="2"] {
+  --background: var(--bg-base);
+  --foreground: var(--fg-primary);
+  --card: var(--bg-surface);
+  --popover: var(--bg-surface);
+  --secondary: var(--bg-elevated);
+  --primary: var(--brand-accent);
+  --accent: var(--brand-accent);
+  --muted: var(--bg-elevated);
+  --muted-foreground: var(--fg-muted-1);
+  --border: color-mix(in srgb, var(--fg-muted-2) 20%, transparent);
+  --input: var(--bg-elevated);
+  --ring: var(--brand-accent);
+  --success: var(--color-side-buy);
+  --destructive: var(--color-side-sell);
+}
+
+[data-brand-direction="2"] body {
+  font-family: var(--font-geist-sans);
+}
+
 [data-brand-direction="2"] [data-testid="brand-specimen-2"] {
   position: relative;
   isolation: isolate;
@@ -458,6 +500,27 @@ body:has(main[data-brand-direction="1"])::before {
   --glass-saturate: 1.1;
 }
 
+[data-brand-direction="3"] {
+  --background: var(--bg-base);
+  --foreground: var(--fg-primary);
+  --card: var(--bg-surface);
+  --popover: var(--bg-surface);
+  --secondary: var(--bg-elevated);
+  --primary: var(--brand-accent);
+  --accent: var(--brand-accent);
+  --muted: var(--bg-elevated);
+  --muted-foreground: var(--fg-muted-1);
+  --border: color-mix(in srgb, var(--fg-muted-2) 20%, transparent);
+  --input: var(--bg-elevated);
+  --ring: var(--brand-accent);
+  --success: var(--color-side-buy);
+  --destructive: var(--color-side-sell);
+}
+
+[data-brand-direction="3"] body {
+  font-family: var(--font-geist-sans);
+}
+
 [data-brand-direction="3"] .brand-direction-3 {
   position: relative;
   overflow: hidden;
@@ -630,6 +693,33 @@ body:has(main[data-brand-direction="1"])::before {
   font-family: var(--font-direction-4-sans);
   position: relative;
   isolation: isolate;
+}
+
+[data-brand-direction="4"] {
+  --bg-base: #0a0a0d;
+  --bg-surface: #121317;
+  --bg-elevated: #1c1e25;
+  --fg-primary: #f2f0ea;
+  --fg-muted-1: #b8b3a7;
+  --fg-muted-2: #b8b3a7;
+  --background: var(--bg-base);
+  --foreground: var(--fg-primary);
+  --card: var(--bg-surface);
+  --popover: var(--bg-surface);
+  --secondary: var(--bg-elevated);
+  --primary: var(--brand-accent);
+  --accent: var(--brand-accent);
+  --muted: var(--bg-elevated);
+  --muted-foreground: var(--fg-muted-1);
+  --border: color-mix(in srgb, var(--fg-muted-2) 20%, transparent);
+  --input: var(--bg-elevated);
+  --ring: var(--brand-accent);
+  --success: var(--color-side-buy);
+  --destructive: var(--color-side-sell);
+}
+
+[data-brand-direction="4"] body {
+  font-family: var(--font-direction-4-sans);
 }
 
 [data-brand-direction="4"]::before,

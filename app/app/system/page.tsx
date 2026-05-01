@@ -96,6 +96,7 @@ import { Separator } from "@/components/ui/separator";
 import { Animate, AnimatePresence } from "@/components/ui/animate";
 import { Badge } from "@/components/ui/badge";
 import { Status, type StatusState } from "@/components/ui/status";
+import { ThemeSwitcherFAB } from "@/components/shell/theme-switcher-fab";
 import { type LucideIcon } from "lucide-react";
 import { Icon } from "@/lib/icons";
 import { getBrandDirection } from "@/lib/brand-directions";
@@ -198,10 +199,11 @@ export default function SystemShowcase() {
 
   return (
     <TooltipProvider delayDuration={150}>
-      <main id="top" data-brand-direction={direction} className="relative min-h-screen pb-32">
-        <ReviewNav />
-        <SectionNav items={[...SECTIONS]} />
-        <Hero />
+      <>
+        <main id="top" data-brand-direction={direction} className="relative min-h-screen pb-32">
+          <ReviewNav />
+          <SectionNav items={[...SECTIONS]} />
+          <Hero />
 
         <Section
           id="foundation"
@@ -1263,7 +1265,9 @@ export function cn(...inputs: ClassValue[]) {
             </p>
           </div>
         </footer>
-      </main>
+        </main>
+        <ThemeSwitcherFAB />
+      </>
     </TooltipProvider>
   );
 }

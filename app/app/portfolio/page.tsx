@@ -148,7 +148,7 @@ function PortfolioSkeleton({
 
       <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[1.6fr_1fr]">
         <aside className="flex flex-col gap-4 lg:order-2 lg:sticky lg:top-24 lg:self-start">
-          <Card variant="glass" className="flex flex-col gap-4 p-5 md:p-6">
+          <Card className="flex flex-col gap-4 p-5 md:p-6">
             <SkeletonBar className="h-3 w-16" />
             <div className="flex flex-col gap-2">
               <SkeletonBar className="h-3 w-full" />

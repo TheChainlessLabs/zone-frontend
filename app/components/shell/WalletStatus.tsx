@@ -85,7 +85,7 @@ export function WalletStatus() {
     <>
       {state === "disconnected" ? (
         <Button
-          variant="outline"
+          variant="glass"
           size="sm"
           onClick={handleSignUpClick}
           aria-label="Sign up"
@@ -97,7 +97,7 @@ export function WalletStatus() {
 
       {state === "signing-up" || state === "magic-link-sent" ? (
         <Button
-          variant="outline"
+          variant="glass"
           size="sm"
           onClick={handleSignUpClick}
           aria-label="Awaiting magic link"
@@ -112,7 +112,7 @@ export function WalletStatus() {
 
       {state === "connecting" ? (
         <Button
-          variant="outline"
+          variant="glass"
           size="sm"
           onClick={handleSignUpClick}
           aria-label="Awaiting wallet signature"
@@ -141,7 +141,7 @@ export function WalletStatus() {
       ) : null}
 
       {state === "no-nft-pass" ? (
-        <Button asChild variant="outline" size="sm">
+        <Button asChild variant="glass" size="sm">
           <a href="#nft-pass" aria-label="Phase 4 NFT pass required">
             <Icon.Unauthorised aria-hidden />
             <span>Pass required</span>
@@ -153,7 +153,7 @@ export function WalletStatus() {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
-              variant="outline"
+              variant="glass"
               size="sm"
               aria-label={`Wallet menu for ${truncated}`}
             >

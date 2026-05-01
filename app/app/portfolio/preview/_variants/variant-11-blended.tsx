@@ -119,145 +119,145 @@ export default function Variant11Blended({
         </div>
       </section>
 
-      <Card variant="glass" className="flex flex-col gap-4 p-4 md:p-6">
+      <Card className="flex flex-col gap-4 p-4 md:p-6">
+        <div
+          role="img"
+          aria-label={`Portfolio value over ${range}, current $${fixture.totalValueUSD}`}
+          className="overflow-hidden [&>svg]:block [&>svg]:h-[160px] [&>svg]:w-full md:[&>svg]:h-[220px]"
+        >
+          <Sparkline
+            series={series}
+            width={1100}
+            height={220}
+            ariaLabel={`Portfolio value over ${range}`}
+            stroke={stroke}
+            fill={fill}
+            strokeWidth={1.75}
+          />
+        </div>
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div
-            role="img"
-            aria-label={`Portfolio value over ${range}, current $${fixture.totalValueUSD}`}
-            className="overflow-hidden [&>svg]:block [&>svg]:h-[160px] [&>svg]:w-full md:[&>svg]:h-[220px]"
+            role="tablist"
+            aria-label="Time range"
+            className="flex flex-wrap items-center gap-1 rounded-full border border-[var(--border)] p-1"
           >
-            <Sparkline
-              series={series}
-              width={1100}
-              height={220}
-              ariaLabel={`Portfolio value over ${range}`}
-              stroke={stroke}
-              fill={fill}
-              strokeWidth={1.75}
-            />
+            {RANGES.map((r) => (
+              <button
+                key={r}
+                type="button"
+                role="tab"
+                aria-selected={r === range}
+                onClick={() => setRange(r)}
+                className={cn(
+                  "rounded-full px-3 py-1 transition-colors",
+                  PILL,
+                  r === range
+                    ? "bg-[var(--accent)] text-[var(--foreground)]"
+                    : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]",
+                )}
+              >
+                {r}
+              </button>
+            ))}
           </div>
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div
-              role="tablist"
-              aria-label="Time range"
-              className="flex flex-wrap items-center gap-1 rounded-full border border-[var(--border)] p-1"
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              onClick={onDeposit}
+              className="min-h-[44px] md:min-h-0"
             >
-              {RANGES.map((r) => (
-                <button
-                  key={r}
-                  type="button"
-                  role="tab"
-                  aria-selected={r === range}
-                  onClick={() => setRange(r)}
-                  className={cn(
-                    "rounded-full px-3 py-1 transition-colors",
-                    PILL,
-                    r === range
-                      ? "bg-[var(--accent)] text-[var(--foreground)]"
-                      : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]",
-                  )}
-                >
-                  {r}
-                </button>
-              ))}
-            </div>
-            <div className="flex gap-2">
-              <Button
-                size="sm"
-                onClick={onDeposit}
-                className="min-h-[44px] md:min-h-0"
-              >
-                <Icon.Wallet aria-hidden />
-                Deposit
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={onWithdraw}
-                className="min-h-[44px] md:min-h-0"
-              >
-                Withdraw
-              </Button>
-            </div>
+              <Icon.Wallet aria-hidden />
+              Deposit
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={onWithdraw}
+              className="min-h-[44px] md:min-h-0"
+            >
+              Withdraw
+            </Button>
           </div>
+        </div>
       </Card>
 
       <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[1.6fr_1fr]">
         <aside className="flex flex-col gap-4 lg:order-2 lg:sticky lg:top-24 lg:self-start">
-          <Card variant="glass" className="flex flex-col gap-4 p-5 md:p-6">
-              <span
-                className={cn(
-                  PILL,
-                  "text-[11px] text-[var(--muted-foreground)]",
-                )}
+          <Card className="flex flex-col gap-4 p-5 md:p-6">
+            <span
+              className={cn(
+                PILL,
+                "text-[11px] text-[var(--muted-foreground)]",
+              )}
+            >
+              Summary
+            </span>
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between text-xs text-[var(--muted-foreground)]">
+                <span>Capital deployed</span>
+                <MonoNum>{(lockedShare * 100).toFixed(1)}%</MonoNum>
+              </div>
+              <div
+                role="img"
+                aria-label={`Capital deployed ${(lockedShare * 100).toFixed(1)} percent`}
+                className="h-2 w-full overflow-hidden rounded-full bg-[var(--muted)]"
               >
-                Summary
-              </span>
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center justify-between text-xs text-[var(--muted-foreground)]">
-                  <span>Capital deployed</span>
-                  <MonoNum>{(lockedShare * 100).toFixed(1)}%</MonoNum>
-                </div>
+                <div
+                  className="h-full rounded-full bg-[var(--success)]"
+                  style={{ width: `${(lockedShare * 100).toFixed(2)}%` }}
+                />
+              </div>
+            </div>
+            <div className="flex flex-col gap-1.5 text-xs">
+              <SummaryRow label="Available" value={`$${totals.available.toFixed(2)}`} />
+              <SummaryRow label="Locked" value={`$${totals.locked.toFixed(2)}`} />
+            </div>
+            <div className="flex flex-col gap-3 border-t border-[var(--border)] pt-4">
+              <div className="flex items-center justify-between text-xs text-[var(--muted-foreground)]">
+                <span>Allocation</span>
+                <MonoNum>{allocations.length} tokens</MonoNum>
+              </div>
+              {allocations.length > 0 ? (
                 <div
                   role="img"
-                  aria-label={`Capital deployed ${(lockedShare * 100).toFixed(1)} percent`}
-                  className="h-2 w-full overflow-hidden rounded-full bg-[var(--muted)]"
+                  aria-label={`Allocation across ${allocations.length} tokens: ${allocations
+                    .map((a) => `${a.token} ${(a.share * 100).toFixed(1)} percent`)
+                    .join(", ")}`}
+                  className="flex h-2 w-full overflow-hidden rounded-full bg-[var(--muted)]"
                 >
-                  <div
-                    className="h-full rounded-full bg-[var(--success)]"
-                    style={{ width: `${(lockedShare * 100).toFixed(2)}%` }}
-                  />
+                  {allocations.map((a) => (
+                    <span
+                      key={a.token}
+                      aria-hidden
+                      className="block h-full"
+                      style={{
+                        width: `${(a.share * 100).toFixed(2)}%`,
+                        background: TOKEN_TONE[a.token],
+                      }}
+                    />
+                  ))}
                 </div>
-              </div>
-              <div className="flex flex-col gap-1.5 text-xs">
-                <SummaryRow label="Available" value={`$${totals.available.toFixed(2)}`} />
-                <SummaryRow label="Locked" value={`$${totals.locked.toFixed(2)}`} />
-              </div>
-              <div className="flex flex-col gap-3 border-t border-[var(--border)] pt-4">
-                <div className="flex items-center justify-between text-xs text-[var(--muted-foreground)]">
-                  <span>Allocation</span>
-                  <MonoNum>{allocations.length} tokens</MonoNum>
-                </div>
-                {allocations.length > 0 ? (
-                  <div
-                    role="img"
-                    aria-label={`Allocation across ${allocations.length} tokens: ${allocations
-                      .map((a) => `${a.token} ${(a.share * 100).toFixed(1)} percent`)
-                      .join(", ")}`}
-                    className="flex h-2 w-full overflow-hidden rounded-full bg-[var(--muted)]"
-                  >
-                    {allocations.map((a) => (
-                      <span
-                        key={a.token}
-                        aria-hidden
-                        className="block h-full"
-                        style={{
-                          width: `${(a.share * 100).toFixed(2)}%`,
-                          background: TOKEN_TONE[a.token],
-                        }}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <div
-                    aria-hidden
-                    className="h-2 w-full rounded-full bg-[var(--muted)]"
-                  />
-                )}
-                <ul className="flex flex-col gap-1.5 text-xs">
-                  {allocations.map((a) => {
-                    const balance = fixture.balances.find((b) => b.token === a.token);
-                    const usd = balance ? parseNum(balance.total) : 0;
-                    return (
-                      <li
-                        key={a.token}
-                        className="flex items-center justify-between gap-3"
-                      >
-                        <span className="inline-flex min-w-0 items-center gap-2">
-                          <span
-                            aria-hidden
-                            className="inline-block h-2 w-2 rounded-full"
-                            style={{ background: TOKEN_TONE[a.token] }}
-                          />
+              ) : (
+                <div
+                  aria-hidden
+                  className="h-2 w-full rounded-full bg-[var(--muted)]"
+                />
+              )}
+              <ul className="flex flex-col gap-1.5 text-xs">
+                {allocations.map((a) => {
+                  const balance = fixture.balances.find((b) => b.token === a.token);
+                  const usd = balance ? parseNum(balance.total) : 0;
+                  return (
+                    <li
+                      key={a.token}
+                      className="flex items-center justify-between gap-3"
+                    >
+                      <span className="inline-flex min-w-0 items-center gap-2">
+                        <span
+                          aria-hidden
+                          className="inline-block h-2 w-2 rounded-full"
+                          style={{ background: TOKEN_TONE[a.token] }}
+                        />
                           <span className="font-medium">{a.token}</span>
                         </span>
                         <span className="flex items-center gap-3">

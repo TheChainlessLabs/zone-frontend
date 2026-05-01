@@ -53,12 +53,11 @@ export function ModalShell({
   className,
 }: ModalShellProps) {
   const isDesktop = useIsDesktop();
-  const shellClassName = cn("glass bg-background/0", className);
 
   if (isDesktop) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className={cn(desktopMaxWidth, shellClassName)}>
+        <DialogContent className={cn(desktopMaxWidth, className)}>
           <DialogHeader>
             <DialogTitle>{title}</DialogTitle>
             {description ? (
@@ -74,7 +73,7 @@ export function ModalShell({
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className={shellClassName}>
+      <DrawerContent className={className}>
         <DrawerHeader>
           <DrawerTitle>{title}</DrawerTitle>
           {description ? (

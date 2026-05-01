@@ -145,7 +145,7 @@ export function BatchesListView() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
-                variant="outline"
+                variant="glass"
                 size="sm"
                 className="h-8 gap-1 font-mono text-xs"
               >

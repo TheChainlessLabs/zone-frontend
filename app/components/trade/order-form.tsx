@@ -31,7 +31,6 @@ import * as React from "react";
 
 import { OrderConfirmationModal } from "@/components/modals";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Tabs,
@@ -193,13 +192,12 @@ export function OrderForm({
 
   return (
     <>
-      <Card variant="glass" className="p-5">
-        <form
-          onSubmit={handleSubmit}
-          onKeyDown={handleKeyDown}
-          className="flex flex-col gap-5"
-          aria-label="Order entry"
-        >
+      <form
+        onSubmit={handleSubmit}
+        onKeyDown={handleKeyDown}
+        className="flex flex-col gap-5 rounded-[var(--radius-xl)] surface-soft bg-[var(--card)] p-5"
+        aria-label="Order entry"
+      >
           {/* Top-line execution summary — Bloomberg/EMSX-style ticket head.
               Side · Pair · Midpoint · Available, all on one row, mono tabular.
               Available balance is promoted out of the 10px label tracker. */}
@@ -394,8 +392,7 @@ export function OrderForm({
             </span>
           </Button>
         )}
-        </form>
-      </Card>
+      </form>
 
       {pendingOrder ? (
         <OrderConfirmationModal

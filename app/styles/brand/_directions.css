@@ -117,7 +117,7 @@ body:has(main[data-brand-direction="1"])::before {
 [data-brand-direction="1"] .eyebrow,
 [data-brand-direction="1"] [data-eyebrow] {
   font-family: var(--font-geist-sans);
-  font-size: 0.6875rem;
+  font-size: 0.8125rem;
   font-weight: 600;
   line-height: 1.2;
   letter-spacing: -0.01em;

@@ -18,7 +18,7 @@ export function Direction1Specimen() {
         <Fixture title="Navbar mockup">
           <div data-testid="fixture-navbar" className="space-y-5">
             <div className="brand-direction-1-navbar mx-auto flex max-w-lg items-center justify-between gap-3 px-3 py-2">
-              <span className="brand-direction-1-eyebrow eyebrow text-[11px]">Omega desk</span>
+              <span className="brand-direction-1-eyebrow eyebrow">Omega Markets</span>
               <div className="flex items-center gap-1">
                 {["Trade", "Batches", "Account"].map((item) => (
                   <button

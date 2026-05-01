@@ -43,7 +43,7 @@ export function Direction3Specimen() {
         <div className="flex flex-col gap-5 border-b border-[var(--border)] pb-5 md:flex-row md:items-start md:justify-between">
           <div className="space-y-3">
             <p className="font-mono text-[11px] uppercase tracking-[0.24em] text-[var(--muted-foreground)]">
-              Omega desk
+              Omega Markets
             </p>
             <h1 className="brand-direction-3-display max-w-[10ch] text-[clamp(3.5rem,9vw,7rem)] leading-[0.92] text-[var(--foreground)]">
               acid witness

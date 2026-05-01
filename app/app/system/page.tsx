@@ -2,6 +2,7 @@
 
 import { motion, MotionConfig } from "motion/react";
 import { useEffect, useState, type ReactNode } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   AlignCenter,
   AlignLeft,
@@ -97,6 +98,7 @@ import { Badge } from "@/components/ui/badge";
 import { Status, type StatusState } from "@/components/ui/status";
 import { type LucideIcon } from "lucide-react";
 import { Icon } from "@/lib/icons";
+import { getBrandDirection } from "@/lib/brand-directions";
 import { DisconnectedState } from "@/components/DisconnectedState";
 import { NotFoundContents } from "@/components/NotFoundContents";
 import {
@@ -191,9 +193,12 @@ const ICON_COLOR_CONTEXTS: Array<{ label: string; className: string }> = [
 ];
 
 export default function SystemShowcase() {
+  const searchParams = useSearchParams();
+  const direction = getBrandDirection(searchParams.get("dir"));
+
   return (
     <TooltipProvider delayDuration={150}>
-      <main id="top" className="relative min-h-screen pb-32">
+      <main id="top" data-brand-direction={direction} className="relative min-h-screen pb-32">
         <ReviewNav />
         <SectionNav items={[...SECTIONS]} />
         <Hero />

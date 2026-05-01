@@ -8,8 +8,9 @@
  */
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { motion } from "motion/react";
+import { getBrandDirection } from "@/lib/brand-directions";
 import { OmegaMark } from "./OmegaMark";
 import { ThemeToggle } from "./ThemeToggle";
 
@@ -20,6 +21,9 @@ const TABS = [
 
 export function ReviewNav() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const direction = getBrandDirection(searchParams.get("dir"));
+  const showDirection = pathname.startsWith("/brand") || pathname.startsWith("/system");
 
   return (
     <header className="sticky top-0 z-50 flex h-12 items-center justify-between gap-4 border-b border-[var(--border)] bg-[var(--background)]/55 px-4 backdrop-blur-xl backdrop-saturate-[1.4] before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-[color-mix(in_oklab,var(--foreground)_8%,transparent)] md:px-8 relative">
@@ -61,8 +65,23 @@ export function ReviewNav() {
         })}
       </nav>
 
-      {/* Theme toggle */}
-      <ThemeToggle />
+      <div className="flex items-center gap-2">
+        {showDirection ? (
+          <nav aria-label="Direction" className="hidden items-center gap-1 md:flex">
+            {[0, 1, 2, 3, 4].map((value) => (
+              <Link
+                key={value}
+                href={`${pathname}?dir=${value}`}
+                aria-current={direction === value ? "page" : undefined}
+                className={`rounded-[var(--radius-md)] px-2 py-1 font-mono text-[10px] uppercase tracking-[0.18em] ${direction === value ? "bg-[var(--muted)] text-[var(--foreground)]" : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]"}`}
+              >
+                {value}
+              </Link>
+            ))}
+          </nav>
+        ) : null}
+        <ThemeToggle />
+      </div>
     </header>
   );
 }

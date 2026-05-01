@@ -5,6 +5,8 @@
    scripts/sync-tokens.mjs. Auto-runs before `pnpm dev` and `pnpm build`.
    Do not hand-edit tokens.css; edit tokens.json upstream and re-sync. */
 @import "./_generated/tokens.css";
+@import "../styles/brand/_fonts-directions.css";
+@import "../styles/brand/_directions.css";
 
 /* Legacy radius carve-out: `--radius-2xl` is referenced by /brand but is not
    yet present in tokens.json. Tracked as an upstream omega-docs follow-up;

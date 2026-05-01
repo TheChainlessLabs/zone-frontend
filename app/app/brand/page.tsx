@@ -2,6 +2,7 @@
 
 import { motion, useAnimate, useInView, type AnimationOptions } from "motion/react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   ArrowDown,
   ArrowUp,
@@ -19,11 +20,13 @@ import { ReviewNav } from "@/components/ReviewNav";
 import { SectionNav } from "@/components/SectionNav";
 import { MidpointTape } from "@/components/MidpointTape";
 import { OmegaMark } from "@/components/OmegaMark";
+import { BrandSpecimen } from "@/components/brand/brand-specimen";
 import { Button } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Toggle } from "@/components/ui/toggle";
+import { getBrandDirection } from "@/lib/brand-directions";
 
 const SECTIONS = [
   { id: "positioning", number: "01", label: "Brand" },
@@ -77,8 +80,24 @@ const SEMANTIC_ACCENTS: { name: string; varName: string; description: string }[]
 ];
 
 export default function BrandBoard() {
+  const searchParams = useSearchParams();
+  const direction = getBrandDirection(searchParams.get("dir"));
+
+  if (direction) {
+    return (
+      <main id="top" data-brand-direction={direction} className="relative min-h-screen pb-20">
+        <ReviewNav />
+        <BrandSpecimen direction={direction} />
+      </main>
+    );
+  }
+
+  return <BrandBoardDefault direction={direction} />;
+}
+
+function BrandBoardDefault({ direction = 0 }: { direction?: number }) {
   return (
-    <main id="top" className="relative min-h-screen pb-32">
+    <main id="top" data-brand-direction={direction} className="relative min-h-screen pb-32">
       <ReviewNav />
       <SectionNav items={[...SECTIONS]} />
       <Hero />

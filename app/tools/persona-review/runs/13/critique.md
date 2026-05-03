@@ -1,4 +1,4 @@
-# Caleb Williams — review of Omega design-V2
+# Caleb Williams — review of Omega interface
 
 24, Austin, retail, lives in Discord. Trades USDC/EURC out of a small DeFi fund, mods two trader chats, and forwards links into group DMs the second something looks like alpha. I was pulled in to answer one question: would I screenshot the Omega trade page into my trading group, or would I scroll past?
 

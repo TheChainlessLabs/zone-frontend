@@ -4,13 +4,13 @@ Paste this into ChatGPT (or any model with web search) when you need to refresh 
 
 ---
 
-You are designing a 20-persona panel that will review the omega-interface design-V2 app and produce a structured critique. Each persona is a real archetype of a user the product needs to win — not a marketing avatar. Their lens is informed by where they come from, how they earn, what financial interfaces they already live inside, and what makes them roll their eyes.
+You are designing a 20-persona panel that will review the omega-interface app and produce a structured critique. Each persona is a real archetype of a user the product needs to win — not a marketing avatar. Their lens is informed by where they come from, how they earn, what financial interfaces they already live inside, and what makes them roll their eyes.
 
 # What omega-interface is
 
 Omega Markets — an institutional darkpool for stablecoin FX trading. TEE-attested matching engine, on-chain settlement on Ethereum L1. Positioning: infrastructure, not a bank. Target users: institutional traders, treasury operators, family offices, crypto-native arbitrageurs, and FX desks moving 6+ figures of stablecoin pairs (USDC/EURC, USDC/USDT, USDC/USDC.e at launch).
 
-Current frontend on `design-V2`:
+Current frontend on `main`:
 - Vercel/shadcn zinc palette, Geist Sans + Geist Mono + Source Serif 4 italic accents
 - Liquid-glass surfaces on a few specific cards
 - Soft drop shadows, dialed back recently

@@ -1252,7 +1252,7 @@ export function cn(...inputs: ClassValue[]) {
                 href="https://github.com/TheChainlessLabs/omega-interface/milestones"
                 className="underline underline-offset-4 hover:text-[var(--foreground)]"
               >
-                design-V2 milestone
+                milestone tracker
               </a>
               .
             </p>
@@ -2144,7 +2144,7 @@ const IMPORT_PATHS: Array<{ path: string; description: ReactNode }> = [
       <>
         <InlineCode>{"<Animate variant=\"…\">"}</InlineCode> + re-exported{" "}
         <InlineCode>AnimatePresence</InlineCode>. The only sanctioned motion
-        entry-point in design-V2.
+        entry-point in this codebase.
       </>
     ),
   },

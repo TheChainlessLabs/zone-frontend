@@ -4,7 +4,7 @@ Frontend for the [Omega Markets](https://omegamarkets.com) protocol — an insti
 
 ## Status
 
-**This branch (`design-V2`) is a clean-room rebuild.** The legacy V1 implementation lives on `main` and is preserved as a reference. New work here goes through the milestone process below; nothing is ported wholesale from `main`.
+**`main` is the clean-room rebuild.** The legacy V1 implementation is preserved on the `archive/v1-legacy-main` tag for reference. New work goes through the milestone process below; nothing is ported wholesale from that tag.
 
 ## Sequential milestones
 
@@ -91,10 +91,10 @@ Standard PR cycle:
 ```
 plan → worktree → implement → typecheck/test/build
      → independent reviewer → open PR → human review (when human-in-loop)
-     → squash-merge into design-V2
+     → squash-merge into main
 ```
 
-- **Branch base:** always `design-V2`. Never `main`. Never another feature branch.
+- **Branch base:** always `main`. Never another feature branch.
 - **Worktrees:** under `Chainless/worktrees/<name>/`.
 - **Commits:** Conventional. No `Co-Authored-By` trailers, no AI attribution.
 - **Diff size:** ≤400 LOC per PR or split.

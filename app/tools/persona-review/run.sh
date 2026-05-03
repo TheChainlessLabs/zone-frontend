@@ -413,7 +413,7 @@ phase_tally() {
 
   local prompt
   prompt=$(cat <<'PROMPT'
-You are tallying a 20-persona design-review batch for the omega-interface frontend (design-V2 branch).
+You are tallying a 20-persona design-review batch for the omega-interface frontend.
 
 Input: read every file at /Users/brianseong/Develop/Chainless/omega-interface/app/tools/persona-review/runs/<NN>/critique.md (NN = 01..20).
 

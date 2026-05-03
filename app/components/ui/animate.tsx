@@ -12,7 +12,7 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * Animate — the only sanctioned way to add motion in design-V2.
+ * Animate — the only sanctioned way to add motion in this codebase.
  *
  * The five variants are the brand motion ladder, locked to
  * `omega-docs/03-brand/visual-identity.md` and the motion tokens in

@@ -1,6 +1,6 @@
 // @ts-nocheck
 // Daniel Cho — surgical pass on components/trade/order-form.tsx.
-// Changes vs. design-V2 head:
+// Changes vs. current main:
 //   1. New top-line ExecSummaryRow at the head of the ticket — side · pair · midpoint · available — one mono row, large enough to read at desk distance.
 //   2. Available balance promoted out of the 10px label tracker into the summary row.
 //   3. Limit-price cell border + ring colour-locked to the active side (success on Buy, destructive on Sell). Cyan label tint dropped — accent moves onto the value when the user is editing.

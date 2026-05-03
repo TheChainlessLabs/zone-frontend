@@ -1,4 +1,4 @@
-# Daniel Cho — Omega design-V2 review
+# Daniel Cho — Omega interface review
 
 Senior FX execution trader. Korean pension fund. Bloomberg + CME Direct + IBKR TWS user. I run six-figure stablecoin hedges on a four-monitor desk in Seoul.
 
@@ -81,7 +81,7 @@ This is the strongest surface in the build. The 4-stage `Queued -> Sealed -> Pro
 
 ## Verdict
 
-`design-V2` is closer than `main` and the /batches surface earned its keep. The trade ticket needs a surgical pass — I've spec'd it in `redesign/order-form-daniel.tsx`. It's not a rebuild. It's the same component with the cells reordered, the summary row added, the colour lock-in wired, and the CTA copy made honest.
+The current build is close and the /batches surface earned its keep. The trade ticket needs a surgical pass — I've spec'd it in `redesign/order-form-daniel.tsx`. It's not a rebuild. It's the same component with the cells reordered, the summary row added, the colour lock-in wired, and the CTA copy made honest.
 
 Don't add features. Anchor what's there.
 

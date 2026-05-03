@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 
 /**
  * Tightly-styled markdown renderer for persona critique + inspirations.
- * Headings, lists, links, code, and quotes are mapped to the design-V2
+ * Headings, lists, links, code, and quotes are mapped to the design-system
  * tokens so the persona's voice doesn't fight the surrounding UI.
  */
 export function Markdown({ source }: { source: string }) {

@@ -1,10 +1,8 @@
-# Omega Interface — Project Instructions (design-V2)
+# Omega Interface — Project Instructions
 
 ## Status
 
-This branch (`design-V2`) is a **clean-room rebuild** of the omega-interface frontend. The legacy implementation lives on `main` and is preserved as a reference, but no code from `main` should be ported wholesale into `design-V2` without going through the milestone process below.
-
-`design-V2` is the default branch on the remote. All new feature branches cut from `design-V2`. Do **not** branch from `main`.
+`main` is the clean-room rebuild and the default branch on the remote. The legacy V1 implementation is preserved on the `archive/v1-legacy-main` tag for reference; no code from that tag should be ported wholesale into `main` without going through the milestone process below. All new feature branches cut from `main`.
 
 ## Product
 
@@ -14,7 +12,7 @@ The product is positioned as **infrastructure, not a bank** — institutional ex
 
 ## Repo structure
 
-After the design-V2 wipe, the repo is:
+After the clean-room rebuild, the repo is:
 
 ```
 omega-interface/
@@ -82,10 +80,10 @@ Standard for every issue:
 ```
 plan → worktree (under Chainless/worktrees/) → implement → self-test
      → independent reviewer subagent → open PR → human review (if human-in-loop)
-     → squash-merge → pull design-V2 → clean worktree
+     → squash-merge → pull main → clean worktree
 ```
 
-- **Branch base:** always `design-V2`. Never `main`. Never another feature branch (no stacked PRs).
+- **Branch base:** always `main`. Never another feature branch (no stacked PRs).
 - **Worktrees:** `Chainless/worktrees/<name>/` only.
 - **Commits:** Conventional. No `Co-Authored-By` trailers. No "Generated with Claude Code". No personal-infra references.
 - **Diff size:** ≤400 LOC per PR or split.

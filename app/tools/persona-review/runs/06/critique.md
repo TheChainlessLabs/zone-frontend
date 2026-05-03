@@ -1,4 +1,4 @@
-Yuki Tanaka reviews Omega Markets design-V2.
+Yuki Tanaka reviews Omega Markets.
 
 ## Top observations
 

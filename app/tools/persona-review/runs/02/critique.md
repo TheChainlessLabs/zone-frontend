@@ -1,4 +1,4 @@
-# Mei Lin — Omega design-V2 review
+# Mei Lin — Omega interface review
 
 Senior product designer, cross-border payments, Shanghai. I trade stablecoins from a phone in line at the airport. I have used Alipay, WeChat Pay, OKX, Futu, and Tiger every day for years. I judge a financial UI by whether I can read it on a 6.1" screen with one thumb while a flight is boarding.
 
@@ -100,7 +100,7 @@ These three screens are the worst surfaces in the build for a mobile-first user.
 
 ## Verdict
 
-`design-V2` reads like a desktop layout that was responsive-shrunk to mobile. The bones are good — the order primitives, the batches surface, the colour discipline. The mobile ergonomics are not yet shipped. I have rewritten the /trade mobile shell at `redesign/trade-mobile-mei.tsx` — chart-first, pair-strip-second, bottom-docked ticket, available-balance promoted, CTA carrying the summary. It is not a rebuild of the order primitives. It is a re-layering of where they sit on a phone.
+The current build reads like a desktop layout that was responsive-shrunk to mobile. The bones are good — the order primitives, the batches surface, the colour discipline. The mobile ergonomics are not yet shipped. I have rewritten the /trade mobile shell at `redesign/trade-mobile-mei.tsx` — chart-first, pair-strip-second, bottom-docked ticket, available-balance promoted, CTA carrying the summary. It is not a rebuild of the order primitives. It is a re-layering of where they sit on a phone.
 
 A trader holding the device with one hand should be able to switch pair, set amount, and submit without their thumb leaving the bottom third of the screen. That is the test. Ship that, and the desktop layout falls out for free as a wider grid of the same units.
 

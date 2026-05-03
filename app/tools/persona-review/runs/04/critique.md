@@ -1,4 +1,4 @@
-# Amira Haddad — Omega design-V2 review
+# Amira Haddad — Omega interface review
 
 Portfolio director, Gulf family office. I sit on a treasury committee that approves stablecoin allocations against the dollar book and the euro book. The desks I review are Goldman Marquee, J.P. Morgan Markets, and a UBS private-banking portal. I do not read trading-app marketing copy. I read the order ticket, the audit log, and the timestamp.
 

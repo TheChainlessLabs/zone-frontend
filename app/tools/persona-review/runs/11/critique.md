@@ -1,4 +1,4 @@
-# Marcus Reed — Omega design-V2 review
+# Marcus Reed — Omega interface review
 
 Former prime-brokerage product lead, now advising crypto market-structure startups. New York. I sit across from compliance officers, fund ops, and middle-office heads; I've watched a SOC2 auditor reject a vendor for not being able to produce a withdrawal receipt with a wallclock timestamp. I review your screens the way I'd review one of my client's vendor onboarding decks: can a fund operator walk a colleague through the system in one demo, and produce paper for it three quarters later.
 

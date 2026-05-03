@@ -1,4 +1,4 @@
-# Aisha Khan — critique of Omega design-V2
+# Aisha Khan — critique of Omega interface
 
 If a keyboard-only trader on a screen reader cannot complete the demo path — connect, fund, place a market order, read its outcome, find it again in /portfolio — then this product does not exist for them. That is the gate. I reviewed the dark and light renders on desktop and mobile, with a focus on the surfaces a wallet-gated, FX-priced, on-chain-settled product fails first: the disconnected state, the wrong-network banner, the order form, the withdraw modal, and the batch detail.
 

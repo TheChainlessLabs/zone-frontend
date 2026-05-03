@@ -93,12 +93,16 @@ body::before {
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.18) 1px, transparent 1px);
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.45) 1.5px, transparent 1.5px);
   background-size: var(--route-dot-grid-size) var(--route-dot-grid-size);
   background-position: 0 0;
   -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, #000 30%, transparent 80%);
   mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, #000 30%, transparent 80%);
   opacity: var(--route-dot-grid-opacity);
+}
+
+[data-theme="light"] body::before {
+  background-image: radial-gradient(circle, rgba(15, 23, 42, 0.22) 1.5px, transparent 1.5px);
 }
 
 body[data-route^="/trade"],

@@ -27,6 +27,7 @@ import { Animate } from "@/components/ui/animate";
 import { Icon } from "@/lib/icons";
 import {
   ChartPlaceholder,
+  ExecutionContextStrip,
   OrderForm,
   PairSwitcher,
   YourFills,
@@ -136,7 +137,14 @@ function TradeSurface() {
     <>
       {mode === "market" ? (
         <PageLayout width="narrow" bare>
-          {orderFormBlock}
+          <div className="flex flex-col gap-4">
+            {orderFormBlock}
+            <ExecutionContextStrip
+              midpoint={midpoint || undefined}
+              fee="0.005%"
+              settlement="Ethereum L1"
+            />
+          </div>
         </PageLayout>
       ) : (
         <PageLayout width="wide" bare>

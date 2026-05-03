@@ -271,7 +271,7 @@ export function OrderForm({
                   title="Set limit price to current midpoint (M)"
                 >
                   Use midpoint
-                  <span className="ml-2 font-mono text-[9px] opacity-60">M</span>
+                  <span className="ml-2 font-mono text-[10px] opacity-60">M</span>
                 </button>
               </div>
               <div className="relative">
@@ -387,7 +387,7 @@ export function OrderForm({
             title="Press Enter to submit"
           >
             <span className="truncate font-mono">{ctaLabel}</span>
-            <span className="ml-2 inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-current/30 px-1.5 font-mono text-[9px] uppercase tracking-[0.14em] opacity-80">
+            <span className="ml-2 inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-current/30 px-1.5 font-mono text-[10px] uppercase tracking-[0.14em] opacity-80">
               ↵
             </span>
           </Button>
@@ -460,7 +460,7 @@ function ExecSummaryRow({
         </span>
       </span>
       <span className="flex flex-col items-end leading-tight">
-        <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
+        <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
           Available
         </span>
         <span className="font-mono text-xs tabular-nums text-[var(--foreground)]">
@@ -521,7 +521,7 @@ function SideButton({
       <span>{isBuy ? "Buy" : "Sell"}</span>
       <span
         className={cn(
-          "absolute right-2 top-1/2 -translate-y-1/2 font-mono text-[9px] uppercase tracking-[0.14em]",
+          "absolute right-2 top-1/2 -translate-y-1/2 font-mono text-[10px] uppercase tracking-[0.14em]",
           active ? "opacity-70" : "opacity-40",
         )}
         aria-hidden

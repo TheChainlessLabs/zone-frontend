@@ -5,7 +5,10 @@ import type {
   PageState,
 } from "../types";
 import { batchesDefault } from "./default";
+import { batchesDetailEmpty } from "./detail-empty";
+import { batchesDetailError } from "./detail-error";
 import { batchesDetailFailed } from "./detail-failed";
+import { batchesDetailLoading } from "./detail-loading";
 import { batchesDetailPending } from "./detail-pending";
 import { batchesDetailVerified } from "./detail-verified";
 import { batchesEmpty } from "./empty";
@@ -30,21 +33,29 @@ export const batchesListFixtures: Record<
   error: batchesError,
 };
 
-export type BatchesDetailState = "verified" | "pending" | "failed" | "loading" | "error";
+export type BatchesDetailState =
+  | "verified"
+  | "pending"
+  | "failed"
+  | "empty"
+  | "loading"
+  | "error";
 
 /**
- * /batches/[number] detail-view fixtures. Detail variants are keyed by
- * batch status rather than the generic PageState because the matrix cell
- * is "shows a verified vs pending vs failed batch", not "is the page
- * loading".
+ * /batches/[number] detail-view fixtures. The happy-path cells are keyed
+ * by batch status; the route also accepts generic page-state overrides
+ * (`loading` / `empty` / `error`) via `usePageState()`.
  */
 export const batchesDetailFixtures: Record<
-  Extract<BatchesDetailState, "verified" | "pending" | "failed">,
+  BatchesDetailState,
   BatchesDetailFixture
 > = {
   verified: batchesDetailVerified,
   pending: batchesDetailPending,
   failed: batchesDetailFailed,
+  empty: batchesDetailEmpty,
+  loading: batchesDetailLoading,
+  error: batchesDetailError,
 };
 
 export const batchesSearchFixtures: Record<

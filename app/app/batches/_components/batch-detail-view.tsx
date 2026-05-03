@@ -5,8 +5,11 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
 import { PageLayout } from "@/components/shell/PageLayout";
+import { SurfaceState } from "@/components/shell/SurfaceState";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Icon } from "@/lib/icons";
-import { batchesDetailFixtures } from "@/lib/fixtures";
+import { batchesDetailFixtures, usePageState } from "@/lib/fixtures";
 import type { BatchesDetailFixture } from "@/lib/fixtures/types";
 import {
   formatRelativeTime,
@@ -28,8 +31,9 @@ import { EtherscanTxLink } from "@/app/batches/_components/etherscan-link";
  *
  * Privacy hard rule: aggregate-by-pair only. No individual fills, no
  * counterparty IDs, no order IDs. Users see their own fills via
- * /portfolio. Three default cells (verified / pending / failed) are
- * reachable via `?state=detail-verified|detail-pending|detail-failed`.
+ * /portfolio. Default renders the verified fixture; `?state=loading|
+ * empty|error` mirrors the list-page review toggle, while the legacy
+ * `detail-pending` / `detail-failed` variants remain available.
  *
  * M4.23 — compressed to a one-screen header strip + flat two-column body
  * (Tempo-style). Header carries the batch number, status, Etherscan jump,
@@ -55,12 +59,18 @@ const VALID_DETAIL_KEYS = new Set<DetailStateKey>([
 
 export function BatchDetailView({ id }: { id: string }) {
   const params = useSearchParams();
-  const raw = params.get("state");
-  const key: DetailStateKey =
-    raw && VALID_DETAIL_KEYS.has(raw as DetailStateKey)
-      ? (raw as DetailStateKey)
-      : "detail-verified";
-  const fixture = STATE_TO_FIXTURE[key];
+  const state = usePageState();
+  const rawState = params.get("state");
+  const fixture =
+    state === "loading"
+      ? batchesDetailFixtures.loading
+      : state === "empty"
+        ? batchesDetailFixtures.empty
+        : state === "error"
+          ? batchesDetailFixtures.error
+          : rawState && VALID_DETAIL_KEYS.has(rawState as DetailStateKey)
+            ? STATE_TO_FIXTURE[rawState as DetailStateKey]
+            : batchesDetailFixtures.verified;
 
   // Honour the route segment for the title even when we render a
   // status-keyed fixture. Falls back to the fixture batch number.
@@ -75,8 +85,41 @@ export function BatchDetailView({ id }: { id: string }) {
 
   return (
     <PageLayout width="default" bare>
-      <BatchDetail fixture={fixtureForVariant} />
-      <PrivacyFooter />
+      {fixture.isLoading ? (
+        <BatchDetailSkeleton />
+      ) : fixture.error ? (
+        <SurfaceState
+          title="Failed to load batch."
+          description="Refresh to retry."
+          action={
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                if (typeof window !== "undefined") window.location.reload();
+              }}
+              className="min-h-[44px] md:min-h-0"
+            >
+              Retry
+            </Button>
+          }
+        />
+      ) : state === "empty" ? (
+        <SurfaceState
+          title="Batch not found."
+          description="The route you tried doesn't exist. Head back to /batches."
+          action={
+            <Button asChild>
+              <Link href="/batches">Back to /batches</Link>
+            </Button>
+          }
+        />
+      ) : (
+        <>
+          <BatchDetail fixture={fixtureForVariant} />
+          <PrivacyFooter />
+        </>
+      )}
     </PageLayout>
   );
 }
@@ -397,5 +440,52 @@ function PrivacyFooter() {
       </Link>
       .
     </p>
+  );
+}
+
+function BatchDetailSkeleton() {
+  return (
+    <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
+      <div
+        aria-hidden
+        className="h-4 w-24 animate-pulse rounded bg-[var(--muted)]"
+      />
+      <Card className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-5 shadow-none">
+        <div className="flex flex-col gap-3 border-b border-dashed border-[var(--border)] pb-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="h-8 w-32 animate-pulse rounded bg-[var(--muted)]" />
+              <div className="h-6 w-6 animate-pulse rounded bg-[var(--muted)]" />
+              <div className="h-6 w-20 animate-pulse rounded bg-[var(--muted)]" />
+            </div>
+            <div className="h-5 w-28 animate-pulse rounded bg-[var(--muted)]" />
+          </div>
+          <div className="h-3 w-48 animate-pulse rounded bg-[var(--muted)]" />
+        </div>
+        <div className="mt-6 grid grid-cols-1 gap-y-8 md:grid-cols-2 md:gap-x-12 md:gap-y-0">
+          <SkeletonSection rows={6} />
+          <SkeletonSection rows={4} />
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function SkeletonSection({ rows }: { rows: number }) {
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="h-3 w-28 animate-pulse rounded bg-[var(--muted)]" />
+      <div className="flex flex-col">
+        {Array.from({ length: rows }).map((_, idx) => (
+          <div
+            key={idx}
+            className="grid grid-cols-1 gap-2 border-b border-dashed border-[var(--border)] py-2 last:border-b-0 sm:grid-cols-[120px_minmax(0,1fr)] sm:items-baseline sm:gap-3"
+          >
+            <div className="h-3 w-20 animate-pulse rounded bg-[var(--muted)]" />
+            <div className="h-3 w-full max-w-[220px] animate-pulse rounded bg-[var(--muted)]" />
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }

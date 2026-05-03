@@ -213,6 +213,32 @@ describe("BatchDetailView", () => {
     ).toBeGreaterThan(0);
   });
 
+  it("loading state renders the detail skeleton instead of batch content", async () => {
+    const { container } = await renderDetail("4821", { state: "loading" });
+    expect(
+      screen.queryByRole("heading", { level: 1, name: "Batch #4821" }),
+    ).toBeNull();
+    expect(container.querySelector('[aria-hidden="true"]')).not.toBeNull();
+  });
+
+  it("empty state follows the not-found copy register", async () => {
+    await renderDetail("9999", { state: "empty" });
+    expect(screen.getByText("Batch not found.")).toBeDefined();
+    expect(
+      screen.getByText("The route you tried doesn't exist. Head back to /batches."),
+    ).toBeDefined();
+    expect(
+      screen.getByRole("link", { name: "Back to /batches" }),
+    ).toBeDefined();
+  });
+
+  it("error state shows the recovery hint and a Retry button", async () => {
+    await renderDetail("4821", { state: "error" });
+    expect(screen.getByText("Failed to load batch.")).toBeDefined();
+    expect(screen.getByText("Refresh to retry.")).toBeDefined();
+    expect(screen.getByRole("button", { name: "Retry" })).toBeDefined();
+  });
+
   it("never exposes individual fill IDs or order IDs", async () => {
     // The verified fixture has fill ids `f-2914`, `f-2913` and order ids
     // `o-9482`, `o-9477`, `o-9476`. None of them must surface on the

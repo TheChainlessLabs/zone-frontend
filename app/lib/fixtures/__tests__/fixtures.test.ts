@@ -60,10 +60,13 @@ it("/batches list exposes default/empty/loading/error", () => {
   expect(batchesListFixtures.error.error?.code).toBe("EXPLORER_UNREACHABLE");
 });
 
-it("/batches detail exposes verified/pending/failed", () => {
+it("/batches detail exposes verified/pending/failed/empty/loading/error", () => {
   expect(batchesDetailFixtures.verified.batch.status).toBe("verified");
   expect(batchesDetailFixtures.pending.batch.status).toBe("pending");
   expect(batchesDetailFixtures.failed.batch.status).toBe("failed");
+  expect(batchesDetailFixtures.empty.orders).toEqual([]);
+  expect(batchesDetailFixtures.loading.isLoading).toBe(true);
+  expect(batchesDetailFixtures.error.error?.code).toBe("EXPLORER_UNREACHABLE");
 });
 
 it("/batches search exposes results + no-results", () => {

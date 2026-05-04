@@ -51,6 +51,7 @@ export const TransitionLink = React.forwardRef<
     // SSR + capability guard.
     if (typeof document === "undefined") return;
     if (!("startViewTransition" in document)) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
     event.preventDefault();
     const navigate = () => {

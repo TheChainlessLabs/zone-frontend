@@ -74,7 +74,7 @@ export function OrderConfirmationModal({
   onRetry,
 }: OrderConfirmationModalProps) {
   const isBusy = state === "signing" || state === "submitting";
-  const [base, quote] = pair.split("/");
+  const [base] = pair.split("/");
   const previewTimestamp = React.useMemo(
     () => submittedAt ?? new Date().toISOString(),
     [submittedAt],
@@ -114,26 +114,6 @@ export function OrderConfirmationModal({
             <Receipt.Row label="Submitted at" value={submittedAtLabel} />
             <Receipt.Row label="Available" value={availableLabel} />
           </Receipt.Metadata>
-          <Receipt.Actions>
-            <Receipt.Action number={1} label="Sign" payload="Wallet approval" />
-            <Receipt.Action number={2} label="Queue" payload="Next batch" />
-            <Receipt.Action
-              number={3}
-              label="Match"
-              payload={
-                mode === "market"
-                  ? "Private midpoint"
-                  : price
-                    ? `${price} ${quote}`
-                    : "Private limit"
-              }
-            />
-            <Receipt.Action
-              number={4}
-              label="Settle"
-              payload="Batch finality"
-            />
-          </Receipt.Actions>
           <Receipt.Totals>
             <Receipt.Row label="Amount" value={amountLabel} />
             <Receipt.Row label="Fee" value={feeLabel} />

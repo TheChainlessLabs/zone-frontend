@@ -151,6 +151,7 @@ function BatchDetail({ fixture }: { fixture: BatchesDetailFixture }) {
         Batch log
       </Link>
 
+      <Card className="flex flex-col gap-6 overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--card)] p-5 shadow-none sm:p-6">
       {/* Header strip — title + status + Etherscan + summary */}
       <header className="flex flex-col gap-2 border-b border-dashed border-[var(--border)] pb-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -304,6 +305,7 @@ function BatchDetail({ fixture }: { fixture: BatchesDetailFixture }) {
           />
         </section>
       </div>
+      </Card>
     </div>
   );
 }

@@ -60,7 +60,12 @@ export function AppShell({ route, auth = false, children }: AppShellProps) {
     <div className="min-h-screen text-[var(--foreground)]">
       <WrongNetworkBanner />
       <Navbar />
-      <div className="pb-[calc(60px+env(safe-area-inset-bottom)+16px)] md:pb-0">{content}</div>
+      <div
+        className="pb-[calc(60px+env(safe-area-inset-bottom)+16px)] md:pb-0"
+        style={{ viewTransitionName: "omega-page-content" }}
+      >
+        {content}
+      </div>
       <MobileTabBar />
     </div>
   );

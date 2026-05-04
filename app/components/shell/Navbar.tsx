@@ -5,84 +5,86 @@
  *
  * Distinct from `ReviewNav` (which serves only /brand and /system review
  * surfaces). This header ships with the v0 routes /trade, /portfolio,
- * /batches, /account.
+ * /batches.
  *
  * Layout: wordmark left · primary-nav center · WalletStatus right.
- * The primary-nav active indicator uses a shared `motion` `layoutId` so
- * tab switches glide between targets — same pattern as ReviewNav.
+ * The primary-nav shares the liquid-glass segmented-pill register used by
+ * OrderModeSelector on /trade.
  *
  * Mobile (< md) hides the primary-nav center; MobileTabBar renders below
  * instead and the wallet status collapses to the right of the wordmark.
  */
 
 import { usePathname } from "next/navigation";
-import { motion, useReducedMotion } from "motion/react";
 import { OmegaMark } from "@/components/OmegaMark";
 import { TransitionLink as Link } from "@/components/shell/transition-link";
 import { WalletStatus } from "@/components/shell/WalletStatus";
+import { Icon } from "@/lib/icons";
+import { cn } from "@/lib/utils";
 
 const PRIMARY_TABS = [
-  { href: "/trade", label: "Trade" },
-  { href: "/portfolio", label: "Portfolio" },
-  { href: "/batches", label: "Batches" },
+  { href: "/trade", label: "Trade", icon: Icon.Trade },
+  { href: "/portfolio", label: "Portfolio", icon: Icon.Wallet },
+  { href: "/batches", label: "Batches", icon: Icon.Batches },
 ] as const;
 
 export function Navbar() {
   const pathname = usePathname() ?? "";
-  const reduce = useReducedMotion() ?? false;
 
   return (
-    <header className="sticky top-0 z-40 flex h-14 items-center justify-between gap-4 border-b border-[var(--border)] bg-[var(--background)]/55 px-4 backdrop-blur-xl backdrop-saturate-[1.4] before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-[color-mix(in_oklab,var(--foreground)_8%,transparent)] md:px-8 relative">
-      {/* Wordmark */}
-      <Link
-        href="/trade"
-        className="flex items-center gap-2 text-[var(--foreground)] transition-opacity hover:opacity-80"
-        aria-label="Omega Markets — Trade"
-      >
-        <OmegaMark size={20} />
-        <span className="font-mono text-[11px] uppercase tracking-[0.24em]">
-          OMEGA
-        </span>
-      </Link>
+    <header className="sticky top-3 z-40 grid grid-cols-[1fr_auto_1fr] items-center gap-4 px-4 md:px-8">
+      <div>
+        {/* Wordmark */}
+        <Link
+          href="/trade"
+          className="flex items-center gap-2 text-[var(--foreground)] transition-opacity hover:opacity-80"
+          aria-label="Omega Markets — Trade"
+        >
+          <OmegaMark size={20} />
+          <span className="font-mono text-[11px] uppercase tracking-[0.24em]">
+            OMEGA MARKETS
+          </span>
+        </Link>
+      </div>
 
-      {/* Primary nav (desktop only) */}
-      <nav
-        aria-label="Primary"
-        className="hidden items-center gap-1 md:flex"
-      >
-        {PRIMARY_TABS.map((tab) => {
-          const isActive =
-            pathname === tab.href || pathname.startsWith(`${tab.href}/`);
-          return (
-            <Link
-              key={tab.href}
-              href={tab.href}
-              aria-current={isActive ? "page" : undefined}
-              className={`relative inline-flex h-8 items-center rounded-[var(--radius-md)] px-3 font-mono text-[11px] uppercase tracking-[0.18em] transition-colors ${
-                isActive
-                  ? "text-[var(--foreground)]"
-                  : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
-              }`}
-            >
-              {isActive && (
-                <motion.span
-                  layoutId="navbar-active"
-                  transition={
-                    reduce
-                      ? { duration: 0 }
-                      : { duration: 0.25, ease: [0.16, 1, 0.3, 1] }
-                  }
-                  className="absolute inset-0 rounded-[var(--radius-md)] bg-[var(--muted)]"
-                />
-              )}
-              <span className="relative">{tab.label}</span>
-            </Link>
-          );
-        })}
-      </nav>
+      <div className="flex justify-center">
+        {/* Primary nav (desktop only) */}
+        <nav
+          aria-label="Primary"
+          className="glass-pill hidden w-[420px] items-center gap-1 rounded-full p-1 md:inline-flex"
+        >
+          {PRIMARY_TABS.map((tab) => {
+            const isActive = pathname.startsWith(tab.href);
+            const TabIcon = tab.icon;
+            return (
+              <Link
+                key={tab.href}
+                href={tab.href}
+                aria-label={tab.label}
+                aria-current={isActive ? "page" : undefined}
+                className={cn(
+                  "press-down inline-flex h-9 flex-1 items-center justify-center gap-2 rounded-full px-2.5 font-mono text-[11px] uppercase tracking-[0.14em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]",
+                  isActive
+                    ? "bg-[var(--foreground)] text-[var(--background)]"
+                    : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]",
+                )}
+              >
+                <TabIcon size={16} aria-hidden />
+                {isActive && (
+                  <span className="overflow-hidden whitespace-nowrap">
+                    {tab.label}
+                  </span>
+                )}
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
 
-      {/* Right rail — wallet status */}
-      <WalletStatus />
+      <div className="flex justify-end">
+        {/* Right rail — wallet status */}
+        <WalletStatus />
+      </div>
     </header>
   );
 }

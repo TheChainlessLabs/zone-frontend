@@ -276,21 +276,57 @@ body[data-route="/404"] {
 }
 
 /* M5.4 (#227) — View Transitions cross-fade on route changes.
-   `@view-transition { navigation: auto }` opts the document into the API
-   so same-document navigations (driven by `<TransitionLink>` in
-   `components/shell/transition-link.tsx`) animate the root snapshot pair.
-   The 200ms duration with `--ease-standard` matches the M5.1 motion ladder.
-   Reduced-motion is handled by the global override below — it collapses
-   any `animation-duration`, including the view-transition keyframes, to
-   effectively-instant. Chromium-only today; Safari/Firefox simply ignore
-   these rules and the wrapper falls back to standard `next/link` clicks. */
-@view-transition {
-  navigation: auto;
-}
-::view-transition-old(root),
-::view-transition-new(root) {
-  animation-duration: 200ms;
-  animation-timing-function: var(--ease-standard);
+   `<TransitionLink>` wraps same-document navigations in the View Transitions
+   API when supported. The root snapshot is held still so shell chrome
+   (Navbar, MobileTabBar, banners) does not fade; only AppShell's named page
+   content snapshot cross-fades. Reduced-motion users bypass the API in
+   TransitionLink and this CSS opts out of automatic document transitions. */
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition {
+    navigation: auto;
+  }
+
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 150ms;
+    animation-timing-function: ease-out;
+  }
+
+  ::view-transition-old(omega-page-content),
+  ::view-transition-new(omega-page-content) {
+    animation-duration: 180ms;
+    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  ::view-transition-old(omega-page-content) {
+    animation-name: omega-page-old;
+  }
+
+  ::view-transition-new(omega-page-content) {
+    animation-name: omega-page-new;
+  }
+
+  @keyframes omega-page-old {
+    from {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    to {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+  }
+
+  @keyframes omega-page-new {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 }
 
 /* M5.1 (#224) — global reduced-motion override. Collapses any animation,

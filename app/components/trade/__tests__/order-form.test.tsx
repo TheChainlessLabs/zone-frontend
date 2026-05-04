@@ -17,14 +17,25 @@ it("renders Market mode by default with Buy/Sell + percentage shortcuts", () => 
       midpoint="0.9213"
     />,
   );
-  expect(screen.getByRole("tab", { name: "Market" })).toBeDefined();
-  expect(screen.getByRole("tab", { name: "Limit" })).toBeDefined();
   expect(screen.getByRole("radio", { name: /Buy/ })).toBeDefined();
   expect(screen.getByRole("radio", { name: /Sell/ })).toBeDefined();
   expect(screen.getByRole("button", { name: "25" })).toBeDefined();
   expect(screen.getByRole("button", { name: "50" })).toBeDefined();
   expect(screen.getByRole("button", { name: "75" })).toBeDefined();
   expect(screen.getByRole("button", { name: "MAX" })).toBeDefined();
+});
+
+it("does not render the in-form Market/Limit tabs (lifted to page-level OrderModeSelector)", () => {
+  render(
+    <OrderForm
+      pair={DEFAULT_PAIR}
+      mode="market"
+      onModeChange={() => {}}
+      midpoint="0.9213"
+    />,
+  );
+  expect(screen.queryByRole("tab", { name: "Market" })).toBeNull();
+  expect(screen.queryByRole("tab", { name: "Limit" })).toBeNull();
 });
 
 it("renders the top-line execution summary with side, pair, midpoint, and available balance", () => {
@@ -137,9 +148,8 @@ it("clicking submit opens the confirmation modal with the order summary", () => 
   fireEvent.click(screen.getByRole("button", { name: /Buy USDC/i }));
 
   expect(screen.getByRole("dialog")).toBeDefined();
-  // Receipt-format summary: ORDER PREVIEW header + numbered Sign action + privacy line
+  // Receipt-format summary: ORDER PREVIEW header + privacy line
   expect(screen.getByText(/ORDER PREVIEW/i)).toBeDefined();
-  expect(screen.getAllByText(/Sign/i).length).toBeGreaterThan(0);
   expect(screen.getByText(/Matches privately at midpoint/i)).toBeDefined();
 });
 
@@ -243,7 +253,7 @@ it("does not render the legacy 11px privacy footer line", () => {
   ).toBeNull();
 });
 
-it("does not render the in-form Type/Fee/Est. receive strip", () => {
+it("renders the in-form Midpoint / Est. received / Fee strip", () => {
   render(
     <OrderForm
       pair={DEFAULT_PAIR}
@@ -252,9 +262,10 @@ it("does not render the in-form Type/Fee/Est. receive strip", () => {
       midpoint="0.9213"
     />,
   );
-  expect(screen.queryByText("Type")).toBeNull();
-  expect(screen.queryByText("Fee")).toBeNull();
-  expect(screen.queryByText("Est. receive")).toBeNull();
+  expect(screen.getByText("Midpoint")).toBeDefined();
+  expect(screen.getByText("Est. received")).toBeDefined();
+  expect(screen.getByText("Fee")).toBeDefined();
+  expect(screen.queryByText("Settlement")).toBeNull();
 });
 
 it("hotkey B/S toggles side; M sets price to midpoint in limit mode", () => {

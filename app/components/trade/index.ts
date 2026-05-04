@@ -6,9 +6,9 @@ export {
   type OrderMode,
 } from "./order-form";
 export {
-  ExecutionContextStrip,
-  type ExecutionContextStripProps,
-} from "./execution-context-strip";
+  OrderModeSelector,
+  type OrderModeSelectorProps,
+} from "./order-mode-selector";
 export { ChartPlaceholder, type ChartPlaceholderProps } from "./chart-placeholder";
 export { YourFills, type YourFillsProps } from "./your-fills";
 export {

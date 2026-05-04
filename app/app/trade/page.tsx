@@ -27,8 +27,8 @@ import { Animate } from "@/components/ui/animate";
 import { Icon } from "@/lib/icons";
 import {
   ChartPlaceholder,
-  ExecutionContextStrip,
   OrderForm,
+  OrderModeSelector,
   PairSwitcher,
   YourFills,
   type OrderMode,
@@ -133,24 +133,35 @@ function TradeSurface() {
     </Animate>
   );
 
+  const modeSelector = (
+    <div className="flex justify-center">
+      <OrderModeSelector value={mode} onChange={setMode} />
+    </div>
+  );
+
   return (
     <>
       {mode === "market" ? (
-        <PageLayout width="narrow" bare>
+      <PageLayout width="narrow" bare>
           <div className="flex flex-col gap-4">
+            {modeSelector}
             {orderFormBlock}
-            <ExecutionContextStrip
-              midpoint={midpoint || undefined}
-              fee="0.005%"
-              settlement="Ethereum L1"
+            <YourFills
+              fills={state === "default" ? fixture.recentFills : []}
+              loading={isLoading}
+              errorMessage={errorMessage}
+              emptyMessage={fillsEmptyMessage}
             />
           </div>
         </PageLayout>
       ) : (
         <PageLayout width="wide" bare>
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[480px_1fr] lg:gap-8">
-            <div>{orderFormBlock}</div>
-            <div>{limitSideBlock}</div>
+          <div className="flex flex-col gap-4">
+            {modeSelector}
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-[480px_1fr] lg:gap-8">
+              <div>{orderFormBlock}</div>
+              <div>{limitSideBlock}</div>
+            </div>
           </div>
         </PageLayout>
       )}

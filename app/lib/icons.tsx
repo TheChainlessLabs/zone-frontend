@@ -18,6 +18,7 @@ import {
   AlertTriangle,
   ArrowDown,
   ArrowDownLeft,
+  ArrowLeftRight,
   ArrowRight,
   ArrowUp,
   ArrowUpRight,
@@ -33,6 +34,7 @@ import {
   EyeOff,
   HelpCircle,
   Info,
+  Layers,
   Lock,
   LogOut,
   Mail,
@@ -43,6 +45,7 @@ import {
   Shield,
   ShoppingCart,
   Sun,
+  User,
   Wallet,
   X,
   XCircle,
@@ -53,6 +56,7 @@ export const Icon = {
   // Order lifecycle
   Buy: ArrowUpRight,
   Sell: ArrowDownLeft,
+  Trade: ArrowLeftRight,
   Submit: ShoppingCart,
   Match: CheckCircle2,
   Settled: CheckCircle2,
@@ -60,6 +64,7 @@ export const Icon = {
   Cancelled: XCircle,
   Failed: AlertCircle,
   Proof: Shield,
+  Batches: Layers,
 
   // Wallet + auth
   Wallet,
@@ -67,6 +72,7 @@ export const Icon = {
   Disconnect: LogOut,
   Unauthorised: Lock,
   Mail,
+  Account: User,
   ArrowRight,
 
   // Privacy + status

@@ -32,12 +32,6 @@ import * as React from "react";
 import { OrderConfirmationModal } from "@/components/modals";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
 import { Animate } from "@/components/ui/animate";
 import { Icon } from "@/lib/icons";
 import { cn } from "@/lib/utils";
@@ -59,6 +53,7 @@ export interface OrderFormProps {
   onModeChange: (mode: OrderMode) => void;
   /** Live midpoint as a decimal string. Empty = unknown (em-dash). */
   midpoint: string;
+  fee?: string;
   /** When true, the form renders skeleton placeholders. */
   loading?: boolean;
   /** When set, the form renders an inline error tile in place of the CTA. */
@@ -88,6 +83,7 @@ export function OrderForm({
   mode,
   onModeChange,
   midpoint,
+  fee = "0.005%",
   loading = false,
   errorMessage,
   onSubmit,
@@ -208,20 +204,6 @@ export function OrderForm({
             available={MOCK_AVAILABLE}
             loading={loading}
           />
-
-          {/* Tabs: Market / Limit */}
-          <Tabs
-            value={mode}
-            onValueChange={(v) => onModeChange(v as OrderMode)}
-            className="w-full"
-          >
-            <TabsList className="grid h-9 w-full grid-cols-2">
-              <TabsTrigger value="market">Market</TabsTrigger>
-              <TabsTrigger value="limit">Limit</TabsTrigger>
-            </TabsList>
-            <TabsContent value="market" className="mt-0" />
-            <TabsContent value="limit" className="mt-0" />
-          </Tabs>
 
           {/* Buy / Sell segmented toggle. Hotkey badge inline so the affordance
               is discoverable. */}
@@ -352,14 +334,13 @@ export function OrderForm({
             ))}
           </div>
 
-          {/* You receive — restated at submit weight. */}
-          <div className="flex items-baseline justify-between rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--muted)]/40 px-3 py-3">
-            <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
-              You receive
-            </span>
-            <span className="font-mono text-lg tabular-nums text-[var(--foreground)]">
-              {estReceive ? `${formatGroup(estReceive)} ${pair.quote}` : "—"}
-            </span>
+          <div className="grid grid-cols-3 gap-px overflow-hidden rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--border)]">
+            <ContextCell label="Midpoint" value={midpoint || "—"} />
+            <ContextCell
+              label="Est. received"
+              value={estReceive ? `${formatGroup(estReceive)} ${pair.quote}` : "—"}
+            />
+            <ContextCell label="Fee" value={fee} />
           </div>
 
         {errorMessage ? (
@@ -405,7 +386,7 @@ export function OrderForm({
           amount={formatGroup(Number.parseFloat(pendingOrder.amount).toFixed(2))}
           price={pendingOrder.price}
           midpoint={midpoint}
-          fee="0.005%"
+          fee={fee}
           available={formatGroup(MOCK_AVAILABLE)}
           onConfirm={handleConfirm}
         />
@@ -466,6 +447,19 @@ function ExecSummaryRow({
         <span className="font-mono text-xs tabular-nums text-[var(--foreground)]">
           {loading ? "—" : `${formatGroup(available)} ${pair.base}`}
         </span>
+      </span>
+    </div>
+  );
+}
+
+function ContextCell({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex flex-col gap-1 bg-[var(--muted)]/40 px-3 py-2.5">
+      <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
+        {label}
+      </span>
+      <span className="font-mono text-sm tabular-nums text-[var(--foreground)]">
+        {value}
       </span>
     </div>
   );

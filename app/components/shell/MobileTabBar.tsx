@@ -3,9 +3,9 @@
 /**
  * MobileTabBar — bottom-of-viewport primary nav for ≤ md.
  *
- * Three tabs: Trade · Portfolio · Batches. Tap targets ≥ 44 × 44 to satisfy
- * the iOS HIG and Material guidelines. Safe-area inset bottom keeps the bar
- * above the home indicator on iOS.
+ * Three tabs: Trade · Portfolio · Batches. Tap targets ≥ 44 × 44
+ * satisfy the iOS HIG and Material guidelines. Safe-area inset bottom keeps
+ * the bar above the home indicator on iOS.
  *
  * Hidden on ≥ md; the desktop Navbar renders the same tabs in its center
  * slot. AppShell adds `pb-[calc(60px+env(safe-area-inset-bottom)+16px)]
@@ -14,19 +14,18 @@
  */
 
 import { usePathname } from "next/navigation";
-import { motion, useReducedMotion } from "motion/react";
 import { Icon } from "@/lib/icons";
 import { TransitionLink as Link } from "@/components/shell/transition-link";
+import { cn } from "@/lib/utils";
 
 const MOBILE_TABS = [
-  { href: "/trade", label: "Trade", icon: Icon.Buy },
+  { href: "/trade", label: "Trade", icon: Icon.Trade },
   { href: "/portfolio", label: "Portfolio", icon: Icon.Wallet },
-  { href: "/batches", label: "Batches", icon: Icon.Proof },
+  { href: "/batches", label: "Batches", icon: Icon.Batches },
 ] as const;
 
 export function MobileTabBar() {
   const pathname = usePathname() ?? "";
-  const reduce = useReducedMotion() ?? false;
 
   return (
     <nav
@@ -34,38 +33,29 @@ export function MobileTabBar() {
       className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--border)] bg-[var(--background)]/55 backdrop-blur-xl backdrop-saturate-[1.4] before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-[color-mix(in_oklab,var(--foreground)_8%,transparent)] md:hidden relative"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
-      <ul className="mx-auto flex h-[60px] max-w-md items-stretch justify-around">
+      <ul className="glass-pill mx-auto my-2 flex h-[52px] max-w-md items-center justify-center gap-1 rounded-full p-1">
         {MOBILE_TABS.map((tab) => {
-          const isActive =
-            pathname === tab.href || pathname.startsWith(`${tab.href}/`);
+          const isActive = pathname.startsWith(tab.href);
           const TabIcon = tab.icon;
           return (
             <li key={tab.href} className="flex-1">
               <Link
                 href={tab.href}
+                aria-label={tab.label}
                 aria-current={isActive ? "page" : undefined}
-                className={`relative flex h-full min-h-[44px] min-w-[44px] flex-col items-center justify-center gap-1 px-3 transition-colors ${
+                className={cn(
+                  "press-down inline-flex h-11 w-full min-w-[44px] items-center justify-center gap-2 rounded-xl px-3 font-mono text-[11px] uppercase tracking-[0.14em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]",
                   isActive
-                    ? "text-[var(--foreground)]"
-                    : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
-                }`}
-              >
-                {isActive && (
-                  <motion.span
-                    layoutId="mobile-tab-active"
-                    transition={
-                      reduce
-                        ? { duration: 0 }
-                        : { duration: 0.25, ease: [0.16, 1, 0.3, 1] }
-                    }
-                    aria-hidden
-                    className="absolute inset-x-4 top-0 h-[2px] rounded-full bg-[var(--foreground)]"
-                  />
+                    ? "bg-[var(--foreground)] text-[var(--background)]"
+                    : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]",
                 )}
+              >
                 <TabIcon size={18} aria-hidden />
-                <span className="font-mono text-[11px] uppercase tracking-[0.16em]">
-                  {tab.label}
-                </span>
+                {isActive && (
+                  <span className="overflow-hidden whitespace-nowrap truncate">
+                    {tab.label}
+                  </span>
+                )}
               </Link>
             </li>
           );

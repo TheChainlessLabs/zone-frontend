@@ -1,0 +1,59 @@
+{
+  "seed": "omega-blackhole-m8-v1",
+  "brandTokenReference": "omega-docs/03-brand/assets/tokens.json",
+  "narrative": {
+    "visibleTextLabels": false,
+    "beats": [
+      "event-horizon",
+      "gravitational-lensing",
+      "slow-accretion-disk"
+    ]
+  },
+  "render": {
+    "durationSeconds": 8,
+    "fps": 24,
+    "posterSeconds": 6.25,
+    "desktop": {
+      "width": 2560,
+      "height": 1440
+    },
+    "outputs": {
+      "desktop": {
+        "webm": "omega-blackhole-hero-desktop.webm",
+        "mp4": "omega-blackhole-hero-desktop.mp4",
+        "poster": "omega-blackhole-hero-poster.png"
+      }
+    },
+    "encoding": {
+      "webmCrf": 31,
+      "mp4Crf": 22
+    }
+  },
+  "artDirection": {
+    "coreRadius": 0.175,
+    "diskIntensity": 0.79,
+    "lensingStrength": 0.43,
+    "spinSpeed": 0.14,
+    "showBackgroundGuides": true,
+    "showOrderObjects": false,
+    "showRadiation": false,
+    "showProofCapsule": false,
+    "orderObjectCount": 6,
+    "radiationParticleCount": 500,
+    "proofCapsuleCount": 1,
+    "proofExitSeconds": 5.1,
+    "cameraDepth": 7,
+    "view": {
+      "pitchDegrees": -3,
+      "yawDegrees": -8,
+      "zoom": 0.88,
+      "diskSpread": 1.28
+    },
+    "composition": {
+      "horizonX": 0.44,
+      "horizonY": 0.5,
+      "proofExitX": 0.685,
+      "proofExitY": 0.48
+    }
+  }
+}

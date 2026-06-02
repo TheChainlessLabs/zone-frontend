@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Omega Blackhole Render Lab</title>
+    <script type="importmap">
+      {
+        "imports": {
+          "three/webgpu": "/node_modules/three/build/three.webgpu.js",
+          "three/tsl": "/node_modules/three/build/three.tsl.js",
+          "three/addons/": "/node_modules/three/examples/jsm/"
+        }
+      }
+    </script>
+    <style>
+      :root {
+        color-scheme: dark;
+        background: #030303;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        background: #030303;
+      }
+
+      body {
+        font-family: Geist, ui-sans-serif, system-ui, sans-serif;
+      }
+
+      button,
+      input {
+        font: inherit;
+      }
+
+      #stage {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        display: block;
+        width: 100vw;
+        height: 100vh;
+      }
+
+      .stage-grade {
+        position: fixed;
+        inset: 0;
+        z-index: 1;
+        pointer-events: none;
+        background:
+          radial-gradient(circle at 44% 50%, rgba(3, 3, 3, 0) 0 34%, rgba(3, 3, 3, 0.12) 62%, rgba(3, 3, 3, 0.34) 100%),
+          linear-gradient(112deg, rgba(18, 18, 18, 0.03), rgba(3, 3, 3, 0.08) 48%, rgba(9, 9, 9, 0.07));
+        mix-blend-mode: multiply;
+        opacity: 0.55;
+        transition: opacity 180ms ease;
+      }
+
+      body[data-background-guides="false"] .stage-grade {
+        opacity: 0;
+      }
+
+      [data-blackhole-lab] {
+        position: fixed;
+        top: 16px;
+        right: 16px;
+        z-index: 3;
+        width: min(360px, calc(100vw - 32px));
+        max-height: calc(100vh - 32px);
+        overflow: auto;
+        border: 1px solid rgba(250, 250, 250, 0.1);
+        border-radius: 14px;
+        background: rgba(9, 9, 11, 0.78);
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.08),
+          0 20px 80px rgba(0, 0, 0, 0.34);
+        color: #fafafa;
+        backdrop-filter: blur(24px) saturate(1.4);
+        -webkit-backdrop-filter: blur(24px) saturate(1.4);
+      }
+
+      .lab-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 16px 16px 12px;
+        border-bottom: 1px solid rgba(250, 250, 250, 0.08);
+      }
+
+      .lab-kicker,
+      .lab-status,
+      .lab-value {
+        color: rgba(250, 250, 250, 0.54);
+        font: 10px/1.35 ui-monospace, SFMono-Regular, Menlo, monospace;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .lab-title {
+        margin: 4px 0 0;
+        font-size: 14px;
+        font-weight: 520;
+        letter-spacing: 0;
+      }
+
+      .lab-controls {
+        display: grid;
+        gap: 14px;
+        padding: 14px 16px 16px;
+      }
+
+      .lab-control {
+        display: grid;
+        gap: 7px;
+      }
+
+      .lab-control-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .lab-label {
+        color: rgba(250, 250, 250, 0.82);
+        font-size: 12px;
+        line-height: 1.35;
+      }
+
+      input[type="range"] {
+        width: 100%;
+        accent-color: #fafafa;
+      }
+
+      .lab-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding-top: 2px;
+      }
+
+      .lab-button {
+        min-height: 32px;
+        border: 1px solid rgba(250, 250, 250, 0.12);
+        border-radius: 8px;
+        padding: 0 11px;
+        background: rgba(250, 250, 250, 0.08);
+        color: #fafafa;
+        cursor: pointer;
+      }
+
+      .lab-button:hover {
+        background: rgba(250, 250, 250, 0.12);
+      }
+
+      .lab-button[data-primary="true"] {
+        background: #fafafa;
+        color: #18181b;
+      }
+
+      .lab-toggle {
+        display: flex;
+        min-height: 36px;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        border: 1px solid rgba(250, 250, 250, 0.12);
+        border-radius: 8px;
+        padding: 0 11px;
+        background: rgba(250, 250, 250, 0.06);
+        color: #fafafa;
+        cursor: pointer;
+      }
+
+      .lab-toggle:hover {
+        background: rgba(250, 250, 250, 0.1);
+      }
+
+      .lab-toggle[aria-pressed="true"] {
+        background: rgba(250, 250, 250, 0.14);
+      }
+
+      body[data-debug="true"]::after {
+        position: fixed;
+        right: 16px;
+        bottom: 14px;
+        z-index: 2;
+        color: rgba(250, 250, 250, 0.58);
+        content: "Omega blackhole render lab";
+        font: 11px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      body[data-renderer="webgpu"] [data-renderer-label]::before {
+        content: "WebGPU";
+      }
+
+      body[data-renderer="webgl"] [data-renderer-label]::before {
+        content: "WebGL fallback";
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="stage" aria-hidden="true"></canvas>
+    <div class="stage-grade" aria-hidden="true"></div>
+    <aside data-blackhole-lab aria-label="Blackhole render controls">
+      <div class="lab-header">
+        <div>
+          <div class="lab-kicker">Omega asset lab</div>
+          <h1 class="lab-title">Blackhole hero tuning</h1>
+          <div class="lab-status" data-renderer-label></div>
+        </div>
+        <div class="lab-status" data-lab-status>Live</div>
+      </div>
+      <form class="lab-controls" data-lab-controls>
+        <label class="lab-control">
+          <span class="lab-control-row">
+            <span class="lab-label">Core Radius</span>
+            <span class="lab-value" data-lab-value="artDirection.coreRadius"></span>
+          </span>
+          <input type="range" min="0.11" max="0.24" step="0.001" data-config-path="artDirection.coreRadius" />
+        </label>
+        <label class="lab-control">
+          <span class="lab-control-row">
+            <span class="lab-label">Disk Intensity</span>
+            <span class="lab-value" data-lab-value="artDirection.diskIntensity"></span>
+          </span>
+          <input type="range" min="0.35" max="1.15" step="0.01" data-config-path="artDirection.diskIntensity" />
+        </label>
+        <label class="lab-control">
+          <span class="lab-control-row">
+            <span class="lab-label">Lensing Strength</span>
+            <span class="lab-value" data-lab-value="artDirection.lensingStrength"></span>
+          </span>
+          <input type="range" min="0.25" max="1.25" step="0.01" data-config-path="artDirection.lensingStrength" />
+        </label>
+        <label class="lab-control">
+          <span class="lab-control-row">
+            <span class="lab-label">Spin Speed</span>
+            <span class="lab-value" data-lab-value="artDirection.spinSpeed"></span>
+          </span>
+          <input type="range" min="0" max="0.25" step="0.01" data-config-path="artDirection.spinSpeed" />
+        </label>
+        <label class="lab-control">
+          <span class="lab-control-row">
+            <span class="lab-label">Horizon X</span>
+            <span class="lab-value" data-lab-value="artDirection.composition.horizonX"></span>
+          </span>
+          <input type="range" min="0.36" max="0.56" step="0.005" data-config-path="artDirection.composition.horizonX" />
+        </label>
+        <label class="lab-control">
+          <span class="lab-control-row">
+            <span class="lab-label">Horizon Y</span>
+            <span class="lab-value" data-lab-value="artDirection.composition.horizonY"></span>
+          </span>
+          <input type="range" min="0.38" max="0.6" step="0.005" data-config-path="artDirection.composition.horizonY" />
+        </label>
+        <label class="lab-control">
+          <span class="lab-control-row">
+            <span class="lab-label">Tilt Up / Down</span>
+            <span class="lab-value" data-lab-value="artDirection.view.pitchDegrees"></span>
+          </span>
+          <input type="range" min="-18" max="18" step="0.5" data-config-path="artDirection.view.pitchDegrees" />
+        </label>
+        <label class="lab-control">
+          <span class="lab-control-row">
+            <span class="lab-label">Turn Left / Right</span>
+            <span class="lab-value" data-lab-value="artDirection.view.yawDegrees"></span>
+          </span>
+          <input type="range" min="-36" max="36" step="0.5" data-config-path="artDirection.view.yawDegrees" />
+        </label>
+        <label class="lab-control">
+          <span class="lab-control-row">
+            <span class="lab-label">Zoom</span>
+            <span class="lab-value" data-lab-value="artDirection.view.zoom"></span>
+          </span>
+          <input type="range" min="0.65" max="1.65" step="0.01" data-config-path="artDirection.view.zoom" />
+        </label>
+        <label class="lab-control">
+          <span class="lab-control-row">
+            <span class="lab-label">Disk Spread</span>
+            <span class="lab-value" data-lab-value="artDirection.view.diskSpread"></span>
+          </span>
+          <input type="range" min="0.7" max="1.5" step="0.01" data-config-path="artDirection.view.diskSpread" />
+        </label>
+        <button class="lab-toggle" type="button" data-config-toggle="artDirection.showBackgroundGuides" aria-pressed="false">
+          <span class="lab-label">Background Guides</span>
+          <span class="lab-value" data-toggle-label="artDirection.showBackgroundGuides">Hidden</span>
+        </button>
+        <div class="lab-actions">
+          <button class="lab-button" type="button" data-save-config data-primary="true">Save Config</button>
+          <button class="lab-button" type="button" data-reset-config>Reload</button>
+        </div>
+      </form>
+    </aside>
+    <script type="module" src="/tools/blackhole-render/bootstrap.mjs"></script>
+    <script type="module" src="/tools/blackhole-render/lab-ui.mjs"></script>
+  </body>
+</html>

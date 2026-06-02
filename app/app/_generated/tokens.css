@@ -1,7 +1,7 @@
 /* GENERATED FILE — do not edit by hand.
  * Regenerate via `pnpm sync-tokens` (auto-runs before `pnpm dev` and `pnpm build`).
  * Source: omega-docs/03-brand/assets/tokens.json
- * Source SHA: d9f3d93a3b321f746468b8bb410756f92d1f58ee
+ * Source SHA: 4f9007b05bf8d6143525dd48f159914ef92c258e
  * Generator: scripts/sync-tokens.mjs
  */
 
@@ -48,8 +48,8 @@
   /* Motion — durations and easing curves. */
   --duration-press: 100ms;
   --duration-small: 150ms;
-  --duration-medium: 200ms;
-  --duration-large: 250ms;
+  --duration-medium: 300ms;
+  --duration-large: 500ms;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-inout: cubic-bezier(0.4, 0, 0.2, 1);
   --ease-in: cubic-bezier(0.7, 0, 1, 0.5);

@@ -49,6 +49,8 @@ export interface OrderConfirmationModalProps {
   fee?: string;
   /** Available balance in the base token, formatted. */
   available?: string;
+  /** Token symbol for the available balance. Defaults to the pair base. */
+  availableToken?: string;
   /** Preview timestamp in ISO-8601 UTC. Defaults to current time. */
   submittedAt?: string;
   errorMessage?: string;
@@ -68,6 +70,7 @@ export function OrderConfirmationModal({
   midpoint,
   fee = "0.005%",
   available,
+  availableToken,
   submittedAt,
   errorMessage = "Wallet rejected the signature. Try again or check your wallet.",
   onConfirm,
@@ -85,11 +88,12 @@ export function OrderConfirmationModal({
   const feeAmount = amountValue * feeRate;
   const netAmount = Math.max(amountValue - feeAmount, 0);
   const amountLabel = `${amount} ${base}`;
-  const availableLabel = `${available ?? amount} ${base}`;
+  const availableLabel = `${available ?? amount} ${availableToken ?? base}`;
   const feeLabel = `${formatFixedQuantity(feeAmount)} ${base}`;
   const netLabel = `${formatFixedQuantity(netAmount)} ${base}`;
   const typeLabel = mode === "limit" ? "Limit" : "Market";
   const sideLabel = side === "buy" ? "Buy" : "Sell";
+  const displayErrorMessage = formatOrderErrorMessage(errorMessage);
 
   return (
     <ModalShell
@@ -104,7 +108,7 @@ export function OrderConfirmationModal({
         </>
       }
     >
-      <div className="flex flex-col gap-5">
+      <div className="flex min-w-0 flex-col gap-5">
         <Receipt cta={undefined}>
           <Receipt.Header label="ORDER PREVIEW" />
           <Receipt.Metadata>
@@ -125,7 +129,7 @@ export function OrderConfirmationModal({
         </Receipt>
 
         {/* State surface */}
-        <ConfirmationStateSurface state={state} message={errorMessage} />
+        <ConfirmationStateSurface state={state} message={displayErrorMessage} />
 
         {/* CTAs */}
         <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
@@ -182,6 +186,14 @@ function formatFixedQuantity(value: number): string {
   return formatThousands(value.toFixed(2));
 }
 
+function formatOrderErrorMessage(message: string): string {
+  if (message.includes("Invalid params") && message.includes("eth_sendTransaction")) {
+    return "Tempo Wallet rejected the zone transaction request. Retry once; if it repeats, the wallet likely does not support this Omega Zone transaction path yet.";
+  }
+  if (message.length <= 320) return message;
+  return `${message.slice(0, 320).trim()}...`;
+}
+
 function ConfirmationStateSurface({
   state,
   message,
@@ -214,11 +226,11 @@ function ConfirmationStateSurface({
   }
 
   return (
-    <div className="flex flex-col gap-2 rounded-[var(--radius-md)] border border-[color-mix(in_oklab,var(--destructive)_30%,transparent)] bg-[color-mix(in_oklab,var(--destructive)_10%,transparent)] p-3">
+    <div className="flex min-w-0 max-w-full flex-col gap-2 overflow-hidden rounded-[var(--radius-md)] border border-[color-mix(in_oklab,var(--destructive)_30%,transparent)] bg-[color-mix(in_oklab,var(--destructive)_10%,transparent)] p-3">
       <Status state="failed" />
-      <span className="text-xs leading-relaxed text-[var(--foreground)]">
+      <p className="max-h-36 min-w-0 overflow-y-auto text-xs leading-relaxed text-[var(--foreground)] [overflow-wrap:anywhere]">
         {message}
-      </span>
+      </p>
     </div>
   );
 }

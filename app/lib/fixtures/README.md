@@ -15,7 +15,7 @@ app/lib/fixtures/
 ├── portfolio/                   /portfolio page states
 ├── batches/                     /batches list + detail + search
 ├── account/                     /account page states
-├── modals/                      ConnectWallet, Deposit, Withdraw, Order Confirmation
+├── modals/                      Tempo Wallet, Deposit, Withdraw, Order Confirmation
 └── use-page-state.ts            URL `?state=` reader hook
 ```
 

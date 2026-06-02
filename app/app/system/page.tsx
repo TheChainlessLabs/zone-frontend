@@ -100,15 +100,13 @@ import { Icon } from "@/lib/icons";
 import { DisconnectedState } from "@/components/DisconnectedState";
 import { NotFoundContents } from "@/components/NotFoundContents";
 import {
-  ConnectWalletModal,
   DepositModal,
-  EmailSignupModal,
   OrderConfirmationModal,
+  TempoWalletModal,
   WithdrawModal,
-  type ConnectWalletState,
   type DepositState,
-  type EmailSignupState,
   type OrderConfirmationState,
+  type TempoWalletState,
   type WithdrawState,
 } from "@/components/modals";
 
@@ -2463,7 +2461,7 @@ function EmptyStatesShowcase() {
       <PreviewFrame caption="DisconnectedState — no alpha pass">
         <DisconnectedState
           title="Phase-4 alpha pass required"
-          description="Connect a wallet that holds the alpha pass NFT."
+          description="Connect the Tempo Wallet that holds the alpha pass NFT."
           actionLabel="Learn more"
           icon={Icon.Info}
           onAction={() => toast("Learn more (preview)")}
@@ -2480,13 +2478,6 @@ function EmptyStatesShowcase() {
  * passed straight into the modal as a prop.
  * ------------------------------------------------------------------------ */
 
-const CONNECT_STATES: ConnectWalletState[] = [
-  "idle",
-  "connecting",
-  "connected",
-  "failed",
-  "no-nft-pass",
-];
 const DEPOSIT_STATES: DepositState[] = [
   "idle",
   "approving",
@@ -2508,21 +2499,16 @@ const ORDER_STATES: OrderConfirmationState[] = [
   "submitting",
   "failed",
 ];
-const EMAIL_SIGNUP_STATES: EmailSignupState[] = [
+const TEMPO_WALLET_STATES: TempoWalletState[] = [
   "idle",
-  "submitting",
-  "sent",
-  "expired",
-  "invalid",
-  "already-claimed",
-  "not-on-allowlist",
+  "connecting",
+  "connected",
+  "failed",
 ];
-
 function ModalsShowcase() {
   return (
     <div className="grid grid-cols-1 gap-12 md:grid-cols-2">
-      <EmailSignupModalDemo />
-      <ConnectModalDemo />
+      <TempoWalletModalDemo />
       <DepositModalDemo />
       <WithdrawModalDemo />
       <OrderModalDemo />
@@ -2567,54 +2553,29 @@ function ModalDemoCard({
     </div>
   );
 }
-function EmailSignupModalDemo() {
-  const [state, setState] = useState<EmailSignupState>("idle");
+
+function TempoWalletModalDemo() {
+  const [state, setState] = useState<TempoWalletState>("idle");
   const [open, setOpen] = useState(false);
 
   return (
     <ModalDemoCard
-      title="Email signup (v0)"
+      title="Tempo wallet"
       current={state}
-      states={EMAIL_SIGNUP_STATES}
-      onState={(s) => setState(s as EmailSignupState)}
-      snippet={`<EmailSignupModal\n  open\n  state="${state}"\n  email="alpha@omegamarkets.com"\n  onClose={close}\n/>`}
+      states={TEMPO_WALLET_STATES}
+      onState={(s) => setState(s as TempoWalletState)}
+      snippet={`<TempoWalletModal\n  open\n  state="${state}"\n  onClose={close}\n/>`}
     >
       <Button variant="outline" onClick={() => setOpen(true)}>
-        Open Email signup modal
+        Open Tempo wallet modal
       </Button>
-      <EmailSignupModal
+      <TempoWalletModal
         open={open}
         state={state}
-        email="alpha@omegamarkets.com"
+        address="0xa513e6e4b8f2a923d98304ec87f64353c4d5c853"
         onClose={() => setOpen(false)}
-        onSubmit={() => setState("sent")}
-      />
-    </ModalDemoCard>
-  );
-}
-
-function ConnectModalDemo() {
-  const [state, setState] = useState<ConnectWalletState>("idle");
-  const [open, setOpen] = useState(false);
-
-  return (
-    <ModalDemoCard
-      title="Connect wallet"
-      current={state}
-      states={CONNECT_STATES}
-      onState={(s) => setState(s as ConnectWalletState)}
-      snippet={`<ConnectWalletModal\n  open\n  state="${state}"\n  onClose={close}\n/>`}
-    >
-      <Button variant="outline" onClick={() => setOpen(true)}>
-        Open Connect modal
-      </Button>
-      <ConnectWalletModal
-        open={open}
-        state={state}
-        activeConnector="MetaMask"
-        onClose={() => setOpen(false)}
-        onSelectConnector={() => setState("connecting")}
-        onRetry={() => setState("connecting")}
+        onCreateAccount={() => setState("connecting")}
+        onSignIn={() => setState("connecting")}
       />
     </ModalDemoCard>
   );
@@ -2631,7 +2592,7 @@ function DepositModalDemo() {
       current={state}
       states={DEPOSIT_STATES}
       onState={(s) => setState(s as DepositState)}
-      snippet={`<DepositModal\n  open\n  state="${state}"\n  token="USDC"\n  permitSigned={${state !== "idle" && state !== "approving"}}\n  onClose={close}\n/>`}
+      snippet={`<DepositModal\n  open\n  state="${state}"\n  token="PATH.USD"\n  permitSigned={${state !== "idle" && state !== "approving"}}\n  onClose={close}\n/>`}
     >
       <Button variant="outline" onClick={() => setOpen(true)}>
         Open Deposit modal
@@ -2639,7 +2600,7 @@ function DepositModalDemo() {
       <DepositModal
         open={open}
         state={state}
-        token="USDC"
+        token="PATH.USD"
         amount={amount}
         permitSigned={state !== "idle" && state !== "approving"}
         onAmountChange={setAmount}
@@ -2662,7 +2623,7 @@ function WithdrawModalDemo() {
       current={state}
       states={WITHDRAW_STATES}
       onState={(s) => setState(s as WithdrawState)}
-      snippet={`<WithdrawModal\n  open\n  state="${state}"\n  token="USDC"\n  onSubmit={submit}\n  onClose={close}\n/>`}
+      snippet={`<WithdrawModal\n  open\n  state="${state}"\n  token="PATH.USD"\n  onSubmit={submit}\n  onClose={close}\n/>`}
     >
       <Button variant="outline" onClick={() => setOpen(true)}>
         Open Withdraw modal
@@ -2670,7 +2631,7 @@ function WithdrawModalDemo() {
       <WithdrawModal
         open={open}
         state={state}
-        token="USDC"
+        token="PATH.USD"
         onClose={() => setOpen(false)}
         onSubmit={() => setState("signing")}
         onRetry={() => setState("signing")}

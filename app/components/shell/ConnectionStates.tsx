@@ -5,10 +5,10 @@
  * auth-required route can't render its real content.
  *
  * Three branches:
- *   • DisconnectedState  — wallet not connected
+ *   • DisconnectedState  — Tempo wallet not connected
  *   • NoNftPassState     — wallet connected, but no Phase-4 NFT pass (#12)
  *   • WrongNetworkBanner — sticky-top banner shown above any route while
- *                          the wallet is on the wrong chain
+ *                          the wallet is off Tempo
  *
  * Voice: omega-docs/03-brand/messaging.md — terse, no exclamation marks,
  * no anxiety verbs ("trapped", "lost"), no apology pile-up.
@@ -18,7 +18,7 @@ import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/lib/icons";
 import { useWalletState } from "@/components/shell/WalletStateProvider";
-import { EmailSignupModal } from "@/components/modals";
+import { TempoWalletModal } from "@/components/modals";
 
 export function DisconnectedState({ routeLabel }: { routeLabel?: string }) {
   const wallet = useWalletState();
@@ -31,12 +31,15 @@ export function DisconnectedState({ routeLabel }: { routeLabel?: string }) {
   const modalOpen =
     openRequested ||
     wallet.state === "signing-up" ||
-    wallet.state === "magic-link-sent";
+    wallet.state === "connecting" ||
+    Boolean(wallet.errorMessage);
   const modalState =
-    wallet.state === "signing-up"
-      ? ("submitting" as const)
-      : wallet.state === "magic-link-sent"
-      ? ("sent" as const)
+    wallet.errorMessage
+      ? ("failed" as const)
+      : wallet.state === "signing-up" || wallet.state === "connecting"
+      ? ("connecting" as const)
+      : wallet.state === "connected"
+      ? ("connected" as const)
       : ("idle" as const);
 
   return (
@@ -45,18 +48,17 @@ export function DisconnectedState({ routeLabel }: { routeLabel?: string }) {
         aria-hidden
         className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--border)] text-[var(--muted-foreground)]"
       >
-        <Icon.Mail size={18} />
+        <Icon.Wallet size={18} />
       </span>
       <div className="flex flex-col gap-2">
         <h1 className="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
           {routeLabel ?? "Sign in required"}
         </h1>
         <p className="text-2xl font-medium tracking-tight md:text-3xl">
-          Sign up to continue
+          Connect Tempo Wallet
         </p>
         <p className="mx-auto max-w-md text-sm leading-relaxed text-[var(--muted-foreground)]">
-          Omega is read-only until you sign in with email. We'll send a
-          magic link to activate your account.
+          Omega is read-only until your Tempo account is connected.
         </p>
       </div>
       <Button
@@ -64,15 +66,20 @@ export function DisconnectedState({ routeLabel }: { routeLabel?: string }) {
         onClick={() => setOpenRequested(true)}
         className="min-h-[44px] md:min-h-0"
       >
-        <Icon.Mail aria-hidden />
-        <span>Sign up</span>
+        <Icon.Wallet aria-hidden />
+        <span>Tempo wallet</span>
       </Button>
-      <EmailSignupModal
+      <TempoWalletModal
         open={modalOpen}
         state={modalState}
-        email={wallet.email}
-        onClose={() => setOpenRequested(false)}
-        onSubmit={(nextEmail) => wallet.signUp(nextEmail)}
+        address={wallet.address}
+        errorMessage={wallet.errorMessage}
+        onClose={() => {
+          wallet.clearError();
+          setOpenRequested(false);
+        }}
+        onCreateAccount={() => wallet.signUp()}
+        onSignIn={() => wallet.connect("Tempo Wallet")}
       />
     </main>
   );
@@ -130,18 +137,18 @@ export function WrongNetworkBanner() {
         <span className="text-[var(--destructive)]/80">
           You're on{" "}
           <span className="font-mono">{chainName ?? "an unsupported chain"}</span>
-          . Switch to Ethereum mainnet to continue.
+          . Switch to Omega Zone to continue.
         </span>
       </div>
       <Button
         variant="destructive"
         size="sm"
         onClick={() => switchNetwork()}
-        aria-label="Switch to Ethereum mainnet"
+        aria-label="Switch to Omega Zone"
         className="min-h-[44px] shrink-0 sm:min-h-0"
       >
         <span className="sm:hidden">Switch network</span>
-        <span className="hidden sm:inline">Switch to Ethereum mainnet</span>
+        <span className="hidden sm:inline">Switch to Omega Zone</span>
       </Button>
     </div>
   );

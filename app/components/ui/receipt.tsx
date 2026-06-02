@@ -59,7 +59,7 @@ const ReceiptRoot = React.forwardRef<HTMLDivElement, ReceiptProps>(
     <div
       ref={ref}
       className={cn(
-        "font-mono rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--card)] text-[var(--foreground)] shadow-[inset_0_0_0_1px_var(--surface-edge)]",
+        "min-w-0 max-w-full overflow-hidden font-mono rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--card)] text-[var(--foreground)] shadow-[inset_0_0_0_1px_var(--surface-edge)]",
         className,
       )}
       {...props}
@@ -136,11 +136,11 @@ function ReceiptRow({ label, value }: ReceiptRowProps) {
   const kind = React.useContext(ReceiptSectionContext);
 
   return (
-    <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] items-start gap-x-4">
-      <dt className="text-[var(--muted-foreground)]">{label}</dt>
+    <div className="grid min-w-0 grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)] items-start gap-x-4">
+      <dt className="min-w-0 truncate text-[var(--muted-foreground)]">{label}</dt>
       <dd
         className={cn(
-          "min-w-0 text-right tabular-nums text-[var(--foreground)]",
+          "min-w-0 overflow-hidden text-right tabular-nums text-[var(--foreground)]",
           kind === "totals" ? "font-semibold" : "font-medium",
         )}
       >
@@ -224,7 +224,7 @@ function ReceiptValueNode({ value }: { value: ReceiptValue }) {
     return <ReceiptHashValue value={value} />;
   }
   if (typeof value === "number") {
-    return <span className="block truncate">{value}</span>;
+    return <span className="block truncate" title={String(value)}>{value}</span>;
   }
 
   if (typeof value !== "string") {
@@ -235,7 +235,7 @@ function ReceiptValueNode({ value }: { value: ReceiptValue }) {
     return <ReceiptHashValue value={{ display: truncateHash(value), full: value }} />;
   }
 
-  return <span className="block truncate">{value}</span>;
+  return <span className="block truncate" title={value}>{value}</span>;
 }
 
 function ReceiptHashValue({ value }: { value: ReceiptLinkedValue }) {

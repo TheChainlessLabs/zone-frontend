@@ -25,10 +25,19 @@ import {
 } from "@/lib/format";
 import {
   batchesListFixtures,
-  batchesSearchFixtures,
   usePageState,
 } from "@/lib/fixtures";
-import type { BatchFixture, BatchStatus } from "@/lib/fixtures/types";
+import type {
+  BatchFixture,
+  BatchStatus,
+  MarketPair,
+} from "@/lib/fixtures/types";
+import {
+  listZoneBatches,
+  searchZoneBatch,
+  type ZoneBatchSummary,
+  type ZoneBatchStatus,
+} from "@/lib/zone";
 
 import { CopyButton } from "./copy-button";
 import { EtherscanTxLink } from "./etherscan-link";
@@ -36,11 +45,12 @@ import { EtherscanTxLink } from "./etherscan-link";
 /**
  * BatchesListView — the public settlement explorer.
  *
- * Default state shows the last 100 sealed batches paginated client-side
- * (per omega-docs#5 Q3). Search by batch ID or tx hash narrows the table
- * to a search-results fixture. The page is read-only and renders
- * regardless of wallet state — privacy hard rule: NO counterparty IDs
- * anywhere on this surface.
+ * Default state shows the latest zone batch windows paginated client-side.
+ * Pending windows are locally produced zone blocks that have not settled on
+ * L1 yet. Search by batch ID or tx hash narrows the table to a
+ * search-results fixture. The page is read-only and renders regardless of
+ * wallet state — privacy hard rule: NO counterparty IDs anywhere on this
+ * surface.
  *
  * Visual register: tempo-explorer flat-table (M4.20). Single card with a
  * 1px border, mono everywhere inside the table, hairline row dividers,
@@ -63,7 +73,48 @@ const STATUS_DOT: Record<BatchStatus, { color: string; label: string }> = {
 
 export function BatchesListView() {
   const state = usePageState();
-  const fallback = batchesListFixtures.default;
+  const [search, setSearch] = React.useState("");
+  const [pageSize, setPageSize] = React.useState<PageSize>(100);
+  const [page, setPage] = React.useState(1);
+  const [liveRows, setLiveRows] = React.useState<BatchFixture[]>([]);
+  const [liveState, setLiveState] = React.useState<
+    "loading" | "ready" | "error"
+  >("loading");
+  const [liveError, setLiveError] = React.useState<string | undefined>();
+
+  const searchParam = useSearchParam("search");
+
+  React.useEffect(() => {
+    if (searchParam) setSearch(searchParam);
+  }, [searchParam]);
+
+  React.useEffect(() => {
+    if (state !== "default") return;
+    let cancelled = false;
+    const timeout = window.setTimeout(async () => {
+      setLiveState("loading");
+      setLiveError(undefined);
+      try {
+        const query = search.trim();
+        const batches = query
+          ? compactBatch(await searchZoneBatch(query))
+          : (await listZoneBatches({ limit: pageSize })).batches;
+        if (cancelled) return;
+        setLiveRows(batches.map(zoneBatchToFixture));
+        setLiveState("ready");
+      } catch (error) {
+        if (cancelled) return;
+        setLiveError(getErrorMessage(error));
+        setLiveState("error");
+      }
+    }, search.trim() ? 250 : 0);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeout);
+    };
+  }, [pageSize, search, state]);
+
   const fixture =
     state === "empty"
       ? batchesListFixtures.empty
@@ -71,30 +122,17 @@ export function BatchesListView() {
         ? batchesListFixtures.loading
         : state === "error"
           ? batchesListFixtures.error
-          : fallback;
+          : null;
 
-  const [search, setSearch] = React.useState("");
-  const [pageSize, setPageSize] = React.useState<PageSize>(100);
-  const [page, setPage] = React.useState(1);
+  const isLoading = fixture?.isLoading || (state === "default" && liveState === "loading");
+  const error =
+    fixture?.error ??
+    (state === "default" && liveState === "error"
+      ? { message: liveError ?? "Failed to load batches.", code: "ZONE_RPC" }
+      : undefined);
 
-  const searchParam = useSearchParam("search");
-  const searchFixture =
-    searchParam === "results"
-      ? batchesSearchFixtures.results
-      : searchParam === "no-results"
-        ? batchesSearchFixtures["no-results"]
-        : null;
-
-  React.useEffect(() => {
-    if (searchFixture) setSearch(searchFixture.query);
-  }, [searchFixture]);
-
-  const isLoading = !!fixture.isLoading && !searchFixture;
-  const error = !searchFixture ? fixture.error : undefined;
-
-  const rows: BatchFixture[] = searchFixture
-    ? searchFixture.results
-    : fixture.batches;
+  const rows: BatchFixture[] =
+    state === "default" ? liveRows : fixture?.batches ?? [];
 
   const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
   const safePage = Math.min(page, totalPages);
@@ -107,7 +145,7 @@ export function BatchesListView() {
     <PageLayout
       width="wide"
       title="Batches"
-      description="Sealed settlement batches with on-chain attestation. Public, verifiable."
+      description="Live zone block windows and L1 settlement batches. Pending ranges are local until proof submission lands."
     >
       <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-4">
         <div className="relative flex w-full items-center md:max-w-md">
@@ -172,9 +210,9 @@ export function BatchesListView() {
         </div>
       </div>
 
-      {searchFixture && searchFixture.results.length === 0 ? (
+      {search.trim() && !isLoading && !error && rows.length === 0 ? (
         <ListMessage
-          title={`No batches match "${searchFixture.query}".`}
+          title={`No batches match "${search.trim()}".`}
           description="Try a different ID or hash."
         />
       ) : isLoading ? (
@@ -198,8 +236,8 @@ export function BatchesListView() {
         />
       ) : rows.length === 0 ? (
         <ListMessage
-          title="No batches sealed yet."
-          description="Check back after the first market open."
+          title="No zone batches yet."
+          description="Check back after the zone produces its first block range."
         />
       ) : (
         <BatchesTable
@@ -217,6 +255,132 @@ export function BatchesListView() {
       )}
     </PageLayout>
   );
+}
+
+export function zoneBatchToFixture(batch: ZoneBatchSummary): BatchFixture {
+  const aggregatePairs = Array.isArray(batch.aggregatePairs)
+    ? batch.aggregatePairs
+    : [];
+  return {
+    number: Number(BigInt(batch.batchNumber)),
+    zoneBlockFrom: formatZoneBlockNumber(batch.zoneBlockFrom),
+    zoneBlockTo: formatZoneBlockNumber(batch.zoneBlockTo),
+    root: asHex(batch.root),
+    status: zoneStatusToFixture(batch.status),
+    sealedAt: timestampToIso(batch.sealedAt ?? batch.settledAt),
+    orderCount: Number(batch.orderCount ?? 0),
+    fillCount: Number(batch.fillCount ?? 0),
+    settlementTx: isHexString(batch.settlementTxHash)
+      ? batch.settlementTxHash
+      : null,
+    proofRef: isHexString(batch.proofRef) ? batch.proofRef : undefined,
+    pairs: aggregatePairs.filter(isKnownPair),
+    volumeUsd: aggregateVolumeToUsd(batch.aggregateVolume),
+  };
+}
+
+function zoneStatusToFixture(status: ZoneBatchStatus): BatchStatus {
+  if (status === "failed") return "failed";
+  if (status === "settled" || status === "verified") return "verified";
+  return "pending";
+}
+
+function compactBatch(batch: ZoneBatchSummary | null): ZoneBatchSummary[] {
+  return batch ? [batch] : [];
+}
+
+function aggregateVolumeToUsd(value: unknown): string | undefined {
+  if (!value || (Array.isArray(value) && value.length === 0)) return undefined;
+  if (typeof value === "string") return value;
+  if (Array.isArray(value)) {
+    const total = value.reduce<number>((sum, entry) => {
+      if (!entry || typeof entry !== "object") return sum;
+      const amount = (entry as { amount?: unknown }).amount;
+      if (typeof amount === "number") return sum + amount;
+      if (typeof amount === "string") {
+        const parsed = Number(amount.startsWith("0x") ? BigInt(amount) : amount);
+        return Number.isFinite(parsed) ? sum + parsed / 1_000_000 : sum;
+      }
+      return sum;
+    }, 0);
+    return total > 0 ? String(total) : undefined;
+  }
+  if (typeof value !== "object") return undefined;
+  const values = Object.values(value as Record<string, unknown>);
+  if (values.length === 0) return undefined;
+  const total = values.reduce<number>((sum, next) => {
+    if (typeof next === "number") return sum + next;
+    if (typeof next === "string") {
+      const parsed = Number(next);
+      return Number.isFinite(parsed) ? sum + parsed : sum;
+    }
+    return sum;
+  }, 0);
+  return total > 0 ? String(total) : undefined;
+}
+
+function isKnownPair(value: string): value is MarketPair {
+  return value === "OALPHA/PATH.USD";
+}
+
+function isHexString(value: unknown): value is `0x${string}` {
+  return typeof value === "string" && value.startsWith("0x");
+}
+
+function asHex(value: string): `0x${string}` {
+  return isHexString(value)
+    ? value
+    : "0x0000000000000000000000000000000000000000000000000000000000000000";
+}
+
+function formatZoneBlockNumber(value: unknown): string | undefined {
+  if (value == null) return undefined;
+  try {
+    const parsed =
+      typeof value === "bigint"
+        ? value
+        : typeof value === "number"
+          ? BigInt(value)
+          : typeof value === "string"
+            ? BigInt(value)
+            : null;
+    if (parsed === null) return undefined;
+    return parsed.toLocaleString("en-US");
+  } catch {
+    return undefined;
+  }
+}
+
+function zoneBlockRangeLabel(batch: BatchFixture): string | null {
+  if (!batch.zoneBlockFrom || !batch.zoneBlockTo) return null;
+  return `Zone blocks #${batch.zoneBlockFrom}–#${batch.zoneBlockTo}`;
+}
+
+function isPendingZoneRange(batch: BatchFixture): boolean {
+  return batch.status === "pending" && zoneBlockRangeLabel(batch) !== null;
+}
+
+function timestampToIso(value: unknown): string {
+  const fallback = new Date().toISOString();
+  if (value == null) return fallback;
+  try {
+    const seconds =
+      typeof value === "number"
+        ? value
+        : typeof value === "bigint"
+          ? Number(value)
+          : typeof value === "string"
+            ? Number(BigInt(value))
+            : Number.NaN;
+    if (!Number.isFinite(seconds) || seconds <= 0) return fallback;
+    return new Date(seconds * 1000).toISOString();
+  } catch {
+    return fallback;
+  }
+}
+
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : "Failed to load batches.";
 }
 
 /* ────────────────────────────────────────────────────────────────────────── */
@@ -266,7 +430,7 @@ function BatchesTable({
           <thead>
             <tr className="border-b border-[var(--border)]">
               <Th className="w-[8%] text-left">Batch</Th>
-              <Th className="w-[14%] text-left">Sealed</Th>
+              <Th className="w-[18%] text-left">Window</Th>
               <Th className="w-[8%] text-right">Fills</Th>
               <Th className="w-[14%] text-right">Volume</Th>
               <Th
@@ -345,6 +509,8 @@ function Th({
 
 function BatchRow({ batch }: { batch: BatchFixture }) {
   const status = STATUS_DOT[batch.status];
+  const rangeLabel = zoneBlockRangeLabel(batch);
+  const pendingRange = isPendingZoneRange(batch);
   return (
     <tr className="group border-b border-[var(--border)] transition-[background-color] duration-75 ease-[var(--ease-standard)] last:border-b-0 hover:bg-[var(--muted)]/30 hover:-mt-px hover:border-t hover:border-[var(--border)]">
       <Td className="text-left">
@@ -356,16 +522,28 @@ function BatchRow({ batch }: { batch: BatchFixture }) {
         </Link>
       </Td>
       <Td className="text-left text-[var(--muted-foreground)]">
-        {formatRelativeTime(batch.sealedAt)}
+        <span className="flex flex-col gap-0.5">
+          <span className="text-[var(--foreground)]">
+            {rangeLabel ?? formatRelativeTime(batch.sealedAt)}
+          </span>
+          {pendingRange ? (
+            <span className="text-[10px] uppercase tracking-[0.16em]">
+              Awaiting L1 settlement
+            </span>
+          ) : null}
+        </span>
       </Td>
       <Td className="text-right tabular-nums">
         {formatThousands(String(batch.fillCount))}
       </Td>
       <Td className="text-right tabular-nums">
-        {batch.volumeUsd ? formatUSD(batch.volumeUsd) : "—"}
+        {batch.volumeUsd ? formatUSD(batch.volumeUsd) : pendingRange ? "pending" : "—"}
       </Td>
       <Td className="text-left">
-        <PairsCluster pairs={batch.pairs ?? []} />
+        <PairsCluster
+          pairs={batch.pairs ?? []}
+          fallback={pendingRange ? "waiting for fills" : "—"}
+        />
       </Td>
       <Td className="text-left">
         <span className="inline-flex items-center gap-2">
@@ -381,7 +559,7 @@ function BatchRow({ batch }: { batch: BatchFixture }) {
         <HashRefCell
           hash={batch.settlementTx}
           copyLabel={`Copy settlement tx for batch #${batch.number}`}
-          fallback="pending"
+          fallback={pendingRange ? "not submitted" : "pending"}
         />
       </Td>
     </tr>
@@ -409,6 +587,8 @@ function Td({
 
 function BatchRowMobile({ batch }: { batch: BatchFixture }) {
   const status = STATUS_DOT[batch.status];
+  const rangeLabel = zoneBlockRangeLabel(batch);
+  const pendingRange = isPendingZoneRange(batch);
   return (
     <Link
       href={`/batches/${batch.number}`}
@@ -430,18 +610,23 @@ function BatchRowMobile({ batch }: { batch: BatchFixture }) {
         </span>
       </div>
       <div className="flex items-center justify-between gap-3 font-mono text-[11px] text-[var(--muted-foreground)]">
-        <span>{formatRelativeTime(batch.sealedAt)}</span>
+        <span>{rangeLabel ?? formatRelativeTime(batch.sealedAt)}</span>
         <span className="tabular-nums text-[var(--foreground)]">
-          {batch.volumeUsd ? formatUSD(batch.volumeUsd) : "—"}
+          {batch.volumeUsd ? formatUSD(batch.volumeUsd) : pendingRange ? "pending" : "—"}
         </span>
       </div>
+      {pendingRange ? (
+        <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--muted-foreground)]">
+          Awaiting L1 settlement
+        </span>
+      ) : null}
       <div className="flex items-center justify-between gap-3 font-mono text-[11px] text-[var(--muted-foreground)]">
         <span className="shrink-0 tabular-nums">
           {formatThousands(String(batch.fillCount))} fills
         </span>
         <span className="min-w-0 flex-1 truncate text-right text-[var(--foreground)]">
           {(batch.pairs ?? []).length === 0
-            ? "—"
+            ? pendingRange ? "waiting for fills" : "—"
             : (() => {
                 const pairs = batch.pairs ?? [];
                 const visible = pairs.slice(0, 2);
@@ -458,14 +643,18 @@ function BatchRowMobile({ batch }: { batch: BatchFixture }) {
 
 function PairsCluster({
   pairs,
+  fallback = "—",
   max = 3,
 }: {
   pairs: readonly string[];
+  fallback?: string;
   max?: number;
 }) {
   if (pairs.length === 0) {
     return (
-      <span className="font-mono text-xs text-[var(--muted-foreground)]">—</span>
+      <span className="font-mono text-xs text-[var(--muted-foreground)]">
+        {fallback}
+      </span>
     );
   }
   const visible = pairs.slice(0, max);

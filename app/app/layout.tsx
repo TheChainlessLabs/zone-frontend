@@ -4,6 +4,7 @@ import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { Source_Serif_4 } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
+import { TempoWalletProvider } from "@/components/shell/TempoWalletProvider";
 import { WalletStateProvider } from "@/components/shell/WalletStateProvider";
 import { RouteAtmosphere } from "@/components/shell/RouteAtmosphere";
 import { HashHighlightMount } from "@/components/shell/HashHighlightMount";
@@ -22,8 +23,11 @@ const sourceSerif = Source_Serif_4({
 });
 
 export const metadata: Metadata = {
-  title: "Omega Markets — Brand Board",
-  description: "Anonymous spot FX. On-chain settlement.",
+  title: {
+    default: "Omega Markets",
+    template: "%s — Omega Markets",
+  },
+  description: "Private stablecoin trading on Omega Zone.",
 };
 
 // Viewport metadata is required so the /system + /brand showcases reflow
@@ -54,7 +58,9 @@ export default function RootLayout({
         <Suspense fallback={null}>
           <RouteAtmosphere />
           <HashHighlightMount />
-          <WalletStateProvider>{children}</WalletStateProvider>
+          <TempoWalletProvider>
+            <WalletStateProvider>{children}</WalletStateProvider>
+          </TempoWalletProvider>
         </Suspense>
         <Toaster />
       </body>

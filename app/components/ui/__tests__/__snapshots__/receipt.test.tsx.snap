@@ -5,7 +5,7 @@ exports[`matches the snapshot for each receipt story scenario > fill-drilldown 1
   class="w-[420px] max-w-full"
 >
   <div
-    class="font-mono rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--card)] text-[var(--foreground)] shadow-[inset_0_0_0_1px_var(--surface-edge)]"
+    class="min-w-0 max-w-full overflow-hidden font-mono rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--card)] text-[var(--foreground)] shadow-[inset_0_0_0_1px_var(--surface-edge)]"
   >
     <div
       class="flex items-center justify-between gap-4 border-b border-[var(--border)] px-4 py-3"
@@ -49,69 +49,72 @@ exports[`matches the snapshot for each receipt story scenario > fill-drilldown 1
       class="flex flex-col gap-2 px-4 py-3 text-xs"
     >
       <div
-        class="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] items-start gap-x-4"
+        class="grid min-w-0 grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)] items-start gap-x-4"
       >
         <dt
-          class="text-[var(--muted-foreground)]"
+          class="min-w-0 truncate text-[var(--muted-foreground)]"
         >
           Fill id
         </dt>
         <dd
-          class="min-w-0 text-right tabular-nums text-[var(--foreground)] font-medium"
+          class="min-w-0 overflow-hidden text-right tabular-nums text-[var(--foreground)] font-medium"
         >
           <span
             class="block truncate"
+            title="F-118-04"
           >
             F-118-04
           </span>
         </dd>
       </div>
       <div
-        class="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] items-start gap-x-4"
+        class="grid min-w-0 grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)] items-start gap-x-4"
       >
         <dt
-          class="text-[var(--muted-foreground)]"
+          class="min-w-0 truncate text-[var(--muted-foreground)]"
         >
           Pair
         </dt>
         <dd
-          class="min-w-0 text-right tabular-nums text-[var(--foreground)] font-medium"
+          class="min-w-0 overflow-hidden text-right tabular-nums text-[var(--foreground)] font-medium"
         >
           <span
             class="block truncate"
+            title="WBTC/USDC"
           >
             WBTC/USDC
           </span>
         </dd>
       </div>
       <div
-        class="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] items-start gap-x-4"
+        class="grid min-w-0 grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)] items-start gap-x-4"
       >
         <dt
-          class="text-[var(--muted-foreground)]"
+          class="min-w-0 truncate text-[var(--muted-foreground)]"
         >
           Counterparty
         </dt>
         <dd
-          class="min-w-0 text-right tabular-nums text-[var(--foreground)] font-medium"
+          class="min-w-0 overflow-hidden text-right tabular-nums text-[var(--foreground)] font-medium"
         >
           <span
             class="block truncate"
+            title="Internal dark pool"
           >
             Internal dark pool
           </span>
         </dd>
       </div>
       <div
-        class="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] items-start gap-x-4"
+        class="grid min-w-0 grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)] items-start gap-x-4"
       >
         <dt
-          class="text-[var(--muted-foreground)]"
+          class="min-w-0 truncate text-[var(--muted-foreground)]"
         >
           Fill tx
         </dt>
         <dd
-          class="min-w-0 text-right tabular-nums text-[var(--foreground)] font-medium"
+          class="min-w-0 overflow-hidden text-right tabular-nums text-[var(--foreground)] font-medium"
         >
           <a
             class="inline-flex max-w-full items-center justify-end gap-1 truncate underline-offset-4 hover:underline"
@@ -152,18 +155,19 @@ exports[`matches the snapshot for each receipt story scenario > fill-drilldown 1
         </dd>
       </div>
       <div
-        class="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] items-start gap-x-4"
+        class="grid min-w-0 grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)] items-start gap-x-4"
       >
         <dt
-          class="text-[var(--muted-foreground)]"
+          class="min-w-0 truncate text-[var(--muted-foreground)]"
         >
           Settled at
         </dt>
         <dd
-          class="min-w-0 text-right tabular-nums text-[var(--foreground)] font-medium"
+          class="min-w-0 overflow-hidden text-right tabular-nums text-[var(--foreground)] font-medium"
         >
           <span
             class="block truncate"
+            title="2026-04-30 09:28:03 UTC"
           >
             2026-04-30 09:28:03 UTC
           </span>
@@ -274,54 +278,57 @@ exports[`matches the snapshot for each receipt story scenario > fill-drilldown 1
       class="flex flex-col gap-2 border-t border-[var(--border)] px-4 py-3 text-xs"
     >
       <div
-        class="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] items-start gap-x-4"
+        class="grid min-w-0 grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)] items-start gap-x-4"
       >
         <dt
-          class="text-[var(--muted-foreground)]"
+          class="min-w-0 truncate text-[var(--muted-foreground)]"
         >
           Fill size
         </dt>
         <dd
-          class="min-w-0 text-right tabular-nums text-[var(--foreground)] font-semibold"
+          class="min-w-0 overflow-hidden text-right tabular-nums text-[var(--foreground)] font-semibold"
         >
           <span
             class="block truncate"
+            title="0.1500 WBTC"
           >
             0.1500 WBTC
           </span>
         </dd>
       </div>
       <div
-        class="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] items-start gap-x-4"
+        class="grid min-w-0 grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)] items-start gap-x-4"
       >
         <dt
-          class="text-[var(--muted-foreground)]"
+          class="min-w-0 truncate text-[var(--muted-foreground)]"
         >
           Fee
         </dt>
         <dd
-          class="min-w-0 text-right tabular-nums text-[var(--foreground)] font-semibold"
+          class="min-w-0 overflow-hidden text-right tabular-nums text-[var(--foreground)] font-semibold"
         >
           <span
             class="block truncate"
+            title="6.86 USDC"
           >
             6.86 USDC
           </span>
         </dd>
       </div>
       <div
-        class="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] items-start gap-x-4"
+        class="grid min-w-0 grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)] items-start gap-x-4"
       >
         <dt
-          class="text-[var(--muted-foreground)]"
+          class="min-w-0 truncate text-[var(--muted-foreground)]"
         >
           Net proceeds
         </dt>
         <dd
-          class="min-w-0 text-right tabular-nums text-[var(--foreground)] font-semibold"
+          class="min-w-0 overflow-hidden text-right tabular-nums text-[var(--foreground)] font-semibold"
         >
           <span
             class="block truncate"
+            title="137,243.14 USDC"
           >
             137,243.14 USDC
           </span>
@@ -368,7 +375,7 @@ exports[`matches the snapshot for each receipt story scenario > order-preview 1`
   class="w-[420px] max-w-full"
 >
   <div
-    class="font-mono rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--card)] text-[var(--foreground)] shadow-[inset_0_0_0_1px_var(--surface-edge)]"
+    class="min-w-0 max-w-full overflow-hidden font-mono rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--card)] text-[var(--foreground)] shadow-[inset_0_0_0_1px_var(--surface-edge)]"
   >
     <div
       class="flex items-center justify-between gap-4 border-b border-[var(--border)] px-4 py-3"
@@ -412,90 +419,95 @@ exports[`matches the snapshot for each receipt story scenario > order-preview 1`
       class="flex flex-col gap-2 px-4 py-3 text-xs"
     >
       <div
-        class="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] items-start gap-x-4"
+        class="grid min-w-0 grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)] items-start gap-x-4"
       >
         <dt
-          class="text-[var(--muted-foreground)]"
+          class="min-w-0 truncate text-[var(--muted-foreground)]"
         >
           Pair
         </dt>
         <dd
-          class="min-w-0 text-right tabular-nums text-[var(--foreground)] font-medium"
+          class="min-w-0 overflow-hidden text-right tabular-nums text-[var(--foreground)] font-medium"
         >
           <span
             class="block truncate"
+            title="USDC/EURC"
           >
             USDC/EURC
           </span>
         </dd>
       </div>
       <div
-        class="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] items-start gap-x-4"
+        class="grid min-w-0 grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)] items-start gap-x-4"
       >
         <dt
-          class="text-[var(--muted-foreground)]"
+          class="min-w-0 truncate text-[var(--muted-foreground)]"
         >
           Side
         </dt>
         <dd
-          class="min-w-0 text-right tabular-nums text-[var(--foreground)] font-medium"
+          class="min-w-0 overflow-hidden text-right tabular-nums text-[var(--foreground)] font-medium"
         >
           <span
             class="block truncate"
+            title="Buy"
           >
             Buy
           </span>
         </dd>
       </div>
       <div
-        class="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] items-start gap-x-4"
+        class="grid min-w-0 grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)] items-start gap-x-4"
       >
         <dt
-          class="text-[var(--muted-foreground)]"
+          class="min-w-0 truncate text-[var(--muted-foreground)]"
         >
           Type
         </dt>
         <dd
-          class="min-w-0 text-right tabular-nums text-[var(--foreground)] font-medium"
+          class="min-w-0 overflow-hidden text-right tabular-nums text-[var(--foreground)] font-medium"
         >
           <span
             class="block truncate"
+            title="Limit"
           >
             Limit
           </span>
         </dd>
       </div>
       <div
-        class="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] items-start gap-x-4"
+        class="grid min-w-0 grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)] items-start gap-x-4"
       >
         <dt
-          class="text-[var(--muted-foreground)]"
+          class="min-w-0 truncate text-[var(--muted-foreground)]"
         >
           Submitted at
         </dt>
         <dd
-          class="min-w-0 text-right tabular-nums text-[var(--foreground)] font-medium"
+          class="min-w-0 overflow-hidden text-right tabular-nums text-[var(--foreground)] font-medium"
         >
           <span
             class="block truncate"
+            title="2026-04-30 09:12:44 UTC"
           >
             2026-04-30 09:12:44 UTC
           </span>
         </dd>
       </div>
       <div
-        class="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] items-start gap-x-4"
+        class="grid min-w-0 grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)] items-start gap-x-4"
       >
         <dt
-          class="text-[var(--muted-foreground)]"
+          class="min-w-0 truncate text-[var(--muted-foreground)]"
         >
           Available
         </dt>
         <dd
-          class="min-w-0 text-right tabular-nums text-[var(--foreground)] font-medium"
+          class="min-w-0 overflow-hidden text-right tabular-nums text-[var(--foreground)] font-medium"
         >
           <span
             class="block truncate"
+            title="10,000.00 USDC"
           >
             10,000.00 USDC
           </span>
@@ -606,54 +618,57 @@ exports[`matches the snapshot for each receipt story scenario > order-preview 1`
       class="flex flex-col gap-2 border-t border-[var(--border)] px-4 py-3 text-xs"
     >
       <div
-        class="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] items-start gap-x-4"
+        class="grid min-w-0 grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)] items-start gap-x-4"
       >
         <dt
-          class="text-[var(--muted-foreground)]"
+          class="min-w-0 truncate text-[var(--muted-foreground)]"
         >
           Amount
         </dt>
         <dd
-          class="min-w-0 text-right tabular-nums text-[var(--foreground)] font-semibold"
+          class="min-w-0 overflow-hidden text-right tabular-nums text-[var(--foreground)] font-semibold"
         >
           <span
             class="block truncate"
+            title="10,000.00 USDC"
           >
             10,000.00 USDC
           </span>
         </dd>
       </div>
       <div
-        class="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] items-start gap-x-4"
+        class="grid min-w-0 grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)] items-start gap-x-4"
       >
         <dt
-          class="text-[var(--muted-foreground)]"
+          class="min-w-0 truncate text-[var(--muted-foreground)]"
         >
           Fee
         </dt>
         <dd
-          class="min-w-0 text-right tabular-nums text-[var(--foreground)] font-semibold"
+          class="min-w-0 overflow-hidden text-right tabular-nums text-[var(--foreground)] font-semibold"
         >
           <span
             class="block truncate"
+            title="0.50 USDC"
           >
             0.50 USDC
           </span>
         </dd>
       </div>
       <div
-        class="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] items-start gap-x-4"
+        class="grid min-w-0 grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)] items-start gap-x-4"
       >
         <dt
-          class="text-[var(--muted-foreground)]"
+          class="min-w-0 truncate text-[var(--muted-foreground)]"
         >
           Net
         </dt>
         <dd
-          class="min-w-0 text-right tabular-nums text-[var(--foreground)] font-semibold"
+          class="min-w-0 overflow-hidden text-right tabular-nums text-[var(--foreground)] font-semibold"
         >
           <span
             class="block truncate"
+            title="9,999.50 USDC"
           >
             9,999.50 USDC
           </span>
@@ -674,7 +689,7 @@ exports[`matches the snapshot for each receipt story scenario > settlement-recor
   class="w-[420px] max-w-full"
 >
   <div
-    class="font-mono rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--card)] text-[var(--foreground)] shadow-[inset_0_0_0_1px_var(--surface-edge)]"
+    class="min-w-0 max-w-full overflow-hidden font-mono rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--card)] text-[var(--foreground)] shadow-[inset_0_0_0_1px_var(--surface-edge)]"
   >
     <div
       class="flex items-center justify-between gap-4 border-b border-[var(--border)] px-4 py-3"
@@ -718,51 +733,53 @@ exports[`matches the snapshot for each receipt story scenario > settlement-recor
       class="flex flex-col gap-2 px-4 py-3 text-xs"
     >
       <div
-        class="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] items-start gap-x-4"
+        class="grid min-w-0 grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)] items-start gap-x-4"
       >
         <dt
-          class="text-[var(--muted-foreground)]"
+          class="min-w-0 truncate text-[var(--muted-foreground)]"
         >
           Batch
         </dt>
         <dd
-          class="min-w-0 text-right tabular-nums text-[var(--foreground)] font-medium"
+          class="min-w-0 overflow-hidden text-right tabular-nums text-[var(--foreground)] font-medium"
         >
           <span
             class="block truncate"
+            title="#2048"
           >
             #2048
           </span>
         </dd>
       </div>
       <div
-        class="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] items-start gap-x-4"
+        class="grid min-w-0 grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)] items-start gap-x-4"
       >
         <dt
-          class="text-[var(--muted-foreground)]"
+          class="min-w-0 truncate text-[var(--muted-foreground)]"
         >
           Pair
         </dt>
         <dd
-          class="min-w-0 text-right tabular-nums text-[var(--foreground)] font-medium"
+          class="min-w-0 overflow-hidden text-right tabular-nums text-[var(--foreground)] font-medium"
         >
           <span
             class="block truncate"
+            title="USDC/EURC"
           >
             USDC/EURC
           </span>
         </dd>
       </div>
       <div
-        class="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] items-start gap-x-4"
+        class="grid min-w-0 grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)] items-start gap-x-4"
       >
         <dt
-          class="text-[var(--muted-foreground)]"
+          class="min-w-0 truncate text-[var(--muted-foreground)]"
         >
           Settlement tx
         </dt>
         <dd
-          class="min-w-0 text-right tabular-nums text-[var(--foreground)] font-medium"
+          class="min-w-0 overflow-hidden text-right tabular-nums text-[var(--foreground)] font-medium"
         >
           <a
             class="inline-flex max-w-full items-center justify-end gap-1 truncate underline-offset-4 hover:underline"
@@ -803,36 +820,38 @@ exports[`matches the snapshot for each receipt story scenario > settlement-recor
         </dd>
       </div>
       <div
-        class="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] items-start gap-x-4"
+        class="grid min-w-0 grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)] items-start gap-x-4"
       >
         <dt
-          class="text-[var(--muted-foreground)]"
+          class="min-w-0 truncate text-[var(--muted-foreground)]"
         >
           Settled at
         </dt>
         <dd
-          class="min-w-0 text-right tabular-nums text-[var(--foreground)] font-medium"
+          class="min-w-0 overflow-hidden text-right tabular-nums text-[var(--foreground)] font-medium"
         >
           <span
             class="block truncate"
+            title="2026-04-30 09:16:12 UTC"
           >
             2026-04-30 09:16:12 UTC
           </span>
         </dd>
       </div>
       <div
-        class="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] items-start gap-x-4"
+        class="grid min-w-0 grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)] items-start gap-x-4"
       >
         <dt
-          class="text-[var(--muted-foreground)]"
+          class="min-w-0 truncate text-[var(--muted-foreground)]"
         >
           Operator
         </dt>
         <dd
-          class="min-w-0 text-right tabular-nums text-[var(--foreground)] font-medium"
+          class="min-w-0 overflow-hidden text-right tabular-nums text-[var(--foreground)] font-medium"
         >
           <span
             class="block truncate"
+            title="Omega Batch 12"
           >
             Omega Batch 12
           </span>
@@ -943,54 +962,57 @@ exports[`matches the snapshot for each receipt story scenario > settlement-recor
       class="flex flex-col gap-2 border-t border-[var(--border)] px-4 py-3 text-xs"
     >
       <div
-        class="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] items-start gap-x-4"
+        class="grid min-w-0 grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)] items-start gap-x-4"
       >
         <dt
-          class="text-[var(--muted-foreground)]"
+          class="min-w-0 truncate text-[var(--muted-foreground)]"
         >
           Gross
         </dt>
         <dd
-          class="min-w-0 text-right tabular-nums text-[var(--foreground)] font-semibold"
+          class="min-w-0 overflow-hidden text-right tabular-nums text-[var(--foreground)] font-semibold"
         >
           <span
             class="block truncate"
+            title="24,500.00 USDC"
           >
             24,500.00 USDC
           </span>
         </dd>
       </div>
       <div
-        class="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] items-start gap-x-4"
+        class="grid min-w-0 grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)] items-start gap-x-4"
       >
         <dt
-          class="text-[var(--muted-foreground)]"
+          class="min-w-0 truncate text-[var(--muted-foreground)]"
         >
           Fee
         </dt>
         <dd
-          class="min-w-0 text-right tabular-nums text-[var(--foreground)] font-semibold"
+          class="min-w-0 overflow-hidden text-right tabular-nums text-[var(--foreground)] font-semibold"
         >
           <span
             class="block truncate"
+            title="1.23 USDC"
           >
             1.23 USDC
           </span>
         </dd>
       </div>
       <div
-        class="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] items-start gap-x-4"
+        class="grid min-w-0 grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)] items-start gap-x-4"
       >
         <dt
-          class="text-[var(--muted-foreground)]"
+          class="min-w-0 truncate text-[var(--muted-foreground)]"
         >
           Net
         </dt>
         <dd
-          class="min-w-0 text-right tabular-nums text-[var(--foreground)] font-semibold"
+          class="min-w-0 overflow-hidden text-right tabular-nums text-[var(--foreground)] font-semibold"
         >
           <span
             class="block truncate"
+            title="24,498.77 USDC"
           >
             24,498.77 USDC
           </span>

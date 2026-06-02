@@ -4,15 +4,13 @@ import { configureAxe } from "vitest-axe";
 import { vi } from "vitest";
 
 import {
-  ConnectWalletModal,
   DepositModal,
-  EmailSignupModal,
   OrderConfirmationModal,
+  TempoWalletModal,
   WithdrawModal,
-  type ConnectWalletState,
   type DepositState,
-  type EmailSignupState,
   type OrderConfirmationState,
+  type TempoWalletState,
   type WithdrawState,
 } from "@/components/modals";
 
@@ -33,13 +31,6 @@ async function expectNoViolations() {
   expect(results.violations).toEqual([]);
 }
 
-const CONNECT_STATES: ConnectWalletState[] = [
-  "idle",
-  "connecting",
-  "connected",
-  "failed",
-  "no-nft-pass",
-];
 const DEPOSIT_STATES: DepositState[] = [
   "idle",
   "approving",
@@ -61,41 +52,21 @@ const ORDER_STATES: OrderConfirmationState[] = [
   "submitting",
   "failed",
 ];
-const EMAIL_SIGNUP_STATES: EmailSignupState[] = [
+const TEMPO_WALLET_STATES: TempoWalletState[] = [
   "idle",
-  "submitting",
-  "sent",
-  "expired",
-  "invalid",
-  "already-claimed",
-  "not-on-allowlist",
+  "connecting",
+  "connected",
+  "failed",
 ];
 
-it.each(CONNECT_STATES)(
-  "ConnectWalletModal — no a11y violations · %s",
+it.each(TEMPO_WALLET_STATES)(
+  "TempoWalletModal — no a11y violations · %s",
   async (state) => {
     render(
-      <ConnectWalletModal
+      <TempoWalletModal
         open
         state={state}
-        activeConnector="MetaMask"
-        onClose={() => {}}
-      />
-    );
-    expect(screen.getByRole("dialog")).toBeTruthy();
-    await expectNoViolations();
-    cleanup();
-  }
-);
-
-it.each(EMAIL_SIGNUP_STATES)(
-  "EmailSignupModal — no a11y violations · %s",
-  async (state) => {
-    render(
-      <EmailSignupModal
-        open
-        state={state}
-        email="alpha@omegamarkets.com"
+        address="0xa513e6e4b8f2a923d98304ec87f64353c4d5c853"
         onClose={() => {}}
       />
     );
@@ -112,7 +83,7 @@ it.each(DEPOSIT_STATES)(
       <DepositModal
         open
         state={state}
-        token="USDC"
+        token="PATH.USD"
         amount="1000.00"
         permitSigned={state !== "idle" && state !== "approving"}
         onClose={() => {}}
@@ -128,7 +99,7 @@ it.each(WITHDRAW_STATES)(
   "WithdrawModal — no a11y violations · %s",
   async (state) => {
     render(
-      <WithdrawModal open state={state} token="USDC" onClose={() => {}} />
+      <WithdrawModal open state={state} token="PATH.USD" onClose={() => {}} />
     );
     expect(screen.getByRole("dialog")).toBeTruthy();
     await expectNoViolations();

@@ -13,18 +13,18 @@ it("renders the default copy + CTA when no props are passed", () => {
   ).toBeDefined();
   expect(
     screen.getByText(
-      "Sign up with email to access trading and account screens.",
+      "Connect Tempo Wallet to access trading and account screens.",
     ),
   ).toBeDefined();
   expect(
-    screen.getByRole("button", { name: "Sign up" }),
+    screen.getByRole("button", { name: "Tempo wallet" }),
   ).toBeDefined();
 });
 
 it("invokes onAction when the CTA is clicked", () => {
   const onAction = vi.fn();
   render(<DisconnectedState onAction={onAction} />);
-  fireEvent.click(screen.getByRole("button", { name: "Sign up" }));
+  fireEvent.click(screen.getByRole("button", { name: "Tempo wallet" }));
   expect(onAction).toHaveBeenCalledOnce();
 });
 

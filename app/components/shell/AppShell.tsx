@@ -46,7 +46,11 @@ export function AppShell({ route, auth = false, children }: AppShellProps) {
 
   let content: React.ReactNode = children;
   if (auth) {
-    if (state === "disconnected") {
+    if (
+      state === "disconnected" ||
+      state === "signing-up" ||
+      state === "connecting"
+    ) {
       content = <DisconnectedState routeLabel={route} />;
     } else if (state === "no-nft-pass") {
       content = <NoNftPassState />;
@@ -60,10 +64,7 @@ export function AppShell({ route, auth = false, children }: AppShellProps) {
     <div className="min-h-screen text-[var(--foreground)]">
       <WrongNetworkBanner />
       <Navbar />
-      <div
-        className="pb-[calc(60px+env(safe-area-inset-bottom)+16px)] md:pb-0"
-        style={{ viewTransitionName: "omega-page-content" }}
-      >
+      <div className="pb-[calc(60px+env(safe-area-inset-bottom)+16px)] md:pb-0">
         {content}
       </div>
       <MobileTabBar />

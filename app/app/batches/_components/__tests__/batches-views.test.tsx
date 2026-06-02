@@ -8,13 +8,15 @@
  */
 
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 
-import { BatchesListView } from "../batches-list-view";
-import { BatchDetailView } from "../batch-detail-view";
-import { batchesDetailFixtures } from "@/lib/fixtures";
+import { batchesDetailFixtures, batchesListFixtures } from "@/lib/fixtures";
+import type { BatchFixture } from "@/lib/fixtures/types";
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
 
 // next/navigation hooks aren't initialised under jsdom — stub them so the
 // "use client" components render.
@@ -39,9 +41,20 @@ function mockSearchParams(entries: Record<string, string> = {}) {
 
 async function renderList(entries: Record<string, string> = {}) {
   mockSearchParams(entries);
+  mockBatchRpc();
   vi.resetModules();
   const mod = await import("../batches-list-view");
-  return render(<mod.BatchesListView />);
+  const result = render(<mod.BatchesListView />);
+  if (!entries.state) {
+    await waitFor(() => {
+      if (entries.search) {
+        expect(screen.queryByText(/No batches match/)).not.toBeNull();
+        return;
+      }
+      expect(screen.getByLabelText("Live")).toBeDefined();
+    });
+  }
+  return result;
 }
 
 async function renderDetail(
@@ -49,9 +62,121 @@ async function renderDetail(
   entries: Record<string, string> = {},
 ) {
   mockSearchParams(entries);
+  mockBatchRpc();
   vi.resetModules();
   const mod = await import("../batch-detail-view");
-  return render(<mod.BatchDetailView id={id} />);
+  const result = render(<mod.BatchDetailView id={id} />);
+  if (!entries.state) {
+    await waitFor(() => {
+      expect(
+        screen.getByRole("heading", { level: 1, name: `Batch #${id}` }),
+      ).toBeDefined();
+    });
+  }
+  return result;
+}
+
+function mockBatchRpc() {
+  const fetchMock = vi.fn(async (_url: string, init?: RequestInit) => {
+    const body = JSON.parse(String(init?.body ?? "{}")) as {
+      method?: string;
+      params?: unknown[];
+    };
+    const batches = batchesListFixtures.default.batches.map(toZoneBatch);
+    const detailBatch = toZoneBatch(batchesDetailFixtures.verified.batch);
+    const result =
+      body.method === "zone_listBatches"
+        ? { batches, nextCursor: null }
+        : body.method === "zone_getBatch"
+          ? detailBatch
+          : body.method === "zone_searchBatch"
+            ? String(body.params?.[0] ?? "") === "0xdead"
+              ? null
+              : detailBatch
+            : null;
+    return new Response(JSON.stringify({ result }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
+  });
+  vi.stubGlobal("fetch", fetchMock);
+}
+
+function mockPendingZoneRangeRpc() {
+  const fetchMock = vi.fn(async (_url: string, init?: RequestInit) => {
+    const body = JSON.parse(String(init?.body ?? "{}")) as {
+      method?: string;
+    };
+    const pendingBatch = {
+      batchNumber: "0x1",
+      zoneBlockFrom: "0x1",
+      zoneBlockTo: "0x10740a",
+      tempoBlockNumber: "0x1276dcd",
+      root: "0x0000000000000000000000000000000000000000000000000000000000000000",
+      prevBlockHash:
+        "0x0000000000000000000000000000000000000000000000000000000000000000",
+      nextBlockHash:
+        "0xb338bf1e87b284bded20be3e43cf86d81fc07df685a9cc674145cf9a83d07977",
+      status: "pending",
+      orderCount: "0x0",
+      fillCount: "0x0",
+      aggregatePairs: [],
+      aggregateVolume: [],
+    };
+    return new Response(
+      JSON.stringify({
+        result: body.method === "zone_listBatches"
+          ? { batches: [pendingBatch], nextCursor: null }
+          : pendingBatch,
+      }),
+      {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      },
+    );
+  });
+  vi.stubGlobal("fetch", fetchMock);
+}
+
+async function renderListWithPendingZoneRange() {
+  mockSearchParams();
+  mockPendingZoneRangeRpc();
+  vi.resetModules();
+  const mod = await import("../batches-list-view");
+  const result = render(<mod.BatchesListView />);
+  await waitFor(() => {
+    expect(screen.getAllByText("Zone blocks #1–#1,078,282").length).toBeGreaterThan(
+      0,
+    );
+  });
+  return result;
+}
+
+function toZoneBatch(batch: BatchFixture) {
+  const sealedAtSeconds = Math.floor(new Date(batch.sealedAt).getTime() / 1000);
+  return {
+    batchNumber: String(batch.number),
+    tempoBlockNumber: "1",
+    root: batch.root,
+    prevBlockHash: batch.root,
+    nextBlockHash: batch.root,
+    status:
+      batch.status === "verified"
+        ? "verified"
+        : batch.status === "failed"
+          ? "failed"
+          : "pending",
+    sealedAt: String(sealedAtSeconds),
+    settledAt: String(sealedAtSeconds + 120),
+    orderCount: batch.orderCount,
+    fillCount: batch.fillCount,
+    aggregatePairs: ["OALPHA/PATH.USD"],
+    aggregateVolume: [],
+    settlementTxHash:
+      batch.settlementTx ??
+      "0x0000000000000000000000000000000000000000000000000000000000000000",
+    proofRef: batch.proofRef,
+  };
 }
 
 describe("BatchesListView", () => {
@@ -62,7 +187,7 @@ describe("BatchesListView", () => {
     expect(screen.getAllByText("Batches").length).toBeGreaterThan(0);
     expect(
       screen.getByText(
-        "Sealed settlement batches with on-chain attestation. Public, verifiable.",
+        "Live zone block windows and L1 settlement batches. Pending ranges are local until proof submission lands.",
       ),
     ).toBeDefined();
   });
@@ -70,6 +195,15 @@ describe("BatchesListView", () => {
   it("renders the tempo-style table header with a Live indicator", async () => {
     await renderList();
     expect(screen.getByLabelText("Live")).toBeDefined();
+  });
+
+  it("renders backend pending zone ranges without calling them sealed", async () => {
+    await renderListWithPendingZoneRange();
+    expect(screen.getAllByText("Zone blocks #1–#1,078,282").length).toBeGreaterThan(
+      0,
+    );
+    expect(screen.getAllByText("Awaiting L1 settlement").length).toBeGreaterThan(0);
+    expect(screen.queryByText(/^0s ago$/)).toBeNull();
   });
 
   it("default state surfaces the search affordance and per-page selector", async () => {
@@ -87,7 +221,7 @@ describe("BatchesListView", () => {
     const pairText = container.textContent ?? "";
     // At least one fixture row carries a pair list — we expect that to land
     // somewhere in the rendered output.
-    expect(pairText).toMatch(/[A-Z]{3,4}\/[A-Z]{3,4}/);
+    expect(pairText).toContain("OALPHA/PATH.USD");
     // No pair string should be wrapped in a bordered chip. The legacy
     // bordered-pill markup used `border-[var(--border)]` on a span around a
     // single pair; assert no `span.border` ancestor wraps a lone pair.
@@ -145,9 +279,9 @@ describe("BatchesListView", () => {
 
   it("empty state follows voice rule [what happened] [what to do next]", async () => {
     await renderList({ state: "empty" });
-    expect(screen.getByText("No batches sealed yet.")).toBeDefined();
+    expect(screen.getByText("No zone batches yet.")).toBeDefined();
     expect(
-      screen.getByText("Check back after the first market open."),
+      screen.getByText("Check back after the zone produces its first block range."),
     ).toBeDefined();
   });
 
@@ -179,7 +313,7 @@ describe("BatchesListView", () => {
   });
 
   it("search-no-results echoes the query and offers next steps", async () => {
-    await renderList({ search: "no-results" });
+    await renderList({ search: "0xdead" });
     expect(screen.getByText('No batches match "0xdead".')).toBeDefined();
     expect(screen.getByText("Try a different ID or hash.")).toBeDefined();
   });

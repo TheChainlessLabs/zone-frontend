@@ -19,7 +19,8 @@ export type MarketPair =
   | "USDC/USDT"
   | "USDT/EURC"
   | "ETH/USDC"
-  | "BTC/USDC";
+  | "BTC/USDC"
+  | "OALPHA/PATH.USD";
 
 export type PageState =
   | "default"
@@ -83,6 +84,9 @@ export type BatchStatus = "pending" | "verified" | "failed";
 export interface BatchFixture {
   /** Sequential batch number (e.g. 4821). */
   number: number;
+  /** Inclusive Omega Zone block range, present for local pending ranges. */
+  zoneBlockFrom?: string;
+  zoneBlockTo?: string;
   /** Hex digest of batch root (0x… 32-byte). */
   root: `0x${string}`;
   status: BatchStatus;
@@ -117,7 +121,7 @@ export interface BatchFixture {
 }
 
 export interface BalanceFixture {
-  token: "USDC" | "EURC" | "USDT" | "ETH" | "BTC";
+  token: "USDC" | "EURC" | "USDT" | "ETH" | "BTC" | "PATH.USD" | "OALPHA";
   /** Decimal string. Available to trade. */
   available: string;
   /** Decimal string. Locked in open orders. */
@@ -218,8 +222,6 @@ export interface BatchesSearchFixture {
 }
 
 export interface AccountFixture {
-  /** Email shown on /account when no provider-backed session email exists. */
-  email: string;
   /** Truncated address (e.g. "0x1234…abcd") — never the full address in fixtures. */
   address: `0x${string}` | null;
   /** Whether the connected wallet holds an Omega NFT pass. */
@@ -239,19 +241,6 @@ export interface AccountFixture {
 /*  Modal fixture shapes                                                      */
 /* ────────────────────────────────────────────────────────────────────────── */
 
-export type ConnectModalState =
-  | "idle"
-  | "connecting"
-  | "connected"
-  | "failed"
-  | "no-nft-pass";
-
-export interface ConnectModalFixture {
-  state: ConnectModalState;
-  address?: `0x${string}`;
-  error?: ErrorEnvelope;
-}
-
 export type DepositModalState =
   | "idle"
   | "approving"
@@ -262,7 +251,7 @@ export type DepositModalState =
 
 export interface DepositModalFixture {
   state: DepositModalState;
-  token: BalanceFixture["token"];
+  token: "PATH.USD";
   amount: string;
   /** L1 tx hash once broadcast. */
   txHash?: `0x${string}`;
@@ -278,7 +267,7 @@ export type WithdrawModalState =
 
 export interface WithdrawModalFixture {
   state: WithdrawModalState;
-  token: BalanceFixture["token"];
+  token: "PATH.USD";
   amount: string;
   txHash?: `0x${string}`;
   error?: ErrorEnvelope;

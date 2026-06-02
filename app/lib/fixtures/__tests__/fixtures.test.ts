@@ -5,7 +5,6 @@ import {
   batchesDetailFixtures,
   batchesListFixtures,
   batchesSearchFixtures,
-  connectModalFixtures,
   DEFAULT_PAIR,
   depositModalFixtures,
   LAUNCH_PAIRS,
@@ -75,19 +74,8 @@ it("/batches search exposes results + no-results", () => {
 });
 
 it("/account exposes default + disconnected", () => {
-  expect(accountFixtures.default.email).toBeDefined();
   expect(accountFixtures.default.address).toBeDefined();
   expect(accountFixtures.disconnected.address).toBeNull();
-});
-
-it("Connect modal covers all five states", () => {
-  expect(Object.keys(connectModalFixtures).sort()).toEqual([
-    "connected",
-    "connecting",
-    "failed",
-    "idle",
-    "no-nft-pass",
-  ]);
 });
 
 it("Deposit modal covers all six states", () => {

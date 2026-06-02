@@ -66,37 +66,31 @@ const CASES: Array<{
     param: "signing-up",
     expected: "signing-up",
     hasAddress: false,
-    chain: "Ethereum",
-  },
-  {
-    param: "magic-link-sent",
-    expected: "magic-link-sent",
-    hasAddress: false,
-    chain: "Ethereum",
+    chain: "Tempo Testnet (Moderato)",
   },
   {
     param: "connecting",
     expected: "connecting",
     hasAddress: false,
-    chain: "Ethereum",
+    chain: "Tempo Testnet (Moderato)",
   },
   {
     param: "connected",
     expected: "connected",
     hasAddress: true,
-    chain: "Ethereum",
+    chain: "Tempo Testnet (Moderato)",
   },
   {
     param: "wrong-network",
     expected: "wrong-network",
     hasAddress: true,
-    chain: "Base",
+    chain: "Ethereum",
   },
   {
     param: "no-nft-pass",
     expected: "no-nft-pass",
     hasAddress: true,
-    chain: "Ethereum",
+    chain: "Tempo Testnet (Moderato)",
   },
   // Unknown values fall back to disconnected — same intent as a missing param.
   { param: "garbage", expected: "disconnected", hasAddress: false, chain: "" },
@@ -110,7 +104,7 @@ describe("WalletStateProvider — query-param overrides", () => {
       );
 
       render(
-        <WalletStateProvider>
+        <WalletStateProvider mode="mock">
           <Probe />
         </WalletStateProvider>
       );
@@ -132,11 +126,11 @@ describe("WalletStateProvider — interactive flow", () => {
     vi.useRealTimers();
   });
 
-  it("signUp() transitions disconnected → signing-up → magic-link-sent, activateMagicLink() lands at connected", () => {
+  it("signUp() transitions disconnected → signing-up → connected", () => {
     let captured: WalletStateContextValue | null = null;
 
     render(
-      <WalletStateProvider>
+      <WalletStateProvider mode="mock">
         <Probe capture={(ctx) => (captured = ctx)} />
       </WalletStateProvider>
     );
@@ -144,21 +138,14 @@ describe("WalletStateProvider — interactive flow", () => {
     expect(captured!.state).toBe("disconnected");
 
     act(() => {
-      captured!.signUp("alpha@omegamarkets.com");
+      captured!.signUp();
     });
     expect(captured!.state).toBe("signing-up");
-    expect(captured!.email).toBe("alpha@omegamarkets.com");
 
     act(() => {
       vi.advanceTimersByTime(700);
     });
-    expect(captured!.state).toBe("magic-link-sent");
-
-    act(() => {
-      captured!.activateMagicLink();
-    });
     expect(captured!.state).toBe("connected");
-    expect(captured!.email).toBe("alpha@omegamarkets.com");
     expect(captured!.address).toBe(
       "0xa513e6e4b8f2a923d98304ec87f64353c4d5c853"
     );
@@ -168,7 +155,7 @@ describe("WalletStateProvider — interactive flow", () => {
     let captured: WalletStateContextValue | null = null;
 
     render(
-      <WalletStateProvider>
+      <WalletStateProvider mode="mock">
         <Probe capture={(ctx) => (captured = ctx)} />
       </WalletStateProvider>
     );
@@ -176,10 +163,10 @@ describe("WalletStateProvider — interactive flow", () => {
     expect(captured!.state).toBe("disconnected");
 
     act(() => {
-      captured!.connect("MetaMask");
+      captured!.connect("Tempo Wallet");
     });
     expect(captured!.state).toBe("connecting");
-    expect(captured!.connector).toBe("MetaMask");
+    expect(captured!.connector).toBe("Tempo Wallet");
     expect(captured!.address).toBeUndefined();
 
     act(() => {
@@ -189,20 +176,20 @@ describe("WalletStateProvider — interactive flow", () => {
     expect(captured!.address).toBe(
       "0xa513e6e4b8f2a923d98304ec87f64353c4d5c853"
     );
-    expect(captured!.chainName).toBe("Ethereum");
+    expect(captured!.chainName).toBe("Tempo Testnet (Moderato)");
   });
 
   it("disconnect() resets to disconnected and clears connector", () => {
     let captured: WalletStateContextValue | null = null;
 
     render(
-      <WalletStateProvider>
+      <WalletStateProvider mode="mock">
         <Probe capture={(ctx) => (captured = ctx)} />
       </WalletStateProvider>
     );
 
     act(() => {
-      captured!.connect("Coinbase");
+      captured!.connect("Tempo Wallet");
     });
     act(() => {
       vi.advanceTimersByTime(1600);
@@ -222,32 +209,32 @@ describe("WalletStateProvider — interactive flow", () => {
     let captured: WalletStateContextValue | null = null;
 
     render(
-      <WalletStateProvider>
+      <WalletStateProvider mode="mock">
         <Probe capture={(ctx) => (captured = ctx)} />
       </WalletStateProvider>
     );
 
     expect(captured!.state).toBe("wrong-network");
-    expect(captured!.chainName).toBe("Base");
+    expect(captured!.chainName).toBe("Ethereum");
 
     act(() => {
       captured!.switchNetwork();
     });
     expect(captured!.state).toBe("connected");
-    expect(captured!.chainName).toBe("Ethereum");
+    expect(captured!.chainName).toBe("Tempo Testnet (Moderato)");
   });
 
   it("persists connected state to localStorage and rehydrates on remount", () => {
     let captured: WalletStateContextValue | null = null;
 
     const { unmount } = render(
-      <WalletStateProvider>
+      <WalletStateProvider mode="mock">
         <Probe capture={(ctx) => (captured = ctx)} />
       </WalletStateProvider>
     );
 
     act(() => {
-      captured!.connect("MetaMask");
+      captured!.connect("Tempo Wallet");
     });
     act(() => {
       vi.advanceTimersByTime(1600);
@@ -261,18 +248,18 @@ describe("WalletStateProvider — interactive flow", () => {
       connector?: string;
     };
     expect(parsed.state).toBe("connected");
-    expect(parsed.connector).toBe("MetaMask");
+    expect(parsed.connector).toBe("Tempo Wallet");
 
     unmount();
 
     let rehydrated: WalletStateContextValue | null = null;
     render(
-      <WalletStateProvider>
+      <WalletStateProvider mode="mock">
         <Probe capture={(ctx) => (rehydrated = ctx)} />
       </WalletStateProvider>
     );
     expect(rehydrated!.state).toBe("connected");
-    expect(rehydrated!.connector).toBe("MetaMask");
+    expect(rehydrated!.connector).toBe("Tempo Wallet");
     expect(rehydrated!.address).toBe(
       "0xa513e6e4b8f2a923d98304ec87f64353c4d5c853"
     );
@@ -282,13 +269,13 @@ describe("WalletStateProvider — interactive flow", () => {
     let captured: WalletStateContextValue | null = null;
 
     const { unmount } = render(
-      <WalletStateProvider>
+      <WalletStateProvider mode="mock">
         <Probe capture={(ctx) => (captured = ctx)} />
       </WalletStateProvider>
     );
 
     act(() => {
-      captured!.connect("MetaMask");
+      captured!.connect("Tempo Wallet");
     });
     expect(captured!.state).toBe("connecting");
     // Persistence skips while we're mid-connect.
@@ -298,7 +285,7 @@ describe("WalletStateProvider — interactive flow", () => {
 
     let rehydrated: WalletStateContextValue | null = null;
     render(
-      <WalletStateProvider>
+      <WalletStateProvider mode="mock">
         <Probe capture={(ctx) => (rehydrated = ctx)} />
       </WalletStateProvider>
     );
@@ -310,13 +297,13 @@ describe("WalletStateProvider — interactive flow", () => {
     let captured: WalletStateContextValue | null = null;
 
     render(
-      <WalletStateProvider>
+      <WalletStateProvider mode="mock">
         <Probe capture={(ctx) => (captured = ctx)} />
       </WalletStateProvider>
     );
 
     act(() => {
-      captured!.connect("MetaMask");
+      captured!.connect("Tempo Wallet");
     });
     act(() => {
       vi.advanceTimersByTime(1600);
@@ -332,13 +319,13 @@ describe("WalletStateProvider — interactive flow", () => {
   it("query override beats persisted state on hydrate", () => {
     window.localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({ state: "connected", connector: "MetaMask" })
+      JSON.stringify({ state: "connected", connector: "Tempo Wallet" })
     );
     currentParams = new URLSearchParams("walletState=disconnected");
 
     let captured: WalletStateContextValue | null = null;
     render(
-      <WalletStateProvider>
+      <WalletStateProvider mode="mock">
         <Probe capture={(ctx) => (captured = ctx)} />
       </WalletStateProvider>
     );

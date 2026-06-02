@@ -18,7 +18,6 @@ export {
 } from "./batches";
 export { accountFixtures } from "./account";
 export {
-  connectModalFixtures,
   depositModalFixtures,
   withdrawModalFixtures,
   orderConfirmationModalFixtures,

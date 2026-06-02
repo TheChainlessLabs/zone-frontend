@@ -5,21 +5,17 @@
  *
  * Renders one of six branches based on `useWalletState()`:
  *
- *   disconnected     → outline "Sign up" button (opens EmailSignupModal)
+ *   disconnected     → outline "Tempo wallet" button (opens TempoWalletModal)
  *   signing-up /
- *   magic-link-sent  → outline button with spinner + "Awaiting magic link"
+ *   connecting       → outline button with spinner + "Opening Tempo"
  *   wrong-network    → destructive "Switch network" CTA + warning glyph
  *   no-nft-pass      → outline "Pass required" link to onboarding info
  *   connected        → DropdownMenu with truncated address + chain dot
  *
- * Drives the `EmailSignupModal` end-to-end:
- *   click Sign up → modal opens at `state="idle"`
- *   submit valid email → wallet.signUp() → modal flips through
- *   `submitting` → `sent`. Backend integration replaces the mock at M6.
+ * Drives the `TempoWalletModal` end-to-end:
+ *   click Tempo wallet → create/sign-in choice → wagmi Tempo connector.
  *
- * Copy follows omega-docs/03-brand/messaging.md (status lexicon). The
- * connect-wallet flow is preserved in `connect-wallet-modal.tsx` for
- * Phase-4 self-custody reactivation.
+ * Copy follows omega-docs/03-brand/messaging.md (status lexicon).
  */
 
 import * as React from "react";
@@ -39,40 +35,46 @@ import {
   truncateAddress,
   useWalletState,
 } from "@/components/shell/WalletStateProvider";
-import { EmailSignupModal } from "@/components/modals";
-
-const ETHERSCAN_BASE = "https://etherscan.io/address/";
+import { TempoWalletModal } from "@/components/modals";
+import { tempoAddressUrl } from "@/lib/zone";
 
 export function WalletStatus() {
   const wallet = useWalletState();
-  const { state, address, chainName, email } = wallet;
+  const { state, address, chainName, errorMessage } = wallet;
   const [openRequested, setOpenRequested] = React.useState(false);
 
-  // Auto-open the modal whenever the session is mid-sign-up so the user can
+  // Auto-open the modal whenever the session is mid-connect so the user can
   // see the live state. Closes follow explicit user action.
   const modalOpen =
-    openRequested || state === "signing-up" || state === "magic-link-sent";
+    openRequested ||
+    state === "signing-up" ||
+    state === "connecting" ||
+    Boolean(errorMessage);
   const modalState =
-    state === "signing-up"
-      ? ("submitting" as const)
-      : state === "magic-link-sent"
-      ? ("sent" as const)
+    errorMessage
+      ? ("failed" as const)
+      : state === "signing-up" || state === "connecting"
+      ? ("connecting" as const)
+      : state === "connected"
+      ? ("connected" as const)
       : ("idle" as const);
 
-  const handleSignUpClick = React.useCallback(() => {
+  const handleTempoClick = React.useCallback(() => {
     setOpenRequested(true);
   }, []);
 
   const handleClose = React.useCallback(() => {
+    wallet.clearError();
     setOpenRequested(false);
-  }, []);
+  }, [wallet]);
 
-  const handleSubmitEmail = React.useCallback(
-    (nextEmail: string) => {
-      wallet.signUp(nextEmail);
-    },
-    [wallet],
-  );
+  const handleCreateAccount = React.useCallback(() => {
+    wallet.signUp();
+  }, [wallet]);
+
+  const handleSignIn = React.useCallback(() => {
+    wallet.connect("Tempo Wallet");
+  }, [wallet]);
 
   const handleDisconnect = React.useCallback(() => {
     wallet.disconnect();
@@ -92,26 +94,24 @@ export function WalletStatus() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={handleSignUpClick}
-            aria-label="Sign up"
+            onClick={handleTempoClick}
+            aria-label="Open Tempo Wallet"
           >
-            <Icon.Mail aria-hidden />
-            <span>Sign up</span>
+            <Icon.Wallet aria-hidden />
+            <span>Tempo wallet</span>
           </Button>
         ) : null}
 
-        {state === "signing-up" || state === "magic-link-sent" ? (
+        {state === "signing-up" ? (
           <Button
             variant="ghost"
             size="sm"
-            onClick={handleSignUpClick}
-            aria-label="Awaiting magic link"
+            onClick={handleTempoClick}
+            aria-label="Opening Tempo Wallet"
             aria-busy="true"
           >
             <ConnectingSpinner />
-            <span>
-              {state === "signing-up" ? "Sending..." : "Magic link sent"}
-            </span>
+            <span>Creating account...</span>
           </Button>
         ) : null}
 
@@ -119,12 +119,12 @@ export function WalletStatus() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={handleSignUpClick}
-            aria-label="Awaiting wallet signature"
+            onClick={handleTempoClick}
+            aria-label="Awaiting Tempo Wallet"
             aria-busy="true"
           >
             <ConnectingSpinner />
-            <span>Awaiting signature…</span>
+            <span>Opening Tempo...</span>
           </Button>
         ) : null}
 
@@ -175,7 +175,7 @@ export function WalletStatus() {
             <DropdownMenuContent align="end" className="min-w-[14rem]">
               <DropdownMenuLabel className="flex flex-col gap-1">
                 <span className="font-mono text-[11px] uppercase tracking-wider text-[var(--muted-foreground)]">
-                  {chainName ?? "Ethereum"}
+                  {chainName ?? "Omega Zone"}
                 </span>
                 <span className="font-mono text-xs text-[var(--foreground)]">
                   {truncated}
@@ -198,12 +198,12 @@ export function WalletStatus() {
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <a
-                  href={address ? `${ETHERSCAN_BASE}${address}` : "#"}
+                  href={address ? tempoAddressUrl(address) : "#"}
                   target="_blank"
                   rel="noreferrer noopener"
                 >
                   <Icon.External aria-hidden />
-                  <span>View on Etherscan</span>
+                  <span>View on Tempo Explorer</span>
                 </a>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
@@ -238,12 +238,14 @@ export function WalletStatus() {
         ) : null}
       </div>
 
-      <EmailSignupModal
+      <TempoWalletModal
         open={modalOpen}
         state={modalState}
-        email={email}
+        address={address}
+        errorMessage={errorMessage}
         onClose={handleClose}
-        onSubmit={handleSubmitEmail}
+        onCreateAccount={handleCreateAccount}
+        onSignIn={handleSignIn}
       />
     </>
   );

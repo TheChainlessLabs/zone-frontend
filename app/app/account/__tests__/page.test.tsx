@@ -25,6 +25,10 @@ vi.mock("@/components/ThemeToggle", () => ({
   ThemeToggle: () => <div>Theme toggle</div>,
 }));
 
+vi.mock("@/components/omega-zone/OmegaZoneStatus", () => ({
+  OmegaZoneStatus: () => <div>Omega zone status</div>,
+}));
+
 const disconnect = vi.fn();
 const useWalletState = vi.fn();
 
@@ -41,30 +45,27 @@ afterEach(() => {
   useWalletState.mockReset();
 });
 
-it("renders the provider email, closed-alpha badge, and server-managed trading copy", () => {
+it("renders the Tempo account, closed-alpha badge, and wallet-session copy", () => {
   useWalletState.mockReturnValue({
     state: "connected",
-    email: "alpha@omegamarkets.com",
     address: "0xa513e6e4b8f2a923d98304ec87f64353c4d5c853",
-    chainName: "Ethereum",
-    connector: "Browser wallet",
+    chainName: "Omega Local Zone",
+    connector: "Tempo Wallet",
     disconnect,
   });
 
   render(<AccountPage />);
 
-  expect(screen.getByText("Email")).toBeDefined();
-  expect(screen.getByText("alpha@omegamarkets.com")).toBeDefined();
-  expect(screen.getByText("Trading address (server-managed)")).toBeDefined();
+  expect(screen.getByText("Tempo account")).toBeDefined();
   expect(
     screen.getByText(
-      "This address holds your seeded testnet balance during the closed alpha. You don't manage its keys.",
+      "This Tempo account signs private-alpha testnet actions and holds seeded testnet balances.",
     ),
   ).toBeDefined();
   expect(screen.getByText("Closed testnet · Private alpha")).toBeDefined();
   expect(
     screen.getByText(
-      "Your seeded balance and order history remain - sign back in with your email any time.",
+      "Your seeded balance and order history remain - sign back in with Tempo Wallet any time.",
     ),
   ).toBeDefined();
   expect(screen.queryByText("Gas preference")).toBeNull();
@@ -74,17 +75,16 @@ it("renders the provider email, closed-alpha badge, and server-managed trading c
   expect(screen.queryByText("Show advanced order types")).toBeNull();
 });
 
-it("falls back to the account fixture email when the provider email is absent", () => {
+it("falls back to the account fixture address when the provider address is absent", () => {
   useWalletState.mockReturnValue({
     state: "connected",
-    email: undefined,
-    address: "0xa513e6e4b8f2a923d98304ec87f64353c4d5c853",
-    chainName: "Ethereum",
-    connector: "Browser wallet",
+    address: undefined,
+    chainName: "Omega Local Zone",
+    connector: "Tempo Wallet",
     disconnect,
   });
 
   render(<AccountPage />);
 
-  expect(screen.getByText("trader@omegamarkets.com")).toBeDefined();
+  expect(screen.getByText("0x9A9f…63AE")).toBeDefined();
 });

@@ -15,13 +15,14 @@ it("renders Market mode by default with Buy/Sell + percentage shortcuts", () => 
       mode="market"
       onModeChange={() => {}}
       midpoint="0.9213"
+      available="10000.00"
     />,
   );
   expect(screen.getByRole("radio", { name: /Buy/ })).toBeDefined();
   expect(screen.getByRole("radio", { name: /Sell/ })).toBeDefined();
-  expect(screen.getByRole("button", { name: "25" })).toBeDefined();
-  expect(screen.getByRole("button", { name: "50" })).toBeDefined();
-  expect(screen.getByRole("button", { name: "75" })).toBeDefined();
+  expect(screen.getByRole("button", { name: "25%" })).toBeDefined();
+  expect(screen.getByRole("button", { name: "50%" })).toBeDefined();
+  expect(screen.getByRole("button", { name: "75%" })).toBeDefined();
   expect(screen.getByRole("button", { name: "MAX" })).toBeDefined();
 });
 
@@ -32,6 +33,7 @@ it("does not render the in-form Market/Limit tabs (lifted to page-level OrderMod
       mode="market"
       onModeChange={() => {}}
       midpoint="0.9213"
+      available="10000.00"
     />,
   );
   expect(screen.queryByRole("tab", { name: "Market" })).toBeNull();
@@ -45,6 +47,7 @@ it("renders the top-line execution summary with side, pair, midpoint, and availa
       mode="market"
       onModeChange={() => {}}
       midpoint="0.9213"
+      available="10000.00"
     />,
   );
   const summary = screen.getByLabelText("Order summary");
@@ -52,7 +55,7 @@ it("renders the top-line execution summary with side, pair, midpoint, and availa
   expect(summary.textContent).toContain(`${DEFAULT_PAIR.base}/${DEFAULT_PAIR.quote}`);
   expect(summary.textContent).toContain("0.9213");
   expect(summary.textContent).toContain("Available");
-  expect(summary.textContent).toContain(`10,000.00 ${DEFAULT_PAIR.base}`);
+  expect(summary.textContent).toContain(`10,000.00 ${DEFAULT_PAIR.quote}`);
 });
 
 it("top-line summary flips to SELL tone when Sell is selected", () => {

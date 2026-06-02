@@ -23,22 +23,23 @@ import {
 import { Icon } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 import { LAUNCH_PAIRS, type LaunchPair } from "@/lib/fixtures/pairs";
-import type { MarketPair } from "@/lib/fixtures/types";
 
 /** Stable demo 24h-change values keyed by pair so the wireframe doesn't flap. */
-const DEMO_CHANGES: Record<MarketPair, string> = {
+const DEMO_CHANGES: Record<string, string> = {
   "USDC/EURC": "+0.04%",
   "USDC/USDT": "−0.01%",
   "USDT/EURC": "+0.06%",
   "ETH/USDC": "+1.82%",
   "BTC/USDC": "−0.34%",
+  "OALPHA/PATH.USD": "0.00%",
 };
 
 export interface PairSwitcherProps {
-  value: MarketPair;
-  onChange: (pair: MarketPair) => void;
+  value: string;
+  onChange: (pair: string) => void;
   /** Live midpoint for the selected pair, formatted. Empty = em-dash. */
   midpoint?: string;
+  pairs?: LaunchPair[];
   className?: string;
 }
 
@@ -46,9 +47,10 @@ export function PairSwitcher({
   value,
   onChange,
   midpoint,
+  pairs = LAUNCH_PAIRS,
   className,
 }: PairSwitcherProps) {
-  const selected = LAUNCH_PAIRS.find((p) => p.pair === value) ?? LAUNCH_PAIRS[0];
+  const selected = pairs.find((p) => p.pair === value) ?? pairs[0] ?? LAUNCH_PAIRS[0];
 
   return (
     <DropdownMenu>
@@ -81,7 +83,7 @@ export function PairSwitcher({
         sideOffset={8}
         className="w-[var(--radix-dropdown-menu-trigger-width)] min-w-[280px] p-1"
       >
-        {LAUNCH_PAIRS.map((pair) => (
+        {pairs.map((pair) => (
           <PairRow
             key={pair.pair}
             pair={pair}
@@ -103,7 +105,7 @@ function PairRow({
   active: boolean;
   onSelect: () => void;
 }) {
-  const change = DEMO_CHANGES[pair.pair];
+  const change = DEMO_CHANGES[pair.pair] ?? "0.00%";
   const isUp = change.startsWith("+");
   return (
     <DropdownMenuItem

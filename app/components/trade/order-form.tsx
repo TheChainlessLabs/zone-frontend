@@ -53,23 +53,24 @@ export interface OrderFormProps {
   onModeChange: (mode: OrderMode) => void;
   /** Live midpoint as a decimal string. Empty = unknown (em-dash). */
   midpoint: string;
+  /** Live available trading balance in the base token, formatted. */
+  available?: string;
+  /** Side-aware wallet balances: buy spends quote, sell spends base. */
+  availableBySide?: Partial<Record<Side, string>>;
   fee?: string;
   /** When true, the form renders skeleton placeholders. */
   loading?: boolean;
   /** When set, the form renders an inline error tile in place of the CTA. */
   errorMessage?: string;
-  onSubmit?: (payload: OrderFormSubmitPayload) => void;
+  onSubmit?: (payload: OrderFormSubmitPayload) => void | Promise<void>;
 }
 
 const PCT_SHORTCUTS: Array<{ label: string; value: number }> = [
-  { label: "25", value: 0.25 },
-  { label: "50", value: 0.5 },
-  { label: "75", value: 0.75 },
+  { label: "25%", value: 0.25 },
+  { label: "50%", value: 0.5 },
+  { label: "75%", value: 0.75 },
   { label: "MAX", value: 1 },
 ];
-
-/** Mock available balance (BASE) per pair — stable so review shots don't flap. */
-const MOCK_AVAILABLE = "10000.00";
 
 /** Tabular grouping for the summary row — `10000.00` -> `10,000.00`. */
 function formatGroup(value: string): string {
@@ -83,6 +84,8 @@ export function OrderForm({
   mode,
   onModeChange,
   midpoint,
+  available = "0.00",
+  availableBySide,
   fee = "0.005%",
   loading = false,
   errorMessage,
@@ -93,6 +96,9 @@ export function OrderForm({
   const [price, setPrice] = React.useState<string>(midpoint || "");
   const [pendingOrder, setPendingOrder] =
     React.useState<OrderFormSubmitPayload | null>(null);
+  const [confirmationState, setConfirmationState] =
+    React.useState<"idle" | "signing" | "submitting" | "failed">("idle");
+  const [submissionError, setSubmissionError] = React.useState<string>();
 
   // Sync the limit-price input default whenever the midpoint or mode shifts —
   // the user can still override. Empty midpoint stays empty.
@@ -106,21 +112,29 @@ export function OrderForm({
   const numericPrice = parseFloat(
     (mode === "limit" ? price : midpoint) || "0",
   );
+  const activeAvailable =
+    availableBySide?.[side] ?? available;
+  const activeAvailableToken = side === "buy" ? pair.quote : pair.base;
   const estReceive =
     Number.isFinite(numericAmount) &&
     Number.isFinite(numericPrice) &&
     numericAmount > 0 &&
     numericPrice > 0
-      ? (numericAmount * numericPrice).toFixed(2)
+      ? side === "buy"
+        ? numericAmount.toFixed(2)
+        : (numericAmount * numericPrice).toFixed(2)
       : "";
+  const estReceiveToken = side === "buy" ? pair.base : pair.quote;
 
   const submitDisabled =
     loading || !!errorMessage || numericAmount <= 0 ||
     (mode === "limit" && numericPrice <= 0);
 
   const handlePct = (factor: number) => {
-    const base = parseFloat(MOCK_AVAILABLE);
-    const next = (base * factor).toFixed(2);
+    const balance = parseFloat(activeAvailable.replace(/,/g, ""));
+    const maxBase =
+      side === "buy" && numericPrice > 0 ? balance / numericPrice : balance;
+    const next = (maxBase * factor).toFixed(2);
     setAmount(next);
   };
 
@@ -135,18 +149,35 @@ export function OrderForm({
     });
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (!pendingOrder) return;
-    onSubmit?.(pendingOrder);
-    setPendingOrder(null);
-    setAmount("");
-    if (pendingOrder.mode === "limit") {
-      setPrice(midpoint || "");
+    setSubmissionError(undefined);
+    setConfirmationState("signing");
+    try {
+      const result = onSubmit?.(pendingOrder);
+      if (result && typeof result === "object" && "then" in result) {
+        setConfirmationState("submitting");
+        await result;
+      }
+      setPendingOrder(null);
+      setAmount("");
+      setConfirmationState("idle");
+      if (pendingOrder.mode === "limit") {
+        setPrice(midpoint || "");
+      }
+    } catch (error) {
+      setConfirmationState("failed");
+      setSubmissionError(getErrorMessage(error));
     }
   };
 
   const handleCancel = () => {
+    if (confirmationState === "signing" || confirmationState === "submitting") {
+      return;
+    }
     setPendingOrder(null);
+    setConfirmationState("idle");
+    setSubmissionError(undefined);
   };
 
   // Keyboard hotkeys at form level. Match TWS / Bloomberg ticket-pad muscle
@@ -201,7 +232,8 @@ export function OrderForm({
             side={side}
             pair={pair}
             midpoint={midpoint}
-            available={MOCK_AVAILABLE}
+            available={activeAvailable}
+            availableToken={activeAvailableToken}
             loading={loading}
           />
 
@@ -338,7 +370,7 @@ export function OrderForm({
             <ContextCell label="Midpoint" value={midpoint || "—"} />
             <ContextCell
               label="Est. received"
-              value={estReceive ? `${formatGroup(estReceive)} ${pair.quote}` : "—"}
+              value={estReceive ? `${formatGroup(estReceive)} ${estReceiveToken}` : "—"}
             />
             <ContextCell label="Fee" value={fee} />
           </div>
@@ -379,7 +411,7 @@ export function OrderForm({
         <OrderConfirmationModal
           open
           onClose={handleCancel}
-          state="idle"
+          state={confirmationState}
           side={pendingOrder.side}
           pair={`${pair.base}/${pair.quote}`}
           mode={pendingOrder.mode}
@@ -387,8 +419,11 @@ export function OrderForm({
           price={pendingOrder.price}
           midpoint={midpoint}
           fee={fee}
-          available={formatGroup(MOCK_AVAILABLE)}
+          available={formatGroup(activeAvailable)}
+          availableToken={activeAvailableToken}
+          errorMessage={submissionError}
           onConfirm={handleConfirm}
+          onRetry={handleConfirm}
         />
       ) : null}
     </>
@@ -407,12 +442,14 @@ function ExecSummaryRow({
   pair,
   midpoint,
   available,
+  availableToken,
   loading,
 }: {
   side: Side;
   pair: LaunchPair;
   midpoint: string;
   available: string;
+  availableToken: string;
   loading: boolean;
 }) {
   const sideTone = side === "buy" ? "var(--success)" : "var(--destructive)";
@@ -445,7 +482,7 @@ function ExecSummaryRow({
           Available
         </span>
         <span className="font-mono text-xs tabular-nums text-[var(--foreground)]">
-          {loading ? "—" : `${formatGroup(available)} ${pair.base}`}
+          {loading ? "—" : `${formatGroup(available)} ${availableToken}`}
         </span>
       </span>
     </div>
@@ -536,4 +573,10 @@ function Skeleton({ className }: { className?: string }) {
       )}
     />
   );
+}
+
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error && error.message) return error.message;
+  if (typeof error === "string") return error;
+  return "Order failed.";
 }

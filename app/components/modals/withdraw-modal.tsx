@@ -19,17 +19,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Status } from "@/components/ui/status";
 import { Icon } from "@/lib/icons";
+import { tempoTxUrl } from "@/lib/zone";
 import { ModalShell } from "./modal-shell";
 
 /**
- * WithdrawModal — withdraw stablecoins back to an Ethereum L1 address.
+ * WithdrawModal — withdraw PATH.USD back to a Tempo L1 address.
  *
  * State machine:
  *   idle    — recipient + amount entry
  *   signing — Sign withdrawal pending
- *   pending — relayer processing
+ *   pending — zone outbox processing
  *   success — withdrawal queued; tx hash link
- *   failed  — wallet rejected or relayer error
+ *   failed  — wallet rejected or zone RPC error
  *
  * Uses the M2.10 Form primitive + zod for the recipient address validator.
  * Microcopy follows omega-docs/03-brand/messaging.md "[What happened.]
@@ -42,9 +43,9 @@ export type WithdrawState =
   | "success"
   | "failed";
 
-export type WithdrawToken = "USDC" | "USDT" | "EURC";
+export type WithdrawToken = "PATH.USD";
 
-const WITHDRAW_TOKENS: WithdrawToken[] = ["USDC", "USDT", "EURC"];
+const WITHDRAW_TOKENS: WithdrawToken[] = ["PATH.USD"];
 
 const withdrawSchema = z.object({
   recipient: z
@@ -52,7 +53,7 @@ const withdrawSchema = z.object({
     .min(1, "Recipient required. Paste the destination address.")
     .regex(
       /^0x[a-fA-F0-9]{40}$/,
-      "Invalid address. Paste a 0x-prefixed Ethereum address."
+      "Invalid address. Paste a 0x-prefixed Tempo address."
     ),
   amount: z
     .string()
@@ -84,7 +85,7 @@ export function WithdrawModal({
   open,
   onClose,
   state,
-  token = "USDC",
+  token = "PATH.USD",
   available = "9,820.00",
   networkFeeUsd = "$0.42",
   privacyFeeUsd = "$0.10",
@@ -115,7 +116,7 @@ export function WithdrawModal({
         if (!next && !isBusy) onClose();
       }}
       title="Withdraw"
-      description="Withdraw stablecoins to an Ethereum L1 address."
+      description="Withdraw PATH.USD to a Tempo L1 address."
     >
       <Form {...form}>
         <form
@@ -293,7 +294,7 @@ function WithdrawStateSurface({
       <div className="flex items-center justify-between gap-3 rounded-[var(--radius-md)] border border-[var(--border)] p-3">
         <Status state="settled" />
         <a
-          href={`https://etherscan.io/tx/${txHash}`}
+          href={tempoTxUrl(txHash)}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1.5 font-mono text-xs text-[var(--foreground)] underline-offset-4 hover:underline"

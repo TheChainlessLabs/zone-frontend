@@ -50,7 +50,7 @@ it's missing.
 
 | Modal                     | states                                                              |
 | ------------------------- | ------------------------------------------------------------------- |
-| ConnectWallet             | idle [x] · connecting [x] · connected [x] · failed [x] · no-nft-pass [x] |
+| TempoWallet               | idle [x] · connecting [x] · connected [x] · failed [x] |
 | Deposit                   | idle [x] · approving [x] · depositing [x] · pending [x] · success [x] · failed [x] |
 | Withdraw                  | idle [x] · signing [x] · pending [x] · success [x] · failed [x]     |
 | Order Confirmation        | idle [x] · signing [x] · submitting [x] · failed [x]                |

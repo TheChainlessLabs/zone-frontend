@@ -119,7 +119,6 @@ export function computeAllocations(fixture: PortfolioFixture): Allocation[] {
         share: total > 0 ? value / total : 0,
       };
     })
-    .filter((a) => a.value > 0)
     .sort((a, b) => b.value - a.value);
 }
 
@@ -161,6 +160,8 @@ export function syntheticSeries(
  * institutional steel/zinc + emerald for the dominant slice. No neon.
  */
 export const TOKEN_TONE: Record<BalanceFixture["token"], string> = {
+  "PATH.USD": "var(--foreground)",
+  OALPHA: "var(--success)",
   USDC: "var(--foreground)",
   EURC: "var(--success)",
   USDT: "var(--muted-foreground)",

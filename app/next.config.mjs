@@ -1,5 +1,15 @@
+const frameAncestors = process.env.OMEGA_FRAME_ANCESTORS?.trim() || "'self'";
+const frameOptionHeaders =
+  frameAncestors === "'self'"
+    ? [{ key: "X-Frame-Options", value: "SAMEORIGIN" }]
+    : [];
+const allowedDevOrigins = process.env.OMEGA_ALLOWED_DEV_ORIGINS?.split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  ...(allowedDevOrigins?.length ? { allowedDevOrigins } : {}),
   output: "standalone",
   async headers() {
     return [
@@ -14,7 +24,7 @@ const nextConfig = {
           // iframe its sibling /personas/preview/render/<id> routes for
           // sandboxed live previews. Cross-origin iframing of the app
           // remains blocked.
-          { key: "X-Frame-Options", value: "SAMEORIGIN" },
+          ...frameOptionHeaders,
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           {
@@ -31,7 +41,8 @@ const nextConfig = {
               "img-src 'self' data: blob: https:",
               "font-src 'self' data:",
               "connect-src 'self' https: wss:",
-              "frame-ancestors 'self'",
+              "frame-src 'self' https://wallet.tempo.xyz https://wallet-next.tempo.xyz",
+              `frame-ancestors ${frameAncestors}`,
               "base-uri 'self'",
               "form-action 'self'",
             ].join("; "),

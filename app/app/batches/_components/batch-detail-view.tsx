@@ -25,6 +25,8 @@ import {
 import { AttestationStatus } from "@/app/batches/_components/attestation-status";
 import { CopyButton } from "@/app/batches/_components/copy-button";
 import { EtherscanTxLink } from "@/app/batches/_components/etherscan-link";
+import { getZoneBatch, type ZoneBatchSummary } from "@/lib/zone";
+import { zoneBatchToFixture } from "./batches-list-view";
 
 /**
  * BatchDetailView — per-batch verification surface.
@@ -61,7 +63,42 @@ export function BatchDetailView({ id }: { id: string }) {
   const params = useSearchParams();
   const state = usePageState();
   const rawState = params.get("state");
-  const fixture =
+  const [liveFixture, setLiveFixture] =
+    React.useState<BatchesDetailFixture | null>(null);
+  const [liveState, setLiveState] = React.useState<
+    "loading" | "ready" | "error" | "empty"
+  >("loading");
+  const [liveError, setLiveError] = React.useState<string | undefined>();
+
+  React.useEffect(() => {
+    if (state !== "default" || rawState) return;
+    let cancelled = false;
+    async function loadBatch() {
+      setLiveState("loading");
+      setLiveError(undefined);
+      try {
+        const batch = await getZoneBatch(parseBatchRouteId(id));
+        if (cancelled) return;
+        if (!batch) {
+          setLiveFixture(null);
+          setLiveState("empty");
+          return;
+        }
+        setLiveFixture(zoneBatchToDetailFixture(batch));
+        setLiveState("ready");
+      } catch (error) {
+        if (cancelled) return;
+        setLiveError(getErrorMessage(error));
+        setLiveState("error");
+      }
+    }
+    void loadBatch();
+    return () => {
+      cancelled = true;
+    };
+  }, [id, rawState, state]);
+
+  const fixture: BatchesDetailFixture =
     state === "loading"
       ? batchesDetailFixtures.loading
       : state === "empty"
@@ -70,7 +107,20 @@ export function BatchDetailView({ id }: { id: string }) {
           ? batchesDetailFixtures.error
           : rawState && VALID_DETAIL_KEYS.has(rawState as DetailStateKey)
             ? STATE_TO_FIXTURE[rawState as DetailStateKey]
-            : batchesDetailFixtures.verified;
+            : liveState === "empty"
+              ? batchesDetailFixtures.empty
+              : liveFixture ??
+              {
+                ...batchesDetailFixtures.loading,
+                error:
+                  liveState === "error"
+                    ? {
+                        message: liveError ?? "Failed to load batch.",
+                        code: "ZONE_RPC",
+                      }
+                    : undefined,
+                isLoading: liveState === "loading",
+              };
 
   // Honour the route segment for the title even when we render a
   // status-keyed fixture. Falls back to the fixture batch number.
@@ -104,7 +154,7 @@ export function BatchDetailView({ id }: { id: string }) {
             </Button>
           }
         />
-      ) : state === "empty" ? (
+      ) : state === "empty" || liveState === "empty" ? (
         <SurfaceState
           title="Batch not found."
           description="The route you tried doesn't exist. Head back to /batches."
@@ -122,6 +172,24 @@ export function BatchDetailView({ id }: { id: string }) {
       )}
     </PageLayout>
   );
+}
+
+function zoneBatchToDetailFixture(batch: ZoneBatchSummary): BatchesDetailFixture {
+  return {
+    batch: zoneBatchToFixture(batch),
+    orders: [],
+    fills: [],
+  };
+}
+
+function parseBatchRouteId(id: string) {
+  if (id.startsWith("0x")) return id as `0x${string}`;
+  if (/^\d+$/.test(id)) return BigInt(id);
+  throw new Error("Invalid batch identifier.");
+}
+
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : "Failed to load batch.";
 }
 
 function BatchDetail({ fixture }: { fixture: BatchesDetailFixture }) {

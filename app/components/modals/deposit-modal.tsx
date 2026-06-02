@@ -8,18 +8,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Status } from "@/components/ui/status";
 import { Icon } from "@/lib/icons";
+import { tempoTxUrl } from "@/lib/zone";
 import { ModalShell } from "./modal-shell";
 
 /**
- * DepositModal — bridge USDC / USDT / EURC from Ethereum L1 into Omega.
+ * DepositModal — bridge PATH.USD from Tempo L1 into Omega Zone.
  *
  * State machine:
  *   idle       — picker, amount entry, fee summary, two CTAs
  *   approving  — Sign permit pending in wallet
  *   depositing — Sign deposit pending in wallet
- *   pending    — relayer waiting for L1 confirmation (~30s)
+ *   pending    — zone sequencer waiting for L1 confirmation (~30s)
  *   success    — deposit credited; tx hash link
- *   failed     — wallet rejected or relayer error
+ *   failed     — wallet rejected or zone RPC error
  *
  * Voice: "Sign permit" / "Sign deposit" — never "approve" /
  * "authorise" (omega-docs/03-brand/messaging.md).
@@ -32,9 +33,9 @@ export type DepositState =
   | "success"
   | "failed";
 
-export type DepositToken = "USDC" | "USDT" | "EURC";
+export type DepositToken = "PATH.USD";
 
-const DEPOSIT_TOKENS: DepositToken[] = ["USDC", "USDT", "EURC"];
+const DEPOSIT_TOKENS: DepositToken[] = ["PATH.USD"];
 const PERCENT_SHORTCUTS = [25, 50, 75] as const;
 
 export interface DepositModalProps {
@@ -62,7 +63,7 @@ export function DepositModal({
   open,
   onClose,
   state,
-  token = "USDC",
+  token = "PATH.USD",
   amount = "",
   walletBalance = "12,500.00",
   networkFeeUsd = "$0.42",
@@ -93,10 +94,10 @@ export function DepositModal({
         if (!next && !isBusy) onClose();
       }}
       title="Deposit"
-      description="Bridge stablecoins from Ethereum L1 into Omega."
+      description="Bridge PATH.USD from Tempo L1 into Omega Zone."
     >
       <div className="flex flex-col gap-5">
-        {/* Chain selector — locked to Ethereum L1 for v0 */}
+        {/* Chain selector — locked to Tempo L1 for v0 */}
         <div className="flex flex-col gap-2">
           <Label className="font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
             Chain
@@ -109,7 +110,7 @@ export function DepositModal({
           >
             <span className="flex items-center gap-2">
               <Icon.Wallet size={14} aria-hidden />
-              Ethereum
+              Tempo L1
             </span>
             <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
               L1 only
@@ -255,7 +256,7 @@ function DepositStateSurface({
       <div className="flex items-start gap-3 rounded-[var(--radius-md)] border border-[var(--border)] p-3">
         <Status state="pending" />
         <span className="text-xs leading-relaxed text-[var(--muted-foreground)]">
-          We&rsquo;re confirming your deposit on Ethereum. This usually takes
+          We&rsquo;re confirming your deposit on Tempo. This usually takes
           about 30 seconds.
         </span>
       </div>
@@ -267,7 +268,7 @@ function DepositStateSurface({
       <div className="flex items-center justify-between gap-3 rounded-[var(--radius-md)] border border-[var(--border)] p-3">
         <Status state="settled" />
         <a
-          href={`https://etherscan.io/tx/${txHash}`}
+          href={tempoTxUrl(txHash)}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1.5 font-mono text-xs text-[var(--foreground)] underline-offset-4 hover:underline"

@@ -8,15 +8,15 @@ import { Icon } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 
 /**
- * DisconnectedState — auth-required empty state for routes behind the v0
- * email session.
+ * DisconnectedState — auth-required empty state for routes behind the Tempo
+ * wallet session.
  *
  * Reused by /trade, /portfolio, /account. /batches is public and does not
  * use this. Voice rule (omega-docs/03-brand/messaging.md): "[What happened.]
  * [What to do next.]" — terse, period-terminated, no exclamation points.
  *
  * The component is generic. Consumers pass the variant they need:
- *   - default               → no email session
+ *   - default               → no Tempo wallet session
  *   - wrong-network         → switch chain (Phase 4 only)
  *   - no-NFT-pass           → phase-4 alpha gate
  * …or any other one-shot empty state with a single primary action.
@@ -45,10 +45,10 @@ export const DisconnectedState = React.forwardRef<
 >(function DisconnectedState(
   {
     title = "Anonymous spot FX. On-chain settlement.",
-    description = "Sign up with email to access trading and account screens.",
-    actionLabel = "Sign up",
+    description = "Connect Tempo Wallet to access trading and account screens.",
+    actionLabel = "Tempo wallet",
     onAction,
-    icon: IconComponent = Icon.Mail,
+    icon: IconComponent = Icon.Wallet,
     className,
     ...rest
   },

@@ -1,13 +1,8 @@
 export {
-  ConnectWalletModal,
-  type ConnectWalletModalProps,
-  type ConnectWalletState,
-} from "./connect-wallet-modal";
-export {
-  EmailSignupModal,
-  type EmailSignupModalProps,
-  type EmailSignupState,
-} from "./email-signup-modal";
+  TempoWalletModal,
+  type TempoWalletModalProps,
+  type TempoWalletState,
+} from "./tempo-wallet-modal";
 export {
   DepositModal,
   type DepositModalProps,

@@ -1,6 +1,4 @@
 import type {
-  ConnectModalFixture,
-  ConnectModalState,
   DepositModalFixture,
   DepositModalState,
   OrderConfirmationModalFixture,
@@ -8,11 +6,6 @@ import type {
   WithdrawModalFixture,
   WithdrawModalState,
 } from "../types";
-import { connectConnected } from "./connect-connected";
-import { connectConnecting } from "./connect-connecting";
-import { connectFailed } from "./connect-failed";
-import { connectIdle } from "./connect-idle";
-import { connectNoNftPass } from "./connect-no-nft-pass";
 import { depositApproving } from "./deposit-approving";
 import { depositDepositing } from "./deposit-depositing";
 import { depositFailed } from "./deposit-failed";
@@ -28,17 +21,6 @@ import { withdrawIdle } from "./withdraw-idle";
 import { withdrawPending } from "./withdraw-pending";
 import { withdrawSigning } from "./withdraw-signing";
 import { withdrawSuccess } from "./withdraw-success";
-
-export const connectModalFixtures: Record<
-  ConnectModalState,
-  ConnectModalFixture
-> = {
-  idle: connectIdle,
-  connecting: connectConnecting,
-  connected: connectConnected,
-  failed: connectFailed,
-  "no-nft-pass": connectNoNftPass,
-};
 
 export const depositModalFixtures: Record<
   DepositModalState,

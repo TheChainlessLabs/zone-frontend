@@ -52,7 +52,7 @@ export const WithIcon: Story = {
         <Icon.Buy /> Buy
       </Button>
       <Button variant="outline">
-        <Icon.Wallet /> Connect wallet
+        <Icon.Wallet /> Tempo wallet
       </Button>
       <Button variant="glass">
         <Icon.Submit /> Place order

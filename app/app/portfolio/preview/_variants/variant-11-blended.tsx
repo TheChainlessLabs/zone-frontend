@@ -214,7 +214,7 @@ export default function Variant11Blended({
             </div>
             <div className="flex flex-col gap-3 border-t border-[var(--border)] pt-4">
               <div className="flex items-center justify-between text-xs text-[var(--muted-foreground)]">
-                <span>Allocation</span>
+                <span>Token balances</span>
                 <MonoNum>{allocations.length} tokens</MonoNum>
               </div>
               {allocations.length > 0 ? (
@@ -250,28 +250,38 @@ export default function Variant11Blended({
                   return (
                     <li
                       key={a.token}
-                      className="flex items-center justify-between gap-3"
+                      className="flex items-start justify-between gap-3"
                     >
-                      <span className="inline-flex min-w-0 items-center gap-2">
+                      <span className="inline-flex min-w-0 items-start gap-2">
                         <span
                           aria-hidden
-                          className="inline-block h-2 w-2 rounded-full"
+                          className="mt-1.5 inline-block h-2 w-2 shrink-0 rounded-full"
                           style={{ background: TOKEN_TONE[a.token] }}
                         />
+                        <span className="flex min-w-0 flex-col gap-0.5">
                           <span className="font-medium">{a.token}</span>
+                          {balance ? (
+                            <MonoNum className="text-[10px] leading-4 text-[var(--muted-foreground)]">
+                              {balance.available} free · {balance.locked} darkpool
+                            </MonoNum>
+                          ) : null}
                         </span>
+                      </span>
+                      <span className="flex shrink-0 flex-col items-end gap-0.5">
+                        <MonoNum>{balance ? `${balance.total} ${a.token}` : a.token}</MonoNum>
                         <span className="flex items-center gap-3">
-                          <MonoNum className="text-[var(--muted-foreground)]">
+                          <MonoNum className="text-[10px] leading-4 text-[var(--muted-foreground)]">
                             ${usd.toFixed(2)}
                           </MonoNum>
-                          <MonoNum className="w-12 text-right text-[var(--muted-foreground)]">
+                          <MonoNum className="w-12 text-right text-[10px] leading-4 text-[var(--muted-foreground)]">
                             {(a.share * 100).toFixed(1)}%
                           </MonoNum>
                         </span>
-                      </li>
-                    );
-                  })}
-                </ul>
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
               </div>
             </Card>
         </aside>

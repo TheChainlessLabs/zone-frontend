@@ -1,11 +1,10 @@
 "use client";
 
 /**
- * /account — email-led identity, theme, and session.
+ * /account — Tempo wallet identity, theme, and session.
  *
- * v0 auth is email-first with a server-managed pre-generated trading
- * address. The page reflects that model directly: lead with the user's
- * email, then the trading address used inside the closed alpha.
+ * The private-alpha auth model now uses Tempo Wallet. This page leads with
+ * the Tempo account address that signs testnet actions.
  */
 
 import * as React from "react";
@@ -17,15 +16,14 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
+import { OmegaZoneStatus } from "@/components/omega-zone/OmegaZoneStatus";
 import { Icon } from "@/lib/icons";
 import { accountFixtures } from "@/lib/fixtures";
 import {
   truncateAddress,
   useWalletState,
 } from "@/components/shell/WalletStateProvider";
-
-const ETHERSCAN_BASE = "https://etherscan.io/address/";
+import { tempoAddressUrl } from "@/lib/zone";
 
 export default function AccountPage() {
   const wallet = useWalletState();
@@ -37,11 +35,13 @@ export default function AccountPage() {
   ) {
     return (
       <AppShell route="/account" auth>
-        <DisconnectedState
-          title="Account is private."
-          description="Sign up with email to view and update your account."
-          onAction={() => {}}
-        />
+          <DisconnectedState
+            title="Account is private."
+            description="Connect Tempo Wallet to view and update your account."
+            actionLabel="Tempo wallet"
+            onAction={() => {}}
+            icon={Icon.Wallet}
+          />
       </AppShell>
     );
   }
@@ -49,8 +49,7 @@ export default function AccountPage() {
   const fixture = accountFixtures.default;
   const address: string =
     wallet.address ?? fixture.address ?? "0x0000000000000000000000000000000000000000";
-  const email = wallet.email ?? fixture.email;
-  const chainName = wallet.chainName ?? "Ethereum";
+  const chainName = wallet.chainName ?? "Omega Zone";
   const truncated = truncateAddress(address);
   const sessionStartedAt = fixture.sessionStartedAt;
 
@@ -65,33 +64,26 @@ export default function AccountPage() {
           <Card className="flex flex-col gap-4 p-5 md:p-6">
             <div className="flex flex-col gap-1.5">
               <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
-                Email
-              </span>
-              <span className="text-base">{email}</span>
-            </div>
-            <Separator />
-            <div className="flex flex-col gap-1.5">
-              <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
-                Trading address (server-managed)
+                Tempo account
               </span>
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-mono text-sm">{truncated}</span>
                 <CopyButton value={address} label="Copy address" />
                 <Button asChild variant="ghost" size="sm">
                   <a
-                    href={`${ETHERSCAN_BASE}${address}`}
+                    href={tempoAddressUrl(address)}
                     target="_blank"
                     rel="noreferrer noopener"
-                    aria-label="View on Etherscan"
+                    aria-label="View on Tempo Explorer"
                   >
                     <Icon.External className="h-3.5 w-3.5" aria-hidden />
-                    Etherscan
+                    Explorer
                   </a>
                 </Button>
               </div>
               <span className="text-[11px] text-[var(--muted-foreground)]">
-                This address holds your seeded testnet balance during the closed
-                alpha. You don&apos;t manage its keys.
+                This Tempo account signs private-alpha testnet actions and holds
+                seeded testnet balances.
               </span>
             </div>
             <div className="flex flex-wrap items-center gap-3">
@@ -108,10 +100,14 @@ export default function AccountPage() {
               <Field label="Chain" value={chainName} />
               <Field
                 label="Connector"
-                value={wallet.connector ?? "Browser wallet"}
+                value={wallet.connector ?? "Tempo Wallet"}
               />
             </div>
           </Card>
+        </PageSection>
+
+        <PageSection title={<MonoSectionTitle>Zone</MonoSectionTitle>}>
+          <OmegaZoneStatus />
         </PageSection>
 
         <PageSection title={<MonoSectionTitle>Theme</MonoSectionTitle>}>
@@ -132,7 +128,7 @@ export default function AccountPage() {
               <span className="text-sm">Sign out of this device.</span>
               <span className="text-xs text-[var(--muted-foreground)]">
                 Your seeded balance and order history remain - sign back in with
-                your email any time.
+                Tempo Wallet any time.
               </span>
             </div>
             <Button

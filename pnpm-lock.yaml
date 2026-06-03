@@ -42,7 +42,7 @@ importers:
         version: 5.100.11(react@18.3.1)
       accounts:
         specifier: ^0.12.2
-        version: 0.12.2(@types/react@18.3.28)(@wagmi/core@3.4.12)(react@18.3.1)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@18.3.1))(viem@2.50.4(typescript@5.9.3)(zod@4.3.6))(wagmi@3.6.15)
+        version: 0.12.2(@types/react@18.3.28)(@wagmi/core@3.4.12)(react@18.3.1)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@18.3.1))(viem@2.50.4(typescript@5.9.3)(zod@4.4.3))(wagmi@3.6.15)
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -90,13 +90,13 @@ importers:
         version: 1.1.2(@types/react-dom@18.3.7(@types/react@18.3.28))(@types/react@18.3.28)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       viem:
         specifier: ^2.50.4
-        version: 2.50.4(typescript@5.9.3)(zod@4.3.6)
+        version: 2.50.4(typescript@5.9.3)(zod@4.4.3)
       wagmi:
         specifier: ^3.6.15
-        version: 3.6.15(@tanstack/query-core@5.100.11)(@tanstack/react-query@5.100.11(react@18.3.1))(@types/react@18.3.28)(accounts@0.12.2)(react@18.3.1)(typescript@5.9.3)(viem@2.50.4(typescript@5.9.3)(zod@4.3.6))
+        version: 3.6.15(@tanstack/query-core@5.100.11)(@tanstack/react-query@5.100.11(react@18.3.1))(@types/react@18.3.28)(accounts@0.12.2)(react@18.3.1)(typescript@5.9.3)(viem@2.50.4(typescript@5.9.3)(zod@4.4.3))
       zod:
-        specifier: ^4.3.6
-        version: 4.3.6
+        specifier: ^4.4.3
+        version: 4.4.3
     devDependencies:
       '@babel/preset-env':
         specifier: ^7.29.2
@@ -6007,9 +6007,6 @@ packages:
     resolution: {integrity: sha512-4LCcse/U2MHZ63HAJVE+v71o7yOdIe4cZ70Wpf8D/IyjDKYQLV5GD46B+hSTjJsvV5PztjvHoU580EftxjDZFQ==}
     engines: {node: '>=12.20'}
 
-  zod@4.3.6:
-    resolution: {integrity: sha512-rftlrkhHZOcjDwkGlnUtZZkvaPHCsDATp4pGpuOOMDaTdDDXF91wuVDJoWoPsKX/3YPQ5fHuF3STjcYyKr+Qhg==}
-
   zod@4.4.3:
     resolution: {integrity: sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ==}
 
@@ -8600,23 +8597,23 @@ snapshots:
       convert-source-map: 2.0.0
       tinyrainbow: 3.1.0
 
-  '@wagmi/connectors@8.0.14(@wagmi/core@3.4.12)(accounts@0.12.2)(typescript@5.9.3)(viem@2.50.4(typescript@5.9.3)(zod@4.3.6))':
+  '@wagmi/connectors@8.0.14(@wagmi/core@3.4.12)(accounts@0.12.2)(typescript@5.9.3)(viem@2.50.4(typescript@5.9.3)(zod@4.4.3))':
     dependencies:
-      '@wagmi/core': 3.4.12(@tanstack/query-core@5.100.11)(@types/react@18.3.28)(accounts@0.12.2)(react@18.3.1)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@18.3.1))(viem@2.50.4(typescript@5.9.3)(zod@4.3.6))
-      viem: 2.50.4(typescript@5.9.3)(zod@4.3.6)
+      '@wagmi/core': 3.4.12(@tanstack/query-core@5.100.11)(@types/react@18.3.28)(accounts@0.12.2)(react@18.3.1)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@18.3.1))(viem@2.50.4(typescript@5.9.3)(zod@4.4.3))
+      viem: 2.50.4(typescript@5.9.3)(zod@4.4.3)
     optionalDependencies:
-      accounts: 0.12.2(@types/react@18.3.28)(@wagmi/core@3.4.12)(react@18.3.1)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@18.3.1))(viem@2.50.4(typescript@5.9.3)(zod@4.3.6))(wagmi@3.6.15)
+      accounts: 0.12.2(@types/react@18.3.28)(@wagmi/core@3.4.12)(react@18.3.1)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@18.3.1))(viem@2.50.4(typescript@5.9.3)(zod@4.4.3))(wagmi@3.6.15)
       typescript: 5.9.3
 
-  '@wagmi/core@3.4.12(@tanstack/query-core@5.100.11)(@types/react@18.3.28)(accounts@0.12.2)(react@18.3.1)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@18.3.1))(viem@2.50.4(typescript@5.9.3)(zod@4.3.6))':
+  '@wagmi/core@3.4.12(@tanstack/query-core@5.100.11)(@types/react@18.3.28)(accounts@0.12.2)(react@18.3.1)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@18.3.1))(viem@2.50.4(typescript@5.9.3)(zod@4.4.3))':
     dependencies:
       eventemitter3: 5.0.1
       mipd: 0.0.7(typescript@5.9.3)
-      viem: 2.50.4(typescript@5.9.3)(zod@4.3.6)
+      viem: 2.50.4(typescript@5.9.3)(zod@4.4.3)
       zustand: 5.0.0(@types/react@18.3.28)(react@18.3.1)(use-sync-external-store@1.4.0(react@18.3.1))
     optionalDependencies:
       '@tanstack/query-core': 5.100.11
-      accounts: 0.12.2(@types/react@18.3.28)(@wagmi/core@3.4.12)(react@18.3.1)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@18.3.1))(viem@2.50.4(typescript@5.9.3)(zod@4.3.6))(wagmi@3.6.15)
+      accounts: 0.12.2(@types/react@18.3.28)(@wagmi/core@3.4.12)(react@18.3.1)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@18.3.1))(viem@2.50.4(typescript@5.9.3)(zod@4.4.3))(wagmi@3.6.15)
       typescript: 5.9.3
     transitivePeerDependencies:
       - '@types/react'
@@ -8704,31 +8701,26 @@ snapshots:
 
   '@xtuc/long@4.2.2': {}
 
-  abitype@1.2.3(typescript@5.9.3)(zod@4.3.6):
-    optionalDependencies:
-      typescript: 5.9.3
-      zod: 4.3.6
-
   abitype@1.2.3(typescript@5.9.3)(zod@4.4.3):
     optionalDependencies:
       typescript: 5.9.3
       zod: 4.4.3
 
-  accounts@0.12.2(@types/react@18.3.28)(@wagmi/core@3.4.12)(react@18.3.1)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@18.3.1))(viem@2.50.4(typescript@5.9.3)(zod@4.3.6))(wagmi@3.6.15):
+  accounts@0.12.2(@types/react@18.3.28)(@wagmi/core@3.4.12)(react@18.3.1)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@18.3.1))(viem@2.50.4(typescript@5.9.3)(zod@4.4.3))(wagmi@3.6.15):
     dependencies:
       hono: 4.12.21
       idb-keyval: 6.2.2
       mipd: 0.0.7(typescript@5.9.3)
-      mppx: 0.6.26(hono@4.12.21)(typescript@5.9.3)(viem@2.50.4(typescript@5.9.3)(zod@4.3.6))
+      mppx: 0.6.26(hono@4.12.21)(typescript@5.9.3)(viem@2.50.4(typescript@5.9.3)(zod@4.4.3))
       ox: 0.14.22(typescript@5.9.3)(zod@4.4.3)
       webauthx: 0.1.2(typescript@5.9.3)(zod@4.4.3)
       zod: 4.4.3
       zustand: 5.0.13(@types/react@18.3.28)(react@18.3.1)(use-sync-external-store@1.4.0(react@18.3.1))
     optionalDependencies:
-      '@wagmi/core': 3.4.12(@tanstack/query-core@5.100.11)(@types/react@18.3.28)(accounts@0.12.2)(react@18.3.1)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@18.3.1))(viem@2.50.4(typescript@5.9.3)(zod@4.3.6))
+      '@wagmi/core': 3.4.12(@tanstack/query-core@5.100.11)(@types/react@18.3.28)(accounts@0.12.2)(react@18.3.1)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@18.3.1))(viem@2.50.4(typescript@5.9.3)(zod@4.4.3))
       react: 18.3.1
-      viem: 2.50.4(typescript@5.9.3)(zod@4.3.6)
-      wagmi: 3.6.15(@tanstack/query-core@5.100.11)(@tanstack/react-query@5.100.11(react@18.3.1))(@types/react@18.3.28)(accounts@0.12.2)(react@18.3.1)(typescript@5.9.3)(viem@2.50.4(typescript@5.9.3)(zod@4.3.6))
+      viem: 2.50.4(typescript@5.9.3)(zod@4.4.3)
+      wagmi: 3.6.15(@tanstack/query-core@5.100.11)(@tanstack/react-query@5.100.11(react@18.3.1))(@types/react@18.3.28)(accounts@0.12.2)(react@18.3.1)(typescript@5.9.3)(viem@2.50.4(typescript@5.9.3)(zod@4.4.3))
     transitivePeerDependencies:
       - '@modelcontextprotocol/sdk'
       - '@types/react'
@@ -11014,11 +11006,11 @@ snapshots:
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
 
-  mppx@0.6.26(hono@4.12.21)(typescript@5.9.3)(viem@2.50.4(typescript@5.9.3)(zod@4.3.6)):
+  mppx@0.6.26(hono@4.12.21)(typescript@5.9.3)(viem@2.50.4(typescript@5.9.3)(zod@4.4.3)):
     dependencies:
       incur: 0.4.6
       ox: 0.14.20(typescript@5.9.3)(zod@4.4.3)
-      viem: 2.50.4(typescript@5.9.3)(zod@4.3.6)
+      viem: 2.50.4(typescript@5.9.3)(zod@4.4.3)
       zod: 4.4.3
     optionalDependencies:
       hono: 4.12.21
@@ -11151,21 +11143,6 @@ snapshots:
       '@scure/bip32': 1.7.0
       '@scure/bip39': 1.6.0
       abitype: 1.2.3(typescript@5.9.3)(zod@4.4.3)
-      eventemitter3: 5.0.1
-    optionalDependencies:
-      typescript: 5.9.3
-    transitivePeerDependencies:
-      - zod
-
-  ox@0.14.22(typescript@5.9.3)(zod@4.3.6):
-    dependencies:
-      '@adraffy/ens-normalize': 1.11.1
-      '@noble/ciphers': 1.3.0
-      '@noble/curves': 1.9.1
-      '@noble/hashes': 1.8.0
-      '@scure/bip32': 1.7.0
-      '@scure/bip39': 1.6.0
-      abitype: 1.2.3(typescript@5.9.3)(zod@4.3.6)
       eventemitter3: 5.0.1
     optionalDependencies:
       typescript: 5.9.3
@@ -12122,15 +12099,15 @@ snapshots:
       '@types/unist': 3.0.3
       vfile-message: 4.0.3
 
-  viem@2.50.4(typescript@5.9.3)(zod@4.3.6):
+  viem@2.50.4(typescript@5.9.3)(zod@4.4.3):
     dependencies:
       '@noble/curves': 1.9.1
       '@noble/hashes': 1.8.0
       '@scure/bip32': 1.7.0
       '@scure/bip39': 1.6.0
-      abitype: 1.2.3(typescript@5.9.3)(zod@4.3.6)
+      abitype: 1.2.3(typescript@5.9.3)(zod@4.4.3)
       isows: 1.0.7(ws@8.20.1)
-      ox: 0.14.22(typescript@5.9.3)(zod@4.3.6)
+      ox: 0.14.22(typescript@5.9.3)(zod@4.4.3)
       ws: 8.20.1
     optionalDependencies:
       typescript: 5.9.3
@@ -12198,14 +12175,14 @@ snapshots:
     dependencies:
       xml-name-validator: 5.0.0
 
-  wagmi@3.6.15(@tanstack/query-core@5.100.11)(@tanstack/react-query@5.100.11(react@18.3.1))(@types/react@18.3.28)(accounts@0.12.2)(react@18.3.1)(typescript@5.9.3)(viem@2.50.4(typescript@5.9.3)(zod@4.3.6)):
+  wagmi@3.6.15(@tanstack/query-core@5.100.11)(@tanstack/react-query@5.100.11(react@18.3.1))(@types/react@18.3.28)(accounts@0.12.2)(react@18.3.1)(typescript@5.9.3)(viem@2.50.4(typescript@5.9.3)(zod@4.4.3)):
     dependencies:
       '@tanstack/react-query': 5.100.11(react@18.3.1)
-      '@wagmi/connectors': 8.0.14(@wagmi/core@3.4.12)(accounts@0.12.2)(typescript@5.9.3)(viem@2.50.4(typescript@5.9.3)(zod@4.3.6))
-      '@wagmi/core': 3.4.12(@tanstack/query-core@5.100.11)(@types/react@18.3.28)(accounts@0.12.2)(react@18.3.1)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@18.3.1))(viem@2.50.4(typescript@5.9.3)(zod@4.3.6))
+      '@wagmi/connectors': 8.0.14(@wagmi/core@3.4.12)(accounts@0.12.2)(typescript@5.9.3)(viem@2.50.4(typescript@5.9.3)(zod@4.4.3))
+      '@wagmi/core': 3.4.12(@tanstack/query-core@5.100.11)(@types/react@18.3.28)(accounts@0.12.2)(react@18.3.1)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@18.3.1))(viem@2.50.4(typescript@5.9.3)(zod@4.4.3))
       react: 18.3.1
       use-sync-external-store: 1.4.0(react@18.3.1)
-      viem: 2.50.4(typescript@5.9.3)(zod@4.3.6)
+      viem: 2.50.4(typescript@5.9.3)(zod@4.4.3)
     optionalDependencies:
       typescript: 5.9.3
     transitivePeerDependencies:
@@ -12438,8 +12415,6 @@ snapshots:
   yocto-queue@0.1.0: {}
 
   yocto-queue@1.2.2: {}
-
-  zod@4.3.6: {}
 
   zod@4.4.3: {}
 

@@ -500,6 +500,227 @@ body[data-route="/404"] {
   }
 }
 
+/* Landing hero — blackhole ingress layer. */
+.omega-hero-blackhole-video {
+  transform: translate(-50%, -50%) scale(var(--hero-video-scale, 1.02));
+  transform-origin: center;
+  will-change: transform;
+}
+
+.omega-meteor-field {
+  pointer-events: none;
+  mix-blend-mode: screen;
+  opacity: var(--hero-meteor-opacity, 0.96);
+  perspective: 900px;
+  transform-style: preserve-3d;
+  transition: opacity 120ms linear;
+}
+
+.omega-order-meteor {
+  --sx: -50vw;
+  --sy: -20vh;
+  --z-start: 80px;
+  --z-end: -340px;
+  --rot-start: 0deg;
+  --rot-end: 0deg;
+  --tilt-x: 0deg;
+  --tilt-y: 0deg;
+  --scale-start: 1;
+  --scale-end: 0.06;
+  --duration: 6s;
+  --delay: 0s;
+  --tail: 160px;
+  --opacity: 0.7;
+
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: clamp(25px, 2.25vw, 42px);
+  height: clamp(16px, 1.35vw, 26px);
+  opacity: 0;
+  transform-origin: center;
+  animation: omega-order-ingress var(--duration) linear infinite;
+  animation-delay: var(--delay);
+  transform-style: preserve-3d;
+  will-change: transform, opacity, filter;
+}
+
+.omega-order-meteor--wide {
+  display: none;
+}
+
+.omega-order-meteor__tail {
+  position: absolute;
+  right: 58%;
+  top: 50%;
+  width: min(var(--tail), 36vw);
+  height: clamp(9px, 0.82vw, 15px);
+  transform: translateY(-50%);
+  background:
+    linear-gradient(
+      90deg,
+      transparent 0%,
+      color-mix(in oklab, var(--foreground) 4%, transparent) 22%,
+      color-mix(in oklab, var(--foreground) 20%, transparent) 64%,
+      color-mix(in oklab, var(--foreground) 72%, transparent) 100%
+    );
+  clip-path: polygon(0 46%, 100% 0, 100% 100%, 0 54%);
+  filter: blur(0.45px);
+  opacity: 0.86;
+}
+
+.omega-order-meteor__tail::after {
+  content: "";
+  position: absolute;
+  inset: -11px -8px -11px 18%;
+  background:
+    linear-gradient(
+      90deg,
+      transparent 0%,
+      color-mix(in oklab, var(--foreground) 9%, transparent) 56%,
+      color-mix(in oklab, var(--foreground) 30%, transparent) 100%
+    );
+  clip-path: polygon(0 48%, 100% 9%, 100% 91%, 0 52%);
+  filter: blur(9px);
+  opacity: 0.68;
+}
+
+.omega-order-meteor__tail::before {
+  content: "";
+  position: absolute;
+  inset: 1px 8% 1px 42%;
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in oklab, var(--foreground) 48%, transparent)
+    );
+  clip-path: polygon(0 44%, 100% 18%, 100% 31%, 0 54%);
+  opacity: 0.7;
+}
+
+.omega-order-meteor__body {
+  position: absolute;
+  inset: 0;
+  display: block;
+  overflow: hidden;
+  border: 1px solid color-mix(in oklab, var(--foreground) 68%, transparent);
+  border-radius: 1px;
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in oklab, var(--foreground) 92%, transparent),
+      color-mix(in oklab, var(--foreground) 48%, transparent) 48%,
+      color-mix(in oklab, var(--background) 38%, transparent)
+    );
+  clip-path: polygon(0 50%, 27% 8%, 74% 0, 100% 48%, 76% 100%, 28% 88%);
+  box-shadow:
+    0 0 22px color-mix(in oklab, var(--foreground) 44%, transparent),
+    inset 0 1px 0 color-mix(in oklab, var(--background) 46%, transparent);
+  transform: skewX(-4deg);
+}
+
+.omega-order-meteor__body::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(
+      28deg,
+      transparent 0 38%,
+      color-mix(in oklab, var(--background) 62%, transparent) 39% 41%,
+      transparent 42%
+    ),
+    linear-gradient(
+      148deg,
+      transparent 0 47%,
+      color-mix(in oklab, var(--background) 42%, transparent) 48% 50%,
+      transparent 51%
+    );
+  opacity: 0.66;
+}
+
+.omega-order-meteor__body::after {
+  content: "";
+  position: absolute;
+  right: -2px;
+  top: -2px;
+  width: 48%;
+  height: 58%;
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in oklab, var(--background) 72%, transparent),
+      transparent 58%
+    );
+  clip-path: polygon(100% 0, 10% 0, 100% 100%);
+  opacity: 0.7;
+}
+
+.omega-order-meteor__body > span {
+  position: absolute;
+  inset: 3px 5px 4px 4px;
+  border: 1px solid color-mix(in oklab, var(--background) 30%, transparent);
+  clip-path: polygon(4% 52%, 28% 14%, 73% 5%, 96% 47%, 74% 94%, 29% 84%);
+  opacity: 0.48;
+}
+
+@keyframes omega-order-ingress {
+  0% {
+    opacity: 0;
+    filter: blur(0) brightness(0.95);
+    transform:
+      translate3d(var(--sx), var(--sy), var(--z-start))
+      rotate(var(--rot-start))
+      rotateX(var(--tilt-x))
+      rotateY(var(--tilt-y))
+      scale(var(--scale-start));
+  }
+  8% {
+    opacity: var(--opacity);
+  }
+  86% {
+    opacity: var(--opacity);
+    filter: blur(0.1px) brightness(1.16);
+  }
+  100% {
+    opacity: 0;
+    filter: blur(1.4px) brightness(1.7);
+    transform:
+      translate3d(0, 0, var(--z-end))
+      rotate(var(--rot-end))
+      rotateX(0deg)
+      rotateY(0deg)
+      scale(var(--scale-end));
+  }
+}
+
+@media (min-width: 768px) {
+  .omega-hero-blackhole-video {
+    transform: translate(-50%, -50%) scale(var(--hero-video-scale, 1.04));
+  }
+
+  .omega-order-meteor--wide {
+    display: block;
+  }
+}
+
+@media (max-width: 767px) {
+  .omega-meteor-field {
+    opacity: var(--hero-meteor-opacity, 0.82);
+  }
+
+  .omega-order-meteor {
+    top: 44%;
+    width: 24px;
+    height: 15px;
+  }
+
+  .omega-order-meteor__tail {
+    width: min(var(--tail), 28vw);
+  }
+}
+
 /* M5.1 (#224) — global reduced-motion override. Collapses any animation,
    transition, or smooth-scroll on the page to effectively-instant when the
    user has expressed `prefers-reduced-motion: reduce`. Component-level paths

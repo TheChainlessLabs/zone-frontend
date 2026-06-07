@@ -50,6 +50,16 @@
      surfaces stay legible once the dot-grid atmosphere sits behind them. */
   --glass-fill: rgba(255, 255, 255, 0.07);
   --glass-saturate: 1.55;
+
+  /* Liquid-glass specular layers — the structural vars the kit's `.glass` /
+     `.glass-pill` recipe references (sheen sweep, edge bloom, brightness
+     lift). Kept on the app's restrained register, NOT the kit's heavier
+     standalone values: the canonical `--glass-blur` / `--glass-saturate`
+     above still win the filter, these only shape the specular highlight.
+     See omega-docs/03-brand/visual-identity.md "Liquid-glass material". */
+  --glass-sheen: rgba(255, 255, 255, 0.10);
+  --glass-bloom: 0 0 40px -18px rgba(255, 255, 255, 0.10);
+  --glass-brightness: 1.06;
 }
 
 [data-theme="light"] {
@@ -63,6 +73,9 @@
   --glass-pill-shadow: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
   --glass-fill: rgba(255, 255, 255, 0.72);
   --glass-saturate: 1.5;
+  --glass-sheen: rgba(255, 255, 255, 0.55);
+  --glass-bloom: 0 0 32px -20px rgba(15, 23, 42, 0.10);
+  --glass-brightness: 1.03;
 }
 
 /* Per-route surface atmosphere.
@@ -93,11 +106,13 @@ body::before {
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.45) 1.5px, transparent 1.5px);
+  /* Ambient dot-grid — matched to the design-kit backdrop (0.40 dot alpha,
+     focal mask at 50% 35%). Per-route size/opacity stay calibrated below. */
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.4) 1.5px, transparent 1.5px);
   background-size: var(--route-dot-grid-size) var(--route-dot-grid-size);
   background-position: 0 0;
-  -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, #000 30%, transparent 80%);
-  mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, #000 30%, transparent 80%);
+  -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 35%, #000 30%, transparent 80%);
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 35%, #000 30%, transparent 80%);
   opacity: var(--route-dot-grid-opacity);
 }
 
@@ -127,16 +142,32 @@ body[data-route="/404"] {
   }
 }
 
-/* Liquid-glass surface utility. Apply to specific moments only — see
-   omega-docs/03-brand/visual-identity.md for the rules. */
+/* Liquid-glass surface utility (surface-sized moments — cards, modals).
+   Structure mirrors the design-kit `colors_and_type.css` .glass recipe:
+   a diagonal sheen + a faint bottom-depth wash over the fill, a specular
+   inset stack, and an outer edge bloom. The FILTER stays on the app's
+   canonical tokens (--glass-blur / --glass-saturate), not the kit's heavier
+   standalone blur/saturate — token wins per the convergence rule. Apply to
+   specific moments only; see omega-docs/03-brand/visual-identity.md. */
 .glass {
-  background: var(--glass-fill);
+  position: relative;
+  isolation: isolate;
+  background:
+    linear-gradient(135deg, var(--glass-sheen) 0%, transparent 34%),
+    linear-gradient(to top, rgba(0, 0, 0, 0.06), transparent 42%),
+    var(--glass-fill);
   border: 1px solid var(--glass-edge);
-  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border-radius: var(--radius-xl);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate))
+    brightness(var(--glass-brightness));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate))
+    brightness(var(--glass-brightness));
   box-shadow:
     inset 0 1px 0 0 var(--glass-highlight),
-    var(--glass-shadow);
+    inset 0 0 0 1px rgba(255, 255, 255, 0.03),
+    inset 0 -8px 24px -16px rgba(0, 0, 0, 0.3),
+    var(--glass-shadow),
+    var(--glass-bloom);
 }
 
 @supports not (backdrop-filter: blur(1px)) {
@@ -152,6 +183,115 @@ body[data-route="/404"] {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
   }
+}
+
+/* ============================================================================
+   SEMANTIC TYPE CLASSES (.t-*)
+   ----------------------------------------------------------------------------
+   The type scale from omega-docs/03-brand/visual-identity.md, mirrored from
+   the design-kit `colors_and_type.css`. Families resolve through the
+   next/font CSS vars wired in layout.tsx (--font-sans / --font-mono /
+   --font-serif). Use these directly so every converged surface shares one
+   type register. Sans = body/UI/chrome · Mono = the data plane (prices,
+   sizes, hashes) · Serif = italic display only, never on data.
+   ============================================================================ */
+
+/* Display — Geist Sans, the big wrapper headline. */
+.t-display {
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  font-size: 48px;
+  line-height: 1.1;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--foreground);
+}
+
+/* Display italic lede — Source Serif 4, italic. The change-of-register
+   moment. NEVER on data, labels, chrome, status, microcopy. */
+.t-lede {
+  font-family: var(--font-serif), ui-serif, Georgia, "Times New Roman", serif;
+  font-style: italic;
+  font-size: 24px;
+  line-height: 1.4;
+  font-weight: 300;
+  color: var(--muted-foreground);
+}
+
+.t-h1 {
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  font-size: 28px;
+  line-height: 1.2;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--foreground);
+}
+.t-h2 {
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  font-size: 22px;
+  line-height: 1.3;
+  font-weight: 600;
+  color: var(--foreground);
+}
+.t-h3 {
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  font-size: 18px;
+  line-height: 1.4;
+  font-weight: 500;
+  color: var(--foreground);
+}
+
+/* Body */
+.t-body {
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 400;
+  color: var(--foreground);
+}
+.t-body-sm {
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+  font-weight: 400;
+  color: var(--foreground);
+}
+
+/* Caption / label — uppercase tracked sans label. */
+.t-caption {
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  font-size: 11px;
+  line-height: 1.4;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted-foreground);
+}
+
+/* Mono data plane — tabular numerals on by default. */
+.t-mono {
+  font-family: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 14px;
+  line-height: 1.4;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+  color: var(--foreground);
+}
+.t-mono-hash {
+  font-family: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 400;
+  color: var(--muted-foreground);
+}
+/* Mono uppercase tracked label — the workhorse caption on the data plane. */
+.t-mono-label {
+  font-family: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  line-height: 1.4;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--muted-foreground);
 }
 
 .font-tabular {
@@ -177,6 +317,27 @@ body[data-route="/404"] {
   }
 }
 
+/* Panel — the ONE resting surface for product chrome (order form, chart,
+   fills, balances, market header). Slightly elevated above the page, a
+   hairline border, and a faint top highlight echoing the glass. Solid for
+   data legibility — glass stays reserved for overlay moments (modals,
+   toasts) so it reads as an event, not a wash. Mirrors the design-kit
+   `colors_and_type.css` .panel recipe. */
+.panel {
+  background: color-mix(in oklab, var(--muted) 45%, var(--card));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.05),
+    var(--shadow-soft);
+}
+[data-theme="light"] .panel {
+  background: var(--card);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.6),
+    var(--shadow-soft);
+}
+
 /* Editorial italic — Source Serif 4. Use for display moments only:
    hero lede, section ledes, mood paragraph, naming italic specimen.
    Never for body / data / labels. */
@@ -185,16 +346,26 @@ body[data-route="/404"] {
   font-style: italic;
 }
 
-/* Glass component variants — for buttons, pills, inputs, toggles.
-   Same material rules as .glass, scaled. */
+/* Liquid-glass pill (component-sized controls — buttons, nav, toggles).
+   Same material family as .glass, scaled: a single diagonal sheen over the
+   fill, an 18px blur (the kit's component-scale blur — the 24px canonical
+   --glass-blur is the surface scale), specular inset highlight, pill shadow,
+   and edge bloom. Saturation rides the app's canonical --glass-saturate. */
 .glass-pill {
-  background: var(--glass-fill);
+  position: relative;
+  isolation: isolate;
+  background:
+    linear-gradient(135deg, var(--glass-sheen) 0%, transparent 52%),
+    var(--glass-fill);
   border: 1px solid var(--glass-edge);
-  backdrop-filter: blur(16px) saturate(var(--glass-saturate));
-  -webkit-backdrop-filter: blur(16px) saturate(var(--glass-saturate));
+  backdrop-filter: blur(18px) saturate(var(--glass-saturate))
+    brightness(var(--glass-brightness));
+  -webkit-backdrop-filter: blur(18px) saturate(var(--glass-saturate))
+    brightness(var(--glass-brightness));
   box-shadow:
     inset 0 1px 0 0 var(--glass-highlight),
-    var(--glass-pill-shadow);
+    var(--glass-pill-shadow),
+    var(--glass-bloom);
 }
 
 @supports not (backdrop-filter: blur(1px)) {

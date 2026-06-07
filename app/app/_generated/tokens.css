@@ -1,7 +1,7 @@
 /* GENERATED FILE — do not edit by hand.
  * Regenerate via `pnpm sync-tokens` (auto-runs before `pnpm dev` and `pnpm build`).
  * Source: omega-docs/03-brand/assets/tokens.json
- * Source SHA: 4f9007b05bf8d6143525dd48f159914ef92c258e
+ * Source SHA: a3127b8fd16505951f825565d7f76e5a07127cb4
  * Generator: scripts/sync-tokens.mjs
  */
 
@@ -108,6 +108,7 @@
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --font-serif: var(--font-serif);
+  --font-wordmark: var(--font-space-grotesk);
   --radius-sm: var(--radius-sm);
   --radius-md: var(--radius-md);
   --radius-lg: var(--radius-lg);

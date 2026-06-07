@@ -179,6 +179,7 @@ function emitThemeInline() {
   lines.push(`  --font-sans: var(--font-geist-sans);`);
   lines.push(`  --font-mono: var(--font-geist-mono);`);
   lines.push(`  --font-serif: var(--font-serif);`);
+  lines.push(`  --font-wordmark: var(--font-space-grotesk);`);
   for (const k of RADIUS_KEYS) {
     lines.push(`  --radius-${k}: var(--radius-${k});`);
   }

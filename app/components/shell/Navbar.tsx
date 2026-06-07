@@ -41,7 +41,7 @@ export function Navbar() {
           aria-label="Omega Markets — Trade"
         >
           <OmegaMark size={20} />
-          <span className="font-mono text-[11px] uppercase tracking-[0.24em]">
+          <span className="font-wordmark text-[15px] font-semibold uppercase tracking-[0.14em]">
             OMEGA MARKETS
           </span>
         </Link>
@@ -51,7 +51,7 @@ export function Navbar() {
         {/* Primary nav (desktop only) */}
         <nav
           aria-label="Primary"
-          className="glass-pill hidden w-[420px] items-center gap-1 rounded-full p-1 md:inline-flex"
+          className="glass-pill hidden w-[440px] items-center gap-1 rounded-full p-1 md:inline-flex"
         >
           {PRIMARY_TABS.map((tab) => {
             const isActive = pathname.startsWith(tab.href);

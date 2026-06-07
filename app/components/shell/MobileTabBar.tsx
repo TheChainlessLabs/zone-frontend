@@ -30,10 +30,12 @@ export function MobileTabBar() {
   return (
     <nav
       aria-label="Primary"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--border)] bg-[var(--background)]/55 backdrop-blur-xl backdrop-saturate-[1.4] before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-[color-mix(in_oklab,var(--foreground)_8%,transparent)] md:hidden relative"
-      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+      className="fixed inset-x-0 bottom-0 z-40 px-4 md:hidden"
+      style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 8px)" }}
     >
-      <ul className="glass-pill mx-auto my-2 flex h-[52px] max-w-md items-center justify-center gap-1 rounded-full p-1">
+      {/* Single floating glass pill — the same register as the desktop
+          Navbar, no surrounding bar/hairline competing with the material. */}
+      <ul className="glass-pill mx-auto flex h-[52px] max-w-md items-center justify-center gap-1 rounded-full p-1">
         {MOBILE_TABS.map((tab) => {
           const isActive = pathname.startsWith(tab.href);
           const TabIcon = tab.icon;
@@ -44,7 +46,7 @@ export function MobileTabBar() {
                 aria-label={tab.label}
                 aria-current={isActive ? "page" : undefined}
                 className={cn(
-                  "press-down inline-flex h-11 w-full min-w-[44px] items-center justify-center gap-2 rounded-xl px-3 font-mono text-[11px] uppercase tracking-[0.14em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]",
+                  "press-down inline-flex h-11 w-full min-w-[44px] items-center justify-center gap-2 rounded-full px-3 font-mono text-[11px] uppercase tracking-[0.14em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]",
                   isActive
                     ? "bg-[var(--foreground)] text-[var(--background)]"
                     : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]",

@@ -11,16 +11,18 @@
 
 Bring the **Omega Markets Design System** kit (`/Users/bs/Downloads/Omega Markets Design System`) into the live **omega-interface** app, surface by surface, until every landing and app page renders to match the kit. Validate each surface against the kit before merge.
 
-## The governing rule (decided)
+## The governing rule (UPDATED 2026-06-07 — "use the new design system completely")
 
-The kit is a **simplified, mainly-cosmetic recreation that was built by reading omega-interface**. It is downstream of the app, not upstream. Therefore:
+Superseding the earlier cautious-convergence rule: Brian's directive is that the current frontend's design is wrong and the new design system must be used **completely**. **Port the kit's components in as the new UI** — the kit's components become the app's components.
 
-> **The kit governs visual design — layout, sections, copy, spacing, type, the liquid-glass look. The app remains the source of truth for real behavior — data-wiring, all interaction states, accessibility, and product content. Never regress working behavior to match a cosmetic kit.**
+> **Port the kit's components into the app as the real UI (JSX→TSX). The kit wins completely on design — layout, structure, components, copy, spacing, type, the liquid-glass look. Replace the current presentation; leave no remnants of the old design. Wire the ported components to the app's real data/wagmi/state. The app keeps its *behaviour* and *data*, not its old look.**
 
 Concretely, in any conflict:
-- **Kit wins:** page/section structure, component layout, copy/microcopy, spacing, radii usage, glass/material treatment, motion feel, iconography (Lucide), voice.
-- **App wins:** wagmi/viem wiring, react-query data, EIP-712 signing flows, Radix a11y, react-hook-form/zod, and **all states** (default / empty / loading / error / skeleton / disconnected / wrong-network).
-- **App keeps its product content:** the live **OALPHA/PATH.USD** alpha pair, real balances, and real copy stay. The kit's `USDC/EURC` + 5-stablecoin set is demo content — **do not** swap the live pairs. Match the kit's *visual treatment* of pairs, not its ticker data.
+- **Kit wins (completely):** page/section structure, component breakdown, layout, copy/microcopy, spacing, radii, glass/material, motion feel, iconography (Lucide), voice — **and design-codifying tests.** A test that asserts the *old* design's behaviour (e.g. "nav collapses labels to icons when inactive") is **updated** to the kit's design, not used to block the port.
+- **App wins (kept):** wagmi/viem wiring, react-query/data layer, EIP-712 signing, Radix a11y semantics, react-hook-form/zod, and **all states** (default/empty/loading/error/skeleton/disconnected/wrong-network) — these are *behaviour*, wired into the ported kit components. Functional / wiring / a11y tests stay green.
+- **App keeps its product content:** the live **OALPHA/PATH.USD** alpha pair + real balances stay — wire them into the kit's components (the kit's `USDC/EURC` is demo data). Backend stays **deferred**.
+
+**Implication:** every surface task below is now a **port** (replace the current components with the kit's, wired to real data), not a cautious convergence. The ≤400 LOC guard is relaxed per surface — a full port is large; split into logical sub-PRs rather than artificially capping.
 
 ## Non-goals
 

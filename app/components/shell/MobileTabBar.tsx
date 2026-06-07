@@ -3,9 +3,11 @@
 /**
  * MobileTabBar — bottom-of-viewport primary nav for ≤ md.
  *
- * Three tabs: Trade · Portfolio · Batches. Tap targets ≥ 44 × 44
- * satisfy the iOS HIG and Material guidelines. Safe-area inset bottom keeps
- * the bar above the home indicator on iOS.
+ * Three tabs: Trade · Portfolio · Batches, carrying the design-kit nav
+ * register: a single floating glass pill with every route label visible at
+ * all times (the active tab fills with `--foreground`). Tap targets
+ * ≥ 44 × 44 satisfy the iOS HIG and Material guidelines. Safe-area inset
+ * bottom keeps the bar above the home indicator on iOS.
  *
  * Hidden on ≥ md; the desktop Navbar renders the same tabs in its center
  * slot. AppShell adds `pb-[calc(60px+env(safe-area-inset-bottom)+16px)]
@@ -53,11 +55,7 @@ export function MobileTabBar() {
                 )}
               >
                 <TabIcon size={18} aria-hidden />
-                {isActive && (
-                  <span className="overflow-hidden whitespace-nowrap truncate">
-                    {tab.label}
-                  </span>
-                )}
+                <span className="truncate whitespace-nowrap">{tab.label}</span>
               </Link>
             </li>
           );

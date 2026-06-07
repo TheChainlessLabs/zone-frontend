@@ -48,13 +48,25 @@ describe("MobileTabBar", () => {
     expect(screen.getByRole("link", { name: "Batches" })).toBeDefined();
   });
 
-  it("only renders the active route label visibly", () => {
+  it("renders every route label at all times, with the active one marked current", () => {
     currentPathname = "/batches/settled";
     render(<MobileTabBar />);
 
+    // Design-kit nav register: all labels stay visible; the active fill
+    // (not label collapse) signals the current tab. The active route carries
+    // aria-current="page"; the others do not.
+    expect(screen.getByText("Trade")).toBeDefined();
+    expect(screen.getByText("Portfolio")).toBeDefined();
     expect(screen.getByText("Batches")).toBeDefined();
-    expect(screen.queryByText("Trade")).toBeNull();
-    expect(screen.queryByText("Portfolio")).toBeNull();
-    expect(screen.queryByText("Account")).toBeNull();
+
+    expect(
+      screen.getByRole("link", { name: "Batches" }).getAttribute("aria-current"),
+    ).toBe("page");
+    expect(
+      screen.getByRole("link", { name: "Trade" }).getAttribute("aria-current"),
+    ).toBeNull();
+    expect(
+      screen.getByRole("link", { name: "Portfolio" }).getAttribute("aria-current"),
+    ).toBeNull();
   });
 });

@@ -52,14 +52,26 @@ describe("Navbar", () => {
     expect(screen.getByRole("link", { name: "Batches" })).toBeDefined();
   });
 
-  it("only renders the active route label visibly", () => {
+  it("renders every route label at all times, with the active one marked current", () => {
     currentPathname = "/portfolio/orders";
     render(<Navbar />);
 
+    // Design-kit nav pill: all labels stay visible; the sliding indicator
+    // (not label collapse) signals the active tab. The active route carries
+    // aria-current="page"; the others do not.
+    expect(screen.getByText("Trade")).toBeDefined();
     expect(screen.getByText("Portfolio")).toBeDefined();
-    expect(screen.queryByText("Trade")).toBeNull();
-    expect(screen.queryByText("Batches")).toBeNull();
-    expect(screen.queryByText("Account")).toBeNull();
+    expect(screen.getByText("Batches")).toBeDefined();
+
+    expect(
+      screen.getByRole("link", { name: "Portfolio" }).getAttribute("aria-current"),
+    ).toBe("page");
+    expect(
+      screen.getByRole("link", { name: "Trade" }).getAttribute("aria-current"),
+    ).toBeNull();
+    expect(
+      screen.getByRole("link", { name: "Batches" }).getAttribute("aria-current"),
+    ).toBeNull();
   });
 
   it("keeps wallet status separate from the account nav item", () => {

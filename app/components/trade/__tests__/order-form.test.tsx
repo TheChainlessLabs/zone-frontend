@@ -40,7 +40,10 @@ it("does not render the in-form Market/Limit tabs (lifted to page-level OrderMod
   expect(screen.queryByRole("tab", { name: "Limit" })).toBeNull();
 });
 
-it("renders the top-line execution summary with side, pair, midpoint, and available balance", () => {
+it("shows the side-aware available balance inline above the amount field (kit layout)", () => {
+  // The design-kit OrderForm has no separate ticket-head summary row; the
+  // available balance sits inline above the amount input, and the midpoint
+  // lives in the context strip. Buy spends the quote token.
   render(
     <OrderForm
       pair={DEFAULT_PAIR}
@@ -50,15 +53,16 @@ it("renders the top-line execution summary with side, pair, midpoint, and availa
       available="10000.00"
     />,
   );
-  const summary = screen.getByLabelText("Order summary");
-  expect(summary.textContent).toContain("BUY");
-  expect(summary.textContent).toContain(`${DEFAULT_PAIR.base}/${DEFAULT_PAIR.quote}`);
-  expect(summary.textContent).toContain("0.9213");
-  expect(summary.textContent).toContain("Available");
-  expect(summary.textContent).toContain(`10,000.00 ${DEFAULT_PAIR.quote}`);
+  expect(screen.queryByLabelText("Order summary")).toBeNull();
+  const available = screen.getByTestId("available-balance");
+  expect(available.textContent).toContain(`10,000.00 ${DEFAULT_PAIR.quote}`);
+  // Side defaults to Buy.
+  expect(
+    screen.getByRole("radio", { name: /Buy/ }).getAttribute("aria-checked"),
+  ).toBe("true");
 });
 
-it("top-line summary flips to SELL tone when Sell is selected", () => {
+it("selecting Sell flips the side radio and the CTA tone", () => {
   render(
     <OrderForm
       pair={DEFAULT_PAIR}
@@ -68,7 +72,12 @@ it("top-line summary flips to SELL tone when Sell is selected", () => {
     />,
   );
   fireEvent.click(screen.getByRole("radio", { name: /Sell/ }));
-  expect(screen.getByLabelText("Order summary").textContent).toContain("SELL");
+  expect(
+    screen.getByRole("radio", { name: /Sell/ }).getAttribute("aria-checked"),
+  ).toBe("true");
+  expect(
+    screen.getByRole("button", { name: new RegExp(`Sell ${DEFAULT_PAIR.base}`) }),
+  ).toBeDefined();
 });
 
 it("Limit mode reveals the Limit price input", () => {
@@ -171,7 +180,9 @@ it("confirming in the modal calls onSubmit and closes the modal", () => {
     target: { value: "100" },
   });
   fireEvent.click(screen.getByRole("button", { name: /Buy USDC/i }));
-  fireEvent.click(screen.getByRole("button", { name: /Confirm order/i }));
+  // The kit's confirmation CTA is "Sign" (omega-docs/03-brand/messaging.md —
+  // never "approve"/"confirm").
+  fireEvent.click(screen.getByRole("button", { name: /^Sign$/i }));
 
   expect(onSubmit).toHaveBeenCalledOnce();
   expect(onSubmit.mock.calls[0]?.[0]).toMatchObject({
@@ -282,9 +293,13 @@ it("hotkey B/S toggles side; M sets price to midpoint in limit mode", () => {
   );
   const form = screen.getByLabelText("Order entry");
   fireEvent.keyDown(form, { key: "s" });
-  expect(screen.getByLabelText("Order summary").textContent).toContain("SELL");
+  expect(
+    screen.getByRole("radio", { name: /Sell/ }).getAttribute("aria-checked"),
+  ).toBe("true");
   fireEvent.keyDown(form, { key: "b" });
-  expect(screen.getByLabelText("Order summary").textContent).toContain("BUY");
+  expect(
+    screen.getByRole("radio", { name: /Buy/ }).getAttribute("aria-checked"),
+  ).toBe("true");
   const priceInput = screen.getByLabelText("Limit price") as HTMLInputElement;
   fireEvent.change(priceInput, { target: { value: "" } });
   fireEvent.keyDown(form, { key: "m" });

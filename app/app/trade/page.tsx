@@ -41,10 +41,12 @@ import { Animate } from "@/components/ui/animate";
 import { Icon } from "@/lib/icons";
 import {
   ChartPlaceholder,
+  MatchToast,
   OrderForm,
   OrderModeSelector,
   PairSwitcher,
   YourFills,
+  type MatchToastFill,
   type OrderMode,
   type OrderFormSubmitPayload,
 } from "@/components/trade";
@@ -128,6 +130,19 @@ function TradeSurface() {
     "idle" | "loading" | "ready" | "error"
   >("idle");
   const [liveError, setLiveError] = React.useState<string | undefined>();
+  // The settlement moment — the kit's Matched→Settled→Proven toast, driven by
+  // the real fill produced by the most recent submit. `key` re-triggers the
+  // slide-in; the timer dismisses it.
+  const [toastFill, setToastFill] = React.useState<MatchToastFill | null>(null);
+  const [toastKey, setToastKey] = React.useState(0);
+  const toastTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  React.useEffect(
+    () => () => {
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    },
+    [],
+  );
   const zoneAuthTokenRef = React.useRef<Hex | null>(null);
   const zoneAuthTokenPromiseRef = React.useRef<Promise<Hex> | null>(null);
   const autoAuthAttemptedRef = React.useRef(false);
@@ -371,6 +386,18 @@ function TradeSurface() {
         midpoint,
       });
       setActivity(mergeOmegaZoneActivity(address, patch));
+
+      // Surface the settlement moment (the kit's MatchToast) for the fill the
+      // submit just produced. Reflects the real fill status (matched at
+      // midpoint) — limit orders that rest without a fill don't toast.
+      const settledFill = patch.fills?.[0];
+      if (settledFill) {
+        if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+        setToastFill({ status: settledFill.status, price: settledFill.price });
+        setToastKey((k) => k + 1);
+        toastTimerRef.current = setTimeout(() => setToastFill(null), 4800);
+      }
+
       await refreshZoneSnapshot(authToken);
     },
     [
@@ -519,6 +546,7 @@ function TradeSurface() {
         </PageLayout>
       )}
 
+      <MatchToast key={toastKey} fill={toastFill} />
     </>
   );
 }

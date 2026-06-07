@@ -1,30 +1,29 @@
 "use client";
 
 /**
- * OrderForm — Market + Limit order entry surface.
+ * OrderForm — the design-kit Market + Limit order-entry surface.
  *
- * Composition:
- *   • Top-line execution summary row: side · pair · midpoint · available
- *     (mono tabular, ticket-pad eyebrow — Bloomberg/EMSX convention)
- *   • Tabs: Market / Limit (controlled)
- *   • Buy / Sell segmented toggle (success-tinted Buy, destructive-tinted Sell)
- *   • Limit price input (Limit mode only; border + ring colour-locked to the
- *     active side — success on Buy, destructive on Sell)
- *   • Amount input (large mono tabular; same side-locked ring)
+ * Ported from the kit's `OrderForm.jsx`: a calm, sectioned, single resting
+ * `.panel`. Side-locked tone (Buy = success, Sell = destructive) runs through
+ * the side toggle, the input rings, and the submit CTA. The context strip's
+ * Midpoint / Est. received cells roll via NumberTicker so the live data has a
+ * pulse. Layout, top-to-bottom:
+ *
+ *   • Buy / Sell segmented toggle (side-locked tint)
+ *   • Limit price input (Limit mode only; "Use midpoint M" chip)
+ *   • Amount input (large mono tabular) with the available balance inline above
  *   • Percentage shortcuts (25 / 50 / 75 / MAX)
- *   • "You receive" estimate row
- *   • Submit CTA with simple verb-based copy (`Buy USDC` / `Sell USDC`)
- *   • Confirmation modal carrying the full order summary before submit
+ *   • Context strip: Midpoint · Est. received · Fee
+ *   • Submit CTA (`Buy OALPHA` / `Sell OALPHA`) with an ↵ badge
  *
- * Keyboard hotkeys (TWS / Bloomberg ticket-pad muscle memory):
- *   B = Buy   S = Sell   M = use midpoint (limit)   Enter = submit
- *   Esc = clear amount
+ * Wiring the app keeps (behaviour, not look): the EIP-712 submit flow runs
+ * through `onSubmit` and the OrderConfirmationModal; ticket-pad keyboard
+ * hotkeys (B = Buy, S = Sell, M = use midpoint, Enter = submit, Esc = clear)
+ * stay live as invisible muscle-memory affordances; loading renders a skeleton
+ * amount field; an error tile replaces the CTA when `errorMessage` is set.
  *
  * Voice: omega-docs/03-brand/messaging.md — terse, period-terminated, no
  * exclamations, no "approve" (use "Sign").
- *
- * State: form state is local (useState). Submit opens OrderConfirmationModal;
- * confirm fires `onSubmit({...})` with the existing payload shape.
  */
 
 import * as React from "react";
@@ -37,6 +36,8 @@ import { Icon } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 import type { LaunchPair } from "@/lib/fixtures/pairs";
 import type { Side } from "@/lib/fixtures/types";
+
+import { NumberTicker } from "./motion";
 
 export type OrderMode = "market" | "limit";
 
@@ -82,7 +83,7 @@ function formatGroup(value: string): string {
 export function OrderForm({
   pair,
   mode,
-  onModeChange,
+  onModeChange: _onModeChange,
   midpoint,
   available = "0.00",
   availableBySide,
@@ -112,8 +113,7 @@ export function OrderForm({
   const numericPrice = parseFloat(
     (mode === "limit" ? price : midpoint) || "0",
   );
-  const activeAvailable =
-    availableBySide?.[side] ?? available;
+  const activeAvailable = availableBySide?.[side] ?? available;
   const activeAvailableToken = side === "buy" ? pair.quote : pair.base;
   const estReceive =
     Number.isFinite(numericAmount) &&
@@ -127,7 +127,9 @@ export function OrderForm({
   const estReceiveToken = side === "buy" ? pair.base : pair.quote;
 
   const submitDisabled =
-    loading || !!errorMessage || numericAmount <= 0 ||
+    loading ||
+    !!errorMessage ||
+    numericAmount <= 0 ||
     (mode === "limit" && numericPrice <= 0);
 
   const handlePct = (factor: number) => {
@@ -180,9 +182,9 @@ export function OrderForm({
     setSubmissionError(undefined);
   };
 
-  // Keyboard hotkeys at form level. Match TWS / Bloomberg ticket-pad muscle
-  // memory. Skip when the user is typing in an input — only trigger from
-  // form-level keydowns outside the inputs. Esc clears amount from anywhere.
+  // Ticket-pad keyboard hotkeys (TWS / Bloomberg muscle memory) — the app
+  // keeps these as invisible behaviour. Skip when typing in an input; Esc
+  // clears amount from anywhere.
   const handleKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
     const target = e.target as HTMLElement;
     const isTextField =
@@ -212,8 +214,8 @@ export function OrderForm({
     }
   };
 
-  // Side-locked tone — drives the segmented toggle, the price-cell ring,
-  // the amount-cell ring, and the CTA background.
+  // Side-locked tone — drives the segmented toggle, the input rings, and the
+  // CTA background.
   const sideTone = side === "buy" ? "var(--success)" : "var(--destructive)";
   const ctaLabel = `${side === "buy" ? "Buy" : "Sell"} ${pair.base}`;
 
@@ -222,169 +224,183 @@ export function OrderForm({
       <form
         onSubmit={handleSubmit}
         onKeyDown={handleKeyDown}
-        className="flex flex-col gap-5 rounded-[var(--radius-xl)] surface-soft bg-[var(--card)] p-5"
+        className="panel flex flex-col gap-[18px] rounded-[var(--radius-xl)] p-5"
         aria-label="Order entry"
       >
-          {/* Top-line execution summary — Bloomberg/EMSX-style ticket head.
-              Side · Pair · Midpoint · Available, all on one row, mono tabular.
-              Available balance is promoted out of the 10px label tracker. */}
-          <ExecSummaryRow
-            side={side}
-            pair={pair}
-            midpoint={midpoint}
-            available={activeAvailable}
-            availableToken={activeAvailableToken}
-            loading={loading}
+        {/* Buy / Sell segmented toggle. */}
+        <div role="radiogroup" aria-label="Side" className="grid grid-cols-2 gap-2">
+          <SideButton
+            side="buy"
+            active={side === "buy"}
+            onClick={() => setSide("buy")}
+            disabled={loading}
           />
+          <SideButton
+            side="sell"
+            active={side === "sell"}
+            onClick={() => setSide("sell")}
+            disabled={loading}
+          />
+        </div>
 
-          {/* Buy / Sell segmented toggle. Hotkey badge inline so the affordance
-              is discoverable. */}
-          <div
-            role="radiogroup"
-            aria-label="Side"
-            className="grid grid-cols-2 gap-2"
-          >
-            <SideButton
-              side="buy"
-              active={side === "buy"}
-              onClick={() => setSide("buy")}
-              disabled={loading}
-              hotkey="B"
-            />
-            <SideButton
-              side="sell"
-              active={side === "sell"}
-              onClick={() => setSide("sell")}
-              disabled={loading}
-              hotkey="S"
-            />
-          </div>
+        {/* Limit price (limit only) — side-locked ring + border tint, with a
+            "Use midpoint M" chip. */}
+        {mode === "limit" ? (
+          <Animate variant="enter" className="flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <label
+                htmlFor="limit-price"
+                className="font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--muted-foreground)]"
+              >
+                Limit price
+              </label>
+              <button
+                type="button"
+                onClick={() => setPrice(midpoint)}
+                disabled={!midpoint}
+                className={cn(
+                  "inline-flex h-6 items-center rounded-[var(--radius-sm)] border border-[var(--border)] px-2",
+                  "font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--muted-foreground)]",
+                  "transition-colors hover:text-[var(--foreground)] hover:border-[var(--foreground)]",
+                  "disabled:opacity-50",
+                )}
+                aria-keyshortcuts="M"
+                title="Set limit price to current midpoint (M)"
+              >
+                Use midpoint
+                <span className="ml-2 font-mono text-[10px] opacity-60">M</span>
+              </button>
+            </div>
+            <div className="relative">
+              <Input
+                id="limit-price"
+                type="text"
+                inputMode="decimal"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                placeholder={midpoint || "0.0000"}
+                disabled={loading}
+                className={cn(
+                  "h-12 pr-16 font-mono text-base tabular-nums",
+                  "focus-visible:ring-1",
+                )}
+                style={{
+                  ["--tw-ring-color" as string]: sideTone,
+                  borderColor: `color-mix(in oklab, ${sideTone} 28%, var(--border))`,
+                }}
+              />
+              <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center font-mono text-xs uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
+                {pair.quote}
+              </span>
+            </div>
+          </Animate>
+        ) : null}
 
-          {/* Limit price (limit only) — side-locked ring + border tint.
-              Use-midpoint promoted from a 10px text shortcut to a real chip. */}
-          {mode === "limit" ? (
-            <Animate variant="enter" className="flex flex-col gap-2">
-              <div className="flex items-center justify-between">
-                <label
-                  htmlFor="limit-price"
-                  className="font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--muted-foreground)]"
-                >
-                  Limit price
-                </label>
-                <button
-                  type="button"
-                  onClick={() => setPrice(midpoint)}
-                  disabled={!midpoint}
-                  className={cn(
-                    "inline-flex h-6 items-center rounded-[var(--radius-sm)] border border-[var(--border)] px-2",
-                    "font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--muted-foreground)]",
-                    "transition-colors hover:text-[var(--foreground)] hover:border-[var(--foreground)]",
-                    "disabled:opacity-50",
-                  )}
-                  aria-keyshortcuts="M"
-                  title="Set limit price to current midpoint (M)"
-                >
-                  Use midpoint
-                  <span className="ml-2 font-mono text-[10px] opacity-60">M</span>
-                </button>
-              </div>
-              <div className="relative">
-                <Input
-                  id="limit-price"
-                  type="text"
-                  inputMode="decimal"
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                  placeholder={midpoint || "0.0000"}
-                  disabled={loading}
-                  className={cn(
-                    "h-12 pr-16 font-mono text-base tabular-nums",
-                    "focus-visible:ring-1",
-                  )}
-                  style={{
-                    ["--tw-ring-color" as string]: sideTone,
-                    borderColor: `color-mix(in oklab, ${sideTone} 30%, var(--border))`,
-                  }}
-                />
-                <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center font-mono text-xs uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
-                  {pair.quote}
-                </span>
-              </div>
-            </Animate>
-          ) : null}
-
-          {/* Amount input — primary cell, side-locked focus ring.
-              Available balance is now in the top-line ExecSummaryRow, not here. */}
-          <div className="flex flex-col gap-2">
+        {/* Amount input — primary cell, side-locked focus ring. The available
+            balance sits inline above the field (kit position). */}
+        <div className="flex flex-col gap-2">
+          <div className="flex items-baseline justify-between">
             <label
               htmlFor="amount"
               className="font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--muted-foreground)]"
             >
               Amount
             </label>
-            <div className="relative">
-              {loading ? (
-                <Skeleton className="h-14 w-full rounded-[var(--radius-md)]" />
-              ) : (
-                <Input
-                  id="amount"
-                  type="text"
-                  inputMode="decimal"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  placeholder="0.00"
-                  disabled={loading}
-                  className="h-14 pr-20 font-mono text-2xl tabular-nums focus-visible:ring-1"
-                  style={{
-                    ["--tw-ring-color" as string]: sideTone,
-                    borderColor: `color-mix(in oklab, ${sideTone} 30%, var(--border))`,
-                  }}
-                />
-              )}
-              {!loading ? (
-                <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center font-mono text-sm uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
-                  {pair.base}
-                </span>
-              ) : null}
-            </div>
+            <span
+              data-testid="available-balance"
+              className="font-mono text-[11px] tabular-nums text-[var(--muted-foreground)]"
+            >
+              {loading
+                ? "—"
+                : `${formatGroup(activeAvailable)} ${activeAvailableToken}`}
+            </span>
           </div>
-
-          {/* Percentage shortcuts */}
-          <div className="grid grid-cols-4 gap-2">
-            {PCT_SHORTCUTS.map((s) => (
-              <Button
-                key={s.label}
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => handlePct(s.value)}
+          <div className="relative">
+            {loading ? (
+              <Skeleton className="h-14 w-full rounded-[var(--radius-md)]" />
+            ) : (
+              <Input
+                id="amount"
+                type="text"
+                inputMode="decimal"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="0.00"
                 disabled={loading}
-                className="h-9 font-mono text-[11px] uppercase tracking-[0.14em]"
-              >
-                {s.label}
-              </Button>
-            ))}
+                className="h-14 pr-20 font-mono text-2xl tabular-nums focus-visible:ring-1"
+                style={{
+                  ["--tw-ring-color" as string]: sideTone,
+                  borderColor: `color-mix(in oklab, ${sideTone} 28%, var(--border))`,
+                }}
+              />
+            )}
+            {!loading ? (
+              <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center font-mono text-sm uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
+                {pair.base}
+              </span>
+            ) : null}
           </div>
+        </div>
 
-          <div className="grid grid-cols-3 gap-px overflow-hidden rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--border)]">
-            <ContextCell label="Midpoint" value={midpoint || "—"} />
-            <ContextCell
-              label="Est. received"
-              value={estReceive ? `${formatGroup(estReceive)} ${estReceiveToken}` : "—"}
-            />
-            <ContextCell label="Fee" value={fee} />
-          </div>
+        {/* Percentage shortcuts */}
+        <div className="grid grid-cols-4 gap-2">
+          {PCT_SHORTCUTS.map((s) => (
+            <Button
+              key={s.label}
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => handlePct(s.value)}
+              disabled={loading}
+              className="h-9 font-mono text-[11px] uppercase tracking-[0.14em]"
+            >
+              {s.label}
+            </Button>
+          ))}
+        </div>
+
+        {/* Context strip — Midpoint · Est. received · Fee. The first two roll
+            via NumberTicker so live data has a pulse. */}
+        <div className="grid grid-cols-3 gap-px overflow-hidden rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--border)]">
+          <ContextCell
+            label="Midpoint"
+            value={
+              loading || !midpoint ? (
+                "—"
+              ) : (
+                <NumberTicker value={midpoint} className="font-mono text-sm" />
+              )
+            }
+          />
+          <ContextCell
+            label="Est. received"
+            value={
+              loading ? (
+                "—"
+              ) : estReceive ? (
+                <span className="inline-flex items-baseline gap-1.5">
+                  <NumberTicker
+                    value={formatGroup(estReceive)}
+                    className="font-mono text-sm"
+                  />
+                  <span className="font-mono text-[10px] tracking-[0.1em] text-[var(--muted-foreground)]">
+                    {estReceiveToken}
+                  </span>
+                </span>
+              ) : (
+                "—"
+              )
+            }
+          />
+          <ContextCell label="Fee" value={fee} />
+        </div>
 
         {errorMessage ? (
           <div
             role="alert"
             className="flex items-start gap-2 rounded-[var(--radius-md)] border border-[color-mix(in_oklab,var(--destructive)_30%,transparent)] bg-[color-mix(in_oklab,var(--destructive)_10%,transparent)] p-3 text-xs leading-relaxed text-[var(--destructive)]"
           >
-            <Icon.Failed
-              size={14}
-              aria-hidden
-              className="mt-0.5 shrink-0"
-            />
+            <Icon.Failed size={14} aria-hidden className="mt-0.5 shrink-0" />
             <span>{errorMessage}</span>
           </div>
         ) : (
@@ -431,80 +447,8 @@ export function OrderForm({
 }
 
 // ----------------------------------------------------------------------------
-// ExecSummaryRow — the new top-line ticket-head row (M4.8).
-// Reads in one glance: side · pair · midpoint · available.
-// Borrowed from Bloomberg EMSX ticket-pad layout. Promotes Available out of
-// the 10px label tracker into a peer of the amount input.
-// ----------------------------------------------------------------------------
-
-function ExecSummaryRow({
-  side,
-  pair,
-  midpoint,
-  available,
-  availableToken,
-  loading,
-}: {
-  side: Side;
-  pair: LaunchPair;
-  midpoint: string;
-  available: string;
-  availableToken: string;
-  loading: boolean;
-}) {
-  const sideTone = side === "buy" ? "var(--success)" : "var(--destructive)";
-  const sideLabel = side === "buy" ? "BUY" : "SELL";
-
-  return (
-    <div
-      className="grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--muted)]/30 px-3 py-2.5"
-      aria-label="Order summary"
-    >
-      <span
-        className="font-mono text-[11px] font-semibold uppercase tracking-[0.18em]"
-        style={{ color: sideTone }}
-      >
-        {sideLabel}
-      </span>
-      <span className="flex items-baseline gap-2 overflow-hidden">
-        <span className="truncate font-mono text-sm font-medium tabular-nums text-[var(--foreground)]">
-          {pair.base}/{pair.quote}
-        </span>
-        <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
-          mid
-        </span>
-        <span className="font-mono text-sm tabular-nums text-[var(--foreground)]">
-          {loading || !midpoint ? "—" : midpoint}
-        </span>
-      </span>
-      <span className="flex flex-col items-end leading-tight">
-        <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
-          Available
-        </span>
-        <span className="font-mono text-xs tabular-nums text-[var(--foreground)]">
-          {loading ? "—" : `${formatGroup(available)} ${availableToken}`}
-        </span>
-      </span>
-    </div>
-  );
-}
-
-function ContextCell({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex flex-col gap-1 bg-[var(--muted)]/40 px-3 py-2.5">
-      <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
-        {label}
-      </span>
-      <span className="font-mono text-sm tabular-nums text-[var(--foreground)]">
-        {value}
-      </span>
-    </div>
-  );
-}
-
-// ----------------------------------------------------------------------------
-// SideButton — segmented Buy/Sell toggle with an inline hotkey badge so the
-// keyboard affordance is discoverable.
+// SideButton — the kit's segmented Buy/Sell toggle (no hotkey badge; the
+// hotkeys stay live as invisible affordances at the form level).
 // ----------------------------------------------------------------------------
 
 function SideButton({
@@ -512,13 +456,11 @@ function SideButton({
   active,
   onClick,
   disabled,
-  hotkey,
 }: {
   side: Side;
   active: boolean;
   onClick: () => void;
   disabled?: boolean;
-  hotkey: string;
 }) {
   const isBuy = side === "buy";
   const tone = isBuy ? "var(--success)" : "var(--destructive)";
@@ -528,11 +470,11 @@ function SideButton({
       type="button"
       role="radio"
       aria-checked={active}
-      aria-keyshortcuts={hotkey}
+      aria-keyshortcuts={isBuy ? "B" : "S"}
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        "relative flex h-10 items-center justify-center gap-2 rounded-[var(--radius-md)] border text-sm font-medium transition-colors",
+        "press-down flex h-10 items-center justify-center gap-2 rounded-[var(--radius-md)] border text-sm font-medium transition-colors",
         "disabled:pointer-events-none disabled:opacity-50",
         active
           ? "text-[var(--foreground)]"
@@ -550,16 +492,26 @@ function SideButton({
     >
       <Glyph size={14} aria-hidden />
       <span>{isBuy ? "Buy" : "Sell"}</span>
-      <span
-        className={cn(
-          "absolute right-2 top-1/2 -translate-y-1/2 font-mono text-[10px] uppercase tracking-[0.14em]",
-          active ? "opacity-70" : "opacity-40",
-        )}
-        aria-hidden
-      >
-        {hotkey}
-      </span>
     </button>
+  );
+}
+
+function ContextCell({
+  label,
+  value,
+}: {
+  label: string;
+  value: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-1 bg-[color-mix(in_oklab,var(--muted)_55%,var(--card))] px-3 py-2.5">
+      <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
+        {label}
+      </span>
+      <span className="font-mono text-sm tabular-nums text-[var(--foreground)]">
+        {value}
+      </span>
+    </div>
   );
 }
 

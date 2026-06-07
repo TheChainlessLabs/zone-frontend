@@ -1,10 +1,19 @@
+"use client";
+
 /**
- * YourFills — user's own fills for the active pair.
+ * YourFills — the design-kit fills table for /trade.
  *
- * User-specific only. Per omega-docs/03-brand/naming.md, Omega is a dark
- * pool — no global trade tape, ever. Empty / loading / error / settled
- * states are first-class branches.
+ * Ported from the kit's `TradeAside.jsx` YourFills: a sans section heading +
+ * subtext, then a mono tabular table (Side · Pair · Amount · Price · Status ·
+ * Matched). A newly-arrived top fill briefly washes success (the kit's fresh
+ * row) so a just-matched fill is legible.
+ *
+ * User-specific only. Per omega-docs/03-brand/naming.md, Omega is a dark pool
+ * — no global trade tape, ever. The app keeps its first-class
+ * empty / loading / error branches and wires the table to real fills.
  */
+
+import * as React from "react";
 
 import { Status } from "@/components/ui/status";
 import { cn } from "@/lib/utils";
@@ -25,23 +34,25 @@ export function YourFills({
   emptyMessage = "No fills yet. Your matches will appear here.",
   className,
 }: YourFillsProps) {
+  const subtext =
+    fills.length > 0
+      ? `${fills.length} ${fills.length === 1 ? "match" : "matches"} · last 24h`
+      : "Your matches · last 24h";
+
   return (
     <section
       aria-labelledby="your-fills-heading"
-      className={cn(
-        "flex flex-col gap-3 rounded-[var(--radius-xl)] surface-soft bg-[var(--card)] p-5",
-        className,
-      )}
+      className={cn("flex flex-col gap-3", className)}
     >
-      <header className="flex items-baseline justify-between gap-3">
+      <header className="flex flex-col gap-0.5">
         <h2
           id="your-fills-heading"
-          className="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]"
+          className="m-0 font-sans text-lg font-semibold text-[var(--foreground)]"
         >
           Your fills
         </h2>
-        <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
-          Last 24h
+        <span className="font-sans text-[13px] text-[var(--muted-foreground)]">
+          {subtext}
         </span>
       </header>
 
@@ -59,9 +70,25 @@ export function YourFills({
 }
 
 function FillsTable({ fills }: { fills: FillFixture[] }) {
+  // Detect a freshly-prepended top fill so it can wash success on arrival,
+  // matching the kit's fresh-row treatment. Tracks the previous top id.
+  const prevTopId = React.useRef<string | null>(fills[0]?.id ?? null);
+  const [freshId, setFreshId] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    const topId = fills[0]?.id ?? null;
+    if (topId && topId !== prevTopId.current) {
+      setFreshId(topId);
+      const t = setTimeout(() => setFreshId(null), 600);
+      prevTopId.current = topId;
+      return () => clearTimeout(t);
+    }
+    prevTopId.current = topId;
+  }, [fills]);
+
   return (
     <div className="overflow-x-auto">
-      <table className="min-w-full">
+      <table className="min-w-full border-collapse">
         <thead>
           <tr className="font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
             <th className="py-2 pr-4 text-left font-medium">Side</th>
@@ -72,10 +99,16 @@ function FillsTable({ fills }: { fills: FillFixture[] }) {
             <th className="py-2 text-right font-medium">Matched</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-[var(--border)]">
+        <tbody>
           {fills.map((f) => (
-            <tr key={f.id} className="text-xs">
-              <td className="py-2.5 pr-4">
+            <tr
+              key={f.id}
+              className={cn(
+                "border-t border-[var(--border)] text-[13px]",
+                f.id === freshId && "omega-fill-row-fresh",
+              )}
+            >
+              <td className="py-3.5 pr-4">
                 <span
                   className="font-mono text-[11px] uppercase tracking-[0.14em]"
                   style={{
@@ -88,17 +121,17 @@ function FillsTable({ fills }: { fills: FillFixture[] }) {
                   {f.side === "buy" ? "Buy" : "Sell"}
                 </span>
               </td>
-              <td className="py-2.5 pr-4 font-mono">{f.pair}</td>
-              <td className="py-2.5 pr-4 text-right font-mono tabular-nums">
+              <td className="py-3.5 pr-4 font-mono tabular-nums">{f.pair}</td>
+              <td className="py-3.5 pr-4 text-right font-mono tabular-nums">
                 {f.amount}
               </td>
-              <td className="py-2.5 pr-4 text-right font-mono tabular-nums">
+              <td className="py-3.5 pr-4 text-right font-mono tabular-nums">
                 {f.price}
               </td>
-              <td className="py-2.5 pr-4">
+              <td className="py-3.5 pr-4">
                 <Status state={f.status} />
               </td>
-              <td className="py-2.5 text-right font-mono text-[var(--muted-foreground)] tabular-nums">
+              <td className="py-3.5 text-right font-mono tabular-nums text-[var(--muted-foreground)]">
                 {formatTime(f.matchedAt)}
               </td>
             </tr>
@@ -124,7 +157,7 @@ function SkeletonRows() {
 
 function EmptyRow({ message }: { message: string }) {
   return (
-    <p className="py-6 text-center text-xs leading-relaxed text-[var(--muted-foreground)]">
+    <p className="py-6 text-center text-[13px] leading-relaxed text-[var(--muted-foreground)]">
       {message}
     </p>
   );
@@ -134,7 +167,7 @@ function ErrorRow({ message }: { message: string }) {
   return (
     <p
       role="alert"
-      className="py-6 text-center text-xs leading-relaxed text-[var(--destructive)]"
+      className="py-6 text-center text-[13px] leading-relaxed text-[var(--destructive)]"
     >
       {message}
     </p>

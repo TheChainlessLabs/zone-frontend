@@ -113,7 +113,3 @@ When M6 begins, the integration surface is:
 - Backend gaps to expect (still mock-driven in M6 unless backend lands the endpoints first): account balance query, order history, deposit/withdrawal history, REST explorer, oracle price feed, transfer, websocket.
 
 Full EIP-712 type definitions and price-encoding details are restored into `app/.claude/CLAUDE.md` as part of M6 kickoff, not here.
-
-## Persona-review pipeline
-
-A 20-persona design-critique runner lives at `app/tools/persona-review/`. Entry point: `cd app/tools/persona-review && ./run.sh`. It splits `personas.md` into 20 briefs against `HARNESS.md`, fans out parallel agent runs (claude-code or codex per persona, capped at 4 in flight), regenerates the wrapper modules under `app/app/personas/preview/render/_redesigns/<NN>.ts` plus `_registry.ts`, runs `diagnose.mjs` to confirm every redesign renders at `/personas/preview/render/<NN>`, and writes a tally to `findings.md`. Phases are addressable individually (`./run.sh briefs`, `./run.sh wrappers`, etc.). Run it whenever a wave of design feedback is needed — after a major surface lands, before a milestone gate, or when refreshing the panel via `MEGA-PROMPT.md`. Outputs in `runs/<NN>/` are ephemeral by design — `prep` archives the prior batch into `runs.archive/<timestamp>/` (gitignored) before the next run starts. See `app/tools/persona-review/README.md` for prerequisites and gotchas.

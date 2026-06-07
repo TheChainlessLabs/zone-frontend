@@ -20,10 +20,6 @@ const nextConfig = {
             key: "Strict-Transport-Security",
             value: "max-age=63072000; includeSubDomains; preload",
           },
-          // SAMEORIGIN (not DENY) so the /personas/preview aggregator can
-          // iframe its sibling /personas/preview/render/<id> routes for
-          // sandboxed live previews. Cross-origin iframing of the app
-          // remains blocked.
           ...frameOptionHeaders,
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },

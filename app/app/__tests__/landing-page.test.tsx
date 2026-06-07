@@ -1,47 +1,75 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
-vi.mock("@/components/landing/scene/midpoint-singularity-scene", () => ({
-  MidpointSingularityScene: () => (
-    <div data-testid="midpoint-singularity-scene">Scene stand-in</div>
-  ),
+// The pinned scroll story drives itself from scroll + matchMedia; stub it so
+// the page-level test focuses on section composition and copy.
+vi.mock("@/components/landing/order-scroll-story", () => ({
+  OrderScrollStory: () => <div data-testid="order-scroll-story">Mechanism stand-in</div>,
 }));
 
 import HomePage, { metadata } from "@/app/page";
 
-afterEach(() => {
-  cleanup();
+beforeEach(() => {
+  Object.defineProperty(window, "matchMedia", {
+    configurable: true,
+    value: vi.fn().mockImplementation((query: string) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    })),
+  });
 });
 
-it("renders the public landing hero instead of redirecting to trade", () => {
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+});
+
+it("renders the public landing hero with the kit headline", () => {
   render(<HomePage />);
 
   expect(
     screen.getByRole("heading", {
-      name: "Darkpool spot FX. Onchain settlement.",
+      name: "Private stablecoin execution across chains and venues.",
     }),
   ).toBeDefined();
-  expect(screen.getAllByRole("link", { name: "Request Access" }).length).toBeGreaterThan(0);
   expect(screen.getByTestId("hero-abstract-field")).toBeDefined();
-  expect(screen.getAllByTestId("midpoint-singularity-scene").length).toBe(1);
+  expect(screen.getByTestId("order-scroll-story")).toBeDefined();
 });
 
-it("renders post-animation conversion sections", () => {
+it("exposes the nav launch-app and request-access actions", () => {
   render(<HomePage />);
 
-  expect(screen.getByText("Midpoint-or-better pricing")).toBeDefined();
-  expect(screen.getByText("No pre-fill visibility")).toBeDefined();
+  expect(screen.getByRole("link", { name: "Launch app" })).toBeDefined();
+  expect(screen.getAllByRole("link", { name: "Request Access" }).length).toBeGreaterThan(0);
+});
+
+it("renders the Why Omega and Built for sections", () => {
+  render(<HomePage />);
+
+  expect(screen.getByText("Stable rates everywhere")).toBeDefined();
+  expect(screen.getByText("Compliance by default")).toBeDefined();
+  expect(screen.getByRole("heading", { name: "Funds" })).toBeDefined();
+  expect(screen.getByRole("heading", { name: "Exchanges" })).toBeDefined();
+});
+
+it("renders the request-access card and footer tagline", () => {
+  render(<HomePage />);
+
+  expect(screen.getByRole("heading", { name: "Request access" })).toBeDefined();
   expect(
-    screen.getByText(
-      "Built for funds, treasuries, onchain traders, payment processors, and FX-exposed crypto businesses.",
-    ),
+    screen.getByText("Private stablecoin execution · Onchain settlement"),
   ).toBeDefined();
-  expect(screen.getByText("Omega Markets — Proven, not promised.")).toBeDefined();
 });
 
 it("sets landing page metadata", () => {
-  expect(metadata.title).toBe("Omega Markets — Darkpool spot FX");
+  expect(metadata.title).toBe("Omega Markets — Private stablecoin execution");
   expect(metadata.description).toBe(
-    "Private spot FX execution with onchain settlement and verifiable fills.",
+    "Omega matches stablecoin orders privately, accesses external liquidity when needed, and settles with verifiable proofs.",
   );
 });

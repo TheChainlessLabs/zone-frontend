@@ -1,15 +1,19 @@
-import type { ScenePoint, SceneState, SceneStep, TempoBlock } from "@/components/landing/scene/types";
+import type { SceneState, SceneStep } from "@/components/landing/scene/types";
 
+// Ordered step ids — must match scrollStates / scene.jsx SCROLL_STATES.
 const STEPS: SceneStep[] = [
-  "private-order",
-  "midpoint-match",
-  "batch-proof",
-  "onchain-settlement",
+  "intent",
+  "matching",
+  "liquidity",
+  "execution",
+  "settlement",
 ];
 
-const TEMPO_CHAIN_START = 0.64;
-const TEMPO_BLOCK_COUNT = 7;
-const SETTLEMENT_BLOCK_INDEX = 3;
+const STEP_COUNT = STEPS.length;
+
+// Scene geometry constants (SVG viewBox 0 0 500 500), mirrored from scene.jsx.
+const CX = 250;
+const CY = 250;
 
 interface ScrollProgressInput {
   scrollY: number;
@@ -22,14 +26,29 @@ export function clamp01(value: number) {
   return Math.min(Math.max(value, 0), 1);
 }
 
+export function clamp(value: number, lo: number, hi: number) {
+  return Math.min(hi, Math.max(lo, value));
+}
+
+export function lerp(a: number, b: number, t: number) {
+  return a + (b - a) * t;
+}
+
+/** Linear interpolation clamped to the 0..1 progress range. */
 export function interpolate(from: number, to: number, progress: number) {
   return from + (to - from) * clamp01(progress);
 }
 
+export function easeInOut(t: number) {
+  return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+}
+
+/** Exponential damping toward a target (no overshoot). */
 export function damp(current: number, target: number, deltaSeconds: number, sharpness = 12) {
   return interpolate(current, target, 1 - Math.exp(-sharpness * deltaSeconds));
 }
 
+/** Map window scroll position to 0..1 progress through a pinned section. */
 export function mapScrollToProgress({
   scrollY,
   sectionTop,
@@ -40,115 +59,51 @@ export function mapScrollToProgress({
   return clamp01((scrollY - sectionTop) / travel);
 }
 
-function range(progress: number, start: number, end: number) {
-  return clamp01((progress - start) / (end - start));
-}
-
-function easeOut(progress: number) {
-  const clamped = clamp01(progress);
-  return 1 - (1 - clamped) ** 3;
-}
-
-function easeInOut(progress: number) {
-  const clamped = clamp01(progress);
-  return clamped < 0.5 ? 4 * clamped ** 3 : 1 - (-2 * clamped + 2) ** 3 / 2;
-}
-
-function point(from: ScenePoint, to: ScenePoint, progress: number): ScenePoint {
-  return {
-    xPercent: interpolate(from.xPercent, to.xPercent, progress),
-    yPercent: interpolate(from.yPercent, to.yPercent, progress),
-  };
-}
-
-function activeStepFor(progress: number): SceneStep {
-  if (progress >= 0.7) return STEPS[3];
-  if (progress >= 0.46) return STEPS[2];
-  if (progress >= 0.2) return STEPS[1];
-  return STEPS[0];
-}
-
-function localProgressFor(progress: number, activeStep: SceneStep) {
-  if (activeStep === "private-order") return range(progress, 0, 0.2);
-  if (activeStep === "midpoint-match") return range(progress, 0.2, 0.46);
-  if (activeStep === "batch-proof") return range(progress, 0.46, 0.7);
-  return range(progress, 0.7, 1);
-}
-
-function visibleTempoBlocks(progress: number): TempoBlock[] {
-  const chainProgress = range(progress, TEMPO_CHAIN_START, 1);
-  if (chainProgress <= 0) return [];
-
-  const visibleCount = Math.max(
-    1,
-    Math.min(TEMPO_BLOCK_COUNT, Math.floor(chainProgress * TEMPO_BLOCK_COUNT + 0.000001) + 1),
-  );
-  const finalized = visibleCount >= SETTLEMENT_BLOCK_INDEX + 3;
-
-  return Array.from({ length: visibleCount }, (_, index) => {
-    const containsSettlement = index === SETTLEMENT_BLOCK_INDEX && visibleCount > SETTLEMENT_BLOCK_INDEX;
-    return {
-      id: index + 1,
-      containsSettlement,
-      status: containsSettlement
-        ? finalized
-          ? "finalized-proof"
-          : "carrying-proof"
-        : "pending",
-    };
-  });
-}
-
-function proofPositionFor(progress: number): ScenePoint {
-  const formation = point(
-    { xPercent: 50, yPercent: 42 },
-    { xPercent: 72, yPercent: 42 },
-    easeInOut(range(progress, 0.46, 0.6)),
-  );
-
-  return point(
-    formation,
-    { xPercent: 51, yPercent: 70 },
-    easeInOut(range(progress, 0.62, 0.78)),
-  );
-}
-
+/**
+ * Derive the full scene state from global scroll progress 0..1.
+ * Port of scene.jsx `sceneState()` + the derived values inside `MidpointScene`.
+ */
 export function getSceneState(progress: number): SceneState {
-  const clamped = clamp01(progress);
-  const activeStep = activeStepFor(clamped);
-  const darkpoolProgress = easeOut(range(clamped, 0.08, 0.24));
-  const darkpoolExit = range(clamped, 0.58, 0.78);
-  const submissionProgress = easeInOut(range(clamped, 0.16, 0.36));
-  const proofProgress = easeOut(range(clamped, 0.44, 0.58));
-  const chainProgress = easeOut(range(clamped, TEMPO_CHAIN_START, 0.76));
-  const finalityProgress = range(clamped, 0.88, 0.94);
-  const matchingFade = 1 - range(clamped, 0.42, 0.58);
-  const proofFade = 1 - range(clamped, 0.82, 0.92);
-  const radiationEnter = easeOut(range(clamped, 0.36, 0.52));
-  const radiationExit = 1 - range(clamped, 0.7, 0.86);
-  const apertureEnter = easeOut(range(clamped, 0.44, 0.6));
-  const apertureExit = 1 - range(clamped, 0.78, 0.9);
+  const p = clamp01(progress);
+  const seg = 1 / STEP_COUNT;
+  const index = clamp(Math.floor(p / seg), 0, STEP_COUNT - 1);
+  const local = easeInOut(clamp01((p - index * seg) / seg));
+
+  // event-horizon radius grows through phase 2, holds
+  const horizon = lerp(36, 96, clamp((p - 0.12) / 0.5, 0, 1));
+  // core finalizes (grows) from phase 2 onward
+  const coreR = index >= 1 ? lerp(13, 22, clamp((p - 0.25) / 0.3, 0, 1)) : 13;
+  // incoming sealed order falls from top into the core during phase 1
+  const fallProgress = index === 0 ? local : 1;
+  const orderY = lerp(40, CY, easeInOut(fallProgress));
+  const orderFalling = index < 1;
+  // orbit angle advances with scroll
+  const spin = p * Math.PI * 2.4;
+  // how far orbiting orders are pulled into the core
+  const pull = clamp((p - 0.18) / 0.4, 0, 1);
+  // proof capsule emerges in phase 3
+  const proof = index >= 2 ? clamp((p - 0.5) / 0.25, 0, 1) : 0;
+  const proofX = lerp(CX, CX + 150, easeInOut(proof));
+  // radiation noise scatter in phase 3
+  const noise = index >= 2 ? clamp((p - 0.5) / 0.3, 0, 1) : 0;
+  // tempo blocks slide in during phase 4
+  const tempo = index >= 3 ? local : 0;
 
   return {
-    activeStep,
-    localProgress: localProgressFor(clamped, activeStep),
-    orderPosition: point(
-      { xPercent: 18, yPercent: 48 },
-      { xPercent: 50, yPercent: 42 },
-      submissionProgress,
-    ),
-    orderOpacity: interpolate(1, 0, range(clamped, 0.34, 0.46)),
-    orderScale: interpolate(1, 0.36, range(clamped, 0.3, 0.46)),
-    darkpoolOpacity: interpolate(0, 1, darkpoolProgress) * interpolate(1, 0.28, darkpoolExit),
-    darkpoolScale: interpolate(0.62, 1, darkpoolProgress),
-    matchingOpacity: interpolate(0, 1, easeOut(range(clamped, 0.2, 0.4))) * matchingFade,
-    radiationOpacity: radiationEnter * radiationExit,
-    apertureOpacity: apertureEnter * apertureExit,
-    proofOpacity: interpolate(0, 1, proofProgress) * proofFade,
-    proofPosition: proofPositionFor(clamped),
-    proofScale: interpolate(0.72, 1, proofProgress),
-    chainOpacity: interpolate(0, 1, chainProgress),
-    tempoBlocks: visibleTempoBlocks(clamped),
-    settlementFinality: finalityProgress,
+    index,
+    activeStep: STEPS[index],
+    local,
+    progress: p,
+    horizon,
+    coreR,
+    orderFalling,
+    orderY,
+    fallProgress,
+    spin,
+    pull,
+    proof,
+    proofX,
+    noise,
+    tempo,
   };
 }

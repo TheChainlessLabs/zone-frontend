@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { LandingPage } from "@/components/landing/landing-page";
 
 export const metadata: Metadata = {
-  title: "Omega Markets — Darkpool spot FX",
+  title: "Omega Markets — Private stablecoin execution",
   description:
-    "Private spot FX execution with onchain settlement and verifiable fills.",
+    "Omega matches stablecoin orders privately, accesses external liquidity when needed, and settles with verifiable proofs.",
 };
 
 export default function HomePage() {

@@ -42,7 +42,10 @@ export function YourFills({
   return (
     <section
       aria-labelledby="your-fills-heading"
-      className={cn("flex flex-col gap-3", className)}
+      className={cn(
+        "glass flex flex-col gap-3 rounded-[var(--radius-xl)] p-5",
+        className,
+      )}
     >
       <header className="flex flex-col gap-0.5">
         <h2

@@ -298,7 +298,7 @@ function ExplorerHeader({
   live: boolean;
 }) {
   return (
-    <section className="panel flex flex-col gap-4 rounded-[var(--radius-xl)] p-6">
+    <section className="glass flex flex-col gap-4 rounded-[var(--radius-xl)] p-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex flex-col gap-2">
           <h1 className="t-h2 m-0">Settlement explorer</h1>
@@ -357,7 +357,7 @@ function StatStrip({
   volume24h: number;
 }) {
   return (
-    <section className="panel flex items-stretch rounded-[var(--radius-xl)] py-5">
+    <section className="glass flex items-stretch rounded-[var(--radius-xl)] py-5">
       <StatCell label="Batches today" value={formatGroup(Math.round(batchesToday))} />
       <Divider />
       <StatCell
@@ -440,7 +440,7 @@ function BatchList({
   onPage: (page: number) => void;
 }) {
   return (
-    <section className="flex flex-col gap-4">
+    <section className="glass flex flex-col gap-4 rounded-[var(--radius-xl)] p-5">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-col gap-0.5">
           <h2 className="t-h3 m-0">Recent batches</h2>
@@ -551,7 +551,7 @@ function SearchBar({
         onChange={(event) => onChange(event.target.value)}
         placeholder="Search batch id…"
         aria-label="Search batches"
-        className="h-9 w-full rounded-[var(--radius-md)] border border-[var(--input)] bg-[var(--background)] pl-9 pr-3 font-mono text-[13px] text-[var(--foreground)] outline-none placeholder:text-[var(--muted-foreground)] focus-visible:ring-1 focus-visible:ring-[var(--ring)]"
+        className="glass h-9 w-full rounded-[var(--radius-md)] pl-9 pr-3 font-mono text-[13px] text-[var(--foreground)] outline-none placeholder:text-[var(--muted-foreground)] focus-visible:ring-1 focus-visible:ring-[var(--ring)]"
       />
     </div>
   );

@@ -48,14 +48,12 @@ function Segmented<T extends string>({
     <div
       role="group"
       aria-label={ariaLabel}
+      className="glass-pill"
       style={{
         display: "inline-flex",
         gap: 2,
         padding: 3,
         borderRadius: "var(--radius-full)",
-        background:
-          "color-mix(in oklab, var(--muted) 60%, var(--card))",
-        border: "1px solid var(--border)",
       }}
     >
       {options.map(([id, label]) => {
@@ -233,14 +231,24 @@ function Section({
       >
         {title}
       </h2>
-      <div style={{ display: "flex", flexDirection: "column" }}>
+      <div
+        className="glass"
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          borderRadius: "var(--radius-xl)",
+          padding: "2px 18px",
+        }}
+      >
         {children}
       </div>
     </section>
   );
 }
 
-/** Ghost action button style — copy / explorer links. */
+/** Ghost action button style — copy / explorer links. Pairs with the
+ *  `glass-pill` class, which supplies the border + glass fill; the inline
+ *  style keeps only layout + type so the two don't fight. */
 const ghostActionStyle: React.CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
@@ -248,8 +256,6 @@ const ghostActionStyle: React.CSSProperties = {
   height: 32,
   padding: "0 12px",
   borderRadius: "var(--radius-md)",
-  border: "1px solid var(--input)",
-  background: "var(--background)",
   cursor: "pointer",
   textDecoration: "none",
   fontFamily: "var(--font-sans)",
@@ -276,7 +282,7 @@ function CopyButton({ address }: { address: string }) {
     <button
       type="button"
       onClick={copy}
-      className="press-down"
+      className="glass-pill press-down"
       style={ghostActionStyle}
       aria-label={copied ? "Address copied" : "Copy address"}
     >
@@ -300,15 +306,13 @@ function CopyButton({ address }: { address: string }) {
 function ZoneBalance({ label, value }: { label: string; value: string }) {
   return (
     <div
+      className="glass"
       style={{
         display: "flex",
         flexDirection: "column",
         gap: 4,
         padding: 12,
         borderRadius: "var(--radius-md)",
-        border: "1px solid var(--border)",
-        background:
-          "color-mix(in oklab, var(--muted) 35%, var(--card))",
       }}
     >
       <span
@@ -344,7 +348,7 @@ function ZoneBalance({ label, value }: { label: string; value: string }) {
 function ZonePanel({ zone }: { zone: AccountZoneFixture }) {
   return (
     <div
-      className="panel"
+      className="glass"
       style={{
         borderRadius: "var(--radius-xl)",
         padding: 18,
@@ -529,7 +533,7 @@ function SettingsContent({
 
       {/* Wallet identity panel */}
       <div
-        className="panel"
+        className="glass"
         style={{
           borderRadius: "var(--radius-xl)",
           padding: 18,
@@ -599,7 +603,7 @@ function SettingsContent({
             href={explorerHref}
             target="_blank"
             rel="noreferrer noopener"
-            className="press-down"
+            className="glass-pill press-down"
             style={ghostActionStyle}
             aria-label="View on Tempo Explorer"
           >

@@ -72,12 +72,7 @@ export default function RootLayout({
           <RouteAtmosphere />
           <HashHighlightMount />
           <TempoWalletProvider>
-            {/* Demo build: drive the wallet from the deterministic in-app mock
-                state machine so connect stays inside the modal (idle →
-                connecting → connected) instead of popping the external Tempo
-                Wallet window. Swap back to the default tempo mode for M6
-                backend integration. */}
-            <WalletStateProvider mode="mock">{children}</WalletStateProvider>
+            <WalletStateProvider>{children}</WalletStateProvider>
           </TempoWalletProvider>
         </Suspense>
         <Toaster />

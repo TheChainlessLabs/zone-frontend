@@ -44,3 +44,30 @@ for (const name of ["localStorage", "sessionStorage"] as const) {
     });
   }
 }
+
+// jsdom does not implement `window.matchMedia`. The Tempo Wallet connector's
+// iframe dialog reads it (via `getReferrer()` → color-scheme detection) the
+// moment the wagmi provider instantiates the connector, so any component test
+// that mounts the app's WagmiProvider throws `window.matchMedia is not a
+// function` without this. Install a minimal always-"no-match" stub. Harness
+// plumbing only — it does not affect product behaviour.
+if (
+  typeof window !== "undefined" &&
+  typeof window.matchMedia !== "function"
+) {
+  Object.defineProperty(window, "matchMedia", {
+    value: (query: string): MediaQueryList =>
+      ({
+        matches: false,
+        media: query,
+        onchange: null,
+        addListener: () => {},
+        removeListener: () => {},
+        addEventListener: () => {},
+        removeEventListener: () => {},
+        dispatchEvent: () => false,
+      }) as unknown as MediaQueryList,
+    writable: true,
+    configurable: true,
+  });
+}

@@ -1,6 +1,7 @@
 import { defineChain, http, type Address } from "viem";
 import { createConfig } from "wagmi";
 import { tempoWallet } from "wagmi/tempo";
+import { Dialog } from "accounts";
 
 const DEFAULT_TEMPO_RPC_URL = "https://rpc.moderato.tempo.xyz";
 const DEFAULT_ZONE_PUBLIC_RPC_URL = "https://omega-zone.example.com/";
@@ -79,6 +80,11 @@ export function zonePrivateRpcUrl(): string {
 export const ZERO_MEMO =
   "0x0000000000000000000000000000000000000000000000000000000000000000" as const;
 
+/** True inside the vitest/jsdom unit-test run. */
+const isVitest =
+  typeof process !== "undefined" &&
+  (process.env.VITEST === "true" || process.env.NODE_ENV === "test");
+
 export const tempoL1Chain = defineChain({
   id: 42431,
   name: "Tempo Testnet (Moderato)",
@@ -128,7 +134,28 @@ export const OMEGA_TEMPO_EXPLORER_URL =
 
 export const omegaZoneConfig = createConfig({
   chains: [tempoL1Chain, omegaZoneChain],
-  connectors: [tempoWallet({ name: "Tempo Wallet", testnet: true })],
+  connectors: [
+    tempoWallet({
+      name: "Tempo Wallet",
+      testnet: true,
+      // Force the in-page iframe dialog. The connector's default picks
+      // `Dialog.popup()` whenever `isInsecureContext()` is true, and that
+      // helper flags *any* `http:` origin as insecure — including
+      // `http://localhost`, which browsers actually treat as a secure context
+      // (WebAuthn works there). On dev that fallback popped a separate browser
+      // window on connect. `Dialog.iframe()` keeps the wallet in the same
+      // window and still self-falls-back to a popup only where the browser
+      // genuinely can't embed it (Safari `wallet_connect`, or an untrusted
+      // host without IntersectionObserver v2). SSR-safe: `iframe()` returns a
+      // no-op when `window` is undefined.
+      //
+      // Skipped under vitest/jsdom: the iframe bootstrap touches browser
+      // globals that jsdom tears down mid-async, spraying noise into the test
+      // log. Tests don't exercise the dialog, so we let the connector keep its
+      // library default there.
+      ...(isVitest ? {} : { dialog: Dialog.iframe() }),
+    }),
+  ],
   multiInjectedProviderDiscovery: false,
   ssr: true,
   transports: {

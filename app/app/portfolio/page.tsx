@@ -553,21 +553,28 @@ export default function PortfolioPage() {
       zoneTokenBalances,
     ],
   );
+  // Live data is only "present" once the snapshot resolved AND the wallet
+  // returned at least one balance. No backend is running in this build, so
+  // the snapshot stays idle/errors out and balances stay null — in every one
+  // of those cases we fall back to the populated demo fixture rather than
+  // showing zeros, an error band, or the skeleton. The real-data path still
+  // wins whenever the backend actually answers.
+  const hasLiveData =
+    state === "default" &&
+    liveState === "ready" &&
+    (zonePathUsdBalance !== null ||
+      zoneOalphaBalance !== null ||
+      (zoneTokenBalances?.length ?? 0) > 0);
   const fixture =
     state === "empty"
       ? portfolioFixtures.empty
       : state === "default"
-        ? livePortfolio
+        ? hasLiveData
+          ? livePortfolio
+          : portfolioFixtures.default
         : portfolioFixtures.default;
-  const isLoading =
-    state === "loading" ||
-    state === "skeleton" ||
-    (state === "default" &&
-      liveState === "loading" &&
-      (zonePathUsdBalance === null ||
-        zoneOalphaBalance === null ||
-        zoneTokenBalances === null));
-  const isError = state === "error" || (state === "default" && liveState === "error");
+  const isLoading = state === "loading" || state === "skeleton";
+  const isError = state === "error";
   const errorMessage =
     liveError ?? portfolioFixtures.error.error?.message ?? "Portfolio unavailable.";
 

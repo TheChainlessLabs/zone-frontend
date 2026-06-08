@@ -9,17 +9,16 @@
  * REFERENCE only — never a public order book (dark-pool rule,
  * omega-docs/03-brand/naming.md).
  *
- * The app keeps its real wiring + states: the headline figure and the
- * Midpoint / Best bid / Best ask reference rows read live zone values, and the
- * trend is only drawn when `historyEnabled` is true (the zone's midpoint
- * history is indexed). When history is disabled, the surface shows a
- * "Live reference only" panel instead of a fabricated trend, so the chart
- * never implies data the dark pool does not expose.
+ * The app keeps its real wiring + states: the headline figure reads the live
+ * zone midpoint, and the trend is only drawn when `historyEnabled` is true (the
+ * zone's midpoint history is indexed). When history is disabled, the surface
+ * shows a "Live reference only" panel instead of a fabricated trend, so the
+ * chart never implies data the dark pool does not expose. It renders bare (no
+ * card / background), matching the portfolio value chart.
  */
 
 import * as React from "react";
 
-import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import type { LaunchPair } from "@/lib/fixtures/pairs";
 
@@ -46,17 +45,9 @@ const TREND_SHAPE = [
 export function ChartPlaceholder({
   pair,
   midpoint,
-  bestBid,
-  bestAsk,
   historyEnabled = false,
   className,
 }: ChartPlaceholderProps) {
-  const rows = [
-    { label: "Midpoint", value: midpoint },
-    { label: "Best bid", value: bestBid },
-    { label: "Best ask", value: bestAsk },
-  ];
-
   const anchor = parsePrice(midpoint);
   const decimals = (String(midpoint ?? "").split(".")[1] ?? "").length || 4;
   const data = useTrendData(anchor, decimals);
@@ -71,10 +62,9 @@ export function ChartPlaceholder({
     hoveredValue != null ? hoveredValue.toFixed(decimals) : midpoint;
 
   return (
-    <Card
-      variant="glass"
+    <div
       className={cn(
-        "relative flex min-h-[320px] flex-col gap-3 overflow-hidden p-5 lg:min-h-[420px]",
+        "relative flex min-h-[320px] flex-col gap-3 lg:min-h-[420px]",
         className,
       )}
     >
@@ -111,22 +101,7 @@ export function ChartPlaceholder({
         <LiveReferenceOnly />
       )}
 
-      <dl className="grid gap-px overflow-hidden rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--border)]">
-        {rows.map((row) => (
-          <div
-            key={row.label}
-            className="grid grid-cols-[1fr_auto] items-baseline gap-4 bg-[var(--card)] px-4 py-3"
-          >
-            <dt className="font-mono text-[11px] uppercase tracking-[0.16em] text-[var(--muted-foreground)]">
-              {row.label}
-            </dt>
-            <dd className="font-mono text-sm tabular-nums">
-              {row.value && row.value.length > 0 ? row.value : "—"}
-            </dd>
-          </div>
-        ))}
-      </dl>
-    </Card>
+    </div>
   );
 }
 

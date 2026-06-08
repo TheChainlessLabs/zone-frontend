@@ -81,9 +81,9 @@ export function Navbar() {
       <div>
         {/* Wordmark */}
         <Link
-          href="/trade"
+          href="/"
           className="flex items-center gap-2 text-[var(--foreground)] transition-opacity hover:opacity-80"
-          aria-label="Omega Markets — Trade"
+          aria-label="Omega Markets — home"
         >
           <OmegaMark size={20} />
           <span className="font-wordmark text-[15px] font-semibold uppercase tracking-[0.14em]">

@@ -46,9 +46,10 @@
     0 4px 16px 0 rgba(0, 0, 0, 0.16),
     0 1px 3px 0 rgba(0, 0, 0, 0.10);
   --glass-pill-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.12);
-  /* M4.28 contrast lift: slightly denser fill + saturation so glass
-     surfaces stay legible once the dot-grid atmosphere sits behind them. */
-  --glass-fill: rgba(255, 255, 255, 0.07);
+  /* Darker, denser glass fill (the landing-card register, preferred over the
+     brighter white tint) so glass reads as a dark frosted panel over the
+     dot-grid instead of washing out. */
+  --glass-fill: color-mix(in oklab, var(--background) 66%, transparent);
   --glass-saturate: 1.55;
 
   /* Liquid-glass specular layers — the structural vars the kit's `.glass` /

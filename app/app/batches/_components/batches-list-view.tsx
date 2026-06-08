@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { PageLayout } from "@/components/shell/PageLayout";
 import { TransitionLink as Link } from "@/components/shell/transition-link";
@@ -582,8 +582,10 @@ function Th({
 }
 
 function BatchRow({ batch, fresh }: { batch: BatchFixture; fresh: boolean }) {
+  const router = useRouter();
   return (
     <tr
+      onClick={() => router.push(`/batches/${batch.number}`)}
       className={cn(
         "group cursor-pointer border-t border-[var(--border)] transition-[background-color] duration-75 ease-[var(--ease-standard)] hover:bg-[var(--muted)]/30",
         fresh ? styles.freshRow : undefined,

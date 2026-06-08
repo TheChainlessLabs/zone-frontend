@@ -705,7 +705,7 @@ function HoldingsTable({
           </thead>
           <tbody>
             {shown.map((h) => (
-              <tr key={h.token} className="border-t border-[var(--border)]">
+              <tr key={h.token} className="border-t border-[var(--border)] transition-[background-color] duration-75 hover:bg-[var(--muted)]/30">
                 <td className={cn(td, "pr-3")}>
                   <span className="flex items-center gap-3">
                     <TokenGlyph symbol={h.token} />
@@ -824,7 +824,7 @@ function ActivityTable({ rows }: { rows: ActivityRow[] }) {
             </thead>
             <tbody>
               {shown.map((r) => (
-                <tr key={`${r.side}-${r.id}`} className="border-t border-[var(--border)]">
+                <tr key={`${r.side}-${r.id}`} className="border-t border-[var(--border)] transition-[background-color] duration-75 hover:bg-[var(--muted)]/30">
                   <td className={td}>
                     <SideTag side={r.side} />
                   </td>
@@ -986,7 +986,7 @@ function OrdersTable({
             </thead>
             <tbody>
               {shown.map((o) => (
-                <tr key={o.id} className="border-t border-[var(--border)]">
+                <tr key={o.id} className="border-t border-[var(--border)] transition-[background-color] duration-75 hover:bg-[var(--muted)]/30">
                   <td className={td}>
                     <SideTag side={o.side} />
                   </td>
@@ -1048,7 +1048,7 @@ function OpenOrders({
           return (
             <div
               key={o.id}
-              className="flex items-center gap-3 border-t border-[var(--border)] py-3"
+              className="flex items-center gap-3 border-t border-[var(--border)] py-3 transition-[background-color] duration-75 hover:bg-[var(--muted)]/30"
             >
               <span
                 className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[var(--border)]"

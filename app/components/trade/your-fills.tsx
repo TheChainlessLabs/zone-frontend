@@ -107,7 +107,7 @@ function FillsTable({ fills }: { fills: FillFixture[] }) {
             <tr
               key={f.id}
               className={cn(
-                "border-t border-[var(--border)] text-[13px]",
+                "border-t border-[var(--border)] text-[13px] transition-[background-color] duration-75 hover:bg-[var(--muted)]/30",
                 f.id === freshId && "omega-fill-row-fresh",
               )}
             >

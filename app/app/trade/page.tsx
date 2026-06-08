@@ -445,13 +445,12 @@ function TradeSurface() {
     );
   }
 
-  // With no backend running, the live zone snapshot is empty. Rather than
-  // showing zeros / an error / a stuck skeleton, the default view falls back to
-  // the populated OALPHA/PATH.USD demo fixture so the surface looks alive. Demo
-  // only kicks in for the default state once the live load has resolved without
-  // data (idle = never attempted, error = backend down) and no live balances
-  // arrived. A successful live snapshot (`ready`) always wins, and an
-  // in-flight load still shows the loading skeleton.
+  // With no backend running, the live zone snapshot is empty. The default view
+  // shows the populated OALPHA/PATH.USD demo fixture whenever no live data has
+  // arrived — including while a load is still in flight — so the surface is
+  // never empty or stuck on a skeleton. A successful live snapshot (`ready`, or
+  // any non-null balance / own fill) always wins and swaps the real values in.
+  // The `?state=loading|skeleton|error` review toggles still force those states.
   const liveFills = activity.fills.filter(
     (fill) => fill.pair === ZONE_PAIR.pair,
   );
@@ -460,10 +459,7 @@ function TradeSurface() {
     zonePathUsdBalance !== null ||
     zoneOalphaBalance !== null ||
     liveFills.length > 0;
-  const useDemoData =
-    state === "default" &&
-    !hasLiveData &&
-    (liveState === "idle" || liveState === "error");
+  const useDemoData = state === "default" && !hasLiveData;
 
   const isLoading =
     state === "loading" ||

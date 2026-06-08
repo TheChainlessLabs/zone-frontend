@@ -53,6 +53,12 @@ import {
 import {
   tradeFixtures,
   usePageState,
+  DEMO_ZONE_PATH_USD_BALANCE,
+  DEMO_ZONE_OALPHA_BALANCE,
+  DEMO_ZONE_MIDPOINT,
+  DEMO_ZONE_BEST_BID,
+  DEMO_ZONE_BEST_ASK,
+  DEMO_ZONE_FILLS,
   type LaunchPair,
 } from "@/lib/fixtures";
 import type { FillFixture, OrderFixture } from "@/lib/fixtures/types";
@@ -439,14 +445,39 @@ function TradeSurface() {
     );
   }
 
+  // With no backend running, the live zone snapshot is empty. Rather than
+  // showing zeros / an error / a stuck skeleton, the default view falls back to
+  // the populated OALPHA/PATH.USD demo fixture so the surface looks alive. Demo
+  // only kicks in for the default state once the live load has resolved without
+  // data (idle = never attempted, error = backend down) and no live balances
+  // arrived. A successful live snapshot (`ready`) always wins, and an
+  // in-flight load still shows the loading skeleton.
+  const liveFills = activity.fills.filter(
+    (fill) => fill.pair === ZONE_PAIR.pair,
+  );
+  const hasLiveData =
+    liveState === "ready" ||
+    zonePathUsdBalance !== null ||
+    zoneOalphaBalance !== null ||
+    liveFills.length > 0;
+  const useDemoData =
+    state === "default" &&
+    !hasLiveData &&
+    (liveState === "idle" || liveState === "error");
+
   const isLoading =
     state === "loading" ||
     state === "skeleton" ||
     (state === "default" &&
+      !useDemoData &&
       liveState === "loading" &&
       (zonePathUsdBalance === null || zoneOalphaBalance === null));
   const errorMessage =
-    state === "error" ? fixture.error?.message : liveError;
+    state === "error"
+      ? fixture.error?.message
+      : useDemoData
+        ? undefined
+        : liveError;
   const fillsEmptyMessage =
     state === "empty"
       ? "No fills yet. Your matches will appear here."
@@ -454,19 +485,29 @@ function TradeSurface() {
   const displayedMidpoint =
     state === "loading" || state === "skeleton" || state === "error"
       ? ""
-      : midpoint;
+      : useDemoData
+        ? DEMO_ZONE_MIDPOINT
+        : midpoint;
   const displayedBestBid =
     state === "loading" || state === "skeleton" || state === "error"
       ? ""
-      : formatRawPrice(bestBid);
+      : useDemoData
+        ? DEMO_ZONE_BEST_BID
+        : formatRawPrice(bestBid);
   const displayedBestAsk =
     state === "loading" || state === "skeleton" || state === "error"
       ? ""
-      : formatRawPrice(bestAsk);
-  const fills =
-    state === "default"
-      ? activity.fills.filter((fill) => fill.pair === ZONE_PAIR.pair)
+      : useDemoData
+        ? DEMO_ZONE_BEST_ASK
+        : formatRawPrice(bestAsk);
+  const fills = useDemoData
+    ? DEMO_ZONE_FILLS
+    : state === "default"
+      ? liveFills
       : [];
+  // The trade chart's midpoint trend renders only when real history is indexed;
+  // in demo mode we plot the kit's illustrative trend instead.
+  const chartHistoryEnabled = useDemoData ? true : midpointHistoryEnabled;
 
   // Order form (shared between Market + Limit) — exact same surface, only
   // the outer width + the chart/fills siblings change.
@@ -484,8 +525,12 @@ function TradeSurface() {
         onModeChange={setMode}
         midpoint={displayedMidpoint}
         availableBySide={{
-          buy: formatTokenAmount(zonePathUsdBalance),
-          sell: formatTokenAmount(zoneOalphaBalance),
+          buy: formatTokenAmount(
+            useDemoData ? DEMO_ZONE_PATH_USD_BALANCE : zonePathUsdBalance,
+          ),
+          sell: formatTokenAmount(
+            useDemoData ? DEMO_ZONE_OALPHA_BALANCE : zoneOalphaBalance,
+          ),
         }}
         loading={isLoading}
         errorMessage={errorMessage}
@@ -502,7 +547,7 @@ function TradeSurface() {
         midpoint={displayedMidpoint}
         bestBid={displayedBestBid}
         bestAsk={displayedBestAsk}
-        historyEnabled={midpointHistoryEnabled}
+        historyEnabled={chartHistoryEnabled}
       />
       <YourFills
         fills={fills}

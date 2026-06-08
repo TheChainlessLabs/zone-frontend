@@ -111,7 +111,13 @@ export function BatchesListView() {
           ? compactBatch(await searchZoneBatch(query))
           : (await listZoneBatches({ limit: 60 })).batches;
         if (cancelled) return;
-        const rows = batches.map(zoneBatchToFixture);
+        let rows = batches.map(zoneBatchToFixture);
+        // No live data and no search → seed the demo fixtures so the public
+        // explorer stays populated until the backend lands. A real non-empty
+        // result always takes precedence.
+        if (rows.length === 0 && !query) {
+          rows = batchesListFixtures.default.batches;
+        }
         setLiveRows(rows);
         if (nextIdRef.current === null && rows.length > 0) {
           nextIdRef.current = rows[0].number + 1;
@@ -119,6 +125,18 @@ export function BatchesListView() {
         setLiveState("ready");
       } catch (error) {
         if (cancelled) return;
+        // Backend unreachable. For the unfiltered default view, fall back to
+        // the demo fixtures rather than the error state; a live search that
+        // fails still surfaces the error.
+        if (!search.trim()) {
+          setLiveRows(batchesListFixtures.default.batches);
+          if (nextIdRef.current === null) {
+            nextIdRef.current =
+              batchesListFixtures.default.batches[0].number + 1;
+          }
+          setLiveState("ready");
+          return;
+        }
         setLiveError(getErrorMessage(error));
         setLiveState("error");
       }
@@ -130,6 +148,12 @@ export function BatchesListView() {
     };
   }, [search, state]);
 
+  // Demo fallback note: with no backend wired up the zone RPC errors or
+  // returns nothing. The fetch effect above already substitutes the populated
+  // demo fixtures into `liveRows` (and parks `liveState` at "ready") for the
+  // unfiltered default view, so the explorer stays alive — heartbeat, stat
+  // strip, and seal loop all run over the demo rows. Real data always wins;
+  // the `?state=` review fixtures are untouched.
   const isLiveDefault =
     state === "default" && liveState === "ready" && search.trim() === "";
 

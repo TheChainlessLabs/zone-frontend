@@ -4,17 +4,18 @@
  * /account — Settings surface (kit port).
  *
  * Ported from the design-kit Settings.jsx. Wired to real Tempo wallet
- * state (address, chain, connector, disconnect) and the existing
- * OmegaZoneStatus widget. Theme persists to localStorage exactly as
- * ThemeToggle did (brand-theme key, dark default).
+ * state (address, chain, connector, disconnect). The Omega Zone snapshot is
+ * filled from the demo fixture (backend unwired) so the surface reads live —
+ * never empty Authorize/Pending/Not-connected states. Theme persists to
+ * localStorage exactly as ThemeToggle did (brand-theme key, dark default).
  */
 
 import * as React from "react";
 
 import { AppShell } from "@/components/shell/AppShell";
-import { OmegaZoneStatus } from "@/components/omega-zone/OmegaZoneStatus";
 import { Icon } from "@/lib/icons";
 import { accountFixtures } from "@/lib/fixtures";
+import type { AccountZoneFixture } from "@/lib/fixtures/types";
 import {
   truncateAddress,
   useWalletState,
@@ -25,7 +26,9 @@ import { tempoAddressUrl } from "@/lib/zone";
 
 type ThemeMode = "dark" | "light";
 type OrderMode = "market" | "limit";
-type DefaultPair = "USDC/EURC" | "ETH/USDC";
+// Product denomination — the live pair is OALPHA/PATH.USD (not the kit's demo
+// USDC/EURC roster). ETH/USDC stays as the secondary option.
+type DefaultPair = "OALPHA/PATH.USD" | "ETH/USDC";
 
 /* ─────────────────────────────────── micro-primitives ─── */
 
@@ -291,6 +294,129 @@ function CopyButton({ address }: { address: string }) {
   );
 }
 
+/* ─────────────────────────── ZonePanel ─── */
+
+/** Small balance mini-card — mono-uppercase label over a tabular figure. */
+function ZoneBalance({ label, value }: { label: string; value: string }) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 4,
+        padding: 12,
+        borderRadius: "var(--radius-md)",
+        border: "1px solid var(--border)",
+        background:
+          "color-mix(in oklab, var(--muted) 35%, var(--card))",
+      }}
+    >
+      <span
+        style={{
+          fontFamily: "var(--font-mono)",
+          fontSize: 10,
+          letterSpacing: "0.18em",
+          textTransform: "uppercase",
+          color: "var(--muted-foreground)",
+        }}
+      >
+        {label}
+      </span>
+      <span
+        style={{
+          fontFamily: "var(--font-mono)",
+          fontSize: 16,
+          fontVariantNumeric: "tabular-nums",
+          color: "var(--foreground)",
+        }}
+      >
+        {value}
+      </span>
+    </div>
+  );
+}
+
+/**
+ * Omega Zone status — demo snapshot. Renders the private-RPC session as
+ * authorized with PATH.USD / OALPHA balances. Replaces the live private-RPC
+ * widget while the backend is unwired so the surface reads live, not empty.
+ */
+function ZonePanel({ zone }: { zone: AccountZoneFixture }) {
+  return (
+    <div
+      className="panel"
+      style={{
+        borderRadius: "var(--radius-xl)",
+        padding: 18,
+        display: "flex",
+        flexDirection: "column",
+        gap: 16,
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 12,
+          flexWrap: "wrap",
+        }}
+      >
+        <span className="t-mono-label">Omega Zone</span>
+        <span
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 7,
+            fontFamily: "var(--font-mono)",
+            fontSize: 12,
+            color: "var(--foreground)",
+          }}
+        >
+          <span
+            aria-hidden
+            style={{
+              width: 6,
+              height: 6,
+              borderRadius: "50%",
+              background: zone.authorized
+                ? "var(--success)"
+                : "var(--muted-foreground)",
+              flexShrink: 0,
+            }}
+          />
+          {zone.authorized ? "Private RPC authorized" : "Private RPC pending"}
+        </span>
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gap: 10,
+          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+        }}
+      >
+        <ZoneBalance
+          label="Zone · PATH.USD"
+          value={`${zone.zoneBalances.pathUsd} PATH.USD`}
+        />
+        <ZoneBalance
+          label="Zone · OALPHA"
+          value={`${zone.zoneBalances.oalpha} OALPHA`}
+        />
+        <ZoneBalance
+          label="Darkpool · PATH.USD"
+          value={`${zone.darkpoolBalances.pathUsd} PATH.USD`}
+        />
+        <ZoneBalance
+          label="Darkpool · OALPHA"
+          value={`${zone.darkpoolBalances.oalpha} OALPHA`}
+        />
+      </div>
+    </div>
+  );
+}
+
 /* ─────────────────────────── useTheme hook ─── */
 
 function useTheme(): [ThemeMode, (m: ThemeMode) => void] {
@@ -338,11 +464,13 @@ function SettingsContent({
   wallet: ReturnType<typeof useWalletState>;
 }) {
   const fixture = accountFixtures.default;
+  const zone = fixture.zone;
   const address: string =
     wallet.address ??
     fixture.address ??
     "0x0000000000000000000000000000000000000000";
-  const chainName = wallet.chainName ?? "Ethereum L1";
+  // Settlement layer — prefer the live wallet chain, else the demo zone name.
+  const chainName = wallet.chainName ?? zone?.chainName ?? "Omega Zone";
   const connector = wallet.connector ?? "Tempo Wallet";
   const sessionStartedAt = fixture.sessionStartedAt;
   const truncated = truncateAddress(address);
@@ -354,7 +482,7 @@ function SettingsContent({
   // Local preference state (cosmetic / session-local for now; backend deferred).
   const [defaultMode, setDefaultMode] = React.useState<OrderMode>("market");
   const [defaultPair, setDefaultPair] =
-    React.useState<DefaultPair>("USDC/EURC");
+    React.useState<DefaultPair>("OALPHA/PATH.USD");
   const [confirmSign, setConfirmSign] = React.useState(true);
   const [hideBalances, setHideBalances] = React.useState(false);
   const [fillAlerts, setFillAlerts] = React.useState(true);
@@ -481,8 +609,8 @@ function SettingsContent({
         </div>
       </div>
 
-      {/* Omega Zone status widget — kept */}
-      <OmegaZoneStatus />
+      {/* Omega Zone — demo snapshot (backend unwired; renders live, not empty) */}
+      {zone ? <ZonePanel zone={zone} /> : null}
 
       {/* Preferences section */}
       <Section title="Preferences">
@@ -523,7 +651,7 @@ function SettingsContent({
           control={
             <Segmented<DefaultPair>
               options={[
-                ["USDC/EURC", "USDC/EURC"],
+                ["OALPHA/PATH.USD", "OALPHA/PATH.USD"],
                 ["ETH/USDC", "ETH/USDC"],
               ]}
               value={defaultPair}

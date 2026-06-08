@@ -74,7 +74,9 @@ export function BatchDetailView({ id }: { id: string }) {
   const [liveState, setLiveState] = React.useState<
     "loading" | "ready" | "error" | "empty"
   >("loading");
-  const [liveError, setLiveError] = React.useState<string | undefined>();
+  // The live error message is kept only as a debugging affordance; the default
+  // surface renders demo data on failure rather than surfacing the message.
+  const [, setLiveError] = React.useState<string | undefined>();
 
   React.useEffect(() => {
     if (state !== "default" || rawState) return;
@@ -104,6 +106,14 @@ export function BatchDetailView({ id }: { id: string }) {
     };
   }, [id, rawState, state]);
 
+  // Demo fallback: with no backend the zone RPC errors or returns nothing.
+  // Rather than dead-ending the default detail surface on "Failed to load" or
+  // "Batch not found", fall back to a populated demo fixture so the page shows
+  // a live-looking batch — lifecycle stepper, per-pair distribution, and
+  // settlement metadata. Real data always wins (`liveFixture`); the explicit
+  // `?state=` / `detail-*` review fixtures below are untouched.
+  const liveUnavailable = liveState === "error" || liveState === "empty";
+
   const fixture: BatchesDetailFixture =
     state === "loading"
       ? batchesDetailFixtures.loading
@@ -113,20 +123,13 @@ export function BatchDetailView({ id }: { id: string }) {
           ? batchesDetailFixtures.error
           : rawState && VALID_DETAIL_KEYS.has(rawState as DetailStateKey)
             ? STATE_TO_FIXTURE[rawState as DetailStateKey]
-            : liveState === "empty"
-              ? batchesDetailFixtures.empty
-              : liveFixture ??
-                {
-                  ...batchesDetailFixtures.loading,
-                  error:
-                    liveState === "error"
-                      ? {
-                          message: liveError ?? "Failed to load batch.",
-                          code: "ZONE_RPC",
-                        }
-                      : undefined,
-                  isLoading: liveState === "loading",
-                };
+            : liveFixture ??
+              (liveUnavailable
+                ? batchesDetailFixtures.verified
+                : {
+                    ...batchesDetailFixtures.loading,
+                    isLoading: liveState === "loading",
+                  });
 
   // Honour the route segment for the title even when we render a
   // status-keyed fixture.
@@ -163,7 +166,7 @@ export function BatchDetailView({ id }: { id: string }) {
               </Button>
             }
           />
-        ) : state === "empty" || liveState === "empty" ? (
+        ) : state === "empty" ? (
           <SurfaceState
             title="Batch not found."
             description="The route you tried doesn't exist. Head back to /batches."

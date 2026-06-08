@@ -11,10 +11,6 @@ vi.mock("@/components/shell/AppShell", () => ({
   AppShell: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
-vi.mock("@/components/omega-zone/OmegaZoneStatus", () => ({
-  OmegaZoneStatus: () => <div data-testid="omega-zone-status">Omega zone status</div>,
-}));
-
 const disconnect = vi.fn();
 const useWalletState = vi.fn();
 
@@ -125,7 +121,7 @@ it("renders kit toggle rows: confirm signing, hide balances, fill alerts, proof 
   expect(screen.getByRole("switch", { name: "Proof verified" })).toBeDefined();
 });
 
-it("renders the OmegaZoneStatus widget", () => {
+it("renders the demo Omega Zone panel as authorized with PATH.USD/OALPHA balances", () => {
   useWalletState.mockReturnValue({
     state: "connected",
     address: "0xa513e6e4b8f2a923d98304ec87f64353c4d5c853",
@@ -136,7 +132,14 @@ it("renders the OmegaZoneStatus widget", () => {
 
   render(<AccountPage />);
 
-  expect(screen.getByTestId("omega-zone-status")).toBeDefined();
+  // Demo snapshot reads live, not empty: authorized status + product-token balances.
+  expect(screen.getByText("Private RPC authorized")).toBeDefined();
+  expect(screen.getByText(/48,250\.00 PATH\.USD/)).toBeDefined();
+  expect(screen.getByText(/12,500\.00 OALPHA/)).toBeDefined();
+  // Never the broken-looking empty states from the live widget.
+  expect(screen.queryByText("Authorize")).toBeNull();
+  expect(screen.queryByText("Not connected")).toBeNull();
+  expect(screen.queryByText("Private RPC pending")).toBeNull();
 });
 
 it("renders the kit Sign out button and calls wallet.disconnect", () => {

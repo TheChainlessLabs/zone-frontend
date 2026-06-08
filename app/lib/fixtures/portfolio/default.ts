@@ -1,42 +1,46 @@
 import type { PortfolioFixture } from "../types";
 
-/** /portfolio default — connected user with positions, fills, and onchain history. */
+/**
+ * /portfolio default — connected user with positions, fills, and onchain
+ * history. Denominated in the venue's OALPHA / PATH.USD market (the live
+ * product denomination), so it doubles as the demo snapshot the page shows
+ * when no backend is reachable.
+ */
 export const portfolioDefault: PortfolioFixture = {
   totalValueUSD: "47,213.40",
   balances: [
     {
-      token: "USDC",
+      token: "PATH.USD",
       available: "32,450.00",
-      locked: "0.00",
-      total: "32,450.00",
+      locked: "1,242.40",
+      total: "33,692.40",
     },
     {
-      token: "EURC",
+      token: "OALPHA",
       available: "13,521.00",
-      locked: "1,242.40",
-      total: "14,763.40",
+      locked: "0.00",
+      total: "13,521.00",
     },
-    { token: "USDT", available: "0.00", locked: "0.00", total: "0.00" },
   ],
   openOrders: [
     {
       id: "o-9482",
-      pair: "USDC/EURC",
+      pair: "OALPHA/PATH.USD",
       side: "sell",
       type: "limit",
       amount: "5000.00",
-      price: "0.9215",
+      price: "1.0421",
       filledPercent: 12,
       status: "pending",
       submittedAt: "2026-04-27T13:42:11Z",
     },
     {
       id: "o-9486",
-      pair: "USDC/USDT",
+      pair: "OALPHA/PATH.USD",
       side: "buy",
       type: "midpoint",
       amount: "10000.00",
-      price: "1.0001",
+      price: "1.0399",
       filledPercent: 0,
       status: "pending",
       submittedAt: "2026-04-27T13:50:02Z",
@@ -46,10 +50,10 @@ export const portfolioDefault: PortfolioFixture = {
     {
       id: "f-2914",
       orderId: "o-9482",
-      pair: "USDC/EURC",
+      pair: "OALPHA/PATH.USD",
       side: "sell",
       amount: "600.00",
-      price: "0.9213",
+      price: "1.0418",
       matchedAt: "2026-04-27T14:02:11Z",
       status: "settled",
       txHash:
@@ -58,10 +62,10 @@ export const portfolioDefault: PortfolioFixture = {
     {
       id: "f-2899",
       orderId: "o-9460",
-      pair: "USDC/EURC",
+      pair: "OALPHA/PATH.USD",
       side: "buy",
       amount: "2500.00",
-      price: "0.9214",
+      price: "1.0405",
       matchedAt: "2026-04-27T11:18:42Z",
       status: "proven",
       txHash:
@@ -71,7 +75,7 @@ export const portfolioDefault: PortfolioFixture = {
   deposits: [
     {
       id: "d-441",
-      token: "USDC",
+      token: "PATH.USD",
       amount: "30,000.00",
       status: "settled",
       initiatedAt: "2026-04-26T09:14:00Z",
@@ -80,7 +84,7 @@ export const portfolioDefault: PortfolioFixture = {
     },
     {
       id: "d-442",
-      token: "EURC",
+      token: "PATH.USD",
       amount: "15,000.00",
       status: "settled",
       initiatedAt: "2026-04-26T09:18:32Z",
@@ -91,7 +95,7 @@ export const portfolioDefault: PortfolioFixture = {
   withdrawals: [
     {
       id: "w-118",
-      token: "USDC",
+      token: "PATH.USD",
       amount: "1,500.00",
       status: "pending",
       initiatedAt: "2026-04-27T13:55:14Z",

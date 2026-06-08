@@ -11,15 +11,12 @@ import {
 } from "@/components/landing/landing-request-access";
 import { OrderScrollStory } from "@/components/landing/order-scroll-story";
 
-// Peak dot-grid opacity once fully scrolled past the hero — matches the
-// shared `--route-dot-grid-opacity` used elsewhere (globals.css).
-const DOT_GRID_PEAK = 0.7;
-
 // Landing page (app.jsx App). Section order: sticky nav → hero → mechanism
 // (pinned scroll story) → Why Omega → Built for → Request access → footer.
 // Owns the two scroll behaviours from the kit: the sticky nav backdrop turns
 // solid past the hero top, and the ambient dot-grid fades in (hidden in the
-// hero, full by the mechanism) by writing the shared dot-grid opacity var.
+// hero, full by the mechanism) by writing `--landing-dots` for the
+// `.lp-dotgrid` layer (globals.css).
 export function LandingPage() {
   const [navSolid, setNavSolid] = React.useState(false);
 
@@ -31,15 +28,14 @@ export function LandingPage() {
     // The landing starts with the dot-grid hidden (the hero owns the frame),
     // then fades it in. Restore the route default on unmount.
     const root = document.documentElement;
-    const previousDots = root.style.getPropertyValue("--route-dot-grid-opacity");
 
     const onScroll = () => {
       const vh = window.innerHeight || 1;
       const t = Math.min(1, Math.max(0, (window.scrollY - vh * 0.45) / (vh * 0.5)));
-      root.style.setProperty(
-        "--route-dot-grid-opacity",
-        (DOT_GRID_PEAK * (reduced ? 1 : t)).toFixed(3),
-      );
+      // Drive the landing-local dot-grid (globals.css `.lp-dotgrid`): hidden in
+      // the hero, full by the mechanism. 0 → 1; the CSS scales it to the kit's
+      // 0.5 peak. Reduced motion shows it fully (no scroll-fade), like the kit.
+      root.style.setProperty("--landing-dots", (reduced ? 1 : t).toFixed(3));
       setNavSolid(window.scrollY > 24);
     };
 
@@ -49,23 +45,25 @@ export function LandingPage() {
     return () => {
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);
-      if (previousDots) {
-        root.style.setProperty("--route-dot-grid-opacity", previousDots);
-      } else {
-        root.style.removeProperty("--route-dot-grid-opacity");
-      }
+      root.style.removeProperty("--landing-dots");
     };
   }, []);
 
   return (
-    <main className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
-      <LandingNav solid={navSolid} />
-      <LandingHero />
-      <OrderScrollStory />
-      <WhyOmega />
-      <BuiltFor />
-      <LandingRequestAccess />
-      <LandingFooter />
+    <main className="relative isolate min-h-screen text-[var(--foreground)]">
+      {/* Ambient dot-grid — a dedicated fixed layer at z-0 (the shared global
+          body::before is occluded by the opaque canvas and never shows). Sits
+          behind the z-1 content wrapper, matching the kit's body::before. */}
+      <div aria-hidden className="lp-dotgrid" />
+      <div className="lp-content relative z-[1]">
+        <LandingNav solid={navSolid} />
+        <LandingHero />
+        <OrderScrollStory />
+        <WhyOmega />
+        <BuiltFor />
+        <LandingRequestAccess />
+        <LandingFooter />
+      </div>
     </main>
   );
 }

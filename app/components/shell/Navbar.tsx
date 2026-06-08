@@ -52,6 +52,13 @@ export function Navbar() {
     left: number;
     width: number;
   } | null>(null);
+  // Gate the slide transition so it only plays on a real tab switch — not on
+  // the initial placement. The indicator's first measured position is applied
+  // with `transition: none` (it just appears under the active tab); the flag
+  // flips true after that first commit so subsequent route changes animate.
+  // This also covers a remount on return from a subpage, where the component
+  // re-mounts with `animate` reset to false.
+  const [animate, setAnimate] = React.useState(false);
 
   // Measure the active tab's box and slide the indicator under it. Runs on
   // mount and whenever the active route changes; a ResizeObserver keeps it
@@ -75,6 +82,11 @@ export function Navbar() {
     ro.observe(nav);
     return () => ro.disconnect();
   }, [active]);
+
+  // Enable the slide only after the first measured placement has painted.
+  React.useEffect(() => {
+    if (indicator) setAnimate(true);
+  }, [indicator]);
 
   return (
     <header className="sticky top-3 z-40 grid grid-cols-[1fr_auto_1fr] items-center gap-4 px-4 md:px-8">
@@ -109,8 +121,9 @@ export function Navbar() {
               left: indicator?.left ?? 4,
               width: indicator?.width ?? 0,
               opacity: indicator ? 1 : 0,
-              transition:
-                "left var(--duration-medium) var(--ease-out), width var(--duration-medium) var(--ease-out), opacity var(--duration-small) var(--ease-out)",
+              transition: animate
+                ? "left var(--duration-medium) var(--ease-out), width var(--duration-medium) var(--ease-out), opacity var(--duration-small) var(--ease-out)"
+                : "none",
             }}
           />
           {PRIMARY_TABS.map((tab) => {

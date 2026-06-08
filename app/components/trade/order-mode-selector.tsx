@@ -39,6 +39,10 @@ export function OrderModeSelector({
     left: number;
     width: number;
   } | null>(null);
+  // Slide only on a real toggle, not on initial placement (or remount). The
+  // first measured position lands with `transition: none`; the flag flips true
+  // after that first commit so later value changes animate left↔right.
+  const [animate, setAnimate] = React.useState(false);
 
   React.useLayoutEffect(() => {
     const list = listRef.current;
@@ -57,6 +61,11 @@ export function OrderModeSelector({
     ro.observe(list);
     return () => ro.disconnect();
   }, [value]);
+
+  // Enable the slide only after the first measured placement has painted.
+  React.useEffect(() => {
+    if (indicator) setAnimate(true);
+  }, [indicator]);
 
   return (
     <div
@@ -77,8 +86,9 @@ export function OrderModeSelector({
           left: indicator?.left ?? 4,
           width: indicator?.width ?? 0,
           opacity: indicator ? 1 : 0,
-          transition:
-            "left var(--duration-medium) var(--ease-out), width var(--duration-medium) var(--ease-out), opacity var(--duration-small) var(--ease-out)",
+          transition: animate
+            ? "left var(--duration-medium) var(--ease-out), width var(--duration-medium) var(--ease-out), opacity var(--duration-small) var(--ease-out)"
+            : "none",
         }}
       />
       {SEGMENTS.map((seg) => {

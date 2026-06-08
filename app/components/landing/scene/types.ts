@@ -1,16 +1,15 @@
 // Scene types for the midpoint-singularity mechanism scene.
 // Mirrors the kit's scene.jsx: a single scroll progress drives a pinned SVG
-// black hole through five lifecycle states.
+// black hole through four lifecycle states.
 
 export type SceneStep =
   | "intent"
   | "matching"
   | "liquidity"
-  | "execution"
-  | "settlement";
+  | "execution";
 
 export interface SceneState {
-  /** Active step index 0..4 and id. */
+  /** Active step index 0..3 and id. */
   index: number;
   activeStep: SceneStep;
   /** Eased sub-progress within the active step, 0..1. */

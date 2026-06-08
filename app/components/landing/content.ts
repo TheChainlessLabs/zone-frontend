@@ -13,7 +13,7 @@ export const landingHero = {
   scrollHint: "Scroll to follow an intent",
 } as const;
 
-// The mechanism scene — five scroll-driven states (scene.jsx SCROLL_STATES).
+// The mechanism scene — four scroll-driven states (scene.jsx SCROLL_STATES).
 export const scrollStates = [
   {
     id: "intent",
@@ -46,14 +46,6 @@ export const scrollStates = [
     title: "Verifiable execution.",
     body:
       "Every fill produces proof artifacts for execution and settlement. Users can verify that orders were processed correctly without revealing the private matching path.",
-  },
-  {
-    id: "settlement",
-    step: "05",
-    label: "Onchain Settlement",
-    title: "Settlement exits only when needed.",
-    body:
-      "Omega keeps execution private offchain while anchoring settlement, withdrawals, and verification artifacts onchain. Only what needs to exit, exits.",
   },
 ] as const;
 

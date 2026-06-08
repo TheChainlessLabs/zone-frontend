@@ -8,10 +8,10 @@ import { ReducedMotionStory } from "@/components/landing/scene/reduced-motion-st
 import { getSceneState, mapScrollToProgress } from "@/components/landing/scene/scroll-progress";
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
 
-// The pinned, ~520vh scroll-driven "midpoint singularity" mechanism.
+// The pinned, ~416vh scroll-driven "midpoint singularity" mechanism.
 // Faithful port of scene.jsx OrderScrollStory: a tall section with an inner
-// sticky stage — black-hole SVG on the left, a 5-segment progress rail plus
-// eyebrow/title/body on the right that advance through the five states.
+// sticky stage — black-hole SVG on the left, a 4-segment progress rail plus
+// eyebrow/title/body on the right that advance through the four states.
 export function OrderScrollStory() {
   const reducedMotion = useReducedMotion();
   const wrapRef = React.useRef<HTMLElement>(null);
@@ -69,7 +69,7 @@ export function OrderScrollStory() {
       id="mechanism"
       data-scroll-story
       aria-label="How an order settles"
-      className="relative z-[1] h-[520vh]"
+      className="relative z-[1] h-[416vh]"
     >
       <div className="sticky top-0 flex h-screen items-center overflow-hidden">
         <div className="mx-auto grid w-full max-w-[1200px] items-center gap-12 px-8 lg:grid-cols-2">

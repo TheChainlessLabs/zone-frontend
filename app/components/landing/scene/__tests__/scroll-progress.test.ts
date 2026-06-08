@@ -48,18 +48,17 @@ describe("landing scroll progress helpers", () => {
     expect(interpolate(10, 20, 1)).toBe(20);
   });
 
-  it("advances through five evenly-spaced scene states", () => {
+  it("advances through four evenly-spaced scene states", () => {
     expect(getSceneState(0).activeStep).toBe("intent");
     expect(getSceneState(0.1).activeStep).toBe("intent");
     expect(getSceneState(0.3).activeStep).toBe("matching");
-    expect(getSceneState(0.5).activeStep).toBe("liquidity");
-    expect(getSceneState(0.7).activeStep).toBe("execution");
-    expect(getSceneState(0.95).activeStep).toBe("settlement");
+    expect(getSceneState(0.6).activeStep).toBe("liquidity");
+    expect(getSceneState(0.9).activeStep).toBe("execution");
   });
 
   it("indexes each state in order", () => {
     expect(getSceneState(0).index).toBe(0);
-    expect(getSceneState(0.99).index).toBe(4);
+    expect(getSceneState(0.99).index).toBe(3);
   });
 
   it("drops the sealed order into the core after the first phase", () => {
@@ -74,7 +73,7 @@ describe("landing scroll progress helpers", () => {
     expect(getSceneState(0.62).noise).toBeGreaterThan(0);
   });
 
-  it("finalizes Tempo blocks only in the settlement phase", () => {
+  it("finalizes Tempo blocks only in the final execution phase", () => {
     expect(getSceneState(0.5).tempo).toBe(0);
     expect(getSceneState(0.9).tempo).toBeGreaterThan(0);
   });

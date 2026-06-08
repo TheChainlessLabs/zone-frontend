@@ -6,7 +6,6 @@ const STEPS: SceneStep[] = [
   "matching",
   "liquidity",
   "execution",
-  "settlement",
 ];
 
 const STEP_COUNT = STEPS.length;

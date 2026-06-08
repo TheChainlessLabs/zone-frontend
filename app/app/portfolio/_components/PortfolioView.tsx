@@ -21,6 +21,7 @@
  */
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -580,6 +581,7 @@ function ActionGrid({
   onWithdraw?: () => void;
   onMore?: () => void;
 }) {
+  const router = useRouter();
   const card = (
     icon: React.ReactNode,
     label: string,
@@ -589,7 +591,7 @@ function ActionGrid({
       type="button"
       onClick={onClick}
       className={cn(
-        "glass press-down flex min-h-[92px] flex-col justify-between gap-[18px] rounded-[var(--radius-lg)] p-4 text-left transition-colors hover:border-[var(--ring)]",
+        "glass press-down flex min-h-[92px] flex-col justify-between gap-[18px] rounded-[var(--radius-lg)] p-4 text-left transition-colors hover:border-[var(--ring)] hover:bg-[var(--muted)]/40",
       )}
     >
       <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)]">
@@ -604,7 +606,7 @@ function ActionGrid({
     <div className="grid grid-cols-2 gap-3">
       {card(<Icon.Wallet size={16} aria-hidden />, "Deposit", onDeposit)}
       {card(<Icon.Sell size={16} aria-hidden />, "Withdraw", onWithdraw)}
-      {card(<Icon.Trade size={16} aria-hidden />, "Trade", onMore)}
+      {card(<Icon.Trade size={16} aria-hidden />, "Trade", () => router.push("/trade"))}
       {card(<Icon.Settings size={16} aria-hidden />, "More", onMore)}
     </div>
   );

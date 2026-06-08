@@ -23,6 +23,7 @@
  */
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import { formatUnits, isAddress, parseUnits, type Address, type Hex } from "viem";
 import {
   useAccount,
@@ -101,6 +102,7 @@ interface ZonePortfolioTokenBalance extends ZonePortfolioToken {
 }
 
 export default function PortfolioPage() {
+  const router = useRouter();
   const state = usePageState();
   const account = useAccount();
   const connections = useConnections();
@@ -590,9 +592,7 @@ export default function PortfolioPage() {
             fixture={fixture}
             onDeposit={() => setDepositOpen(true)}
             onWithdraw={() => setWithdrawOpen(true)}
-            onMore={() => {
-              window.location.assign("/account");
-            }}
+            onMore={() => router.push("/account")}
           />
         )}
       </PageLayout>

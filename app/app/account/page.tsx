@@ -12,7 +12,6 @@
 import * as React from "react";
 
 import { AppShell } from "@/components/shell/AppShell";
-import { DisconnectedState } from "@/components/DisconnectedState";
 import { OmegaZoneStatus } from "@/components/omega-zone/OmegaZoneStatus";
 import { Icon } from "@/lib/icons";
 import { accountFixtures } from "@/lib/fixtures";
@@ -321,24 +320,9 @@ function useTheme(): [ThemeMode, (m: ThemeMode) => void] {
 export default function AccountPage() {
   const wallet = useWalletState();
 
-  if (
-    wallet.state !== "connected" &&
-    wallet.state !== "wrong-network" &&
-    wallet.state !== "no-nft-pass"
-  ) {
-    return (
-      <AppShell route="/account" auth>
-        <DisconnectedState
-          title="Account is private."
-          description="Connect Tempo Wallet to view and update your account."
-          actionLabel="Tempo wallet"
-          onAction={() => {}}
-          icon={Icon.Wallet}
-        />
-      </AppShell>
-    );
-  }
-
+  // No full-page connect gate — SettingsContent renders read-only while
+  // disconnected (it falls back to placeholder identity). The Tempo wallet
+  // connect is a modal popup from the Navbar (WalletStatus).
   return (
     <AppShell route="/account" auth>
       <SettingsContent wallet={wallet} />

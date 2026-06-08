@@ -9,8 +9,9 @@
  *
  *   • wrong-network   → sticky banner above the navbar (and the route's
  *                        own children still render below it)
- *   • disconnected    → on auth-required routes, replace `{children}` with
- *                        DisconnectedState; on public routes, render through
+ *   • disconnected    → auth routes still render their own (read-only)
+ *                        content; the Tempo wallet connect is a modal popup
+ *                        from the Navbar (WalletStatus), never a full page
  *   • no-nft-pass     → on auth-required routes, replace `{children}` with
  *                        NoNftPassState
  *
@@ -26,7 +27,6 @@ import * as React from "react";
 import { Navbar } from "@/components/shell/Navbar";
 import { MobileTabBar } from "@/components/shell/MobileTabBar";
 import {
-  DisconnectedState,
   NoNftPassState,
   WrongNetworkBanner,
 } from "@/components/shell/ConnectionStates";
@@ -41,23 +41,17 @@ export interface AppShellProps {
   children: React.ReactNode;
 }
 
-export function AppShell({ route, auth = false, children }: AppShellProps) {
+export function AppShell({ auth = false, children }: AppShellProps) {
   const { state } = useWalletState();
 
+  // Disconnected/connecting no longer takes over the page with a full-screen
+  // connect surface — auth routes render their own (read-only) content and the
+  // Tempo wallet connect is a modal popup from the Navbar (WalletStatus). Only
+  // the NFT-pass gate stays a full-page surface; wrong-network shows a banner
+  // above the still-navigable route.
   let content: React.ReactNode = children;
-  if (auth) {
-    if (
-      state === "disconnected" ||
-      state === "signing-up" ||
-      state === "connecting"
-    ) {
-      content = <DisconnectedState routeLabel={route} />;
-    } else if (state === "no-nft-pass") {
-      content = <NoNftPassState />;
-    }
-    // wrong-network deliberately falls through — the banner explains the
-    // problem and the underlying route is still navigable in read-only
-    // form. Mutations live behind the per-action signing flow (M6).
+  if (auth && state === "no-nft-pass") {
+    content = <NoNftPassState />;
   }
 
   return (

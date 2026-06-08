@@ -1,0 +1,111 @@
+/* Batches explorer — surface-local motion.
+   Co-located CSS Module so these classes stay scoped to the settlement
+   explorer and never touch the shared globals.css surface. Mirrors the
+   design-kit Batches.jsx personality layer: the ~12s live pulse, the
+   fresh-row seal flash, the list⇄detail slide, the skeleton shimmer.
+   Every animation is composite-only and collapses under reduced motion
+   (the global prefers-reduced-motion override in globals.css also catches
+   these as a backstop). */
+
+/* Live pulse — the heartbeat dot on the explorer header + lifecycle "current"
+   node. Soft opacity breathe, no layout. */
+@keyframes batchesPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+.pulse {
+  animation: batchesPulse 2s var(--ease-standard) infinite;
+}
+
+/* Fresh row — a new batch seals at the top of the list and flashes once with
+   a faint success wash that fades to nothing. */
+@keyframes batchFresh {
+  0% {
+    background-color: color-mix(in oklab, var(--success) 14%, transparent);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+.freshRow {
+  animation: batchFresh 0.9s var(--ease-standard);
+}
+
+/* List ⇄ detail slide. Forward = list pushes left as detail enters from the
+   right; back = the reverse. Short, composite-only translate + fade. */
+@keyframes viewInFwd {
+  from {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@keyframes viewInBack {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+.viewFwd {
+  animation: viewInFwd var(--duration-300) var(--ease-standard);
+}
+.viewBack {
+  animation: viewInBack var(--duration-300) var(--ease-standard);
+}
+
+/* Content fade — swaps skeleton ⇄ content within a view without a jump. */
+@keyframes pfFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.fade {
+  animation: pfFade var(--duration-300) var(--ease-standard);
+}
+
+/* Skeleton shimmer — a slow sheen sweeping across the loading placeholders. */
+@keyframes pfShimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+.skel {
+  background-color: var(--muted);
+  background-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in oklab, var(--foreground) 6%, transparent) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: pfShimmer 1.4s var(--ease-standard) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulse,
+  .freshRow,
+  .viewFwd,
+  .viewBack,
+  .fade,
+  .skel {
+    animation: none;
+  }
+}

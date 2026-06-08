@@ -7,42 +7,37 @@ import { useSearchParams } from "next/navigation";
 import { PageLayout } from "@/components/shell/PageLayout";
 import { SurfaceState } from "@/components/shell/SurfaceState";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Status } from "@/components/ui/status";
 import { Icon } from "@/lib/icons";
+import { cn } from "@/lib/utils";
 import { batchesDetailFixtures, usePageState } from "@/lib/fixtures";
-import type { BatchesDetailFixture } from "@/lib/fixtures/types";
-import {
-  formatRelativeTime,
-  formatTimestampWithRelative,
-  truncateHash,
-} from "@/lib/format";
-import { BATCH_STAGE_MEANING } from "@/lib/lifecycle-copy";
-import {
-  aggregateByPair,
-  fmtCompactUsd,
-  parseNum,
-} from "@/app/batches/preview/_variants/_shared";
-import { AttestationStatus } from "@/app/batches/_components/attestation-status";
-import { CopyButton } from "@/app/batches/_components/copy-button";
-import { EtherscanTxLink } from "@/app/batches/_components/etherscan-link";
+import type { BatchesDetailFixture, BatchStatus } from "@/lib/fixtures/types";
+import { formatRelativeTime } from "@/lib/format";
 import { getZoneBatch, type ZoneBatchSummary } from "@/lib/zone";
+
+import { aggregateByPair, parseNum } from "./aggregate";
+import { CopyButton } from "./copy-button";
+import { EtherscanTxLink } from "./etherscan-link";
 import { zoneBatchToFixture } from "./batches-list-view";
+import styles from "./batches.module.css";
 
 /**
- * BatchDetailView — per-batch verification surface.
+ * BatchDetailView — the per-batch verification surface, ported to the
+ * design-kit `BatchDetail`.
  *
- * Privacy hard rule: aggregate-by-pair only. No individual fills, no
- * counterparty IDs, no order IDs. Users see their own fills via
- * /portfolio. Default renders the verified fixture; `?state=loading|
- * empty|error` mirrors the list-page review toggle, while the legacy
- * `detail-pending` / `detail-failed` variants remain available.
+ * Composition (kit `Batches.jsx`): a back pill, an identity header
+ * (batch glyph · #number · status · seal time · Etherscan + Verify-proof
+ * actions), then a split of an Overview sidebar (settlement metadata) and a
+ * main column carrying the lifecycle stepper (Submitted → Proven → Settled),
+ * the per-pair fill distribution, and the privacy note.
  *
- * M4.23 — compressed to a one-screen header strip + flat two-column body
- * (Tempo-style). Header carries the batch number, status, Etherscan jump,
- * and a one-line summary. Body splits settlement metadata + pair
- * distribution (left) from the four lifecycle actions (right) on desktop;
- * single column on mobile. Hash deep-link IDs and the 100ms hover
- * established by M5.5/M5.3 are preserved on the compact action rows.
+ * Behaviour preserved from the app: in the default state the batch comes
+ * from the live Omega Zone RPC keyed on the route segment; `?state=loading|
+ * empty|error` and the legacy `detail-verified|detail-pending|detail-failed`
+ * fixtures still resolve. Public/no-auth.
+ *
+ * Privacy hard rule: aggregate + per-pair only — never a counterparty, an
+ * order ID, or an individual fill owner.
  */
 
 type DetailStateKey = "detail-verified" | "detail-pending" | "detail-failed";
@@ -58,6 +53,17 @@ const VALID_DETAIL_KEYS = new Set<DetailStateKey>([
   "detail-pending",
   "detail-failed",
 ]);
+
+const STATUS_STATE: Record<BatchStatus, "settled" | "pending" | "failed"> = {
+  verified: "settled",
+  pending: "pending",
+  failed: "failed",
+};
+const STATUS_LABEL: Record<BatchStatus, string> = {
+  verified: "Settled",
+  pending: "Pending",
+  failed: "Failed",
+};
 
 export function BatchDetailView({ id }: { id: string }) {
   const params = useSearchParams();
@@ -110,76 +116,75 @@ export function BatchDetailView({ id }: { id: string }) {
             : liveState === "empty"
               ? batchesDetailFixtures.empty
               : liveFixture ??
-              {
-                ...batchesDetailFixtures.loading,
-                error:
-                  liveState === "error"
-                    ? {
-                        message: liveError ?? "Failed to load batch.",
-                        code: "ZONE_RPC",
-                      }
-                    : undefined,
-                isLoading: liveState === "loading",
-              };
+                {
+                  ...batchesDetailFixtures.loading,
+                  error:
+                    liveState === "error"
+                      ? {
+                          message: liveError ?? "Failed to load batch.",
+                          code: "ZONE_RPC",
+                        }
+                      : undefined,
+                  isLoading: liveState === "loading",
+                };
 
   // Honour the route segment for the title even when we render a
-  // status-keyed fixture. Falls back to the fixture batch number.
+  // status-keyed fixture.
   const overrideNumber = /^\d+$/.test(id) ? Number(id) : null;
   const fixtureForVariant: BatchesDetailFixture =
     overrideNumber !== null
-      ? {
-          ...fixture,
-          batch: { ...fixture.batch, number: overrideNumber },
-        }
+      ? { ...fixture, batch: { ...fixture.batch, number: overrideNumber } }
       : fixture;
 
   return (
     <PageLayout width="default" bare>
-      {fixture.isLoading ? (
-        <BatchDetailSkeleton />
-      ) : fixture.error ? (
-        <SurfaceState
-          title="Failed to load batch."
-          description="Refresh to retry."
-          action={
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                if (typeof window !== "undefined") window.location.reload();
-              }}
-              className="min-h-[44px] md:min-h-0"
-            >
-              Retry
-            </Button>
-          }
-        />
-      ) : state === "empty" || liveState === "empty" ? (
-        <SurfaceState
-          title="Batch not found."
-          description="The route you tried doesn't exist. Head back to /batches."
-          action={
-            <Button asChild>
-              <Link href="/batches">Back to /batches</Link>
-            </Button>
-          }
-        />
-      ) : (
-        <>
-          <BatchDetail fixture={fixtureForVariant} />
-          <PrivacyFooter />
-        </>
-      )}
+      <div
+        className={cn(
+          "mx-auto flex w-full max-w-[1000px] flex-col gap-4",
+          styles.viewBack,
+        )}
+      >
+        {fixture.isLoading ? (
+          <BatchDetailSkeleton />
+        ) : fixture.error ? (
+          <SurfaceState
+            title="Failed to load batch."
+            description="Refresh to retry."
+            action={
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (typeof window !== "undefined") window.location.reload();
+                }}
+                className="min-h-[44px] md:min-h-0"
+              >
+                Retry
+              </Button>
+            }
+          />
+        ) : state === "empty" || liveState === "empty" ? (
+          <SurfaceState
+            title="Batch not found."
+            description="The route you tried doesn't exist. Head back to /batches."
+            action={
+              <Button asChild>
+                <Link href="/batches">Back to /batches</Link>
+              </Button>
+            }
+          />
+        ) : (
+          <div className={cn("flex flex-col gap-4", styles.fade)}>
+            <BatchDetail fixture={fixtureForVariant} />
+          </div>
+        )}
+      </div>
     </PageLayout>
   );
 }
 
 function zoneBatchToDetailFixture(batch: ZoneBatchSummary): BatchesDetailFixture {
-  return {
-    batch: zoneBatchToFixture(batch),
-    orders: [],
-    fills: [],
-  };
+  return { batch: zoneBatchToFixture(batch), orders: [], fills: [] };
 }
 
 function parseBatchRouteId(id: string) {
@@ -192,298 +197,327 @@ function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : "Failed to load batch.";
 }
 
-function BatchDetail({ fixture }: { fixture: BatchesDetailFixture }) {
-  const { batch, fills, orders } = fixture;
-  const aggregates = aggregateByPair(fills, batch.pairs ?? []);
-  const queuedAt = orders
-    .map((order) => order.submittedAt)
-    .sort()[0] ?? batch.sealedAt;
-  const provenAt = deriveStageTime(batch.sealedAt, 120);
-  const settledAt = batch.settlementTx ? deriveStageTime(provenAt, 150) : null;
+/* ─────────────────────────────────────────────────────────────────────── */
+/*  Detail body                                                            */
+/* ─────────────────────────────────────────────────────────────────────── */
 
-  const summaryBits = [
-    `Sealed ${formatRelativeTime(batch.sealedAt)}`,
-    `${batch.fillCount} fills`,
-    batch.volumeUsd
-      ? `${fmtCompactUsd(parseNum(batch.volumeUsd))} volume`
-      : null,
-  ].filter(Boolean) as string[];
+function BatchDetail({ fixture }: { fixture: BatchesDetailFixture }) {
+  const { batch, fills } = fixture;
+  const aggregates = aggregateByPair(fills, batch.pairs ?? []);
+  const pairCount = (batch.pairs ?? []).length;
+  const sealedRel = formatRelativeTime(batch.sealedAt);
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
+    <>
+      {/* Back */}
       <Link
         href="/batches"
-        className="inline-flex items-center gap-1 self-start text-xs text-[var(--muted-foreground)] underline-offset-4 hover:text-[var(--foreground)] hover:underline"
+        className="press-down inline-flex h-[34px] items-center gap-2 self-start whitespace-nowrap rounded-full border border-[var(--border)] bg-transparent pl-2.5 pr-3.5 font-mono text-[11px] uppercase tracking-[0.12em] text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
       >
-        <Icon.Caret.Right className="h-3 w-3 rotate-180" aria-hidden />
-        Batch log
+        <Icon.Caret.Right className="h-[15px] w-[15px] rotate-180" aria-hidden />
+        All batches
       </Link>
 
-      <Card className="flex flex-col gap-6 overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--card)] p-5 shadow-none sm:p-6">
-      {/* Header strip — title + status + Etherscan + summary */}
-      <header className="flex flex-col gap-2 border-b border-dashed border-[var(--border)] pb-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-3">
-            <h1 className="font-mono text-2xl font-medium leading-tight text-[var(--foreground)]">
-              {`Batch #${batch.number}`}
-            </h1>
-            <CopyButton
-              value={`Batch #${batch.number}`}
-              label={`Copy batch number ${batch.number}`}
-            />
-            <AttestationStatus status={batch.status} />
+      {/* Identity header + actions */}
+      <header className="panel flex flex-wrap items-center justify-between gap-5 rounded-[var(--radius-xl)] p-6">
+        <div className="flex items-center gap-4">
+          <span
+            aria-hidden
+            className="inline-flex h-11 w-11 items-center justify-center rounded-[var(--radius-md)] border border-[var(--border)] text-[var(--muted-foreground)]"
+            style={{ background: "color-mix(in oklab, var(--muted) 60%, var(--card))" }}
+          >
+            <Icon.Batches className="h-5 w-5" />
+          </span>
+          <div className="flex flex-col gap-1.5">
+            <div className="flex items-center gap-3">
+              <h1 className="m-0 font-mono text-2xl font-medium leading-tight tracking-[-0.01em] text-[var(--foreground)]">
+                {batchNo(batch.number)}
+              </h1>
+              <CopyButton
+                value={`Batch #${batch.number}`}
+                label={`Copy batch number ${batch.number}`}
+              />
+              <Status
+                state={STATUS_STATE[batch.status]}
+                label={STATUS_LABEL[batch.status]}
+              />
+            </div>
+            <span className="whitespace-nowrap font-mono text-xs text-[var(--muted-foreground)]">
+              Sealed {sealedRel}
+            </span>
           </div>
+        </div>
+        <div className="flex items-center gap-2.5">
           {batch.settlementTx ? (
             <EtherscanTxLink
               hash={batch.settlementTx}
-              label="View on Etherscan"
-              className="text-sm text-[var(--foreground)]"
+              label="Etherscan"
+              className="h-9 rounded-[var(--radius-md)] border border-[var(--input)] bg-[var(--background)] px-3.5 font-sans text-[13px] font-medium text-[var(--foreground)] no-underline hover:no-underline"
             />
           ) : null}
+          <Button className="h-9 px-3.5 text-[13px]">
+            <Icon.Proof aria-hidden />
+            Verify proof
+          </Button>
         </div>
-        <p className="font-mono text-xs text-[var(--muted-foreground)]">
-          {summaryBits.join(" · ")}
-        </p>
       </header>
 
-      {/* Body — two columns on desktop, single on mobile */}
-      <div className="grid grid-cols-1 gap-y-8 md:grid-cols-2 md:gap-x-12 md:gap-y-0">
-        {/* LEFT: settlement metadata + pair distribution + (failure) */}
-        <section
-          aria-label="Settlement metadata"
-          className="flex flex-col gap-4"
-        >
-          <div className="flex flex-col">
-            <SectionLabel>Settlement</SectionLabel>
-            <MetaRow label="Sealed at">
-              <ValueText>
-                {formatTimestampWithRelative(batch.sealedAt)}
-              </ValueText>
-            </MetaRow>
-            <MetaRow label="Settled at">
-              {settledAt ? (
-                <ValueText>{formatTimestampWithRelative(settledAt)}</ValueText>
-              ) : (
-                <MutedMono>pending</MutedMono>
-              )}
-            </MetaRow>
-            <MetaRow label="Sequencer">
-              <MutedMono>Sequencer #1 — TEE</MutedMono>
-            </MetaRow>
-            <MetaRow label="Pair set">
-              <ValueMono>
-                {(batch.pairs ?? []).join(", ") || "—"}
-              </ValueMono>
-            </MetaRow>
-            <MetaRow label="Volume">
-              <ValueMono>
-                {batch.volumeUsd
-                  ? fmtCompactUsd(parseNum(batch.volumeUsd))
-                  : "—"}
-              </ValueMono>
-            </MetaRow>
-          </div>
-
-          {batch.status === "failed" && batch.failureReason ? (
-            <p className="text-xs leading-relaxed text-[var(--muted-foreground)]">
-              {batch.failureReason}
-            </p>
-          ) : null}
-
-          <div className="flex flex-col">
-            <SectionLabel>Pair distribution</SectionLabel>
-            {aggregates.length === 0 ? (
-              <MutedMono>—</MutedMono>
+      {/* Split: Overview sidebar + main content */}
+      <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-[320px_minmax(0,1fr)]">
+        {/* Overview sidebar */}
+        <aside className="panel flex flex-col rounded-[var(--radius-xl)] px-5 pb-4 pt-2">
+          <h2 className="pb-1.5 pt-3.5 font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
+            Overview
+          </h2>
+          <OverviewRow label="Status" first>
+            <Status
+              state={STATUS_STATE[batch.status]}
+              label={STATUS_LABEL[batch.status]}
+            />
+          </OverviewRow>
+          <OverviewRow label="Sealed">{sealedRel}</OverviewRow>
+          <OverviewRow label="Fills">{String(batch.fillCount)}</OverviewRow>
+          <OverviewRow label="Volume">
+            {batch.volumeUsd
+              ? `${formatGroup(roundStr(batch.volumeUsd))} USDC`
+              : "—"}
+          </OverviewRow>
+          <OverviewRow label="Pairs">{String(pairCount)}</OverviewRow>
+          <OverviewRow label="Batch time">~12s</OverviewRow>
+          <OverviewRow label="Sequencer">Sequencer #1 — TEE</OverviewRow>
+          <OverviewRow label="L1 settlement tx" stack>
+            {batch.settlementTx ? (
+              <span id="settlement-tx">
+                <HashLine hash={batch.settlementTx} copyLabel="Copy settlement transaction hash" />
+              </span>
             ) : (
-              aggregates.map((aggregate) => (
-                <MetaRow key={aggregate.pair} label={aggregate.pair}>
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-xs">
-                    <span className="text-[var(--foreground)]">
-                      {aggregate.fillCount} fills
+              <span className="text-[var(--muted-foreground)]">pending</span>
+            )}
+          </OverviewRow>
+          <OverviewRow label="State root" stack>
+            <span id="sealed">
+              <HashLine hash={batch.root} copyLabel="Copy batch root hash" />
+            </span>
+          </OverviewRow>
+          <OverviewRow label="Proof system" stack>
+            {batch.proofRef ? (
+              <span id="proof-hash">
+                <HashLine hash={batch.proofRef} copyLabel="Copy proof hash" />
+              </span>
+            ) : (
+              "TEE-attested"
+            )}
+          </OverviewRow>
+        </aside>
+
+        {/* Main content */}
+        <div className="flex min-w-0 flex-col gap-4">
+          <LifecycleStepper status={batch.status} sealedRel={sealedRel} />
+
+          <section className="flex flex-col gap-3">
+            <div className="flex flex-col gap-0.5">
+              <h2 className="t-h3 m-0">Pairs in batch</h2>
+              <span className="text-[13px] text-[var(--muted-foreground)]">
+                {pairCount} {pairCount === 1 ? "pair" : "pairs"} · {batch.fillCount} fills
+              </span>
+            </div>
+
+            {batch.status === "failed" && batch.failureReason ? (
+              <p className="text-xs leading-relaxed text-[var(--muted-foreground)]">
+                {batch.failureReason}
+              </p>
+            ) : null}
+
+            <div className="flex flex-col">
+              {aggregates.length === 0 ? (
+                <span className="py-3 font-mono text-xs text-[var(--muted-foreground)]">
+                  —
+                </span>
+              ) : (
+                aggregates.map((aggregate, i) => (
+                  <div
+                    key={aggregate.pair}
+                    className={cn(
+                      "flex items-center gap-4 py-3",
+                      i > 0 ? "border-t border-[var(--border)]" : undefined,
+                    )}
+                  >
+                    <span className="w-[120px] flex-shrink-0 font-mono text-sm font-medium">
+                      {aggregate.pair}
                     </span>
-                    <span className="text-[var(--muted-foreground)]">
-                      {(aggregate.share * 100).toFixed(1)}% share
+                    <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-[var(--muted)]">
+                      <div
+                        className="h-full rounded-full bg-[var(--foreground)]"
+                        style={{ width: `${Math.round(aggregate.share * 100)}%` }}
+                      />
+                    </div>
+                    <span className="w-[88px] flex-shrink-0 whitespace-nowrap text-right font-mono text-xs tabular-nums text-[var(--muted-foreground)]">
+                      {aggregate.fillCount > 0
+                        ? `${aggregate.fillCount} fill${aggregate.fillCount > 1 ? "s" : ""}`
+                        : `${(aggregate.share * 100).toFixed(0)}%`}
                     </span>
                   </div>
-                </MetaRow>
-              ))
-            )}
-          </div>
-        </section>
+                ))
+              )}
+            </div>
+          </section>
 
-        {/* RIGHT: lifecycle — 4 compact rows */}
-        <section
-          aria-label="Lifecycle"
-          className="flex flex-col"
-        >
-          <SectionLabel>Lifecycle</SectionLabel>
-          <ActionRow
-            id="queued"
-            index={1}
-            label="Queued"
-            timestamp={queuedAt}
-            meaning={BATCH_STAGE_MEANING.queued}
-            detail={null}
-          />
-          <ActionRow
-            id="sealed"
-            index={2}
-            label="Sealed"
-            timestamp={batch.sealedAt}
-            meaning={BATCH_STAGE_MEANING.sealed}
-            detail={
-              <HashLine hash={batch.root} copyLabel="Copy batch root hash" />
-            }
-          />
-          <ActionRow
-            id="proven"
-            index={3}
-            label="Proven"
-            timestamp={batch.status === "pending" ? null : provenAt}
-            meaning={BATCH_STAGE_MEANING.proven}
-            detail={
-              batch.proofRef ? (
-                <span id="proof-hash">
-                  <HashLine hash={batch.proofRef} copyLabel="Copy proof hash" />
-                </span>
-              ) : (
-                <MutedMono>pending</MutedMono>
-              )
-            }
-          />
-          <ActionRow
-            id="settled"
-            index={4}
-            label="Settled"
-            timestamp={settledAt}
-            tone={batch.status === "failed" ? "destructive" : "default"}
-            meaning={BATCH_STAGE_MEANING.settled}
-            detail={
-              batch.settlementTx ? (
-                <span id="settlement-tx">
-                  <HashLine
-                    hash={batch.settlementTx}
-                    copyLabel="Copy settlement transaction hash"
-                  />
-                </span>
-              ) : (
-                <MutedMono>pending</MutedMono>
-              )
-            }
-          />
-        </section>
+          <PrivacyNote />
+        </div>
       </div>
-      </Card>
+    </>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────────── */
+/*  Lifecycle stepper (Submitted → Proven → Settled)                       */
+/* ─────────────────────────────────────────────────────────────────────── */
+
+const LIFECYCLE = [
+  { key: "submitted", label: "Submitted", sub: "Batch sealed", icon: "batches" },
+  { key: "proven", label: "Proven", sub: "Proof attested", icon: "proof" },
+  { key: "settled", label: "Settled", sub: "Onchain · L1", icon: "settled" },
+] as const;
+
+// The app's three batch statuses collapse onto the kit's three lifecycle
+// stops: pending = Submitted, verified = Settled (fully advanced). A failed
+// settlement is shown as reaching Proven but not Settled.
+function activeIndexFor(status: BatchStatus): number {
+  if (status === "verified") return 2;
+  if (status === "failed") return 1;
+  return 0;
+}
+
+function LifecycleStepper({
+  status,
+  sealedRel,
+}: {
+  status: BatchStatus;
+  sealedRel: string;
+}) {
+  const activeIdx = activeIndexFor(status);
+  return (
+    <div className="panel flex items-start rounded-[var(--radius-xl)] px-6 py-[22px]">
+      {LIFECYCLE.map((step, i) => {
+        const done = i < activeIdx;
+        const current = i === activeIdx;
+        const reached = done || current;
+        const id = STEP_ID[step.key];
+        const StepIcon = done ? Icon.Confirm : STEP_ICON[step.icon];
+        return (
+          <React.Fragment key={step.key}>
+            <div
+              id={id}
+              className="flex w-[110px] flex-[0_0_auto] flex-col items-center gap-2"
+            >
+              <span
+                aria-hidden
+                className={cn(
+                  "inline-flex h-[34px] w-[34px] items-center justify-center rounded-full border",
+                  current ? styles.pulse : undefined,
+                )}
+                style={{
+                  borderColor: reached
+                    ? "color-mix(in oklab, var(--success) 45%, transparent)"
+                    : "var(--border)",
+                  background: reached
+                    ? "color-mix(in oklab, var(--success) 12%, transparent)"
+                    : "transparent",
+                  color: reached ? "var(--success)" : "var(--muted-foreground)",
+                }}
+              >
+                <StepIcon className="h-4 w-4" />
+              </span>
+              <div className="flex flex-col items-center gap-0.5">
+                <span
+                  className={cn(
+                    "font-mono text-[11px] uppercase tracking-[0.1em]",
+                    reached
+                      ? "text-[var(--foreground)]"
+                      : "text-[var(--muted-foreground)]",
+                  )}
+                >
+                  {step.label}
+                </span>
+                <span className="whitespace-nowrap text-[11px] text-[var(--muted-foreground)]">
+                  {current && status === "pending" ? sealedRel : step.sub}
+                </span>
+              </div>
+            </div>
+            {i < LIFECYCLE.length - 1 ? (
+              <div
+                className="mt-[17px] h-px flex-1"
+                style={{
+                  background:
+                    i < activeIdx
+                      ? "color-mix(in oklab, var(--success) 45%, transparent)"
+                      : "var(--border)",
+                }}
+              />
+            ) : null}
+          </React.Fragment>
+        );
+      })}
     </div>
   );
 }
 
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="pb-2 font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--muted-foreground)]">
-      {children}
-    </span>
-  );
-}
+const STEP_ICON = {
+  batches: Icon.Batches,
+  proof: Icon.Proof,
+  settled: Icon.Settled,
+} as const;
 
-function MetaRow({
+// Hash deep-link anchors preserved so `/batches/N#proven` etc. still land.
+const STEP_ID: Record<(typeof LIFECYCLE)[number]["key"], string> = {
+  submitted: "queued",
+  proven: "proven",
+  settled: "settled",
+};
+
+/* ─────────────────────────────────────────────────────────────────────── */
+/*  Small parts                                                            */
+/* ─────────────────────────────────────────────────────────────────────── */
+
+function OverviewRow({
   label,
   children,
+  first,
+  stack,
 }: {
   label: string;
   children: React.ReactNode;
+  first?: boolean;
+  stack?: boolean;
 }) {
-  return (
-    <div className="grid grid-cols-1 gap-0.5 border-b border-dashed border-[var(--border)] py-2 last:border-b-0 sm:grid-cols-[120px_minmax(0,1fr)] sm:items-baseline sm:gap-3">
-      <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-[var(--muted-foreground)]">
-        {label}
-      </span>
-      <div className="min-w-0">{children}</div>
-    </div>
-  );
-}
-
-function ValueMono({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="font-mono text-xs text-[var(--foreground)]">
-      {children}
-    </span>
-  );
-}
-
-function ValueText({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="text-xs text-[var(--foreground)]">{children}</span>
-  );
-}
-
-function MutedMono({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="font-mono text-xs text-[var(--muted-foreground)]">
-      {children}
-    </span>
-  );
-}
-
-function ActionRow({
-  id,
-  index,
-  label,
-  timestamp,
-  detail,
-  meaning,
-  tone = "default",
-}: {
-  id?: string;
-  index: number;
-  label: string;
-  timestamp: string | null;
-  detail: React.ReactNode;
-  meaning?: string;
-  tone?: "default" | "destructive";
-}) {
-  const labelClassName =
-    tone === "destructive"
-      ? "text-[var(--destructive)]"
-      : "text-[var(--foreground)]";
-
   return (
     <div
-      id={id}
-      title={meaning}
-      className="grid grid-cols-[auto_minmax(0,1fr)] items-baseline gap-x-3 gap-y-0.5 border-b border-dashed border-[var(--border)] py-2 transition-[background-color,color] duration-100 ease-[var(--ease-standard)] last:border-b-0 hover:bg-[var(--muted)]/20 motion-reduce:transition-none"
+      className={cn(
+        "flex justify-between gap-3 py-[11px]",
+        stack ? "flex-col items-start gap-1.5" : "flex-row items-center",
+        first ? undefined : "border-t border-[var(--border)]",
+      )}
     >
-      <span
-        className={`font-mono text-[11px] uppercase tracking-[0.16em] ${labelClassName}`}
-      >
-        {index}. {label}
+      <span className="whitespace-nowrap font-mono text-[11px] uppercase tracking-[0.12em] text-[var(--muted-foreground)]">
+        {label}
       </span>
-      <div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-0.5">
-        <span className="font-mono text-[11px] text-[var(--muted-foreground)]">
-          {timestamp ? formatRelativeTime(timestamp) : "pending"}
-        </span>
-        <div className="min-w-0">{detail}</div>
+      <div
+        className={cn(
+          "min-w-0 font-mono text-[13px] tabular-nums text-[var(--foreground)]",
+          stack ? "break-all text-left" : "text-right",
+        )}
+      >
+        {children}
       </div>
-      {meaning ? (
-        <p className="col-start-2 text-[10px] leading-snug text-[var(--muted-foreground)]">
-          {meaning}
-        </p>
-      ) : null}
     </div>
   );
 }
 
-function HashLine({
-  hash,
-  copyLabel,
-}: {
-  hash: string;
-  copyLabel: string;
-}) {
+function HashLine({ hash, copyLabel }: { hash: string; copyLabel: string }) {
   return (
     <span className="inline-flex flex-wrap items-center gap-x-1 gap-y-0.5">
       <span className="font-mono text-xs text-[var(--foreground)]">
-        {truncateHash(hash, 8, 6)}
+        {shortHash(hash)}
       </span>
       <CopyButton value={hash} label={copyLabel} />
       <EtherscanTxLink hash={hash} label="Etherscan" className="text-[11px]" />
@@ -491,71 +525,107 @@ function HashLine({
   );
 }
 
-function deriveStageTime(iso: string, offsetSeconds: number) {
-  const baseMs = new Date(iso).getTime();
-  if (Number.isNaN(baseMs)) return iso;
-  return new Date(baseMs + offsetSeconds * 1000).toISOString();
-}
-
-function PrivacyFooter() {
+function PrivacyNote() {
   return (
-    <p className="mx-auto mt-6 max-w-3xl text-balance text-center text-xs leading-relaxed text-[var(--muted-foreground)]">
-      Counterparty information is by design absent from this surface.
-      Individual fills are visible only to their owner via{" "}
-      <Link
-        href="/portfolio"
-        className="underline-offset-4 hover:text-[var(--foreground)] hover:underline"
-      >
-        /portfolio
-      </Link>
-      .
-    </p>
+    <div className="flex items-start gap-2 px-1">
+      <Icon.Sign className="mt-px h-[13px] w-[13px] flex-shrink-0 text-[var(--muted-foreground)]" aria-hidden />
+      <span className="text-xs leading-relaxed text-[var(--muted-foreground)]">
+        Counterparties are never revealed — the proof attests correct midpoint
+        matching without disclosing identities. Individual fills are visible
+        only to their owner via{" "}
+        <Link
+          href="/portfolio"
+          className="underline-offset-4 hover:text-[var(--foreground)] hover:underline"
+        >
+          /portfolio
+        </Link>
+        .
+      </span>
+    </div>
   );
 }
+
+/* ─────────────────────────────────────────────────────────────────────── */
+/*  Loading skeleton                                                       */
+/* ─────────────────────────────────────────────────────────────────────── */
 
 function BatchDetailSkeleton() {
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
-      <div
-        aria-hidden
-        className="h-4 w-24 animate-pulse rounded bg-[var(--muted)]"
-      />
-      <Card className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-5 shadow-none">
-        <div className="flex flex-col gap-3 border-b border-dashed border-[var(--border)] pb-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="h-8 w-32 animate-pulse rounded bg-[var(--muted)]" />
-              <div className="h-6 w-6 animate-pulse rounded bg-[var(--muted)]" />
-              <div className="h-6 w-20 animate-pulse rounded bg-[var(--muted)]" />
-            </div>
-            <div className="h-5 w-28 animate-pulse rounded bg-[var(--muted)]" />
+    <div className="flex flex-col gap-4">
+      <Skel className="h-[34px] w-[120px] rounded-full" />
+      <Skel className="h-[92px] w-full rounded-[var(--radius-xl)]" />
+      <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-[320px_minmax(0,1fr)]">
+        <Skel className="h-[380px] w-full rounded-[var(--radius-xl)]" />
+        <div className="flex flex-col gap-4">
+          <Skel className="h-[88px] w-full rounded-[var(--radius-xl)]" />
+          <div className="flex flex-col gap-3.5">
+            <Skel className="h-5 w-36" />
+            <SkelRows n={3} />
           </div>
-          <div className="h-3 w-48 animate-pulse rounded bg-[var(--muted)]" />
         </div>
-        <div className="mt-6 grid grid-cols-1 gap-y-8 md:grid-cols-2 md:gap-x-12 md:gap-y-0">
-          <SkeletonSection rows={6} />
-          <SkeletonSection rows={4} />
-        </div>
-      </Card>
+      </div>
     </div>
   );
 }
 
-function SkeletonSection({ rows }: { rows: number }) {
+function Skel({
+  className,
+  style,
+}: {
+  className?: string;
+  style?: React.CSSProperties;
+}) {
   return (
-    <div className="flex flex-col gap-4">
-      <div className="h-3 w-28 animate-pulse rounded bg-[var(--muted)]" />
-      <div className="flex flex-col">
-        {Array.from({ length: rows }).map((_, idx) => (
-          <div
-            key={idx}
-            className="grid grid-cols-1 gap-2 border-b border-dashed border-[var(--border)] py-2 last:border-b-0 sm:grid-cols-[120px_minmax(0,1fr)] sm:items-baseline sm:gap-3"
-          >
-            <div className="h-3 w-20 animate-pulse rounded bg-[var(--muted)]" />
-            <div className="h-3 w-full max-w-[220px] animate-pulse rounded bg-[var(--muted)]" />
+    <div
+      aria-hidden
+      className={cn(styles.skel, "rounded-[var(--radius-sm)]", className)}
+      style={style}
+    />
+  );
+}
+
+function SkelRows({ n }: { n: number }) {
+  return (
+    <div className="flex flex-col">
+      {Array.from({ length: n }).map((_, i) => (
+        <div
+          key={i}
+          className={cn(
+            "flex items-center gap-3.5 py-[13px]",
+            i > 0 ? "border-t border-[var(--border)]" : undefined,
+          )}
+        >
+          <Skel className="h-8 w-8 rounded-full" />
+          <Skel className="h-3.5" style={{ width: `${30 + (i % 3) * 8}%` }} />
+          <div className="ml-auto flex gap-6">
+            <Skel className="h-3.5 w-[70px]" />
+            <Skel className="h-3.5 w-[54px]" />
           </div>
-        ))}
-      </div>
+        </div>
+      ))}
     </div>
   );
+}
+
+/* ─────────────────────────────────────────────────────────────────────── */
+/*  Format helpers                                                         */
+/* ─────────────────────────────────────────────────────────────────────── */
+
+function formatGroup(value: number | string): string {
+  const [whole, frac] = String(value).split(".");
+  const grouped = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return frac ? `${grouped}.${frac}` : grouped;
+}
+
+function roundStr(value: string): string {
+  const n = parseNum(value);
+  return String(Math.round(n));
+}
+
+function shortHash(h: string): string {
+  return h.length > 18 ? `${h.slice(0, 10)}…${h.slice(-8)}` : h;
+}
+
+function batchNo(id: number): string {
+  return "#" + formatGroup(id);
 }

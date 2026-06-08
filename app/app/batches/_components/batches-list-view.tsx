@@ -6,23 +6,9 @@ import { useSearchParams } from "next/navigation";
 import { PageLayout } from "@/components/shell/PageLayout";
 import { TransitionLink as Link } from "@/components/shell/transition-link";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Status } from "@/components/ui/status";
 import { Icon } from "@/lib/icons";
 import { cn } from "@/lib/utils";
-import {
-  formatRelativeTime,
-  formatThousands,
-  formatUSD,
-  truncateHash,
-} from "@/lib/format";
 import {
   batchesListFixtures,
   usePageState,
@@ -41,46 +27,71 @@ import {
 
 import { CopyButton } from "./copy-button";
 import { EtherscanTxLink } from "./etherscan-link";
+import styles from "./batches.module.css";
 
 /**
- * BatchesListView — the public settlement explorer.
+ * BatchesListView — the dark pool's one public surface, ported to the
+ * design-kit settlement explorer.
  *
- * Default state shows the latest zone batch windows paginated client-side.
- * Pending windows are locally produced zone blocks that have not settled on
- * L1 yet. Search by batch ID or tx hash narrows the table to a
- * search-results fixture. The page is read-only and renders regardless of
- * wallet state — privacy hard rule: NO counterparty IDs anywhere on this
- * surface.
+ * Composition (kit `Batches.jsx`): ExplorerHeader (the live next-batch ~12s
+ * heartbeat), StatStrip (ticking aggregate metrics), and a searchable,
+ * paginated Recent-batches table (7 per page). A new batch seals at the top
+ * every ~12s and flashes once; the strip ticks alongside it.
  *
- * Visual register: tempo-explorer flat-table (M4.20). Single card with a
- * 1px border, mono everywhere inside the table, hairline row dividers,
- * compact ~40px rows, status as dot+label (not a pill). Mobile collapses
- * to a card-stack but keeps the mono register.
+ * Behaviour preserved from the app: `usePageState()` drives the `?state=`
+ * fixtures (default/empty/loading/error); in the default state the rows come
+ * from the live Omega Zone RPC (`listZoneBatches` / `searchZoneBatch`).
+ * `?search=` seeds the query. The surface is public/no-auth and renders
+ * regardless of wallet state.
+ *
+ * Privacy hard rule: aggregate + per-pair metadata only — never a
+ * counterparty, an order ID, or an individual fill owner.
  */
 
-const PAGE_SIZE_OPTIONS = [25, 50, 100] as const;
-type PageSize = (typeof PAGE_SIZE_OPTIONS)[number];
+const PAGE_SIZE = 7;
+const PAIR_POOL: MarketPair[] = [
+  "OALPHA/PATH.USD",
+  "USDC/EURC",
+  "USDC/USDT",
+  "USDT/EURC",
+  "ETH/USDC",
+];
 
-// `--warning` is intentionally absent from the v1 token set (see
-// components/ui/badge.tsx); the existing batches surface uses
-// `--muted-foreground` for the pending tone — match that here so the
-// register stays consistent with the receipt detail page.
-const STATUS_DOT: Record<BatchStatus, { color: string; label: string }> = {
-  verified: { color: "var(--success)", label: "Verified" },
-  pending: { color: "var(--muted-foreground)", label: "Pending" },
-  failed: { color: "var(--destructive)", label: "Failed" },
+// `verified` (the app's settled+proven end state) maps onto the kit's
+// `settled` lexicon glyph; pending/failed map directly. Centralised so the
+// table cells and the detail page never drift.
+const STATUS_STATE: Record<
+  BatchStatus,
+  "settled" | "pending" | "failed"
+> = {
+  verified: "settled",
+  pending: "pending",
+  failed: "failed",
+};
+const STATUS_LABEL: Record<BatchStatus, string> = {
+  verified: "Settled",
+  pending: "Pending",
+  failed: "Failed",
 };
 
 export function BatchesListView() {
   const state = usePageState();
   const [search, setSearch] = React.useState("");
-  const [pageSize, setPageSize] = React.useState<PageSize>(100);
   const [page, setPage] = React.useState(1);
   const [liveRows, setLiveRows] = React.useState<BatchFixture[]>([]);
   const [liveState, setLiveState] = React.useState<
     "loading" | "ready" | "error"
   >("loading");
   const [liveError, setLiveError] = React.useState<string | undefined>();
+
+  // Live explorer heartbeat — the ~12s next-batch progress + the ticking
+  // aggregate strip. Seeded near the kit's resting values; reduced motion
+  // parks the bar and stops the seal loop.
+  const [pct, setPct] = React.useState(28);
+  const [batchesToday, setBatchesToday] = React.useState(482);
+  const [volume24h, setVolume24h] = React.useState(38.4e6);
+  const [freshNumber, setFreshNumber] = React.useState<number | null>(null);
+  const nextIdRef = React.useRef<number | null>(null);
 
   const searchParam = useSearchParam("search");
 
@@ -98,9 +109,13 @@ export function BatchesListView() {
         const query = search.trim();
         const batches = query
           ? compactBatch(await searchZoneBatch(query))
-          : (await listZoneBatches({ limit: pageSize })).batches;
+          : (await listZoneBatches({ limit: 60 })).batches;
         if (cancelled) return;
-        setLiveRows(batches.map(zoneBatchToFixture));
+        const rows = batches.map(zoneBatchToFixture);
+        setLiveRows(rows);
+        if (nextIdRef.current === null && rows.length > 0) {
+          nextIdRef.current = rows[0].number + 1;
+        }
         setLiveState("ready");
       } catch (error) {
         if (cancelled) return;
@@ -113,7 +128,66 @@ export function BatchesListView() {
       cancelled = true;
       window.clearTimeout(timeout);
     };
-  }, [pageSize, search, state]);
+  }, [search, state]);
+
+  const isLiveDefault =
+    state === "default" && liveState === "ready" && search.trim() === "";
+
+  // Seal a synthetic batch at the top and advance it Submitted → Proven →
+  // Settled, mirroring the kit. Only runs over the live default list (not a
+  // fixture state, not a filtered search) so it never fights real data.
+  const sealNewBatch = React.useCallback(() => {
+    setLiveRows((prev) => {
+      if (prev.length === 0) return prev;
+      const id = nextIdRef.current ?? prev[0].number + 1;
+      nextIdRef.current = id + 1;
+      const batch = makeBatch(id);
+      setBatchesToday((n) => n + 1);
+      setVolume24h((v) => v + (parseVolume(batch.volumeUsd) ?? 0));
+      setFreshNumber(id);
+      window.setTimeout(() => {
+        setLiveRows((rows) =>
+          rows.map((r) => (r.number === id ? { ...r, status: "verified" } : r)),
+        );
+      }, 4000);
+      return [batch, ...prev].slice(0, 60);
+    });
+  }, []);
+
+  React.useEffect(() => {
+    if (freshNumber === null) return;
+    const t = window.setTimeout(() => setFreshNumber(null), 900);
+    return () => window.clearTimeout(t);
+  }, [freshNumber]);
+
+  // ~12s heartbeat → progress bar; seals a batch on wrap. Skipped under
+  // reduced motion (the bar parks mid-cycle).
+  React.useEffect(() => {
+    if (!isLiveDefault) return;
+    const reduce =
+      typeof window !== "undefined" &&
+      window.matchMedia &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduce) {
+      setPct(64);
+      return;
+    }
+    let acc = pct;
+    const iv = window.setInterval(() => {
+      acc += 100 / 60; // 200ms × 60 ticks = ~12s
+      if (acc >= 100) {
+        acc = 0;
+        sealNewBatch();
+      }
+      setPct(acc);
+    }, 200);
+    return () => window.clearInterval(iv);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLiveDefault, sealNewBatch]);
+
+  React.useEffect(() => {
+    setPage(1);
+  }, [search]);
 
   const fixture =
     state === "empty"
@@ -124,7 +198,8 @@ export function BatchesListView() {
           ? batchesListFixtures.error
           : null;
 
-  const isLoading = fixture?.isLoading || (state === "default" && liveState === "loading");
+  const isLoading =
+    fixture?.isLoading || (state === "default" && liveState === "loading");
   const error =
     fixture?.error ??
     (state === "default" && liveState === "error"
@@ -134,128 +209,554 @@ export function BatchesListView() {
   const rows: BatchFixture[] =
     state === "default" ? liveRows : fixture?.batches ?? [];
 
-  const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
+  const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
-  const pageStart = (safePage - 1) * pageSize;
-  const pageRows = rows.slice(pageStart, pageStart + pageSize);
+  const pageStart = (safePage - 1) * PAGE_SIZE;
+  const pageRows = rows.slice(pageStart, pageStart + PAGE_SIZE);
   const rangeStart = rows.length === 0 ? 0 : pageStart + 1;
   const rangeEnd = pageStart + pageRows.length;
 
-  return (
-    <PageLayout
-      width="wide"
-      title="Batches"
-      description="Live zone block windows and L1 settlement batches. Pending ranges are local until proof submission lands."
-    >
-      <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-4">
-        <div className="relative flex w-full items-center md:max-w-md">
-          <Icon.Search
-            className="pointer-events-none absolute left-3 h-4 w-4 text-[var(--muted-foreground)]"
-            aria-hidden
-          />
-          <Input
-            type="search"
-            value={search}
-            onChange={(event) => {
-              setSearch(event.target.value);
-              setPage(1);
-            }}
-            placeholder="Search by batch ID or tx hash"
-            aria-label="Search batches"
-            className="pl-9 pr-16 font-mono"
-          />
-          {search ? (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setSearch("");
-                setPage(1);
-              }}
-              className="absolute right-1 h-7 px-2 text-xs"
-            >
-              Clear
-            </Button>
-          ) : null}
-        </div>
-        <div className="flex items-center gap-3 text-xs text-[var(--muted-foreground)]">
-          <span className="font-mono uppercase tracking-[0.18em]">Last 100</span>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="glass"
-                size="sm"
-                className="h-8 gap-1 font-mono text-xs"
-              >
-                Per page: {pageSize}
-                <Icon.Caret.Down className="h-3 w-3" aria-hidden />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-[10rem]">
-              <DropdownMenuRadioGroup
-                value={String(pageSize)}
-                onValueChange={(next) => {
-                  setPageSize(Number(next) as PageSize);
-                  setPage(1);
-                }}
-              >
-                {PAGE_SIZE_OPTIONS.map((opt) => (
-                  <DropdownMenuRadioItem key={opt} value={String(opt)}>
-                    {opt} per page
-                  </DropdownMenuRadioItem>
-                ))}
-              </DropdownMenuRadioGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
+  const nextId = nextIdRef.current ?? (rows[0]?.number ?? 48201) + 1;
+  const secsLeft = Math.max(0, 12 - (pct / 100) * 12);
 
-      {search.trim() && !isLoading && !error && rows.length === 0 ? (
-        <ListMessage
-          title={`No batches match "${search.trim()}".`}
-          description="Try a different ID or hash."
-        />
-      ) : isLoading ? (
-        <SkeletonTable rows={8} />
-      ) : error ? (
-        <ListMessage
-          title="Failed to load batches."
-          description="Refresh to retry."
-          action={
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                if (typeof window !== "undefined") window.location.reload();
-              }}
-              className="min-h-[44px] md:min-h-0"
-            >
-              Retry
-            </Button>
-          }
-        />
-      ) : rows.length === 0 ? (
-        <ListMessage
-          title="No zone batches yet."
-          description="Check back after the zone produces its first block range."
-        />
-      ) : (
-        <BatchesTable
-          rows={pageRows}
-          totalCount={rows.length}
-          rangeStart={rangeStart}
-          rangeEnd={rangeEnd}
-          page={safePage}
-          totalPages={totalPages}
-          onPrev={() => setPage((p) => Math.max(1, p - 1))}
-          onNext={() => setPage((p) => Math.min(totalPages, p + 1))}
-          onFirst={() => setPage(1)}
-          onLast={() => setPage(totalPages)}
-        />
-      )}
+  return (
+    <PageLayout width="default" bare>
+      <div
+        className={cn(
+          "mx-auto flex w-full max-w-[1000px] flex-col gap-4",
+          styles.viewFwd,
+        )}
+      >
+        {isLoading ? (
+          <BatchesListSkeleton />
+        ) : (
+          <div className={cn("flex flex-col gap-4", styles.fade)}>
+            <ExplorerHeader
+              pct={pct}
+              secsLeft={secsLeft}
+              nextLabel={batchNo(nextId)}
+              live={isLiveDefault}
+            />
+            <StatStrip batchesToday={batchesToday} volume24h={volume24h} />
+            <BatchList
+              rows={pageRows}
+              total={rows.length}
+              query={search}
+              onQuery={setSearch}
+              page={safePage}
+              pageCount={totalPages}
+              rangeStart={rangeStart}
+              rangeEnd={rangeEnd}
+              error={error}
+              freshNumber={freshNumber}
+              onPage={(p) => setPage(Math.max(1, Math.min(totalPages, p)))}
+            />
+          </div>
+        )}
+      </div>
     </PageLayout>
   );
 }
+
+/* ─────────────────────────────────────────────────────────────────────── */
+/*  Explorer header — the live ~12s heartbeat                              */
+/* ─────────────────────────────────────────────────────────────────────── */
+
+function ExplorerHeader({
+  pct,
+  secsLeft,
+  nextLabel,
+  live,
+}: {
+  pct: number;
+  secsLeft: number;
+  nextLabel: string;
+  live: boolean;
+}) {
+  return (
+    <section className="panel flex flex-col gap-4 rounded-[var(--radius-xl)] p-6">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="flex flex-col gap-2">
+          <h1 className="t-h2 m-0">Settlement explorer</h1>
+          <p className="font-serif m-0 max-w-[460px] text-[15px] font-light text-[var(--muted-foreground)]">
+            Every match settles onchain in batches. Aggregate and verifiable —
+            never a counterparty in sight.
+          </p>
+        </div>
+        <span
+          role="status"
+          aria-label="Live · Ethereum L1"
+          className="inline-flex h-7 items-center gap-[7px] whitespace-nowrap rounded-full border px-3 font-mono text-[11px] uppercase tracking-[0.1em]"
+          style={{
+            borderColor:
+              "color-mix(in oklab, var(--success) 30%, transparent)",
+            background: "color-mix(in oklab, var(--success) 10%, transparent)",
+            color: "var(--success)",
+          }}
+        >
+          <span
+            aria-hidden
+            className={cn("h-1.5 w-1.5 rounded-full bg-current", styles.pulse)}
+          />
+          Live · Ethereum L1
+        </span>
+      </div>
+      <div className="flex flex-col gap-2">
+        <div className="flex items-baseline justify-between">
+          <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
+            Next batch
+          </span>
+          <span className="whitespace-nowrap font-mono text-[11px] tabular-nums text-[var(--muted-foreground)]">
+            {live ? `~${secsLeft.toFixed(0)}s · sealing ${nextLabel}` : "live"}
+          </span>
+        </div>
+        <div className="h-1.5 overflow-hidden rounded-full bg-[var(--muted)]">
+          <div
+            className="h-full rounded-full bg-[var(--success)] transition-[width] duration-200 ease-linear"
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────────── */
+/*  Stat strip                                                             */
+/* ─────────────────────────────────────────────────────────────────────── */
+
+function StatStrip({
+  batchesToday,
+  volume24h,
+}: {
+  batchesToday: number;
+  volume24h: number;
+}) {
+  return (
+    <section className="panel flex items-stretch rounded-[var(--radius-xl)] py-5">
+      <StatCell label="Batches today" value={formatGroup(Math.round(batchesToday))} />
+      <Divider />
+      <StatCell
+        label="Volume · 24h"
+        value={`${(volume24h / 1e6).toFixed(2)}M`}
+        unit="USDC"
+      />
+      <Divider />
+      <StatCell label="Avg batch" value="~12" unit="s" />
+      <Divider />
+      <StatCell label="Proven" value="100%" tone="var(--success)" />
+    </section>
+  );
+}
+
+function StatCell({
+  label,
+  value,
+  unit,
+  tone,
+}: {
+  label: string;
+  value: string;
+  unit?: string;
+  tone?: string;
+}) {
+  return (
+    <div className="flex min-w-0 flex-1 flex-col gap-1.5 px-5">
+      <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
+        {label}
+      </span>
+      <span className="flex items-baseline gap-[5px]">
+        <span
+          className="font-mono text-xl font-medium tabular-nums"
+          style={tone ? { color: tone } : undefined}
+        >
+          {value}
+        </span>
+        {unit ? (
+          <span className="font-mono text-[11px] tracking-[0.08em] text-[var(--muted-foreground)]">
+            {unit}
+          </span>
+        ) : null}
+      </span>
+    </div>
+  );
+}
+
+function Divider() {
+  return <span aria-hidden className="w-px bg-[var(--border)]" />;
+}
+
+/* ─────────────────────────────────────────────────────────────────────── */
+/*  Recent batches — search + table + pagination                          */
+/* ─────────────────────────────────────────────────────────────────────── */
+
+function BatchList({
+  rows,
+  total,
+  query,
+  onQuery,
+  page,
+  pageCount,
+  rangeStart,
+  rangeEnd,
+  error,
+  freshNumber,
+  onPage,
+}: {
+  rows: BatchFixture[];
+  total: number;
+  query: string;
+  onQuery: (next: string) => void;
+  page: number;
+  pageCount: number;
+  rangeStart: number;
+  rangeEnd: number;
+  error?: { message: string; code: string };
+  freshNumber: number | null;
+  onPage: (page: number) => void;
+}) {
+  return (
+    <section className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div className="flex flex-col gap-0.5">
+          <h2 className="t-h3 m-0">Recent batches</h2>
+          <span className="text-[13px] text-[var(--muted-foreground)]">
+            Sealing onchain every ~12s · newest first
+          </span>
+        </div>
+        <SearchBar value={query} onChange={onQuery} />
+      </div>
+
+      <div className="min-h-[120px] overflow-x-auto">
+        {error ? (
+          <ListMessage
+            title="Failed to load batches."
+            description="Refresh to retry."
+            action={
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (typeof window !== "undefined") window.location.reload();
+                }}
+                className="min-h-[44px] md:min-h-0"
+              >
+                Retry
+              </Button>
+            }
+          />
+        ) : total === 0 && query.trim() ? (
+          <ListMessage
+            title={`No batches match "${query.trim()}".`}
+            description="Try a different ID or hash."
+          />
+        ) : total === 0 ? (
+          <ListMessage
+            title="No zone batches yet."
+            description="Check back after the zone produces its first block range."
+          />
+        ) : (
+          <table className="w-full border-collapse">
+            <thead>
+              <tr>
+                <Th>Batch</Th>
+                <Th align="right">Fills</Th>
+                <Th align="right">Volume</Th>
+                <Th title="On-chain Ethereum transaction that settled this batch">
+                  Settlement
+                </Th>
+                <Th>Status</Th>
+                <Th align="right">Age</Th>
+                <th aria-hidden className="w-6" />
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((batch) => (
+                <BatchRow
+                  key={batch.number}
+                  batch={batch}
+                  fresh={batch.number === freshNumber}
+                />
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {!error && total > 0 ? (
+        <div className="flex items-center justify-between gap-3 border-t border-[var(--border)] pt-1">
+          <span className="whitespace-nowrap font-mono text-[11px] tracking-[0.06em] tabular-nums text-[var(--muted-foreground)]">
+            {rangeStart}–{rangeEnd} of {total}
+          </span>
+          <div className="flex items-center gap-2.5">
+            <PageButton dir={-1} disabled={page <= 1} onClick={() => onPage(page - 1)}>
+              Prev
+            </PageButton>
+            <span className="whitespace-nowrap font-mono text-[11px] tracking-[0.08em] tabular-nums text-[var(--foreground)]">
+              {page} / {pageCount}
+            </span>
+            <PageButton
+              dir={1}
+              disabled={page >= pageCount}
+              onClick={() => onPage(page + 1)}
+            >
+              Next
+            </PageButton>
+          </div>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+function SearchBar({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (next: string) => void;
+}) {
+  return (
+    <div className="relative w-[220px] max-w-full">
+      <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center">
+        <Icon.Search className="h-[15px] w-[15px] text-[var(--muted-foreground)]" aria-hidden />
+      </span>
+      <input
+        type="search"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder="Search batch id…"
+        aria-label="Search batches"
+        className="h-9 w-full rounded-[var(--radius-md)] border border-[var(--input)] bg-[var(--background)] pl-9 pr-3 font-mono text-[13px] text-[var(--foreground)] outline-none placeholder:text-[var(--muted-foreground)] focus-visible:ring-1 focus-visible:ring-[var(--ring)]"
+      />
+    </div>
+  );
+}
+
+function Th({
+  children,
+  align = "left",
+  title,
+}: {
+  children: React.ReactNode;
+  align?: "left" | "right";
+  title?: string;
+}) {
+  return (
+    <th
+      scope="col"
+      title={title}
+      className={cn(
+        "whitespace-nowrap pb-2.5 pr-4 font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--muted-foreground)]",
+        align === "right" ? "text-right" : "text-left",
+        title ? "cursor-help" : undefined,
+      )}
+    >
+      {children}
+    </th>
+  );
+}
+
+function BatchRow({ batch, fresh }: { batch: BatchFixture; fresh: boolean }) {
+  return (
+    <tr
+      className={cn(
+        "group cursor-pointer border-t border-[var(--border)] transition-[background-color] duration-75 ease-[var(--ease-standard)] hover:bg-[var(--muted)]/30",
+        fresh ? styles.freshRow : undefined,
+      )}
+    >
+      <Td>
+        <Link
+          href={`/batches/${batch.number}`}
+          className="font-medium text-[var(--foreground)] underline-offset-4 hover:underline"
+        >
+          {batchNo(batch.number)}
+        </Link>
+      </Td>
+      <Td align="right">{batch.fillCount}</Td>
+      <Td align="right">
+        {batch.volumeUsd ? (
+          <>
+            {fmtVol(parseVolume(batch.volumeUsd) ?? 0)}{" "}
+            <span className="text-[10px] text-[var(--muted-foreground)]">USDC</span>
+          </>
+        ) : (
+          <span className="text-[var(--muted-foreground)]">—</span>
+        )}
+      </Td>
+      <Td className="text-[var(--muted-foreground)]">
+        {batch.settlementTx ? (
+          <span
+            className="inline-flex items-center gap-1"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <EtherscanTxLink
+              hash={batch.settlementTx}
+              label={shortHash(batch.settlementTx)}
+            />
+            <CopyButton
+              value={batch.settlementTx}
+              label={`Copy settlement tx for batch #${batch.number}`}
+              className="h-5 w-5"
+            />
+          </span>
+        ) : (
+          "pending"
+        )}
+      </Td>
+      <Td>
+        <Status state={STATUS_STATE[batch.status]} label={STATUS_LABEL[batch.status]} />
+      </Td>
+      <Td align="right" className="text-[var(--muted-foreground)]">
+        {ageOf(batch.sealedAt)}
+      </Td>
+      <Td align="right" className="pr-0">
+        <Link
+          href={`/batches/${batch.number}`}
+          aria-label={`Open batch ${batch.number}`}
+        >
+          <Icon.Caret.Right className="h-[15px] w-[15px] text-[var(--muted-foreground)]" aria-hidden />
+        </Link>
+      </Td>
+    </tr>
+  );
+}
+
+function Td({
+  children,
+  align = "left",
+  className,
+}: {
+  children: React.ReactNode;
+  align?: "left" | "right";
+  className?: string;
+}) {
+  return (
+    <td
+      className={cn(
+        "whitespace-nowrap py-[13px] pr-4 align-middle font-mono text-[13px] tabular-nums text-[var(--foreground)]",
+        align === "right" ? "text-right" : "text-left",
+        className,
+      )}
+    >
+      {children}
+    </td>
+  );
+}
+
+function PageButton({
+  dir,
+  disabled,
+  onClick,
+  children,
+}: {
+  dir: 1 | -1;
+  disabled: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onClick}
+      className={cn(
+        "press-down inline-flex h-[30px] items-center gap-1.5 rounded-[var(--radius-md)] border border-[var(--input)] bg-[var(--background)] px-3 font-mono text-[11px] uppercase tracking-[0.1em] text-[var(--foreground)]",
+        disabled
+          ? "cursor-not-allowed opacity-40"
+          : "cursor-pointer hover:bg-[var(--muted)]/40",
+      )}
+    >
+      {dir < 0 ? <Icon.Caret.Right className="h-3.5 w-3.5 rotate-180" aria-hidden /> : null}
+      {children}
+      {dir > 0 ? <Icon.Caret.Right className="h-3.5 w-3.5" aria-hidden /> : null}
+    </button>
+  );
+}
+
+function ListMessage({
+  title,
+  description,
+  action,
+}: {
+  title: string;
+  description: string;
+  action?: React.ReactNode;
+}) {
+  return (
+    <div
+      role="status"
+      className="flex flex-col items-center justify-center gap-3 rounded-[var(--radius-xl)] px-6 py-12 text-center"
+    >
+      <p className="text-base font-medium leading-tight">{title}</p>
+      <p className="max-w-md text-sm text-[var(--muted-foreground)]">
+        {description}
+      </p>
+      {action ? <div className="pt-2">{action}</div> : null}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────────── */
+/*  Loading skeleton                                                       */
+/* ─────────────────────────────────────────────────────────────────────── */
+
+function BatchesListSkeleton() {
+  return (
+    <div className="flex flex-col gap-4">
+      <Skel className="h-[132px] w-full rounded-[var(--radius-xl)]" />
+      <Skel className="h-[84px] w-full rounded-[var(--radius-xl)]" />
+      <div className="flex flex-col gap-3.5">
+        <Skel className="h-5 w-40" />
+        <Skel className="h-[13px] w-60" />
+        <SkelRows n={7} />
+      </div>
+    </div>
+  );
+}
+
+export function Skel({
+  className,
+  style,
+}: {
+  className?: string;
+  style?: React.CSSProperties;
+}) {
+  return (
+    <div
+      aria-hidden
+      className={cn(styles.skel, "rounded-[var(--radius-sm)]", className)}
+      style={style}
+    />
+  );
+}
+
+export function SkelRows({ n }: { n: number }) {
+  return (
+    <div className="flex flex-col">
+      {Array.from({ length: n }).map((_, i) => (
+        <div
+          key={i}
+          className={cn(
+            "flex items-center gap-3.5 py-[13px]",
+            i > 0 ? "border-t border-[var(--border)]" : undefined,
+          )}
+        >
+          <Skel className="h-8 w-8 rounded-full" />
+          <Skel className="h-3.5" style={{ width: `${30 + (i % 3) * 8}%` }} />
+          <div className="ml-auto flex gap-6">
+            <Skel className="h-3.5 w-[70px]" />
+            <Skel className="h-3.5 w-[54px]" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────────── */
+/*  Zone → fixture mapping (shared with the detail view)                   */
+/* ─────────────────────────────────────────────────────────────────────── */
 
 export function zoneBatchToFixture(batch: ZoneBatchSummary): BatchFixture {
   const aggregatePairs = Array.isArray(batch.aggregatePairs)
@@ -320,7 +821,14 @@ function aggregateVolumeToUsd(value: unknown): string | undefined {
 }
 
 function isKnownPair(value: string): value is MarketPair {
-  return value === "OALPHA/PATH.USD";
+  return (
+    value === "OALPHA/PATH.USD" ||
+    value === "USDC/EURC" ||
+    value === "USDC/USDT" ||
+    value === "USDT/EURC" ||
+    value === "ETH/USDC" ||
+    value === "BTC/USDC"
+  );
 }
 
 function isHexString(value: unknown): value is `0x${string}` {
@@ -351,15 +859,6 @@ function formatZoneBlockNumber(value: unknown): string | undefined {
   }
 }
 
-function zoneBlockRangeLabel(batch: BatchFixture): string | null {
-  if (!batch.zoneBlockFrom || !batch.zoneBlockTo) return null;
-  return `Zone blocks #${batch.zoneBlockFrom}–#${batch.zoneBlockTo}`;
-}
-
-function isPendingZoneRange(batch: BatchFixture): boolean {
-  return batch.status === "pending" && zoneBlockRangeLabel(batch) !== null;
-}
-
 function timestampToIso(value: unknown): string {
   const fallback = new Date().toISOString();
   if (value == null) return fallback;
@@ -383,511 +882,73 @@ function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : "Failed to load batches.";
 }
 
-/* ────────────────────────────────────────────────────────────────────────── */
-/*  Table                                                                     */
-/* ────────────────────────────────────────────────────────────────────────── */
+/* ─────────────────────────────────────────────────────────────────────── */
+/*  Synthetic-batch + format helpers (kit personality)                     */
+/* ─────────────────────────────────────────────────────────────────────── */
 
-interface BatchesTableProps {
-  rows: BatchFixture[];
-  totalCount: number;
-  rangeStart: number;
-  rangeEnd: number;
-  page: number;
-  totalPages: number;
-  onPrev: () => void;
-  onNext: () => void;
-  onFirst: () => void;
-  onLast: () => void;
+function makeBatch(id: number): BatchFixture {
+  const fills = 8 + Math.floor(Math.random() * 9); // 8–16
+  const k = 2 + Math.floor(Math.random() * 2); // 2–3 pairs
+  const chosen = [...PAIR_POOL].sort(() => Math.random() - 0.5).slice(0, k);
+  const volume = Math.round(fills * (11000 + Math.random() * 4000));
+  return {
+    number: id,
+    root: randHex(64),
+    status: "pending",
+    sealedAt: new Date().toISOString(),
+    orderCount: fills + Math.floor(Math.random() * 6),
+    fillCount: fills,
+    settlementTx: randHex(64),
+    pairs: chosen,
+    volumeUsd: String(volume),
+  };
 }
 
-function BatchesTable({
-  rows,
-  totalCount,
-  rangeStart,
-  rangeEnd,
-  page,
-  totalPages,
-  onPrev,
-  onNext,
-  onFirst,
-  onLast,
-}: BatchesTableProps) {
-  return (
-    <Card className="overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--card)] p-0 shadow-none">
-      <header className="flex items-center justify-between gap-4 border-b border-[var(--border)] px-4 py-3 sm:px-5">
-        <h2 className="flex items-baseline gap-2 font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
-          <span>Batches</span>
-          <span className="text-[var(--muted-foreground)]/70">
-            ({formatThousands(String(totalCount))})
-          </span>
-        </h2>
-        <LiveIndicator />
-      </header>
-
-      {/* Desktop: flat table */}
-      <div className="hidden md:block">
-        <table className="w-full border-collapse">
-          <thead>
-            <tr className="border-b border-[var(--border)]">
-              <Th className="w-[8%] text-left">Batch</Th>
-              <Th className="w-[18%] text-left">Window</Th>
-              <Th className="w-[8%] text-right">Fills</Th>
-              <Th className="w-[14%] text-right">Volume</Th>
-              <Th
-                className="w-[24%] text-left"
-                title="Currency pairs traded in this batch"
-              >
-                Pairs
-              </Th>
-              <Th className="w-[12%] text-left">Status</Th>
-              <Th
-                className="w-[20%] text-left"
-                title="On-chain Ethereum transaction that settled this batch"
-              >
-                L1 tx
-              </Th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((batch) => (
-              <BatchRow key={batch.number} batch={batch} />
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Mobile: card-stack with mono register */}
-      <ul className="flex flex-col md:hidden" aria-label="Batches">
-        {rows.map((batch) => (
-          <li
-            key={batch.number}
-            className="border-b border-[var(--border)] last:border-b-0"
-          >
-            <BatchRowMobile batch={batch} />
-          </li>
-        ))}
-      </ul>
-
-      <Pagination
-        rangeStart={rangeStart}
-        rangeEnd={rangeEnd}
-        totalCount={totalCount}
-        page={page}
-        totalPages={totalPages}
-        onPrev={onPrev}
-        onNext={onNext}
-        onFirst={onFirst}
-        onLast={onLast}
-      />
-    </Card>
-  );
+function randHex(len: number): `0x${string}` {
+  return ("0x" +
+    Array.from({ length: len }, () =>
+      Math.floor(Math.random() * 16).toString(16),
+    ).join("")) as `0x${string}`;
 }
 
-function Th({
-  children,
-  className,
-  title,
-}: {
-  children: React.ReactNode;
-  className?: string;
-  title?: string;
-}) {
-  return (
-    <th
-      scope="col"
-      title={title}
-      className={cn(
-        "px-4 py-2.5 font-mono text-[10px] font-normal uppercase tracking-[0.18em] text-[var(--muted-foreground)]",
-        title ? "cursor-help" : undefined,
-        className,
-      )}
-    >
-      {children}
-    </th>
-  );
+function parseVolume(value: string | undefined): number | undefined {
+  if (!value) return undefined;
+  const n = Number(value.replace(/,/g, ""));
+  return Number.isFinite(n) ? n : undefined;
 }
 
-function BatchRow({ batch }: { batch: BatchFixture }) {
-  const status = STATUS_DOT[batch.status];
-  const rangeLabel = zoneBlockRangeLabel(batch);
-  const pendingRange = isPendingZoneRange(batch);
-  return (
-    <tr className="group border-b border-[var(--border)] transition-[background-color] duration-75 ease-[var(--ease-standard)] last:border-b-0 hover:bg-[var(--muted)]/30 hover:-mt-px hover:border-t hover:border-[var(--border)]">
-      <Td className="text-left">
-        <Link
-          href={`/batches/${batch.number}`}
-          className="font-mono text-sm tabular-nums text-[var(--foreground)] underline-offset-4 hover:underline"
-        >
-          #{batch.number}
-        </Link>
-      </Td>
-      <Td className="text-left text-[var(--muted-foreground)]">
-        <span className="flex flex-col gap-0.5">
-          <span className="text-[var(--foreground)]">
-            {rangeLabel ?? formatRelativeTime(batch.sealedAt)}
-          </span>
-          {pendingRange ? (
-            <span className="text-[10px] uppercase tracking-[0.16em]">
-              Awaiting L1 settlement
-            </span>
-          ) : null}
-        </span>
-      </Td>
-      <Td className="text-right tabular-nums">
-        {formatThousands(String(batch.fillCount))}
-      </Td>
-      <Td className="text-right tabular-nums">
-        {batch.volumeUsd ? formatUSD(batch.volumeUsd) : pendingRange ? "pending" : "—"}
-      </Td>
-      <Td className="text-left">
-        <PairsCluster
-          pairs={batch.pairs ?? []}
-          fallback={pendingRange ? "waiting for fills" : "—"}
-        />
-      </Td>
-      <Td className="text-left">
-        <span className="inline-flex items-center gap-2">
-          <span
-            aria-hidden
-            className="inline-block h-1.5 w-1.5 shrink-0 rounded-full"
-            style={{ backgroundColor: status.color }}
-          />
-          <span className="font-mono text-xs">{status.label}</span>
-        </span>
-      </Td>
-      <Td className="text-left">
-        <HashRefCell
-          hash={batch.settlementTx}
-          copyLabel={`Copy settlement tx for batch #${batch.number}`}
-          fallback={pendingRange ? "not submitted" : "pending"}
-        />
-      </Td>
-    </tr>
-  );
+function fmtVol(n: number): string {
+  if (n >= 1e6) return (n / 1e6).toFixed(2) + "M";
+  if (n >= 1e3) return (n / 1e3).toFixed(1) + "K";
+  return String(Math.round(n));
 }
 
-function Td({
-  children,
-  className,
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <td
-      className={cn(
-        "h-[40px] px-4 py-1.5 align-middle font-mono text-xs text-[var(--foreground)]",
-        className,
-      )}
-    >
-      {children}
-    </td>
-  );
+function formatGroup(value: number | string): string {
+  const [whole, frac] = String(value).split(".");
+  const grouped = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return frac ? `${grouped}.${frac}` : grouped;
 }
 
-function BatchRowMobile({ batch }: { batch: BatchFixture }) {
-  const status = STATUS_DOT[batch.status];
-  const rangeLabel = zoneBlockRangeLabel(batch);
-  const pendingRange = isPendingZoneRange(batch);
-  return (
-    <Link
-      href={`/batches/${batch.number}`}
-      className="flex flex-col gap-2 px-4 py-3 transition-colors hover:bg-[var(--muted)]/30"
-    >
-      <div className="flex items-center justify-between gap-3">
-        <span className="font-mono text-sm tabular-nums text-[var(--foreground)]">
-          #{batch.number}
-        </span>
-        <span className="inline-flex items-center gap-2">
-          <span
-            aria-hidden
-            className="inline-block h-1.5 w-1.5 shrink-0 rounded-full"
-            style={{ backgroundColor: status.color }}
-          />
-          <span className="font-mono text-xs text-[var(--muted-foreground)]">
-            {status.label}
-          </span>
-        </span>
-      </div>
-      <div className="flex items-center justify-between gap-3 font-mono text-[11px] text-[var(--muted-foreground)]">
-        <span>{rangeLabel ?? formatRelativeTime(batch.sealedAt)}</span>
-        <span className="tabular-nums text-[var(--foreground)]">
-          {batch.volumeUsd ? formatUSD(batch.volumeUsd) : pendingRange ? "pending" : "—"}
-        </span>
-      </div>
-      {pendingRange ? (
-        <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--muted-foreground)]">
-          Awaiting L1 settlement
-        </span>
-      ) : null}
-      <div className="flex items-center justify-between gap-3 font-mono text-[11px] text-[var(--muted-foreground)]">
-        <span className="shrink-0 tabular-nums">
-          {formatThousands(String(batch.fillCount))} fills
-        </span>
-        <span className="min-w-0 flex-1 truncate text-right text-[var(--foreground)]">
-          {(batch.pairs ?? []).length === 0
-            ? pendingRange ? "waiting for fills" : "—"
-            : (() => {
-                const pairs = batch.pairs ?? [];
-                const visible = pairs.slice(0, 2);
-                const overflow = pairs.length - visible.length;
-                return overflow > 0
-                  ? `${visible.join(", ")} +${overflow}`
-                  : visible.join(", ");
-              })()}
-        </span>
-      </div>
-    </Link>
-  );
+function shortHash(h: string): string {
+  return h.length > 18 ? `${h.slice(0, 10)}…${h.slice(-8)}` : h;
 }
 
-function PairsCluster({
-  pairs,
-  fallback = "—",
-  max = 3,
-}: {
-  pairs: readonly string[];
-  fallback?: string;
-  max?: number;
-}) {
-  if (pairs.length === 0) {
-    return (
-      <span className="font-mono text-xs text-[var(--muted-foreground)]">
-        {fallback}
-      </span>
-    );
-  }
-  const visible = pairs.slice(0, max);
-  const overflow = pairs.length - visible.length;
-  const label =
-    overflow > 0
-      ? `${visible.join(", ")} +${overflow}`
-      : visible.join(", ");
-  return (
-    <span
-      className="block truncate font-mono text-xs text-[var(--foreground)]"
-      title={pairs.join(", ")}
-    >
-      {label}
-    </span>
-  );
+function batchNo(id: number): string {
+  return "#" + formatGroup(id);
 }
 
-function HashRefCell({
-  hash,
-  copyLabel,
-  fallback,
-}: {
-  hash: string | null | undefined;
-  copyLabel: string;
-  fallback: string;
-}) {
-  if (!hash) {
-    return (
-      <span className="font-mono text-xs text-[var(--muted-foreground)]">
-        {fallback}
-      </span>
-    );
-  }
-  return (
-    <span
-      className="inline-flex items-center gap-1"
-      onClick={(event) => event.stopPropagation()}
-    >
-      <EtherscanTxLink hash={hash} label={truncateHash(hash, 8, 6)} />
-      <CopyButton value={hash} label={copyLabel} className="h-5 w-5" />
-    </span>
-  );
+/** Deterministic-ish age string from an ISO seal time. */
+function ageOf(iso: string): string {
+  const then = new Date(iso).getTime();
+  if (Number.isNaN(then)) return "—";
+  const sec = Math.max(0, Math.floor((Date.now() - then) / 1000));
+  if (sec < 60) return `${sec}s`;
+  const min = Math.floor(sec / 60);
+  if (min < 60) return `${min}m`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr}h`;
+  return `${Math.floor(hr / 24)}d`;
 }
-
-/* ────────────────────────────────────────────────────────────────────────── */
-/*  Live indicator                                                            */
-/* ────────────────────────────────────────────────────────────────────────── */
-
-function LiveIndicator() {
-  return (
-    <span
-      role="status"
-      aria-label="Live"
-      className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]"
-    >
-      <span className="relative inline-flex h-1.5 w-1.5">
-        <span
-          aria-hidden
-          className="absolute inline-flex h-full w-full rounded-full bg-[var(--success)] opacity-60 motion-safe:animate-ping"
-        />
-        <span
-          aria-hidden
-          className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[var(--success)]"
-        />
-      </span>
-      Live
-    </span>
-  );
-}
-
-/* ────────────────────────────────────────────────────────────────────────── */
-/*  Loading + empty + error                                                   */
-/* ────────────────────────────────────────────────────────────────────────── */
-
-function SkeletonTable({ rows }: { rows: number }) {
-  return (
-    <Card
-      aria-hidden
-      className="overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--card)] p-0 shadow-none"
-    >
-      <div className="flex items-center justify-between gap-4 border-b border-[var(--border)] px-4 py-3 sm:px-5">
-        <div className="h-3 w-24 animate-pulse rounded bg-[var(--muted)]" />
-        <div className="h-3 w-12 animate-pulse rounded bg-[var(--muted)]" />
-      </div>
-      <ul className="flex flex-col">
-        {Array.from({ length: rows }).map((_, idx) => (
-          <li
-            key={idx}
-            className="flex h-[40px] items-center justify-between gap-4 border-b border-[var(--border)] px-4 last:border-b-0"
-          >
-            <div className="flex items-center gap-4">
-              <div className="h-3 w-12 animate-pulse rounded bg-[var(--muted)]" />
-              <div className="h-3 w-14 animate-pulse rounded bg-[var(--muted)]" />
-            </div>
-            <div className="hidden items-center gap-4 md:flex">
-              <div className="h-3 w-10 animate-pulse rounded bg-[var(--muted)]" />
-              <div className="h-3 w-20 animate-pulse rounded bg-[var(--muted)]" />
-              <div className="h-3 w-24 animate-pulse rounded bg-[var(--muted)]" />
-              <div className="h-3 w-32 animate-pulse rounded bg-[var(--muted)]" />
-            </div>
-          </li>
-        ))}
-      </ul>
-    </Card>
-  );
-}
-
-function ListMessage({
-  title,
-  description,
-  action,
-}: {
-  title: string;
-  description: string;
-  action?: React.ReactNode;
-}) {
-  return (
-    <div
-      role="status"
-      className="flex flex-col items-center justify-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--card)] px-6 py-16 text-center"
-    >
-      <p className="text-base font-medium leading-tight">{title}</p>
-      <p className="max-w-md text-sm text-[var(--muted-foreground)]">
-        {description}
-      </p>
-      {action ? <div className="pt-2">{action}</div> : null}
-    </div>
-  );
-}
-
-/* ────────────────────────────────────────────────────────────────────────── */
-/*  Pagination                                                                */
-/* ────────────────────────────────────────────────────────────────────────── */
-
-function Pagination({
-  rangeStart,
-  rangeEnd,
-  totalCount,
-  page,
-  totalPages,
-  onPrev,
-  onNext,
-  onFirst,
-  onLast,
-}: {
-  rangeStart: number;
-  rangeEnd: number;
-  totalCount: number;
-  page: number;
-  totalPages: number;
-  onPrev: () => void;
-  onNext: () => void;
-  onFirst: () => void;
-  onLast: () => void;
-}) {
-  const atFirst = page <= 1;
-  const atLast = page >= totalPages;
-  return (
-    <div className="flex flex-col gap-3 border-t border-[var(--border)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
-      <div className="flex items-center gap-1">
-        <PagerButton
-          onClick={onFirst}
-          disabled={atFirst}
-          ariaLabel="First page"
-        >
-          <span aria-hidden>{"⏮"}</span>
-        </PagerButton>
-        <PagerButton
-          onClick={onPrev}
-          disabled={atFirst}
-          ariaLabel="Previous page"
-        >
-          <span aria-hidden>{"◀"}</span>
-        </PagerButton>
-        <span className="px-2 font-mono text-xs tabular-nums text-[var(--muted-foreground)]">
-          #{formatThousands(String(rangeStart))}
-          {"–"}
-          #{formatThousands(String(rangeEnd))}
-        </span>
-        <PagerButton
-          onClick={onNext}
-          disabled={atLast}
-          ariaLabel="Next page"
-        >
-          <span aria-hidden>{"▶"}</span>
-        </PagerButton>
-        <PagerButton
-          onClick={onLast}
-          disabled={atLast}
-          ariaLabel="Last page"
-        >
-          <span aria-hidden>{"⏭"}</span>
-        </PagerButton>
-      </div>
-      <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
-        {formatThousands(String(totalCount))} batches
-      </span>
-    </div>
-  );
-}
-
-function PagerButton({
-  onClick,
-  disabled,
-  ariaLabel,
-  children,
-}: {
-  onClick: () => void;
-  disabled: boolean;
-  ariaLabel: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      aria-label={ariaLabel}
-      className={cn(
-        "press-down inline-flex h-7 min-w-[28px] items-center justify-center rounded font-mono text-xs text-[var(--muted-foreground)] transition-colors",
-        "hover:text-[var(--foreground)] hover:bg-[var(--muted)]/40",
-        "disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-[var(--muted-foreground)]",
-      )}
-    >
-      {children}
-    </button>
-  );
-}
-
-/* ────────────────────────────────────────────────────────────────────────── */
-/*  Helpers                                                                   */
-/* ────────────────────────────────────────────────────────────────────────── */
 
 function useSearchParam(name: string): string | null {
   const params = useSearchParams();

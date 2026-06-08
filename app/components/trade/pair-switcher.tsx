@@ -97,7 +97,7 @@ export function PairSwitcher({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
-          variant="outline"
+          variant="glass"
           className={cn(
             "h-12 w-full justify-between gap-3 px-4 text-left",
             className,

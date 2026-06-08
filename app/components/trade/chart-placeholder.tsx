@@ -72,7 +72,7 @@ export function ChartPlaceholder({
 
   return (
     <Card
-      variant="default"
+      variant="glass"
       className={cn(
         "relative flex min-h-[320px] flex-col gap-3 overflow-hidden p-5 lg:min-h-[420px]",
         className,

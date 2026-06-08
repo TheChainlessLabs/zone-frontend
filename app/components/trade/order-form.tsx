@@ -224,7 +224,7 @@ export function OrderForm({
       <form
         onSubmit={handleSubmit}
         onKeyDown={handleKeyDown}
-        className="panel flex flex-col gap-[18px] rounded-[var(--radius-xl)] p-5"
+        className="glass flex flex-col gap-[18px] rounded-[var(--radius-xl)] p-5"
         aria-label="Order entry"
       >
         {/* Buy / Sell segmented toggle. */}
@@ -348,7 +348,7 @@ export function OrderForm({
             <Button
               key={s.label}
               type="button"
-              variant="outline"
+              variant="glass"
               size="sm"
               onClick={() => handlePct(s.value)}
               disabled={loading}
@@ -408,7 +408,7 @@ export function OrderForm({
             type="submit"
             disabled={submitDisabled}
             className={cn(
-              "h-12 w-full px-3 text-[13px] font-medium tabular-nums",
+              "glass-pill h-12 w-full px-3 text-[13px] font-medium tabular-nums",
               side === "buy"
                 ? "bg-[var(--success)] text-[var(--success-foreground)] hover:bg-[var(--success)]/90"
                 : "bg-[var(--destructive)] text-[var(--destructive-foreground)] hover:bg-[var(--destructive)]/90",
@@ -474,11 +474,11 @@ function SideButton({
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        "press-down flex h-10 items-center justify-center gap-2 rounded-[var(--radius-md)] border text-sm font-medium transition-colors",
+        "press-down glass-pill flex h-10 items-center justify-center gap-2 rounded-[var(--radius-md)] text-sm font-medium transition-colors",
         "disabled:pointer-events-none disabled:opacity-50",
         active
           ? "text-[var(--foreground)]"
-          : "border-[var(--border)] bg-transparent text-[var(--muted-foreground)] hover:text-[var(--foreground)]",
+          : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]",
       )}
       style={
         active

@@ -222,7 +222,7 @@ function BatchDetail({ fixture }: { fixture: BatchesDetailFixture }) {
       </Link>
 
       {/* Identity header + actions */}
-      <header className="panel flex flex-wrap items-center justify-between gap-5 rounded-[var(--radius-xl)] p-6">
+      <header className="glass flex flex-wrap items-center justify-between gap-5 rounded-[var(--radius-xl)] p-6">
         <div className="flex items-center gap-4">
           <span
             aria-hidden
@@ -268,7 +268,7 @@ function BatchDetail({ fixture }: { fixture: BatchesDetailFixture }) {
       {/* Split: Overview sidebar + main content */}
       <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-[320px_minmax(0,1fr)]">
         {/* Overview sidebar */}
-        <aside className="panel flex flex-col rounded-[var(--radius-xl)] px-5 pb-4 pt-2">
+        <aside className="glass flex flex-col rounded-[var(--radius-xl)] px-5 pb-4 pt-2">
           <h2 className="pb-1.5 pt-3.5 font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
             Overview
           </h2>
@@ -317,7 +317,7 @@ function BatchDetail({ fixture }: { fixture: BatchesDetailFixture }) {
         <div className="flex min-w-0 flex-col gap-4">
           <LifecycleStepper status={batch.status} sealedRel={sealedRel} />
 
-          <section className="flex flex-col gap-3">
+          <section className="glass flex flex-col gap-3 rounded-[var(--radius-xl)] p-5">
             <div className="flex flex-col gap-0.5">
               <h2 className="t-h3 m-0">Pairs in batch</h2>
               <span className="text-[13px] text-[var(--muted-foreground)]">
@@ -400,7 +400,7 @@ function LifecycleStepper({
 }) {
   const activeIdx = activeIndexFor(status);
   return (
-    <div className="panel flex items-start rounded-[var(--radius-xl)] px-6 py-[22px]">
+    <div className="glass flex items-start rounded-[var(--radius-xl)] px-6 py-[22px]">
       {LIFECYCLE.map((step, i) => {
         const done = i < activeIdx;
         const current = i === activeIdx;

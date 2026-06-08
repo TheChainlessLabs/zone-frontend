@@ -221,6 +221,23 @@ export interface BatchesSearchFixture {
   results: BatchFixture[];
 }
 
+/**
+ * Demo Omega Zone snapshot for the Settings surface. Backend is not wired
+ * yet, so the Settings page renders this fixture instead of the live private
+ * RPC — never empty `Authorize` / `Not connected` / `Pending` states.
+ * Denominated in OALPHA / PATH.USD (the product tokens).
+ */
+export interface AccountZoneFixture {
+  /** Whether the private RPC session is authorized (demo: always true). */
+  authorized: boolean;
+  /** Human-readable settlement chain name. */
+  chainName: string;
+  /** Decimal-string zone balances, keyed by product token. */
+  zoneBalances: { pathUsd: string; oalpha: string };
+  /** Decimal-string darkpool balances, keyed by product token. */
+  darkpoolBalances: { pathUsd: string; oalpha: string };
+}
+
 export interface AccountFixture {
   /** Truncated address (e.g. "0x1234…abcd") — never the full address in fixtures. */
   address: `0x${string}` | null;
@@ -233,6 +250,8 @@ export interface AccountFixture {
     reduceMotion: boolean;
     showAdvancedOrderTypes: boolean;
   };
+  /** Demo Omega Zone snapshot rendered while the backend is unwired. */
+  zone?: AccountZoneFixture;
   isLoading?: boolean;
   error?: ErrorEnvelope;
 }

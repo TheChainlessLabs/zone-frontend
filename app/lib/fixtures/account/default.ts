@@ -9,4 +9,12 @@ export const accountDefault: AccountFixture = {
     reduceMotion: false,
     showAdvancedOrderTypes: true,
   },
+  // Demo zone snapshot — stands in for the unwired private RPC so Settings
+  // reads as live instead of an empty Authorize/Pending panel.
+  zone: {
+    authorized: true,
+    chainName: "Omega Zone",
+    zoneBalances: { pathUsd: "48,250.00", oalpha: "12,500.00" },
+    darkpoolBalances: { pathUsd: "9,400.00", oalpha: "3,150.00" },
+  },
 };

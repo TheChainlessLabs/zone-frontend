@@ -591,7 +591,7 @@ function ActionGrid({
       type="button"
       onClick={onClick}
       className={cn(
-        "glass press-down flex min-h-[92px] flex-col justify-between gap-[18px] rounded-[var(--radius-lg)] p-4 text-left transition-colors hover:border-[var(--ring)] hover:bg-[var(--muted)]/40",
+        "glass glass-interactive press-down flex min-h-[92px] flex-col justify-between gap-[18px] rounded-[var(--radius-lg)] p-4 text-left",
       )}
     >
       <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)]">

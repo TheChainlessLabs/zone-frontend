@@ -186,6 +186,37 @@ body[data-route="/404"] {
   }
 }
 
+/* Interactive glass — hover/focus feedback for clickable `.glass` surfaces
+   (e.g. the portfolio action grid). The base material paints its fill, sheen,
+   and brightness through layered `background` + `backdrop-filter`, so plain
+   Tailwind `hover:bg-*` / `hover:border-*` utilities land BENEATH the glass and
+   read as no-ops. Drive the hover through the material's own tokens instead:
+   lift the backdrop brightness and sheen, brighten the edge to the focus ring,
+   and add an outer bloom. The backdrop-filter + colours transition smoothly;
+   the sheen gradient re-tints on the same beat. */
+.glass-interactive {
+  transition:
+    backdrop-filter 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+}
+.glass-interactive:hover {
+  --glass-brightness: 1.16;
+  --glass-sheen: rgba(255, 255, 255, 0.2);
+  border-color: var(--ring);
+  box-shadow:
+    inset 0 1px 0 0 var(--glass-highlight),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05),
+    inset 0 -8px 24px -16px rgba(0, 0, 0, 0.3),
+    var(--glass-shadow),
+    0 0 32px -12px rgba(255, 255, 255, 0.22);
+}
+@media (prefers-reduced-transparency: reduce) {
+  .glass-interactive:hover {
+    background: color-mix(in oklab, var(--muted) 88%, white);
+  }
+}
+
 /* ============================================================================
    SEMANTIC TYPE CLASSES (.t-*)
    ----------------------------------------------------------------------------

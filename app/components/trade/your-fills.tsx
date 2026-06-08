@@ -24,6 +24,8 @@ export interface YourFillsProps {
   loading?: boolean;
   errorMessage?: string;
   emptyMessage?: string;
+  /** Narrow (market-mode) layout: drops the Pair / Price / Matched columns. */
+  compact?: boolean;
   className?: string;
 }
 
@@ -32,6 +34,7 @@ export function YourFills({
   loading = false,
   errorMessage,
   emptyMessage = "No fills yet. Your matches will appear here.",
+  compact = false,
   className,
 }: YourFillsProps) {
   const subtext =
@@ -66,13 +69,13 @@ export function YourFills({
       ) : fills.length === 0 ? (
         <EmptyRow message={emptyMessage} />
       ) : (
-        <FillsTable fills={fills} />
+        <FillsTable fills={fills} compact={compact} />
       )}
     </section>
   );
 }
 
-function FillsTable({ fills }: { fills: FillFixture[] }) {
+function FillsTable({ fills, compact }: { fills: FillFixture[]; compact?: boolean }) {
   // Detect a freshly-prepended top fill so it can wash success on arrival,
   // matching the kit's fresh-row treatment. Tracks the previous top id.
   const prevTopId = React.useRef<string | null>(fills[0]?.id ?? null);
@@ -95,11 +98,17 @@ function FillsTable({ fills }: { fills: FillFixture[] }) {
         <thead>
           <tr className="font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
             <th className="py-2 pr-4 text-left font-medium">Side</th>
-            <th className="py-2 pr-4 text-left font-medium">Pair</th>
+            {!compact && (
+              <th className="py-2 pr-4 text-left font-medium">Pair</th>
+            )}
             <th className="py-2 pr-4 text-right font-medium">Amount</th>
-            <th className="py-2 pr-4 text-right font-medium">Price</th>
+            {!compact && (
+              <th className="py-2 pr-4 text-right font-medium">Price</th>
+            )}
             <th className="py-2 pr-4 text-left font-medium">Status</th>
-            <th className="py-2 text-right font-medium">Matched</th>
+            {!compact && (
+              <th className="py-2 text-right font-medium">Matched</th>
+            )}
           </tr>
         </thead>
         <tbody>
@@ -124,19 +133,25 @@ function FillsTable({ fills }: { fills: FillFixture[] }) {
                   {f.side === "buy" ? "Buy" : "Sell"}
                 </span>
               </td>
-              <td className="py-3.5 pr-4 font-mono tabular-nums">{f.pair}</td>
+              {!compact && (
+                <td className="py-3.5 pr-4 font-mono tabular-nums">{f.pair}</td>
+              )}
               <td className="py-3.5 pr-4 text-right font-mono tabular-nums">
                 {f.amount}
               </td>
-              <td className="py-3.5 pr-4 text-right font-mono tabular-nums">
-                {f.price}
-              </td>
+              {!compact && (
+                <td className="py-3.5 pr-4 text-right font-mono tabular-nums">
+                  {f.price}
+                </td>
+              )}
               <td className="py-3.5 pr-4">
                 <Status state={f.status} />
               </td>
-              <td className="py-3.5 text-right font-mono tabular-nums text-[var(--muted-foreground)]">
-                {formatTime(f.matchedAt)}
-              </td>
+              {!compact && (
+                <td className="py-3.5 text-right font-mono tabular-nums text-[var(--muted-foreground)]">
+                  {formatTime(f.matchedAt)}
+                </td>
+              )}
             </tr>
           ))}
         </tbody>

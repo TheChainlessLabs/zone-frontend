@@ -572,6 +572,7 @@ function TradeSurface() {
               loading={isLoading}
               errorMessage={errorMessage}
               emptyMessage={fillsEmptyMessage}
+              compact
             />
           </div>
         </PageLayout>

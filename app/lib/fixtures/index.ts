@@ -9,7 +9,15 @@
 
 export * from "./types";
 export * from "./pairs";
-export { tradeFixtures } from "./trade";
+export {
+  tradeFixtures,
+  DEMO_ZONE_PATH_USD_BALANCE,
+  DEMO_ZONE_OALPHA_BALANCE,
+  DEMO_ZONE_MIDPOINT,
+  DEMO_ZONE_BEST_BID,
+  DEMO_ZONE_BEST_ASK,
+  DEMO_ZONE_FILLS,
+} from "./trade";
 export { portfolioFixtures } from "./portfolio";
 export {
   batchesListFixtures,

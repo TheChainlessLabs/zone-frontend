@@ -57,6 +57,19 @@ export function ChartPlaceholder({
     { label: "Best ask", value: bestAsk },
   ];
 
+  const anchor = parsePrice(midpoint);
+  const decimals = (String(midpoint ?? "").split(".")[1] ?? "").length || 4;
+  const data = useTrendData(anchor, decimals);
+
+  // Hover index lives at the card level (as in the kit's TradeAside) so the
+  // headline figure can echo the hovered point's value, falling back to the
+  // live midpoint when the cursor leaves the chart.
+  const [hover, setHover] = React.useState<number | null>(null);
+  const hoveredValue =
+    hover != null && data[hover] != null ? data[hover] : null;
+  const headlineValue =
+    hoveredValue != null ? hoveredValue.toFixed(decimals) : midpoint;
+
   return (
     <Card
       variant="default"
@@ -73,9 +86,9 @@ export function ChartPlaceholder({
               Midpoint reference
             </span>
           </div>
-          {midpoint && midpoint.length > 0 ? (
+          {headlineValue && headlineValue.length > 0 ? (
             <NumberTicker
-              value={midpoint}
+              value={headlineValue}
               className="text-[40px] font-medium leading-none tracking-[-0.01em]"
             />
           ) : (
@@ -87,7 +100,13 @@ export function ChartPlaceholder({
       </header>
 
       {historyEnabled ? (
-        <MidpointTrendChart pair={pair} midpoint={midpoint} />
+        <MidpointTrendChart
+          pair={pair}
+          data={data}
+          decimals={decimals}
+          hover={hover}
+          onHoverChange={setHover}
+        />
       ) : (
         <LiveReferenceOnly />
       )}
@@ -111,6 +130,22 @@ export function ChartPlaceholder({
   );
 }
 
+/**
+ * Build the plotted series from the normalised TREND_SHAPE, anchored to the
+ * live midpoint so the curve reads as a recent drift toward the real value
+ * (the kit's CHART_TREND, generalised off the absent USDC/EURC anchor). The
+ * newest point equals the anchor exactly; with no anchor we fall back to the
+ * raw shape.
+ */
+function useTrendData(anchor: number | null, decimals: number): number[] {
+  return React.useMemo(() => {
+    if (anchor === null) return TREND_SHAPE;
+    const band = Math.max(anchor * 0.004, Math.pow(10, -decimals) * 4);
+    const lastShape = TREND_SHAPE[TREND_SHAPE.length - 1];
+    return TREND_SHAPE.map((s) => anchor + (s - lastShape) * band);
+  }, [anchor, decimals]);
+}
+
 function LiveReferenceOnly() {
   return (
     <div className="flex min-h-[220px] flex-1 flex-col items-center justify-center gap-2 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--muted)]/20 px-4 text-center">
@@ -126,30 +161,22 @@ function LiveReferenceOnly() {
 
 /**
  * The kit's midpoint trend chart — success-tinted area + line with a crosshair
- * on hover. Built from the live midpoint and the normalised TREND_SHAPE so the
- * curve tracks the real anchor value rather than a baked-in number.
+ * on hover. The plotted series + hover index are owned by the parent (matching
+ * the kit's TradeAside, where the headline figure echoes the hovered value).
  */
 function MidpointTrendChart({
   pair,
-  midpoint,
+  data,
+  decimals,
+  hover,
+  onHoverChange,
 }: {
   pair: LaunchPair;
-  midpoint?: string;
+  data: number[];
+  decimals: number;
+  hover: number | null;
+  onHoverChange: (index: number | null) => void;
 }) {
-  const anchor = parsePrice(midpoint);
-  const decimals = (String(midpoint ?? "").split(".")[1] ?? "").length || 4;
-
-  // Map the normalised shape into a tight band around the live midpoint. The
-  // newest point equals the anchor exactly.
-  const data = React.useMemo(() => {
-    if (anchor === null) return TREND_SHAPE;
-    const band = Math.max(anchor * 0.004, Math.pow(10, -decimals) * 4);
-    const lastShape = TREND_SHAPE[TREND_SHAPE.length - 1];
-    return TREND_SHAPE.map(
-      (s) => anchor + (s - lastShape) * band,
-    );
-  }, [anchor, decimals]);
-
   const W = 600;
   const H = 300;
   const pad = 8;
@@ -166,14 +193,13 @@ function MidpointTrendChart({
   const lastY = yFor(data[data.length - 1]);
 
   const wrapRef = React.useRef<HTMLDivElement>(null);
-  const [hover, setHover] = React.useState<number | null>(null);
 
   const onMove = (e: React.MouseEvent) => {
     const el = wrapRef.current;
     if (!el) return;
     const r = el.getBoundingClientRect();
     const frac = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
-    setHover(Math.round(frac * (data.length - 1)));
+    onHoverChange(Math.round(frac * (data.length - 1)));
   };
 
   // Illustrative time labels — 30 points, ~30min apart.
@@ -192,8 +218,8 @@ function MidpointTrendChart({
     <div
       ref={wrapRef}
       onMouseMove={onMove}
-      onMouseLeave={() => setHover(null)}
-      className="relative min-h-[220px] flex-1 cursor-crosshair"
+      onMouseLeave={() => onHoverChange(null)}
+      className="relative min-h-[280px] flex-1 cursor-crosshair"
     >
       <svg
         viewBox={`0 0 ${W} ${H}`}

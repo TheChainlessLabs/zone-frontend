@@ -1,21 +1,18 @@
 "use client";
 
 /**
- * /account — Tempo wallet identity, theme, and session.
+ * /account — Settings surface (kit port).
  *
- * The private-alpha auth model now uses Tempo Wallet. This page leads with
- * the Tempo account address that signs testnet actions.
+ * Ported from the design-kit Settings.jsx. Wired to real Tempo wallet
+ * state (address, chain, connector, disconnect) and the existing
+ * OmegaZoneStatus widget. Theme persists to localStorage exactly as
+ * ThemeToggle did (brand-theme key, dark default).
  */
 
 import * as React from "react";
 
 import { AppShell } from "@/components/shell/AppShell";
-import { PageLayout, PageSection } from "@/components/shell/PageLayout";
 import { DisconnectedState } from "@/components/DisconnectedState";
-import { ThemeToggle } from "@/components/ThemeToggle";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
 import { OmegaZoneStatus } from "@/components/omega-zone/OmegaZoneStatus";
 import { Icon } from "@/lib/icons";
 import { accountFixtures } from "@/lib/fixtures";
@@ -24,6 +21,302 @@ import {
   useWalletState,
 } from "@/components/shell/WalletStateProvider";
 import { tempoAddressUrl } from "@/lib/zone";
+
+/* ─────────────────────────────────────────────── types ─── */
+
+type ThemeMode = "dark" | "light";
+type OrderMode = "market" | "limit";
+type DefaultPair = "USDC/EURC" | "ETH/USDC";
+
+/* ─────────────────────────────────── micro-primitives ─── */
+
+/** Segmented control — dark/light or two-option selector. */
+function Segmented<T extends string>({
+  options,
+  value,
+  onChange,
+  "aria-label": ariaLabel,
+}: {
+  options: [T, string][];
+  value: T;
+  onChange: (v: T) => void;
+  "aria-label"?: string;
+}) {
+  return (
+    <div
+      role="group"
+      aria-label={ariaLabel}
+      style={{
+        display: "inline-flex",
+        gap: 2,
+        padding: 3,
+        borderRadius: "var(--radius-full)",
+        background:
+          "color-mix(in oklab, var(--muted) 60%, var(--card))",
+        border: "1px solid var(--border)",
+      }}
+    >
+      {options.map(([id, label]) => {
+        const active = value === id;
+        return (
+          <button
+            key={id}
+            type="button"
+            role="radio"
+            aria-checked={active}
+            onClick={() => onChange(id)}
+            className="press-down"
+            style={{
+              minWidth: 56,
+              height: 28,
+              padding: "0 12px",
+              border: "none",
+              cursor: "pointer",
+              borderRadius: "var(--radius-full)",
+              fontFamily: "var(--font-mono)",
+              fontSize: 11,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              background: active
+                ? "var(--foreground)"
+                : "transparent",
+              color: active
+                ? "var(--background)"
+                : "var(--muted-foreground)",
+              transition:
+                "color var(--duration-small, 100ms), background var(--duration-small, 100ms)",
+            }}
+          >
+            {label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/** Toggle switch. */
+function SettingsToggle({
+  on,
+  onChange,
+  id,
+  "aria-label": ariaLabel,
+}: {
+  on: boolean;
+  onChange: (v: boolean) => void;
+  id?: string;
+  "aria-label"?: string;
+}) {
+  return (
+    <button
+      id={id}
+      type="button"
+      role="switch"
+      aria-checked={on}
+      aria-label={ariaLabel}
+      onClick={() => onChange(!on)}
+      className="press-down"
+      style={{
+        width: 42,
+        height: 24,
+        flexShrink: 0,
+        borderRadius: "var(--radius-full)",
+        border: "none",
+        cursor: "pointer",
+        padding: 3,
+        background: on ? "var(--success)" : "var(--muted)",
+        transition: "background var(--duration-small, 100ms)",
+        display: "flex",
+        justifyContent: on ? "flex-end" : "flex-start",
+      }}
+    >
+      <span
+        style={{
+          width: 18,
+          height: 18,
+          borderRadius: "50%",
+          background: "var(--background)",
+          transition: "all var(--duration-small, 100ms)",
+        }}
+      />
+    </button>
+  );
+}
+
+/** A row in a section: label + desc left, control right. */
+function Row({
+  title,
+  desc,
+  control,
+  first,
+  id,
+}: {
+  title: string;
+  desc?: string;
+  control: React.ReactNode;
+  first?: boolean;
+  id?: string;
+}) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 24,
+        padding: "16px 0",
+        borderTop: first ? "none" : "1px solid var(--border)",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 3,
+          minWidth: 0,
+        }}
+      >
+        <span
+          id={id}
+          style={{
+            fontFamily: "var(--font-sans)",
+            fontSize: 14,
+            fontWeight: 500,
+            color: "var(--foreground)",
+          }}
+        >
+          {title}
+        </span>
+        {desc && (
+          <span
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: 12,
+              lineHeight: 1.45,
+              color: "var(--muted-foreground)",
+            }}
+          >
+            {desc}
+          </span>
+        )}
+      </div>
+      <div style={{ flexShrink: 0 }}>{control}</div>
+    </div>
+  );
+}
+
+/** Named section with mono-uppercase label. */
+function Section({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section
+      aria-labelledby={`section-${title.toLowerCase().replace(/\s+/g, "-")}`}
+      style={{ display: "flex", flexDirection: "column", gap: 6 }}
+    >
+      <h2
+        id={`section-${title.toLowerCase().replace(/\s+/g, "-")}`}
+        style={{
+          fontFamily: "var(--font-mono)",
+          fontSize: 11,
+          letterSpacing: "0.18em",
+          textTransform: "uppercase",
+          color: "var(--muted-foreground)",
+          margin: 0,
+        }}
+      >
+        {title}
+      </h2>
+      <div style={{ display: "flex", flexDirection: "column" }}>
+        {children}
+      </div>
+    </section>
+  );
+}
+
+/** Ghost action button style — copy / explorer links. */
+const ghostActionStyle: React.CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 7,
+  height: 32,
+  padding: "0 12px",
+  borderRadius: "var(--radius-md)",
+  border: "1px solid var(--input)",
+  background: "var(--background)",
+  cursor: "pointer",
+  textDecoration: "none",
+  fontFamily: "var(--font-sans)",
+  fontSize: 13,
+  fontWeight: 500,
+  color: "var(--foreground)",
+  whiteSpace: "nowrap",
+};
+
+/* ─────────────────────────────── CopyButton ─── */
+
+function CopyButton({ address }: { address: string }) {
+  const [copied, setCopied] = React.useState(false);
+
+  const copy = React.useCallback(() => {
+    if (typeof navigator === "undefined" || !navigator.clipboard) return;
+    void navigator.clipboard.writeText(address).then(() => {
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1400);
+    });
+  }, [address]);
+
+  return (
+    <button
+      type="button"
+      onClick={copy}
+      className="press-down"
+      style={ghostActionStyle}
+      aria-label={copied ? "Address copied" : "Copy address"}
+    >
+      {copied ? (
+        <Icon.Confirm
+          size={15}
+          style={{ color: "var(--success)" }}
+          aria-hidden
+        />
+      ) : (
+        <Icon.Copy size={15} aria-hidden />
+      )}
+      {copied ? "Copied" : "Copy"}
+    </button>
+  );
+}
+
+/* ─────────────────────────── useTheme hook ─── */
+
+function useTheme(): [ThemeMode, (m: ThemeMode) => void] {
+  const [mode, setMode] = React.useState<ThemeMode>("dark");
+
+  React.useEffect(() => {
+    const saved =
+      typeof window !== "undefined"
+        ? (localStorage.getItem("brand-theme") as ThemeMode | null)
+        : null;
+    const initial: ThemeMode = saved ?? "dark";
+    setMode(initial);
+    document.documentElement.dataset.theme = initial;
+  }, []);
+
+  const setTheme = React.useCallback((next: ThemeMode) => {
+    setMode(next);
+    document.documentElement.dataset.theme = next;
+    localStorage.setItem("brand-theme", next);
+  }, []);
+
+  return [mode, setTheme];
+}
+
+/* ─────────────────────────── page component ─── */
 
 export default function AccountPage() {
   const wallet = useWalletState();
@@ -35,179 +328,380 @@ export default function AccountPage() {
   ) {
     return (
       <AppShell route="/account" auth>
-          <DisconnectedState
-            title="Account is private."
-            description="Connect Tempo Wallet to view and update your account."
-            actionLabel="Tempo wallet"
-            onAction={() => {}}
-            icon={Icon.Wallet}
-          />
+        <DisconnectedState
+          title="Account is private."
+          description="Connect Tempo Wallet to view and update your account."
+          actionLabel="Tempo wallet"
+          onAction={() => {}}
+          icon={Icon.Wallet}
+        />
       </AppShell>
     );
   }
 
-  const fixture = accountFixtures.default;
-  const address: string =
-    wallet.address ?? fixture.address ?? "0x0000000000000000000000000000000000000000";
-  const chainName = wallet.chainName ?? "Omega Zone";
-  const truncated = truncateAddress(address);
-  const sessionStartedAt = fixture.sessionStartedAt;
-
   return (
     <AppShell route="/account" auth>
-      <PageLayout
-        width="default"
-        title="Account"
-        description="Identity, theme, session."
-      >
-        <PageSection title={<MonoSectionTitle>Account</MonoSectionTitle>}>
-          <Card className="flex flex-col gap-4 p-5 md:p-6">
-            <div className="flex flex-col gap-1.5">
-              <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
-                Tempo account
-              </span>
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="font-mono text-sm">{truncated}</span>
-                <CopyButton value={address} label="Copy address" />
-                <Button asChild variant="ghost" size="sm">
-                  <a
-                    href={tempoAddressUrl(address)}
-                    target="_blank"
-                    rel="noreferrer noopener"
-                    aria-label="View on Tempo Explorer"
-                  >
-                    <Icon.External className="h-3.5 w-3.5" aria-hidden />
-                    Explorer
-                  </a>
-                </Button>
-              </div>
-              <span className="text-[11px] text-[var(--muted-foreground)]">
-                This Tempo account signs private-alpha testnet actions and holds
-                seeded testnet balances.
-              </span>
-            </div>
-            <div className="flex flex-wrap items-center gap-3">
-              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
-                Closed testnet · Private alpha
-              </span>
-              {sessionStartedAt ? (
-                <span className="font-mono text-[11px] text-[var(--muted-foreground)]">
-                  Connected since {formatSessionStart(sessionStartedAt)}
-                </span>
-              ) : null}
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <Field label="Chain" value={chainName} />
-              <Field
-                label="Connector"
-                value={wallet.connector ?? "Tempo Wallet"}
-              />
-            </div>
-          </Card>
-        </PageSection>
-
-        <PageSection title={<MonoSectionTitle>Zone</MonoSectionTitle>}>
-          <OmegaZoneStatus />
-        </PageSection>
-
-        <PageSection title={<MonoSectionTitle>Theme</MonoSectionTitle>}>
-          <Card className="flex items-center justify-between gap-4 p-5 md:p-6">
-            <div className="flex flex-col gap-1">
-              <span className="text-sm font-medium">Appearance</span>
-              <span className="text-xs text-[var(--muted-foreground)]">
-                Follows your system setting unless overridden.
-              </span>
-            </div>
-            <ThemeToggle />
-          </Card>
-        </PageSection>
-
-        <PageSection title={<MonoSectionTitle>Session</MonoSectionTitle>}>
-          <Card className="flex flex-col gap-4 p-5 md:p-6">
-            <div className="flex flex-col gap-1">
-              <span className="text-sm">Sign out of this device.</span>
-              <span className="text-xs text-[var(--muted-foreground)]">
-                Your seeded balance and order history remain - sign back in with
-                Tempo Wallet any time.
-              </span>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => wallet.disconnect()}
-              className="min-h-[44px] self-start md:min-h-0"
-            >
-              <Icon.Disconnect className="h-3.5 w-3.5" aria-hidden />
-              Sign out
-            </Button>
-          </Card>
-        </PageSection>
-      </PageLayout>
+      <SettingsContent wallet={wallet} />
     </AppShell>
   );
 }
 
-/* ────────────────────────────────────────────────────────────────────────── */
-/*  Section title — mono uppercase tracked, matches eyebrow register on data  */
-/*  surfaces. Page title (PageLayout `title`) stays sans for brand chrome.    */
-/* ────────────────────────────────────────────────────────────────────────── */
+/* ─────────────────── SettingsContent (kit port) ─── */
 
-function MonoSectionTitle({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
-      {children}
-    </span>
-  );
-}
-
-/* ────────────────────────────────────────────────────────────────────────── */
-/*  Tiny presentational helpers                                               */
-/* ────────────────────────────────────────────────────────────────────────── */
-
-function Field({
-  label,
-  value,
+function SettingsContent({
+  wallet,
 }: {
-  label: string;
-  value: string;
+  wallet: ReturnType<typeof useWalletState>;
 }) {
+  const fixture = accountFixtures.default;
+  const address: string =
+    wallet.address ??
+    fixture.address ??
+    "0x0000000000000000000000000000000000000000";
+  const chainName = wallet.chainName ?? "Ethereum L1";
+  const connector = wallet.connector ?? "Tempo Wallet";
+  const sessionStartedAt = fixture.sessionStartedAt;
+  const truncated = truncateAddress(address);
+  const explorerHref = tempoAddressUrl(address);
+
+  // Theme — dark default, persisted to localStorage (brand-theme key).
+  const [theme, setTheme] = useTheme();
+
+  // Local preference state (cosmetic / session-local for now; backend deferred).
+  const [defaultMode, setDefaultMode] = React.useState<OrderMode>("market");
+  const [defaultPair, setDefaultPair] =
+    React.useState<DefaultPair>("USDC/EURC");
+  const [confirmSign, setConfirmSign] = React.useState(true);
+  const [hideBalances, setHideBalances] = React.useState(false);
+  const [fillAlerts, setFillAlerts] = React.useState(true);
+  const [proofAlerts, setProofAlerts] = React.useState(true);
+
   return (
-    <div className="flex flex-col gap-1">
-      <Label className="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
-        {label}
-      </Label>
-      <span className="text-sm">{value}</span>
+    <div
+      className="pf-fade"
+      style={{
+        width: "100%",
+        maxWidth: 720,
+        margin: "0 auto",
+        padding: "32px 24px",
+        display: "flex",
+        flexDirection: "column",
+        gap: 28,
+      }}
+    >
+      {/* Page header */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <h1
+          style={{
+            margin: 0,
+            fontFamily: "var(--font-sans)",
+            fontSize: 26,
+            fontWeight: 600,
+            letterSpacing: "-0.01em",
+            color: "var(--foreground)",
+          }}
+        >
+          Settings
+        </h1>
+        <p
+          style={{
+            margin: 0,
+            fontFamily: "var(--font-sans)",
+            fontSize: 14,
+            color: "var(--muted-foreground)",
+          }}
+        >
+          Account, preferences, and privacy for this session.
+        </p>
+      </div>
+
+      {/* Wallet identity panel */}
+      <div
+        className="panel"
+        style={{
+          borderRadius: "var(--radius-xl)",
+          padding: 18,
+          display: "flex",
+          alignItems: "center",
+          gap: 16,
+          flexWrap: "wrap",
+        }}
+      >
+        <span
+          aria-hidden
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: 40,
+            height: 40,
+            borderRadius: "var(--radius-full)",
+            border: "1px solid var(--border)",
+            background:
+              "color-mix(in oklab, var(--muted) 60%, var(--card))",
+            color: "var(--muted-foreground)",
+            flexShrink: 0,
+          }}
+        >
+          <Icon.Wallet size={18} aria-hidden />
+        </span>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 3,
+            minWidth: 0,
+            flex: 1,
+          }}
+        >
+          <span className="t-mono-label">
+            Tempo Wallet · {connector}
+          </span>
+          <span
+            style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: 13,
+              color: "var(--foreground)",
+              wordBreak: "break-all",
+            }}
+          >
+            {truncated}
+          </span>
+          {sessionStartedAt ? (
+            <span
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: 11,
+                color: "var(--muted-foreground)",
+              }}
+            >
+              Session since {formatSessionStart(sessionStartedAt)}
+            </span>
+          ) : null}
+        </div>
+        <div
+          style={{ marginLeft: "auto", display: "flex", gap: 8, flexShrink: 0 }}
+        >
+          <CopyButton address={address} />
+          <a
+            href={explorerHref}
+            target="_blank"
+            rel="noreferrer noopener"
+            className="press-down"
+            style={ghostActionStyle}
+            aria-label="View on Tempo Explorer"
+          >
+            <Icon.External size={15} aria-hidden />
+            Explorer
+          </a>
+        </div>
+      </div>
+
+      {/* Omega Zone status widget — kept */}
+      <OmegaZoneStatus />
+
+      {/* Preferences section */}
+      <Section title="Preferences">
+        <Row
+          first
+          title="Theme"
+          desc="Dark is the trading default. Light is supported."
+          control={
+            <Segmented<ThemeMode>
+              options={[
+                ["dark", "Dark"],
+                ["light", "Light"],
+              ]}
+              value={theme}
+              onChange={setTheme}
+              aria-label="Theme"
+            />
+          }
+        />
+        <Row
+          title="Default order mode"
+          desc="Which entry mode opens first on the trade screen."
+          control={
+            <Segmented<OrderMode>
+              options={[
+                ["market", "Market"],
+                ["limit", "Limit"],
+              ]}
+              value={defaultMode}
+              onChange={setDefaultMode}
+              aria-label="Default order mode"
+            />
+          }
+        />
+        <Row
+          title="Default pair"
+          desc="The pair selected when you open Trade."
+          control={
+            <Segmented<DefaultPair>
+              options={[
+                ["USDC/EURC", "USDC/EURC"],
+                ["ETH/USDC", "ETH/USDC"],
+              ]}
+              value={defaultPair}
+              onChange={setDefaultPair}
+              aria-label="Default pair"
+            />
+          }
+        />
+      </Section>
+
+      {/* Trading section */}
+      <Section title="Trading">
+        <Row
+          first
+          title="Confirm before signing"
+          desc="Show the order review modal before each signature."
+          control={
+            <SettingsToggle
+              on={confirmSign}
+              onChange={setConfirmSign}
+              aria-label="Confirm before signing"
+            />
+          }
+        />
+        <Row
+          title="Network"
+          desc={`Settlement layer. Chain: ${chainName}.`}
+          control={
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 7,
+                fontFamily: "var(--font-mono)",
+                fontSize: 12,
+                color: "var(--foreground)",
+              }}
+            >
+              <span
+                aria-hidden
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: "50%",
+                  background: "var(--success)",
+                  flexShrink: 0,
+                }}
+              />
+              {chainName}
+            </span>
+          }
+        />
+      </Section>
+
+      {/* Privacy section */}
+      <Section title="Privacy">
+        <Row
+          first
+          title="Hide balances"
+          desc="Mask amounts across the interface until revealed."
+          control={
+            <SettingsToggle
+              on={hideBalances}
+              onChange={setHideBalances}
+              aria-label="Hide balances"
+            />
+          }
+        />
+      </Section>
+
+      {/* Notifications section */}
+      <Section title="Notifications">
+        <Row
+          first
+          title="Fill alerts"
+          desc="Notify when an order matches at midpoint."
+          control={
+            <SettingsToggle
+              on={fillAlerts}
+              onChange={setFillAlerts}
+              aria-label="Fill alerts"
+            />
+          }
+        />
+        <Row
+          title="Proof verified"
+          desc="Notify when a batch proof is verified onchain."
+          control={
+            <SettingsToggle
+              on={proofAlerts}
+              onChange={setProofAlerts}
+              aria-label="Proof verified"
+            />
+          }
+        />
+      </Section>
+
+      {/* Divider */}
+      <div style={{ height: 1, background: "var(--border)" }} />
+
+      {/* Sign out */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 16,
+          flexWrap: "wrap",
+        }}
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+          <span
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: 14,
+              fontWeight: 500,
+              color: "var(--foreground)",
+            }}
+          >
+            Sign out
+          </span>
+          <span
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: 12,
+              color: "var(--muted-foreground)",
+            }}
+          >
+            Ends this session. Your passkey stays on your device.
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={() => wallet.disconnect()}
+          className="press-down"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 8,
+            height: 40,
+            padding: "0 18px",
+            borderRadius: "var(--radius-md)",
+            cursor: "pointer",
+            border:
+              "1px solid color-mix(in oklab, var(--destructive) 40%, transparent)",
+            background:
+              "color-mix(in oklab, var(--destructive) 10%, transparent)",
+            color: "var(--destructive)",
+            fontFamily: "var(--font-sans)",
+            fontSize: 14,
+            fontWeight: 500,
+          }}
+        >
+          <Icon.Disconnect size={16} aria-hidden />
+          Sign out
+        </button>
+      </div>
     </div>
   );
 }
 
-function CopyButton({ value, label }: { value: string; label: string }) {
-  const [copied, setCopied] = React.useState(false);
-  const onCopy = React.useCallback(() => {
-    if (typeof navigator === "undefined" || !navigator.clipboard) return;
-    void navigator.clipboard.writeText(value).then(() => {
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1200);
-    });
-  }, [value]);
-
-  return (
-    <Button
-      variant="ghost"
-      size="sm"
-      onClick={onCopy}
-      aria-label={label}
-      className="h-7 px-2"
-    >
-      {copied ? (
-        <Icon.Match className="h-3.5 w-3.5 text-[var(--success)]" aria-hidden />
-      ) : (
-        <Icon.Copy className="h-3.5 w-3.5" aria-hidden />
-      )}
-      <span className="text-xs">{copied ? "Copied" : "Copy"}</span>
-    </Button>
-  );
-}
+/* ─────────────────────────── helpers ─── */
 
 /** Format `2026-04-27T09:00:00Z` → `Apr 27, 2026 · 09:00 UTC`. */
 function formatSessionStart(iso: string): string {

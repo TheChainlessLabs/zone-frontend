@@ -589,9 +589,8 @@ function ActionGrid({
       type="button"
       onClick={onClick}
       className={cn(
-        "press-down flex min-h-[92px] flex-col justify-between gap-[18px] rounded-[var(--radius-lg)] border border-[var(--border)] p-4 text-left transition-colors hover:border-[var(--ring)]",
+        "glass press-down flex min-h-[92px] flex-col justify-between gap-[18px] rounded-[var(--radius-lg)] p-4 text-left transition-colors hover:border-[var(--ring)]",
       )}
-      style={{ background: "color-mix(in oklab, var(--muted) 45%, var(--card))" }}
     >
       <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)]">
         {icon}
@@ -640,7 +639,7 @@ function ExecutionQualityCard({ fixture }: { fixture: PortfolioFixture }) {
     </div>
   );
   return (
-    <Card className="panel flex flex-col gap-4 rounded-[var(--radius-xl)] p-5">
+    <Card className="glass flex flex-col gap-4 rounded-[var(--radius-xl)] p-5">
       <div className="flex items-center justify-between">
         <h2 className="m-0 text-[15px] font-semibold text-[var(--foreground)]">
           Execution quality
@@ -678,7 +677,7 @@ function HoldingsTable({
     "pb-3 font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--muted-foreground)] whitespace-nowrap";
   const td = "py-3.5 font-mono text-[13px] tabular-nums whitespace-nowrap";
   return (
-    <section className="flex flex-col gap-1">
+    <section className="glass rounded-[var(--radius-xl)] p-5 flex flex-col gap-1">
       <div className="mb-3 flex flex-col gap-0.5">
         <h2 className="m-0 text-lg font-semibold text-[var(--foreground)]">
           Holdings
@@ -797,7 +796,7 @@ function ActivityTable({ rows }: { rows: ActivityRow[] }) {
     "pb-3 pr-4 text-left font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--muted-foreground)] whitespace-nowrap";
   const td = "py-3.5 pr-4 font-mono text-[13px] tabular-nums whitespace-nowrap";
   return (
-    <section className="flex flex-col">
+    <section className="glass rounded-[var(--radius-xl)] p-5 flex flex-col">
       <div className="mb-3 flex flex-col gap-0.5">
         <h2 className="m-0 text-lg font-semibold text-[var(--foreground)]">
           Activity
@@ -869,7 +868,7 @@ function ActivityList({
 }) {
   const shown = limit ? rows.slice(0, limit) : rows;
   return (
-    <section className="flex flex-col">
+    <section className="glass rounded-[var(--radius-xl)] p-5 flex flex-col">
       <div className="mb-2 flex flex-col gap-0.5">
         <h2 className="m-0 text-lg font-semibold text-[var(--foreground)]">
           {title}
@@ -959,7 +958,7 @@ function OrdersTable({
     "pb-3 pr-4 text-left font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--muted-foreground)] whitespace-nowrap";
   const td = "py-3.5 pr-4 font-mono text-[13px] tabular-nums whitespace-nowrap";
   return (
-    <section className="flex flex-col">
+    <section className="glass rounded-[var(--radius-xl)] p-5 flex flex-col">
       <div className="mb-3 flex flex-col gap-0.5">
         <h2 className="m-0 text-lg font-semibold text-[var(--foreground)]">
           Open orders
@@ -1034,7 +1033,7 @@ function OpenOrders({
   if (orders.length === 0) return null;
   const shown = orders.slice(0, 3);
   return (
-    <section className="flex flex-col">
+    <section className="glass rounded-[var(--radius-xl)] p-5 flex flex-col">
       <div className="mb-2 flex flex-col gap-0.5">
         <h2 className="m-0 text-lg font-semibold text-[var(--foreground)]">
           Open orders

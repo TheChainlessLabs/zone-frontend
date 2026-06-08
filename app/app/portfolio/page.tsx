@@ -9,10 +9,14 @@
  * Privacy contract (omega-docs#5 PRD): only the connected user's own
  * state ever lands on this page — no counterparty IDs, no global feed.
  *
- * Layout: the "blended" shape (variant 11) — frame, hero chart,
- * dual-column with sticky summary. Mobile lifts the summary card
- * above the lists so the quick-glance signal stays visible right
- * after the chart instead of being buried under positions.
+ * Presentation is the Omega Markets design-kit Portfolio surface
+ * (`PortfolioView`): value lede + 30-day trend, the Holdings
+ * centerpiece, the Activity stream, and a right rail carrying the
+ * equal-weight Deposit/Withdraw actions, an execution-quality card,
+ * and cancelable open orders — under Overview / Tokens / Orders /
+ * Activity tabs. This page owns the data + behaviour (wagmi/zone
+ * wiring, EIP-712 signing, the deposit/withdraw modals) and feeds the
+ * live OALPHA / PATH.USD fixture into the ported view.
  *
  * State coverage (driven by `?state=`):
  *   default · empty · loading · error · skeleton · disconnected.
@@ -40,9 +44,7 @@ import {
   type WithdrawState,
 } from "@/components/modals/withdraw-modal";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Icon } from "@/lib/icons";
-import { cn } from "@/lib/utils";
 import { portfolioFixtures, usePageState } from "@/lib/fixtures";
 import type {
   BalanceFixture,
@@ -80,7 +82,7 @@ import {
   zoneOutboxRequestWithdrawal,
 } from "@/lib/zone";
 
-import Variant11Blended from "./preview/_variants/variant-11-blended";
+import { PortfolioView, PortfolioSkeleton } from "./_components/PortfolioView";
 
 interface WithdrawFormValues {
   recipient: string;
@@ -571,19 +573,19 @@ export default function PortfolioPage() {
 
   return (
     <AppShell route="/portfolio" auth>
-      <PageLayout width="wide">
+      <PageLayout width="wide" bare>
         {isError ? <ErrorBand message={errorMessage} /> : null}
 
         {isLoading || isError ? (
-          <PortfolioSkeleton
-            onDeposit={() => setDepositOpen(true)}
-            onWithdraw={() => setWithdrawOpen(true)}
-          />
+          <PortfolioSkeleton />
         ) : (
-          <Variant11Blended
+          <PortfolioView
             fixture={fixture}
             onDeposit={() => setDepositOpen(true)}
             onWithdraw={() => setWithdrawOpen(true)}
+            onMore={() => {
+              window.location.assign("/account");
+            }}
           />
         )}
       </PageLayout>
@@ -622,121 +624,10 @@ export default function PortfolioPage() {
 }
 
 /* ────────────────────────────────────────────────────────────────────────── */
-/*  Loading / error skeleton — mirrors variant 11's shape so the page         */
-/*  doesn't reflow when data resolves.                                        */
+/*  Error band — functional retry affordance shown above the skeleton when     */
+/*  the live snapshot fails. The loading/error skeleton itself is the kit's     */
+/*  `PortfolioSkeleton`, imported from ./_components/PortfolioView.            */
 /* ────────────────────────────────────────────────────────────────────────── */
-
-function PortfolioSkeleton({
-  onDeposit,
-  onWithdraw,
-}: {
-  onDeposit: () => void;
-  onWithdraw: () => void;
-}) {
-  return (
-    <div className="flex flex-col gap-6" aria-busy="true">
-      <section
-        aria-label="Portfolio overview"
-        className="flex flex-col gap-3"
-      >
-        <div className="flex flex-col gap-1.5">
-          <SkeletonBar className="h-3 w-20" />
-          <SkeletonBar className="h-5 w-56" />
-        </div>
-        <div className="flex flex-wrap items-end gap-x-4 gap-y-2">
-          <SkeletonBar className="h-12 w-48 md:h-16 md:w-64" />
-          <SkeletonBar className="h-4 w-32" />
-        </div>
-      </section>
-
-      <Card className="flex flex-col gap-4 p-4 md:p-6">
-        <SkeletonBar className="h-[160px] w-full md:h-[220px]" />
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <SkeletonBar className="h-8 w-64 rounded-full" />
-          <div className="flex gap-2">
-            <Button
-              size="sm"
-              onClick={onDeposit}
-              className="min-h-[44px] md:min-h-0"
-            >
-              <Icon.Wallet aria-hidden />
-              Deposit
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={onWithdraw}
-              className="min-h-[44px] md:min-h-0"
-            >
-              Withdraw
-            </Button>
-          </div>
-        </div>
-      </Card>
-
-      <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[1.6fr_1fr]">
-        <aside className="flex flex-col gap-4 lg:order-2 lg:sticky lg:top-24 lg:self-start">
-          <Card className="flex flex-col gap-4 p-5 md:p-6">
-            <SkeletonBar className="h-3 w-16" />
-            <div className="flex flex-col gap-2">
-              <SkeletonBar className="h-3 w-full" />
-              <SkeletonBar className="h-2 w-full rounded-full" />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <SkeletonBar className="h-3 w-full" />
-              <SkeletonBar className="h-3 w-full" />
-            </div>
-            <div className="flex items-center gap-4 border-t border-[var(--border)] pt-4">
-              <SkeletonBar className="h-24 w-24 rounded-full" />
-              <div className="flex flex-1 flex-col gap-2">
-                <SkeletonBar className="h-3 w-full" />
-                <SkeletonBar className="h-3 w-full" />
-                <SkeletonBar className="h-3 w-full" />
-              </div>
-            </div>
-          </Card>
-        </aside>
-
-        <div className="flex flex-col gap-6 lg:order-1">
-          {[
-            { title: "Open positions", rows: 3 },
-            { title: "Recent fills", rows: 3 },
-            { title: "Transfers", rows: 3 },
-          ].map(({ title, rows }) => (
-            <Card key={title} className="flex flex-col gap-4 p-5 md:p-6">
-              <h2 className="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
-                {title}
-              </h2>
-              <ul className="flex flex-col">
-                {Array.from({ length: rows }).map((_, i) => (
-                  <li
-                    key={i}
-                    className="flex items-center justify-between border-t border-[var(--border)] py-3 first:border-t-0"
-                  >
-                    <SkeletonBar className="h-3 w-24" />
-                    <SkeletonBar className="h-3 w-16" />
-                  </li>
-                ))}
-              </ul>
-            </Card>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function SkeletonBar({ className }: { className?: string }) {
-  return (
-    <span
-      aria-hidden
-      className={cn(
-        "inline-block h-3 animate-pulse rounded-sm bg-[var(--muted)]",
-        className,
-      )}
-    />
-  );
-}
 
 function ErrorBand({ message }: { message: string }) {
   return (

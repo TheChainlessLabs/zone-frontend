@@ -40,3 +40,17 @@ it("uses the liquid-glass pill material on the container", () => {
   const list = screen.getByRole("tablist", { name: "Order mode" });
   expect(list.className).toContain("glass-pill");
 });
+
+it("renders a single sliding indicator and tags the active segment for measurement", () => {
+  // The kit's mode toggle slides one indicator under the active segment,
+  // measured from the active button's box (the shell Navbar technique).
+  render(<OrderModeSelector value="limit" onChange={() => {}} />);
+  const list = screen.getByRole("tablist", { name: "Order mode" });
+  // Exactly one element carries the active-measurement hook, and it is Limit.
+  const active = list.querySelectorAll('[data-mode-active="true"]');
+  expect(active.length).toBe(1);
+  expect(active[0]?.textContent).toBe("Limit");
+  // The indicator is an aria-hidden span that is not one of the tab buttons.
+  const indicator = list.querySelector(":scope > span[aria-hidden]");
+  expect(indicator).not.toBeNull();
+});

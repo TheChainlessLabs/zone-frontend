@@ -417,6 +417,49 @@ body[data-route="/404"] {
   }
 }
 
+/* Trade — the design-kit "personality" layer (ported from the kit's
+   Motion.jsx + TradeAside.jsx). A fresh fill row briefly washes success
+   then settles; the settlement MatchToast slides up from the bottom.
+   The global reduced-motion catch-all below suppresses both, and the
+   JS surfaces additionally gate on `useReducedMotion` so the toast simply
+   appears in place. */
+@keyframes omega-fill-row-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+    background: color-mix(in oklab, var(--success) 14%, transparent);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    background: transparent;
+  }
+}
+.omega-fill-row-fresh > td {
+  animation: omega-fill-row-in 0.5s var(--ease-out);
+}
+
+@keyframes omega-match-toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 16px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+.omega-match-toast {
+  animation: omega-match-toast-in 0.36s var(--ease-out);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .omega-fill-row-fresh > td,
+  .omega-match-toast {
+    animation: none;
+  }
+}
+
 /* M5.1 (#224) — `.press-down` press-feedback utility. Applied to interactive
    elements (buttons, pills, swatches) to nudge them 0.5px on `:active` for a
    tactile click without invoking a motion library. Skips elements wired as

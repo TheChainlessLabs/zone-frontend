@@ -5,6 +5,7 @@ import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { Receipt } from "@/components/ui/receipt";
 import { Status } from "@/components/ui/status";
+import { Icon } from "@/lib/icons";
 import { formatAbsoluteTime, formatThousands } from "@/lib/format";
 import { ModalShell } from "./modal-shell";
 
@@ -101,10 +102,11 @@ export function OrderConfirmationModal({
       onOpenChange={(next) => {
         if (!next && !isBusy) onClose();
       }}
-      title="Review order"
+      title="Confirm order"
       description={
         <>
-          <span className="font-mono">{pair}</span> · {typeLabel}
+          <span className="font-mono">{pair}</span> · {typeLabel} · Review and
+          sign to submit.
         </>
       }
     >
@@ -146,9 +148,10 @@ export function OrderConfirmationModal({
               <Button
                 onClick={onConfirm}
                 disabled={isBusy}
-                className="min-h-[44px] md:min-h-0"
+                className="min-h-[44px] gap-2 md:min-h-0"
               >
-                Confirm order
+                <Icon.Sign size={16} aria-hidden />
+                Sign
               </Button>
             </>
           ) : (

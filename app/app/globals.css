@@ -153,10 +153,19 @@ body[data-route="/404"] {
 .glass {
   position: relative;
   isolation: isolate;
-  background:
+  /* Opaque base UNDER the translucent tint so the surface is never see-through.
+     `--glass-fill` carries a near-transparent token default
+     (`rgba(255,255,255,0.04)`) until the darker `:root` override resolves; in
+     dev that override lands a beat after first paint, so a fill-only background
+     flashed the dotted backdrop through every panel on load. Painting an opaque
+     `--background` base first (and layering the tint/sheen as background-images)
+     keeps panels solid from the first frame. Landing keeps its translucent
+     backdrop via `.lp-content .glass` below. */
+  background-color: var(--background);
+  background-image:
     linear-gradient(135deg, var(--glass-sheen) 0%, transparent 34%),
     linear-gradient(to top, rgba(0, 0, 0, 0.06), transparent 42%),
-    var(--glass-fill);
+    linear-gradient(0deg, var(--glass-fill), var(--glass-fill));
   border: 1px solid var(--glass-edge);
   border-radius: var(--radius-xl);
   backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate))
@@ -386,9 +395,12 @@ body[data-route="/404"] {
 .glass-pill {
   position: relative;
   isolation: isolate;
-  background:
+  /* Opaque base under the tint — see `.glass` above for why (prevents the
+     load-time fill-flash that showed the backdrop through the pill). */
+  background-color: var(--background);
+  background-image:
     linear-gradient(135deg, var(--glass-sheen) 0%, transparent 52%),
-    var(--glass-fill);
+    linear-gradient(0deg, var(--glass-fill), var(--glass-fill));
   border: 1px solid var(--glass-edge);
   backdrop-filter: blur(18px) saturate(var(--glass-saturate))
     brightness(var(--glass-brightness));
@@ -571,6 +583,10 @@ body[data-route="/"]::before {
 .lp-content .glass {
   --glass-fill: color-mix(in oklab, var(--background) 66%, transparent);
   --glass-blur: 30px;
+  /* Landing cards are meant to be translucent over the blackhole scene (the
+     liquid-glass look). Drop the product opaque base so the backdrop reads
+     through; the denser 66% fill above keeps copy legible. */
+  background-color: transparent;
 }
 
 /* Hero blackhole video — slow scale/opacity breathing (kit `lp-bh`). The

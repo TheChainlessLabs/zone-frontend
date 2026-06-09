@@ -72,6 +72,8 @@ import {
   fetchOmegaZoneActivity,
   getTempoNativeAuthSigner,
   getZoneMidpointHistory,
+  getZonePublicMidpointHistory,
+  getZonePublicTopOfBook,
   mergeOmegaZoneActivity,
   persistZoneRpcAuthToken,
   publicZoneClient,
@@ -131,6 +133,14 @@ function TradeSurface() {
     "idle" | "loading" | "ready" | "error"
   >("idle");
   const [liveError, setLiveError] = React.useState<string | undefined>();
+  // Wallet-free public market snapshot (midpoint + chart enable). The zone
+  // serves zone_getTopOfBook / zone_getMidpointHistory on the public RPC with
+  // an anonymous AuthContext, so the trade surface shows the live midpoint even
+  // while disconnected. The authed snapshot (when a wallet connects) refines
+  // the same fields with owner context.
+  const [publicMarketState, setPublicMarketState] = React.useState<
+    "idle" | "loading" | "ready" | "error"
+  >("idle");
   // The settlement moment — the kit's Matched→Settled→Proven toast, driven by
   // the real fill produced by the most recent submit. `key` re-triggers the
   // slide-in; the timer dismisses it.
@@ -284,6 +294,54 @@ function TradeSurface() {
       cancelled = true;
     };
   }, [connectedAddress, ensureZoneAuthToken, refreshZoneSnapshot, state]);
+
+  // Wallet-free public market poll — runs regardless of wallet so the trade
+  // surface renders the LIVE midpoint + chart-enable from the zone's public
+  // RPC. Fixtures remain the fallback only when these reads fail (zone
+  // unreachable). The authed snapshot, when a wallet connects, sets the same
+  // fields with owner context.
+  React.useEffect(() => {
+    if (state !== "default") return;
+    let cancelled = false;
+    async function loadPublicMarket() {
+      setPublicMarketState((s) => (s === "ready" ? s : "loading"));
+      try {
+        const [book, history] = await Promise.all([
+          getZonePublicTopOfBook({
+            base: OMEGA_ZONE_ADDRESSES.oalpha,
+            quote: OMEGA_ZONE_ADDRESSES.pathUsd,
+          }),
+          getZonePublicMidpointHistory({
+            base: OMEGA_ZONE_ADDRESSES.oalpha,
+            quote: OMEGA_ZONE_ADDRESSES.pathUsd,
+            interval: "1m",
+            limit: 50,
+          }),
+        ]);
+        if (cancelled) return;
+        setBestBid(
+          book.bid && BigInt(book.bid.price) > BigInt(0)
+            ? BigInt(book.bid.price)
+            : null,
+        );
+        setBestAsk(
+          book.ask && BigInt(book.ask.price) > BigInt(0)
+            ? BigInt(book.ask.price)
+            : null,
+        );
+        setMidpointHistoryEnabled(history.history.enabled);
+        setPublicMarketState("ready");
+      } catch {
+        if (!cancelled) setPublicMarketState("error");
+      }
+    }
+    void loadPublicMarket();
+    const iv = window.setInterval(() => void loadPublicMarket(), 10_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(iv);
+    };
+  }, [state]);
 
   const requireWallet = React.useCallback(() => {
     if (!connectedAddress) throw new Error("Connect Tempo Wallet first.");
@@ -451,6 +509,7 @@ function TradeSurface() {
   );
   const hasLiveData =
     liveState === "ready" ||
+    publicMarketState === "ready" ||
     zonePathUsdBalance !== null ||
     zoneOalphaBalance !== null ||
     liveFills.length > 0;

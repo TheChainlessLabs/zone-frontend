@@ -30,7 +30,7 @@ so surfaces render live public data while disconnected; keep owner-scoped reads 
 | `zone_getTopOfBook` | public | pending | handlers.rs:1537 `zone_get_top_of_book(base,quote,auth)` | curl `[{base,quote}]` → real bid/ask @ price 1, qty 5e9, midpoint 1 | FE `rpc.ts:1084` + `useOmegaZoneTopOfBook` (auth-gated). Trade page is dark-pool: "no public order book" by design — confirm what's shown. |
 | `zone_getMidpointHistory` | public | pending | handlers.rs:1613 | curl needs `[{base,quote}, interval, limit?, cursor?]` | FE `rpc.ts:1286`. Drives the trade chart. |
 | `zone_getZoneInfo` | public? | pending | handlers.rs:1488 `zone_get_zone_info(auth)` | "Method not found" on WIP container (present in main) | WIP-container gap; works once main binary runs. FE `rpc.ts:163` (auth-gated). |
-| `zone_listBatches` | public | pending | handlers.rs:1943 | curl → `{batches:[]}` (live-empty, none settled) | FE rpc.ts: NOT YET. Batches surface. |
+| `zone_listBatches` | public | **wired✓** | handlers.rs:1943 (container overrides default) | CHECKER (it2): proxy → `{batches:[]}`; /batches renders 0 rows + "No zone batches yet" + StatStrip "Batches today 0 · 0.00M", no synthetic rows over 13s | FE `rpc.ts:1219 listZoneBatches`. Map: `BatchListResponse{batches:BatchSummary[]}` → `BatchFixture[]` via `zoneBatchToFixture`; live-empty `{batches:[]}` → empty rows + 0 stats (NOT demo). |
 | `zone_searchBatch` | public | pending | handlers.rs:213 `zone_search_batch(query)` | not tested | FE rpc.ts: NOT YET. Batches search. |
 | `zone_getBatch` | public | pending | handlers.rs:1934 `zone_get_batch(n)` | not tested | FE `rpc.ts:1243`. Batch detail. |
 | `zone_getDepositStatus` | public | pending | handlers.rs:1506 `zone_get_deposit_status(block,auth)` | not tested | FE `rpc.ts:178`. Deposit tracking. |
@@ -46,7 +46,8 @@ so surfaces render live public data while disconnected; keep owner-scoped reads 
 |---|---|---|
 | trade live market (pair/price/midpoint) | pending | needs wallet-free public reads (marketConfig + referencePrice + midpointHistory). |
 | portfolio (balances/orders/fills) | blocked:needs-wallet | owner-scoped (private RPC + auth token). |
-| batches explorer (list/detail) | pending | `zone_listBatches`/`getBatch`/`searchBatch` are public; live-empty expected. |
+| batches explorer (list) | **wired✓ (live-empty)** | it2 CHECKER PASS: default /batches renders live-empty from `zone_listBatches` (demo only on unreachable-fallback via `usingFallback`). Follow-up: ExplorerHeader still shows a static "sealing #48,202 ~9s" countdown on live-empty — park it on real-live. `getBatch`/`searchBatch` param-sensitive, detail surface still pending. |
+| batches detail (getBatch/searchBatch) | pending | `zone_getBatch` wants `[batchNumber]`; `zone_searchBatch` block-range-sensitive. Detail view + search wiring next. |
 
 ## Writes (later, needs funded wallet)
 - order placement (`eth_sendRawTransaction` → darkpool), deposit/withdraw + status polling. Path exists in `requests.ts`; never fake.

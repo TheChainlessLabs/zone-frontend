@@ -83,6 +83,10 @@ export function BatchesListView() {
     "loading" | "ready" | "error"
   >("loading");
   const [liveError, setLiveError] = React.useState<string | undefined>();
+  // True only when the zone RPC is unreachable and we fall back to demo
+  // fixtures + the synthetic heartbeat. A reachable zone (even live-empty)
+  // keeps this false so we render real data, not demo.
+  const [usingFallback, setUsingFallback] = React.useState(false);
 
   // Live explorer heartbeat — the ~12s next-batch progress + the ticking
   // aggregate strip. Seeded near the kit's resting values; reduced motion
@@ -111,13 +115,11 @@ export function BatchesListView() {
           ? compactBatch(await searchZoneBatch(query))
           : (await listZoneBatches({ limit: 60 })).batches;
         if (cancelled) return;
-        let rows = batches.map(zoneBatchToFixture);
-        // No live data and no search → seed the demo fixtures so the public
-        // explorer stays populated until the backend lands. A real non-empty
-        // result always takes precedence.
-        if (rows.length === 0 && !query) {
-          rows = batchesListFixtures.default.batches;
-        }
+        const rows = batches.map(zoneBatchToFixture);
+        // Live-empty is a real, correct state (no batches settled yet) — render
+        // it as empty. Demo fixtures are ONLY a fallback when the zone is
+        // unreachable (the catch below), never to paper over a live-empty book.
+        setUsingFallback(false);
         setLiveRows(rows);
         if (nextIdRef.current === null && rows.length > 0) {
           nextIdRef.current = rows[0].number + 1;
@@ -129,6 +131,10 @@ export function BatchesListView() {
         // the demo fixtures rather than the error state; a live search that
         // fails still surfaces the error.
         if (!search.trim()) {
+          // Zone unreachable → keep the explorer alive with demo fixtures and
+          // the synthetic heartbeat. This is the ONLY default-view path that
+          // uses fixtures.
+          setUsingFallback(true);
           setLiveRows(batchesListFixtures.default.batches);
           if (nextIdRef.current === null) {
             nextIdRef.current =
@@ -187,7 +193,10 @@ export function BatchesListView() {
   // ~12s heartbeat → progress bar; seals a batch on wrap. Skipped under
   // reduced motion (the bar parks mid-cycle).
   React.useEffect(() => {
-    if (!isLiveDefault) return;
+    // The synthetic ~12s seal heartbeat is a DEMO affordance only — run it
+    // over the demo fixtures when the zone is unreachable, never over real
+    // live data (a live-empty alpha book seals nothing).
+    if (!isLiveDefault || !usingFallback) return;
     const reduce =
       typeof window !== "undefined" &&
       window.matchMedia &&
@@ -207,7 +216,7 @@ export function BatchesListView() {
     }, 200);
     return () => window.clearInterval(iv);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLiveDefault, sealNewBatch]);
+  }, [isLiveDefault, usingFallback, sealNewBatch]);
 
   React.useEffect(() => {
     setPage(1);
@@ -243,6 +252,16 @@ export function BatchesListView() {
   const nextId = nextIdRef.current ?? (rows[0]?.number ?? 48201) + 1;
   const secsLeft = Math.max(0, 12 - (pct / 100) * 12);
 
+  // Stat strip reflects reality: the synthetic ticking values only on the demo
+  // fallback; otherwise derive from the live rows (0 when the zone is reachable
+  // but empty — never the seeded demo figures).
+  const liveVolume = rows.reduce(
+    (sum, r) => sum + (parseVolume(r.volumeUsd) ?? 0),
+    0,
+  );
+  const statBatchesToday = usingFallback ? batchesToday : rows.length;
+  const statVolume24h = usingFallback ? volume24h : liveVolume;
+
   return (
     <PageLayout width="default" bare>
       <div
@@ -261,7 +280,10 @@ export function BatchesListView() {
               nextLabel={batchNo(nextId)}
               live={isLiveDefault}
             />
-            <StatStrip batchesToday={batchesToday} volume24h={volume24h} />
+            <StatStrip
+              batchesToday={statBatchesToday}
+              volume24h={statVolume24h}
+            />
             <BatchList
               rows={pageRows}
               total={rows.length}

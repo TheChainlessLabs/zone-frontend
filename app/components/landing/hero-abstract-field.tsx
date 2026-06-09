@@ -1,17 +1,41 @@
 "use client";
 
 import * as React from "react";
+
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
 
-const HERO_VIDEO_SRC =
-  "/landing/blackhole/omega-blackhole-hero-desktop.webm";
+// Real blackhole video (the app ships the .webm; the kit only had a poster).
+const HERO_VIDEO_SRC = "/landing/blackhole/omega-blackhole-hero-desktop.webm";
+const HERO_VIDEO_POSTER = "/landing/blackhole/omega-blackhole-hero-poster.png";
 
-type MeteorStyle = React.CSSProperties & Record<`--${string}`, string | number>;
+type CSSVars = React.CSSProperties & Record<`--${string}`, string | number>;
 
+// Deterministic discrete starfield (app.jsx Stars). 60 stars, seeded so SSR
+// and client render identically. Twinkles slowly via the .lp-star keyframe.
+const STARS = (() => {
+  let seed = 7;
+  const rnd = () => {
+    seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+    return seed / 0x7fffffff;
+  };
+  return Array.from({ length: 60 }).map(() => {
+    const x = rnd() * 100;
+    const y = rnd() * 100;
+    const size = 1.8 + rnd() * 2.8;
+    const o = 0.5 + rnd() * 0.5;
+    return { x, y, size, o, d: (2.5 + rnd() * 4).toFixed(1) };
+  });
+})();
+
+// Order meteors — the original 3D-perspective ingress. Each streak flies in
+// from a screen edge toward the singularity along the Z axis, tilting and
+// shrinking as it falls in. Styled entirely through CSS custom properties the
+// `omega-order-meteor` rule (globals.css) animates via `omega-order-ingress`.
+// `wideOnly` meteors only render at the ≥768px breakpoint (CSS gates display).
 const orderMeteors: Array<{
   id: string;
   wideOnly?: boolean;
-  style: MeteorStyle;
+  style: CSSVars;
 }> = [
   {
     id: "left-high",
@@ -174,6 +198,40 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
 
+function Stars() {
+  return (
+    <div
+      aria-hidden
+      className="pointer-events-none absolute inset-0 z-[1] overflow-hidden"
+    >
+      {STARS.map((s, i) => (
+        <span
+          key={i}
+          className="lp-star"
+          style={
+            {
+              left: s.x + "%",
+              top: s.y + "%",
+              width: s.size,
+              height: s.size,
+              "--o": s.o,
+              "--d": s.d + "s",
+              boxShadow:
+                s.size > 2.6
+                  ? "0 0 6px rgba(255,255,255,0.6)"
+                  : "0 0 3px rgba(255,255,255,0.4)",
+            } as CSSVars
+          }
+        />
+      ))}
+    </div>
+  );
+}
+
+// Full-bleed hero atmosphere: blackhole video + starfield + 3D-perspective
+// order meteors + legibility gradients. Mirrors app.jsx Hero's background
+// layers. A scroll-driven effect fades the meteor field as the hero scrolls
+// out (it reads `[data-landing-hero]` for the section to track).
 export function HeroAbstractField() {
   const reducedMotion = useReducedMotion();
   const fieldRef = React.useRef<HTMLDivElement>(null);
@@ -183,33 +241,26 @@ export function HeroAbstractField() {
     const section = field?.closest<HTMLElement>("[data-landing-hero]");
     if (!field || !section) return;
 
+    // Reduced motion: meteors are not rendered at all, so there is nothing to
+    // drive. The CSS field default (full opacity) is moot.
+    if (reducedMotion) {
+      field.style.setProperty("--hero-meteor-opacity", "0");
+      return;
+    }
+
     let frame = 0;
 
     const update = () => {
       frame = 0;
 
       const isMobile = window.innerWidth < 768;
-      const baseScale = isMobile ? 1.02 : 1.04;
-
-      if (reducedMotion) {
-        field.style.setProperty("--hero-video-scale", baseScale.toFixed(3));
-        field.style.setProperty("--hero-meteor-opacity", "0");
-        section.style.setProperty("--hero-copy-opacity", "1");
-        return;
-      }
-
       const travel = Math.max(1, section.offsetHeight - window.innerHeight);
       const progress = clamp(-section.getBoundingClientRect().top / travel, 0, 1);
-      const eased = 1 - (1 - progress) ** 1.8;
-      const zoom = baseScale + eased * (isMobile ? 1.8 : 2.75);
-      const copyOpacity = clamp(1 - progress * 1.2, 0, 1);
       const meteorOpacity = isMobile
         ? clamp(0.82 - progress * 0.44, 0.24, 0.82)
         : clamp(0.96 - progress * 0.58, 0.28, 0.96);
 
-      field.style.setProperty("--hero-video-scale", zoom.toFixed(3));
       field.style.setProperty("--hero-meteor-opacity", meteorOpacity.toFixed(3));
-      section.style.setProperty("--hero-copy-opacity", copyOpacity.toFixed(3));
     };
 
     const requestUpdate = () => {
@@ -225,7 +276,6 @@ export function HeroAbstractField() {
       if (frame) window.cancelAnimationFrame(frame);
       window.removeEventListener("scroll", requestUpdate);
       window.removeEventListener("resize", requestUpdate);
-      section.style.removeProperty("--hero-copy-opacity");
     };
   }, [reducedMotion]);
 
@@ -234,43 +284,52 @@ export function HeroAbstractField() {
       ref={fieldRef}
       aria-hidden
       data-testid="hero-abstract-field"
-      className="absolute inset-0 overflow-hidden bg-[var(--background)]"
+      className="absolute inset-0 overflow-hidden"
     >
-      <video
-        key={reducedMotion ? "still" : "motion"}
-        className="omega-hero-blackhole-video absolute left-1/2 top-[46%] w-[176vw] max-w-none object-contain opacity-[0.72] [filter:contrast(1.14)_saturate(0.94)] md:top-1/2 md:min-h-full md:min-w-full md:w-auto md:object-cover md:opacity-90"
-        autoPlay={!reducedMotion}
-        loop={!reducedMotion}
-        muted
-        playsInline
-        preload="auto"
-      >
-        <source src={HERO_VIDEO_SRC} type="video/webm" />
-      </video>
+      {/* blackhole graphic — the singularity. Black background drops out via
+          mix-blend-mode: screen so the glowing ring sits on the dark page. */}
+      <div className="lp-blackhole pointer-events-none absolute inset-0 z-0 flex items-center justify-center overflow-hidden">
+        <video
+          key={reducedMotion ? "still" : "motion"}
+          className="omega-hero-blackhole-video max-w-none object-cover"
+          style={{ width: "min(1700px, 185%)", mixBlendMode: "screen", opacity: 0.9 }}
+          autoPlay={!reducedMotion}
+          loop={!reducedMotion}
+          muted
+          playsInline
+          preload="auto"
+          poster={HERO_VIDEO_POSTER}
+        >
+          <source src={HERO_VIDEO_SRC} type="video/webm" />
+        </video>
+      </div>
 
+      {/* legibility gradient — fade the graphic toward the edges into pure
+          black (the video's native black), then into the page background. */}
       <div
-        className="absolute inset-0"
+        className="pointer-events-none absolute inset-0 z-0"
         style={{
           background:
-            "radial-gradient(circle at 50% 42%, transparent 0%, transparent 30%, color-mix(in oklab, var(--background) 28%, transparent) 58%, var(--background) 100%)",
+            "radial-gradient(ellipse 70% 55% at 50% 42%, transparent 30%, #000 80%, transparent 100%)",
         }}
       />
+      {/* even dim veil over the whole graphic for legibility */}
       <div
-        className="absolute inset-0"
+        className="pointer-events-none absolute inset-0 z-[1]"
+        style={{ background: "rgba(0,0,0,0.34)" }}
+      />
+      {/* tall bottom fade — black settles into the page background (no hard cut) */}
+      <div
+        className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-1/2"
         style={{
           background:
-            "linear-gradient(180deg, var(--background) 0%, color-mix(in oklab, var(--background) 12%, transparent) 18%, color-mix(in oklab, var(--background) 0%, transparent) 48%, color-mix(in oklab, var(--background) 74%, transparent) 100%)",
+            "linear-gradient(to bottom, transparent 0%, var(--background) 82%)",
         }}
       />
-      <div
-        className="absolute inset-0 opacity-45"
-        style={{
-          background:
-            "radial-gradient(circle at 50% 42%, color-mix(in oklab, var(--foreground) 20%, transparent) 0%, transparent 18%, transparent 100%)",
-        }}
-      />
+
+      <Stars />
       {!reducedMotion ? (
-        <div className="omega-meteor-field absolute inset-0">
+        <div className="omega-meteor-field absolute inset-0 z-[1]">
           {orderMeteors.map((meteor) => (
             <span
               key={meteor.id}
@@ -289,8 +348,6 @@ export function HeroAbstractField() {
           ))}
         </div>
       ) : null}
-      <div className="absolute inset-x-[8%] bottom-8 h-px bg-[var(--border)]" />
-      <div className="absolute inset-x-[18%] top-[18%] h-px bg-[var(--border)] opacity-35" />
     </div>
   );
 }

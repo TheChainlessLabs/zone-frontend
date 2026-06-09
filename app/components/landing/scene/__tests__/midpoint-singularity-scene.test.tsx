@@ -26,26 +26,23 @@ afterEach(() => {
 });
 
 describe("MidpointSingularityScene", () => {
-  it("renders a clean 2D lifecycle scene when motion is allowed", () => {
+  it("renders the pinned SVG singularity scene when motion is allowed", () => {
     mockReducedMotion(false);
 
     render(<MidpointSingularityScene />);
 
-    expect(screen.getByTestId("order-lifecycle-scene")).toBeDefined();
-    expect(screen.queryByTestId("midpoint-singularity-canvas")).toBeNull();
-    expect(screen.getByText("PRIVATE ORDER")).toBeDefined();
-    expect(screen.getByText("DARKPOOL")).toBeDefined();
-    expect(screen.getByText("NOISE FIELD")).toBeDefined();
-    expect(screen.getByText("BATCH PROOF")).toBeDefined();
-    expect(screen.getByText("TEMPO")).toBeDefined();
+    const scene = screen.getByTestId("order-lifecycle-scene");
+    expect(scene).toBeDefined();
+    expect(scene.tagName.toLowerCase()).toBe("svg");
+    expect(screen.queryByTestId("midpoint-singularity-reduced-motion")).toBeNull();
   });
 
-  it("renders a static scroll-state sequence for reduced motion users", async () => {
+  it("renders a static scroll-state sequence for reduced motion users", () => {
     mockReducedMotion(true);
 
     render(<MidpointSingularityScene />);
 
-    expect(await screen.findByTestId("midpoint-singularity-reduced-motion")).toBeDefined();
+    expect(screen.getByTestId("midpoint-singularity-reduced-motion")).toBeDefined();
     expect(screen.queryByTestId("order-lifecycle-scene")).toBeNull();
 
     for (const state of scrollStates) {

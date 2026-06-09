@@ -1,0 +1,50 @@
+/* Portfolio surface — route-scoped motion + skeleton material.
+   Ported from the Omega Markets design kit (ui_kits/trading-app: the kit's
+   index.html `pf-fade` / `pf-shimmer` recipe + Portfolio.jsx skeleton).
+   Scoped to the portfolio route via CSS Modules so it consumes — never
+   edits — the shared globals.css utilities. Reduced-motion collapses both
+   animations to nothing, matching the kit's prefers-reduced-motion guard. */
+
+.fade {
+  animation: pf-fade 0.32s var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+@keyframes pf-fade {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Shimmer substrate for loading skeletons — the kit's `.pf-skel`. A muted
+   gradient swept across a 200% track so rows read as "loading", not empty. */
+.skel {
+  background: linear-gradient(
+    90deg,
+    var(--muted) 25%,
+    color-mix(in oklab, var(--muted) 55%, var(--card)) 37%,
+    var(--muted) 63%
+  );
+  background-size: 200% 100%;
+  animation: pf-shimmer 1.3s ease-in-out infinite;
+}
+
+@keyframes pf-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fade,
+  .skel {
+    animation: none;
+  }
+}

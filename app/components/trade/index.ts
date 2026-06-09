@@ -17,3 +17,10 @@ export {
   type PipelineStage,
   type ActiveStage,
 } from "./order-pipeline";
+export {
+  NumberTicker,
+  type NumberTickerProps,
+  MatchToast,
+  type MatchToastFill,
+  useLiveMidpoint,
+} from "./motion";

@@ -64,7 +64,7 @@ export function RequestAccessForm() {
   return (
     <Form {...form}>
       <form
-        className="grid gap-5 border border-[var(--border)] bg-[var(--background)] p-5 md:p-6"
+        className="grid gap-5"
         noValidate
         onSubmit={form.handleSubmit(onSubmit)}
       >

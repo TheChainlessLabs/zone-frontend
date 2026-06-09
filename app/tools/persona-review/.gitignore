@@ -1,7 +1,0 @@
-screenshots/
-runs.archive/
-runs/*/.runtime
-runs/*/.log
-runs/*/.last-message
-.tally.log
-.tally.last-message

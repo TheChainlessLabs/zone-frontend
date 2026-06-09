@@ -1,29 +1,57 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
-
-vi.mock("@/components/landing/scene/midpoint-singularity-scene", () => ({
-  MidpointSingularityScene: () => (
-    <div data-testid="midpoint-singularity-scene">Scene stand-in</div>
-  ),
-}));
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { scrollStates } from "@/components/landing/content";
 import { OrderScrollStory } from "@/components/landing/order-scroll-story";
 
+function mockReducedMotion(matches: boolean) {
+  Object.defineProperty(window, "matchMedia", {
+    configurable: true,
+    value: vi.fn().mockImplementation((query: string) => ({
+      matches,
+      media: query,
+      onchange: null,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    })),
+  });
+}
+
 afterEach(() => {
   cleanup();
+  vi.restoreAllMocks();
 });
 
 describe("OrderScrollStory", () => {
-  it("spaces each narrative state like a full scroll page", () => {
+  beforeEach(() => {
+    mockReducedMotion(false);
+  });
+
+  it("pins a tall scroll-story section that opens on the first state", () => {
     render(<OrderScrollStory />);
 
-    for (const state of scrollStates) {
-      const panel = screen.getByText(state.title).closest("article");
+    const section = document.querySelector("[data-scroll-story]");
+    expect(section).not.toBeNull();
+    expect(section?.getAttribute("id")).toBe("mechanism");
+    expect(section?.className).toContain("h-[416vh]");
 
-      expect(panel?.getAttribute("data-scroll-panel")).toBe(state.id);
-      expect(panel?.className).toContain("min-h-[110svh]");
-      expect(panel?.className).toContain("pt-[66svh]");
+    const first = scrollStates[0];
+    const eyebrow = document.querySelector(`[data-scroll-panel="${first.id}"]`);
+    expect(eyebrow?.textContent).toContain(first.label);
+    expect(screen.getByText(first.title)).toBeDefined();
+  });
+
+  it("renders a static stacked fallback for reduced-motion users", () => {
+    mockReducedMotion(true);
+
+    render(<OrderScrollStory />);
+
+    expect(screen.getByTestId("midpoint-singularity-reduced-motion")).toBeDefined();
+    for (const state of scrollStates) {
+      expect(screen.getByText(state.title)).toBeDefined();
     }
   });
 });

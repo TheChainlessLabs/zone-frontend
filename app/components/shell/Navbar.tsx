@@ -29,6 +29,7 @@ import { TransitionLink as Link } from "@/components/shell/transition-link";
 import { WalletStatus } from "@/components/shell/WalletStatus";
 import { Icon } from "@/lib/icons";
 import { cn } from "@/lib/utils";
+import { useSlidingIndicator } from "@/lib/use-sliding-indicator";
 
 const PRIMARY_TABS = [
   { href: "/trade", label: "Trade", icon: Icon.Trade },
@@ -43,50 +44,49 @@ function activeIndex(pathname: string): number {
   return idx === -1 ? 0 : idx;
 }
 
+// Module-level memory of the last active tab index. The navbar remounts on
+// every navigation (each route renders its own AppShell), so the component
+// itself can't tell a fresh load from an arrival via a tab click. This var
+// survives the remount within the JS session, letting the indicator slide
+// from the *previous* tab to the new one — while a fresh page load (null) or
+// a return from a subpage (same index) just places the pill with no slide.
+// Written only in a client effect; on the server it stays null.
+let lastActiveTab: number | null = null;
+
 export function Navbar() {
   const pathname = usePathname() ?? "";
   const active = activeIndex(pathname);
 
-  const navRef = React.useRef<HTMLElement>(null);
-  const [indicator, setIndicator] = React.useState<{
-    left: number;
-    width: number;
-  } | null>(null);
-  // Gate the slide transition so it only plays on a real tab switch — not on
-  // the initial placement. The indicator's first measured position is applied
-  // with `transition: none` (it just appears under the active tab); the flag
-  // flips true after that first commit so subsequent route changes animate.
-  // This also covers a remount on return from a subpage, where the component
-  // re-mounts with `animate` reset to false.
-  const [animate, setAnimate] = React.useState(false);
+  const { trackRef, pillRef, snap, slideFrom } = useSlidingIndicator(
+    '[data-nav-active="true"]',
+  );
 
-  // Measure the active tab's box and slide the indicator under it. Runs on
-  // mount and whenever the active route changes; a ResizeObserver keeps it
-  // aligned through viewport/font reflow. jsdom reports zero geometry, so
-  // tests simply render without a positioned indicator — labels and links
-  // (the asserted surface) are unaffected.
+  // Place the indicator under the active tab, sliding only when arriving from a
+  // *different* tab in the same session. The navbar remounts on navigation, so
+  // module-level `lastActiveTab` is what lets the pill slide across the remount;
+  // a fresh load (null) or a subpage return (same index) just snaps into place.
+  // Tabs are equal width, so the pill keeps a constant shape and only slides.
   React.useLayoutEffect(() => {
-    const nav = navRef.current;
+    const nav = trackRef.current;
     if (!nav) return;
 
-    const measure = () => {
-      const el = nav.querySelector<HTMLElement>('[data-nav-active="true"]');
-      if (!el) return;
-      setIndicator({ left: el.offsetLeft, width: el.offsetWidth });
-    };
+    const from =
+      lastActiveTab !== null && lastActiveTab !== active
+        ? nav.querySelector<HTMLElement>(`[data-nav-tab="${lastActiveTab}"]`)
+        : null;
+    lastActiveTab = active;
 
-    measure();
+    if (from) {
+      slideFrom(from.offsetLeft);
+    } else {
+      snap();
+    }
 
     if (typeof ResizeObserver === "undefined") return;
-    const ro = new ResizeObserver(measure);
+    const ro = new ResizeObserver(() => snap());
     ro.observe(nav);
     return () => ro.disconnect();
-  }, [active]);
-
-  // Enable the slide only after the first measured placement has painted.
-  React.useEffect(() => {
-    if (indicator) setAnimate(true);
-  }, [indicator]);
+  }, [active, trackRef, snap, slideFrom]);
 
   return (
     <header className="sticky top-3 z-40 grid grid-cols-[1fr_auto_1fr] items-center gap-4 px-4 md:px-8">
@@ -108,25 +108,19 @@ export function Navbar() {
         {/* Primary nav (desktop only) — segmented glass pill with a sliding
             active indicator. All labels visible at all times. */}
         <nav
-          ref={navRef}
+          ref={trackRef as React.RefObject<HTMLElement>}
           aria-label="Primary"
           className="glass-pill relative hidden w-[440px] items-center rounded-full p-1 md:inline-flex"
         >
-          {/* Sliding active indicator. Hidden until measured to avoid a
-              flash at the origin before geometry is known. */}
+          {/* Sliding active indicator — position + width are driven imperatively
+              by useSlidingIndicator (starts hidden until first placed). */}
           <span
+            ref={pillRef}
             aria-hidden
             className="pointer-events-none absolute bottom-1 top-1 rounded-full bg-[var(--foreground)]"
-            style={{
-              left: indicator?.left ?? 4,
-              width: indicator?.width ?? 0,
-              opacity: indicator ? 1 : 0,
-              transition: animate
-                ? "left var(--duration-medium) var(--ease-out), width var(--duration-medium) var(--ease-out), opacity var(--duration-small) var(--ease-out)"
-                : "none",
-            }}
+            style={{ left: 0, width: 0, opacity: 0 }}
           />
-          {PRIMARY_TABS.map((tab) => {
+          {PRIMARY_TABS.map((tab, i) => {
             const isActive = pathname.startsWith(tab.href);
             const TabIcon = tab.icon;
             return (
@@ -134,6 +128,7 @@ export function Navbar() {
                 key={tab.href}
                 href={tab.href}
                 data-nav-active={isActive}
+                data-nav-tab={i}
                 aria-label={tab.label}
                 aria-current={isActive ? "page" : undefined}
                 className={cn(

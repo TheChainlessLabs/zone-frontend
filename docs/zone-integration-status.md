@@ -1,5 +1,23 @@
 # Zone Integration Status (omega-interface ↔ omega-zone, zone 35)
 
+## LOOP RESULT — stopped after it4 (only blocked/wallet-gated items remain)
+**Wired✓ (independent-checker verified, via the proxy + rendered UI):**
+- `zone_listBatches` + **batches explorer** → live-empty (it2).
+- `zone_getTopOfBook` + `zone_getMidpointHistory` + **trade live midpoint/chart**, wallet-free (it4).
+- `zone_getMarketConfig` works (trade uses the pinned pair); `zone_getReferencePrice` works but is `enabled:false` on this zone (trade shows the midpoint).
+
+**Blocked — each needs YOU (a key / a decision / a backend PR):**
+1. **Owner-scoped + portfolio** (`getMyOrders/Fills/Transfers`, `getOrder`, `getAuthorizationTokenInfo`, balances) — `blocked:needs-wallet`. Wired through the private-rpc route; need a **test Tempo wallet** to sign the zone auth token to verify end-to-end. Order placement / deposit / withdraw (writes) also need a funded wallet.
+2. **Batch detail/search** (`getBatch`/`searchBatch`) — `blocked:backend`: `-32602 query exceeds max block range 100000` (scans L1 from the 3.2M-block anchor). Needs an **omega-zone PR** (range-bounded scan / indexer). FE already wired.
+3. **`getZoneInfo`** — `blocked:WIP-container` (present in main; the synced container is the WIP build). Resolves when the **patched-main binary** runs on synced data.
+
+**Follow-ups (frontend, non-blocking):** `/trade` intermittently redirects to `/` while disconnected (investigate a wallet-state route guard); batches ExplorerHeader shows a static "sealing #N" label on live-empty.
+
+Branch `brian/zone-integration` (4 commits). Not pushed; no PR (awaiting Brian's OK).
+
+---
+
+
 Spine for the `/loop` integration task. Source of truth for progress — read first
 every iteration; update the row after the checker verdict. Never mark `wired✓`
 without separate-checker evidence.

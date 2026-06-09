@@ -12,7 +12,6 @@
 
 import * as React from "react";
 
-import { AppShell } from "@/components/shell/AppShell";
 import { Icon } from "@/lib/icons";
 import { accountFixtures } from "@/lib/fixtures";
 import type { AccountZoneFixture } from "@/lib/fixtures/types";
@@ -453,11 +452,7 @@ export default function AccountPage() {
   // No full-page connect gate — SettingsContent renders read-only while
   // disconnected (it falls back to placeholder identity). The Tempo wallet
   // connect is a modal popup from the Navbar (WalletStatus).
-  return (
-    <AppShell route="/account" auth>
-      <SettingsContent wallet={wallet} />
-    </AppShell>
-  );
+  return <SettingsContent wallet={wallet} />;
 }
 
 /* ─────────────────── SettingsContent (kit port) ─── */

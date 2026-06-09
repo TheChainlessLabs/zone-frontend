@@ -1,6 +1,5 @@
 import { Suspense } from "react";
 
-import { AppShell } from "@/components/shell/AppShell";
 import { BatchDetailView } from "../_components/batch-detail-view";
 
 /**
@@ -20,10 +19,8 @@ export default function BatchDetailPage({
   params: { id: string };
 }) {
   return (
-    <AppShell route="/batches">
-      <Suspense fallback={null}>
-        <BatchDetailView id={params.id} />
-      </Suspense>
-    </AppShell>
+    <Suspense fallback={null}>
+      <BatchDetailView id={params.id} />
+    </Suspense>
   );
 }

@@ -20,7 +20,7 @@ vi.mock("@/components/shell/WalletStateProvider", () => ({
     `${address.slice(0, 6)}…${address.slice(-4).toUpperCase()}`,
 }));
 
-import AccountPage from "@/app/account/page";
+import AccountPage from "@/app/(app)/account/page";
 
 afterEach(() => {
   cleanup();

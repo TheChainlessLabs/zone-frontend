@@ -33,7 +33,6 @@ import {
   useWalletClient,
 } from "wagmi";
 
-import { AppShell } from "@/components/shell/AppShell";
 import { PageLayout } from "@/components/shell/PageLayout";
 import { DisconnectedState } from "@/components/DisconnectedState";
 import {
@@ -526,13 +525,11 @@ export default function PortfolioPage() {
   // Disconnected short-circuits — the page is auth-gated.
   if (state === "disconnected") {
     return (
-      <AppShell route="/portfolio" auth>
-        <DisconnectedState
-          title="Portfolio is private."
-          description="Connect Tempo Wallet to see your balances, positions, and history."
-          onAction={() => {}}
-        />
-      </AppShell>
+      <DisconnectedState
+        title="Portfolio is private."
+        description="Connect Tempo Wallet to see your balances, positions, and history."
+        onAction={() => {}}
+      />
     );
   }
 
@@ -581,7 +578,7 @@ export default function PortfolioPage() {
     liveError ?? portfolioFixtures.error.error?.message ?? "Portfolio unavailable.";
 
   return (
-    <AppShell route="/portfolio" auth>
+    <>
       <PageLayout width="wide" bare>
         {isError ? <ErrorBand message={errorMessage} /> : null}
 
@@ -626,7 +623,7 @@ export default function PortfolioPage() {
         onSubmit={(values) => void handleWithdraw(values)}
         onRetry={handleWithdrawRetry}
       />
-    </AppShell>
+    </>
   );
 }
 

@@ -34,7 +34,6 @@ import {
   useWalletClient,
 } from "wagmi";
 
-import { AppShell } from "@/components/shell/AppShell";
 import { PageLayout } from "@/components/shell/PageLayout";
 import { DisconnectedState } from "@/components/DisconnectedState";
 import { Animate } from "@/components/ui/animate";
@@ -98,11 +97,7 @@ const ZONE_PAIR: LaunchPair = {
 const ZONE_PAIRS = [ZONE_PAIR];
 
 export default function TradePage() {
-  return (
-    <AppShell route="/trade" auth>
-      <TradeSurface />
-    </AppShell>
-  );
+  return <TradeSurface />;
 }
 
 function TradeSurface() {

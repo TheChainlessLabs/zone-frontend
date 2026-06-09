@@ -44,49 +44,35 @@ function activeIndex(pathname: string): number {
   return idx === -1 ? 0 : idx;
 }
 
-// Module-level memory of the last active tab index. The navbar remounts on
-// every navigation (each route renders its own AppShell), so the component
-// itself can't tell a fresh load from an arrival via a tab click. This var
-// survives the remount within the JS session, letting the indicator slide
-// from the *previous* tab to the new one — while a fresh page load (null) or
-// a return from a subpage (same index) just places the pill with no slide.
-// Written only in a client effect; on the server it stays null.
-let lastActiveTab: number | null = null;
-
 export function Navbar() {
   const pathname = usePathname() ?? "";
   const active = activeIndex(pathname);
 
-  const { trackRef, pillRef, snap, slideFrom } = useSlidingIndicator(
-    '[data-nav-active="true"]',
-  );
+  const { trackRef, pillRef, snap, slideFrom, currentLeft } =
+    useSlidingIndicator('[data-nav-active="true"]');
+  const firstRef = React.useRef(true);
 
-  // Place the indicator under the active tab, sliding only when arriving from a
-  // *different* tab in the same session. The navbar remounts on navigation, so
-  // module-level `lastActiveTab` is what lets the pill slide across the remount;
-  // a fresh load (null) or a subpage return (same index) just snaps into place.
-  // Tabs are equal width, so the pill keeps a constant shape and only slides.
+  // Identical to the order-mode toggle: snap into place on first mount, slide
+  // on a real tab change. The navbar now lives in the persistent (app) layout,
+  // so it stays mounted across navigations and the slide plays in place. A
+  // subpage return keeps the same active index, so the effect doesn't re-run.
   React.useLayoutEffect(() => {
-    const nav = trackRef.current;
-    if (!nav) return;
-
-    const from =
-      lastActiveTab !== null && lastActiveTab !== active
-        ? nav.querySelector<HTMLElement>(`[data-nav-tab="${lastActiveTab}"]`)
-        : null;
-    lastActiveTab = active;
-
-    if (from) {
-      slideFrom(from.offsetLeft);
-    } else {
+    if (firstRef.current) {
+      firstRef.current = false;
       snap();
+      return;
     }
+    slideFrom(currentLeft());
+  }, [active, snap, slideFrom, currentLeft]);
 
-    if (typeof ResizeObserver === "undefined") return;
+  // Keep the indicator aligned through viewport/font reflow (no motion).
+  React.useEffect(() => {
+    const track = trackRef.current;
+    if (!track || typeof ResizeObserver === "undefined") return;
     const ro = new ResizeObserver(() => snap());
-    ro.observe(nav);
+    ro.observe(track);
     return () => ro.disconnect();
-  }, [active, trackRef, snap, slideFrom]);
+  }, [trackRef, snap]);
 
   return (
     <header className="sticky top-3 z-40 grid grid-cols-[1fr_auto_1fr] items-center gap-4 px-4 md:px-8">
@@ -120,7 +106,7 @@ export function Navbar() {
             className="pointer-events-none absolute bottom-1 top-1 rounded-full bg-[var(--foreground)]"
             style={{ left: 0, width: 0, opacity: 0 }}
           />
-          {PRIMARY_TABS.map((tab, i) => {
+          {PRIMARY_TABS.map((tab) => {
             const isActive = pathname.startsWith(tab.href);
             const TabIcon = tab.icon;
             return (
@@ -128,7 +114,6 @@ export function Navbar() {
                 key={tab.href}
                 href={tab.href}
                 data-nav-active={isActive}
-                data-nav-tab={i}
                 aria-label={tab.label}
                 aria-current={isActive ? "page" : undefined}
                 className={cn(

@@ -31,8 +31,8 @@ so surfaces render live public data while disconnected; keep owner-scoped reads 
 | `zone_getMidpointHistory` | public | pending | handlers.rs:1613 | curl needs `[{base,quote}, interval, limit?, cursor?]` | FE `rpc.ts:1286`. Drives the trade chart. |
 | `zone_getZoneInfo` | public? | pending | handlers.rs:1488 `zone_get_zone_info(auth)` | "Method not found" on WIP container (present in main) | WIP-container gap; works once main binary runs. FE `rpc.ts:163` (auth-gated). |
 | `zone_listBatches` | public | **wired✓** | handlers.rs:1943 (container overrides default) | CHECKER (it2): proxy → `{batches:[]}`; /batches renders 0 rows + "No zone batches yet" + StatStrip "Batches today 0 · 0.00M", no synthetic rows over 13s | FE `rpc.ts:1219 listZoneBatches`. Map: `BatchListResponse{batches:BatchSummary[]}` → `BatchFixture[]` via `zoneBatchToFixture`; live-empty `{batches:[]}` → empty rows + 0 stats (NOT demo). |
-| `zone_searchBatch` | public | pending | handlers.rs:213 `zone_search_batch(query)` | not tested | FE rpc.ts: NOT YET. Batches search. |
-| `zone_getBatch` | public | pending | handlers.rs:1934 `zone_get_batch(n)` | not tested | FE `rpc.ts:1243`. Batch detail. |
+| `zone_searchBatch` | public | **blocked:backend** | handlers.rs `zone_search_batch(query)` | it3 curl: `-32602 "query exceeds max block range 100000"` | Backend scans L1 from the 3.2M-block-old anchor → exceeds range cap. FE `searchZoneBatch` (rpc.ts:1250) wired; needs omega-zone fix (range-bounded scan / indexer). |
+| `zone_getBatch` | public | **blocked:backend** | handlers.rs `zone_get_batch(n)` | it3 curl `["4821"]`: `-32602 "query exceeds max block range 100000"` | Same block-range cause. FE `getZoneBatch` (rpc.ts:1237) wired (passes `toBatchNumberHex` string). Detail view falls back to demo on this error (acceptable until backend fixed). |
 | `zone_getDepositStatus` | public | pending | handlers.rs:1506 `zone_get_deposit_status(block,auth)` | not tested | FE `rpc.ts:178`. Deposit tracking. |
 | `zone_getWithdrawalStatus` | public | pending | handlers.rs:1185 | not tested | FE `rpc.ts:1212`. |
 | `zone_getMyOrders` | private | blocked:needs-wallet | handlers.rs:1031 `zone_get_my_orders(query,auth)` | — | owner-filtered by auth token; needs wallet-signed token. |
@@ -47,10 +47,14 @@ so surfaces render live public data while disconnected; keep owner-scoped reads 
 | trade live market (pair/price/midpoint) | pending | needs wallet-free public reads (marketConfig + referencePrice + midpointHistory). |
 | portfolio (balances/orders/fills) | blocked:needs-wallet | owner-scoped (private RPC + auth token). |
 | batches explorer (list) | **wired✓ (live-empty)** | it2 CHECKER PASS: default /batches renders live-empty from `zone_listBatches` (demo only on unreachable-fallback via `usingFallback`). Follow-up: ExplorerHeader still shows a static "sealing #48,202 ~9s" countdown on live-empty — park it on real-live. `getBatch`/`searchBatch` param-sensitive, detail surface still pending. |
-| batches detail (getBatch/searchBatch) | pending | `zone_getBatch` wants `[batchNumber]`; `zone_searchBatch` block-range-sensitive. Detail view + search wiring next. |
+| batches detail (getBatch/searchBatch) | **blocked:backend** | it3: both error `-32602 query exceeds max block range 100000` on this container (L1 scan from the 3.2M-block anchor). FE is already wired (`getZoneBatch`/`searchZoneBatch`); detail view demo-falls-back on the error. Verify live once the backend bounds the scan / adds an indexer. Needs an **omega-zone PR** (range-bounded batch lookup). |
 
 ## Writes (later, needs funded wallet)
 - order placement (`eth_sendRawTransaction` → darkpool), deposit/withdraw + status polling. Path exists in `requests.ts`; never fake.
+
+## Backend issues to PR (omega-zone) — do NOT hack inline
+- **Block-range cap on batch lookups (it3):** `zone_getBatch` / `zone_searchBatch` return `-32602 "query exceeds max block range 100000"` because they scan L1 from the zone's anchor (~3.2M blocks back). Needs a range-bounded scan or an indexer so batch detail/search can serve live. Frontend is already wired; blocked on this.
+- **WIP container vs main:** the synced container is the WIP build — `zone_getZoneInfo` is "Method not found" (present in main). Resolves when the patched-main binary runs on synced data.
 
 ## Decisions needed from Brian
 - A **test Tempo wallet** (connect + sign zone auth token) is required to verify any owner-scoped / wallet-gated surface end-to-end. Without it, those stay `blocked:needs-wallet`.

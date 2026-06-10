@@ -17,3 +17,4 @@ storybook-static/
 !.env.example
 .claude/
 tasks/
+.secrets/

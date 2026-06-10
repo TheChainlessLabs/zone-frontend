@@ -20,7 +20,7 @@
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
-import type { LaunchPair } from "@/lib/fixtures/pairs";
+import type { LaunchPair } from "@/lib/pairs";
 
 import { NumberTicker } from "./motion";
 

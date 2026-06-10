@@ -34,16 +34,13 @@ import type {
   FillFixture,
   OrderFixture,
   PortfolioFixture,
-} from "@/lib/fixtures/types";
+} from "@/lib/view-types";
 
 import styles from "./portfolio.module.css";
 
 /* ────────────────────────────────────────────────────────────────────────── */
 /*  Constants + helpers                                                       */
 /* ────────────────────────────────────────────────────────────────────────── */
-
-const TIMEFRAMES = ["1H", "1D", "1W", "1M", "1Y", "All"] as const;
-type Timeframe = (typeof TIMEFRAMES)[number];
 
 type PortfolioTab = "overview" | "tokens" | "orders" | "activity";
 
@@ -71,16 +68,6 @@ function formatGroup(value: string | number): string {
 }
 
 const fmt2 = (n: number) => formatGroup(n.toFixed(2));
-
-function fmtSignedUsd(n: number): string {
-  const sign = n > 0 ? "+" : n < 0 ? "−" : "";
-  return `${sign}${fmt2(Math.abs(n))}`;
-}
-
-function fmtSignedPct(n: number): string {
-  const sign = n > 0 ? "+" : n < 0 ? "−" : "";
-  return `${sign}${Math.abs(n).toFixed(1)}%`;
-}
 
 /** Time portion of an ISO timestamp — deterministic across SSR/CSR. */
 function formatTime(iso: string): string {
@@ -181,33 +168,13 @@ function deriveActivity(fixture: PortfolioFixture): ActivityRow[] {
 }
 
 /**
- * Deterministic 30-point value curve seeded off the current total. Chart
- * chrome only — there is no price-history backend in v1. No randomness, no
- * wall-clock; the last point is pinned to the real total so the hero number
- * agrees with the curve.
+ * Flat 30-point baseline pinned at the current total. There is no
+ * portfolio-value history backend in v1, so the hero chart is a neutral flat
+ * line — NEVER a fabricated trend or % change. Real history can replace this
+ * once the zone indexes it.
  */
-function syntheticTrend(total: number, points = 30, amp = 0.045): number[] {
-  if (total <= 0) return Array.from({ length: points }, () => 0);
-  const seed = Math.floor(total) || 1;
-  const out: number[] = [];
-  for (let i = 0; i < points; i++) {
-    const t = i / (points - 1);
-    const a = Math.sin((seed % 13) + i * 0.42);
-    const b = Math.cos((seed % 7) + i * 0.18);
-    const drift = total * (1 - amp + amp * 2 * t);
-    const wobble = total * amp * (a * 0.5 + b * 0.3) * 0.4;
-    out.push(drift + wobble);
-  }
-  out[out.length - 1] = total;
-  return out;
-}
-
-function deriveDelta(trend: number[]) {
-  const last = trend[trend.length - 1] ?? 0;
-  const first = trend[0] ?? last;
-  const absolute = last - first;
-  const percent = first !== 0 ? (absolute / first) * 100 : 0;
-  return { absolute, percent, up: absolute >= 0 };
+function flatBaseline(total: number, points = 30): number[] {
+  return Array.from({ length: points }, () => Math.max(total, 0));
 }
 
 /* ────────────────────────────────────────────────────────────────────────── */
@@ -495,9 +462,8 @@ function ValueLede({
   totalLabel: string;
   trend: number[];
 }) {
-  const [tf, setTf] = React.useState<Timeframe>("1M");
-  const delta = deriveDelta(trend);
-  const tone = delta.up ? "var(--success)" : "var(--destructive)";
+  // No portfolio-value history backend in v1 → no % change, no timeframe
+  // switching, and a neutral flat baseline. Honest, never a fabricated trend.
   return (
     <div className="flex flex-col gap-[18px]">
       <div className="flex flex-col gap-1.5">
@@ -512,57 +478,12 @@ function ValueLede({
             PATH.USD
           </span>
         </div>
-        <div className="flex items-center gap-2">
-          {delta.up ? (
-            <Icon.Buy size={14} aria-hidden style={{ color: tone }} />
-          ) : (
-            <Icon.Sell size={14} aria-hidden style={{ color: tone }} />
-          )}
-          <span
-            className="font-mono text-[13px] tabular-nums"
-            style={{ color: tone }}
-          >
-            {fmtSignedUsd(delta.absolute)} ({fmtSignedPct(delta.percent)})
-          </span>
-          <span className="font-mono text-xs uppercase tracking-[0.1em] text-[var(--muted-foreground)]">
-            · 30d
-          </span>
-        </div>
+        <span className="font-mono text-xs uppercase tracking-[0.1em] text-[var(--muted-foreground)]">
+          Live balance · value history coming soon
+        </span>
       </div>
-      <div
-        role="img"
-        aria-label={`Portfolio value over 30 days, current ${totalLabel} PATH.USD`}
-      >
-        <AreaChart data={trend} tone={tone} />
-      </div>
-      <div
-        role="tablist"
-        aria-label="Chart range"
-        className="inline-flex gap-0.5 self-start rounded-full border border-[var(--border)] p-1"
-        style={{
-          background: "color-mix(in oklab, var(--muted) 55%, var(--card))",
-        }}
-      >
-        {TIMEFRAMES.map((t) => {
-          const active = tf === t;
-          return (
-            <button
-              key={t}
-              type="button"
-              role="tab"
-              aria-selected={active}
-              onClick={() => setTf(t)}
-              className={cn(
-                "press-down inline-flex h-7 min-w-[40px] items-center justify-center rounded-full px-3 font-mono text-[11px] tracking-[0.08em] transition-colors",
-                active
-                  ? "bg-[var(--foreground)] text-[var(--background)]"
-                  : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]",
-              )}
-            >
-              {t}
-            </button>
-          );
-        })}
+      <div role="img" aria-label={`Portfolio total ${totalLabel} PATH.USD`}>
+        <AreaChart data={trend} tone="var(--muted-foreground)" />
       </div>
     </div>
   );
@@ -1228,7 +1149,7 @@ export function PortfolioView({
     () => parseNum(fixture.totalValueUSD),
     [fixture.totalValueUSD],
   );
-  const trend = React.useMemo(() => syntheticTrend(total), [total]);
+  const trend = React.useMemo(() => flatBaseline(total), [total]);
   const totalLabel = fixture.totalValueUSD || fmt2(total);
 
   return (

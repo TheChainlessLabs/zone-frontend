@@ -1,20 +1,15 @@
 /**
- * /batches view tests — design-kit settlement explorer.
+ * /batches view tests — live settlement explorer (zone RPC only).
  *
- * These tests guard the behaviour + privacy contract that survives the kit
- * port: every `?state=` variant resolves, the privacy hard rule holds (no
- * counterparty addresses, no individual fill IDs, no order IDs), the live
- * heartbeat indicator is present, and the lifecycle deep-link anchors stay
- * addressable. Design-codifying assertions follow the ported kit
- * (`Settlement explorer` header, `Recent batches` table, `Submitted →
- * Proven → Settled` lifecycle, `#1,234` batch ids).
+ * The demo-fixture system and the `?state=` toggle were removed: these surfaces
+ * render LIVE zone data exclusively. Every state (populated / empty / error /
+ * no-results / not-found) is driven here by the mocked zone JSON-RPC. The tests
+ * guard the rendered shape, the honest non-data states, and the privacy hard
+ * rule (no counterparty, no order/fill IDs, no owner).
  */
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
-
-import { batchesDetailFixtures, batchesListFixtures } from "@/lib/fixtures";
-import type { BatchFixture } from "@/lib/fixtures/types";
 
 afterEach(() => {
   cleanup();
@@ -24,153 +19,150 @@ afterEach(() => {
 // next/navigation hooks aren't initialised under jsdom — stub them so the
 // "use client" components render.
 function mockSearchParams(entries: Record<string, string> = {}) {
-  vi.doMock("next/navigation", () => {
-    return {
-      useSearchParams: () => new URLSearchParams(entries),
-      usePathname: () => "/batches",
-      useRouter: () => ({
-        push: () => {},
-        replace: () => {},
-        prefetch: () => {},
-        back: () => {},
-        forward: () => {},
-        refresh: () => {},
-      }),
-    };
+  vi.doMock("next/navigation", () => ({
+    useSearchParams: () => new URLSearchParams(entries),
+    usePathname: () => "/batches",
+    useRouter: () => ({
+      push: () => {},
+      replace: () => {},
+      prefetch: () => {},
+      back: () => {},
+      forward: () => {},
+      refresh: () => {},
+    }),
+  }));
+}
+
+// A zone batch summary as the public RPC returns it (see ZoneBatchSummary).
+function mkZoneBatch(
+  number: number,
+  status: "verified" | "pending" | "failed" = "verified",
+) {
+  const sealed = 1_700_000_000;
+  return {
+    batchNumber: String(number),
+    tempoBlockNumber: "1",
+    root: `0x${"ab".repeat(32)}`,
+    prevBlockHash: `0x${"cd".repeat(32)}`,
+    nextBlockHash: `0x${"ef".repeat(32)}`,
+    status,
+    sealedAt: String(sealed),
+    settledAt: status === "verified" ? String(sealed + 120) : null,
+    orderCount: 12,
+    fillCount: 9,
+    aggregatePairs: ["OALPHA/PATH.USD"],
+    aggregateVolume: [],
+    settlementTxHash:
+      status === "pending" ? null : `0x${"12".repeat(32)}`,
+    proofRef: status === "verified" ? `0x${"34".repeat(32)}` : undefined,
+  };
+}
+
+type RpcConfig = {
+  list?: unknown[];
+  listThrows?: boolean;
+  detail?: unknown | null;
+  detailThrows?: boolean;
+  search?: unknown | null;
+};
+
+function json(result: unknown) {
+  return new Response(JSON.stringify({ result }), {
+    status: 200,
+    headers: { "content-type": "application/json" },
   });
 }
 
-async function renderList(entries: Record<string, string> = {}) {
-  mockSearchParams(entries);
-  mockBatchRpc();
-  vi.resetModules();
-  const mod = await import("../batches-list-view");
-  const result = render(<mod.BatchesListView />);
-  if (!entries.state) {
-    await waitFor(() => {
-      if (entries.search) {
-        expect(screen.queryByText(/No batches match/)).not.toBeNull();
-        return;
-      }
-      // Live indicator only paints once the live default rows resolve.
-      expect(screen.getByLabelText("Live · Ethereum L1")).toBeDefined();
-    });
-  }
-  return result;
-}
-
-async function renderDetail(id: string, entries: Record<string, string> = {}) {
-  mockSearchParams(entries);
-  mockBatchRpc();
-  vi.resetModules();
-  const mod = await import("../batch-detail-view");
-  const result = render(<mod.BatchDetailView id={id} />);
-  if (!entries.state) {
-    await waitFor(() => {
-      expect(
-        screen.getByRole("heading", { level: 1, name: `#${formatId(id)}` }),
-      ).toBeDefined();
-    });
-  }
-  return result;
-}
-
-function formatId(id: string): string {
-  return /^\d+$/.test(id)
-    ? Number(id).toLocaleString("en-US")
-    : id;
-}
-
-function mockBatchRpc() {
+function mockBatchRpc(cfg: RpcConfig = {}) {
   const fetchMock = vi.fn(async (_url: string, init?: RequestInit) => {
     const body = JSON.parse(String(init?.body ?? "{}")) as {
       method?: string;
       params?: unknown[];
     };
-    const batches = batchesListFixtures.default.batches.map(toZoneBatch);
-    const detailBatch = toZoneBatch(batchesDetailFixtures.verified.batch);
-    const result =
-      body.method === "zone_listBatches"
-        ? { batches, nextCursor: null }
-        : body.method === "zone_getBatch"
-          ? detailBatch
-          : body.method === "zone_searchBatch"
-            ? String(body.params?.[0] ?? "") === "0xdead"
-              ? null
-              : detailBatch
-            : null;
-    return new Response(JSON.stringify({ result }), {
-      status: 200,
-      headers: { "content-type": "application/json" },
-    });
+    if (body.method === "zone_listBatches") {
+      if (cfg.listThrows) return new Response("boom", { status: 500 });
+      return json({ batches: cfg.list ?? [], nextCursor: null });
+    }
+    if (body.method === "zone_getBatch") {
+      if (cfg.detailThrows) return new Response("boom", { status: 500 });
+      return json(cfg.detail ?? null);
+    }
+    if (body.method === "zone_searchBatch") {
+      return json(cfg.search ?? null);
+    }
+    return json(null);
   });
   vi.stubGlobal("fetch", fetchMock);
 }
 
-function toZoneBatch(batch: BatchFixture) {
-  const sealedAtSeconds = Math.floor(new Date(batch.sealedAt).getTime() / 1000);
-  return {
-    batchNumber: String(batch.number),
-    tempoBlockNumber: "1",
-    root: batch.root,
-    prevBlockHash: batch.root,
-    nextBlockHash: batch.root,
-    status:
-      batch.status === "verified"
-        ? "verified"
-        : batch.status === "failed"
-          ? "failed"
-          : "pending",
-    sealedAt: String(sealedAtSeconds),
-    settledAt: String(sealedAtSeconds + 120),
-    orderCount: batch.orderCount,
-    fillCount: batch.fillCount,
-    aggregatePairs: ["OALPHA/PATH.USD"],
-    aggregateVolume: [],
-    settlementTxHash:
-      batch.settlementTx ??
-      "0x0000000000000000000000000000000000000000000000000000000000000000",
-    proofRef: batch.proofRef,
-  };
+async function renderList(cfg: RpcConfig = {}, entries: Record<string, string> = {}) {
+  mockSearchParams(entries);
+  mockBatchRpc(cfg);
+  vi.resetModules();
+  const mod = await import("../batches-list-view");
+  return render(<mod.BatchesListView />);
 }
 
-describe("BatchesListView", () => {
+async function renderDetail(
+  id: string,
+  cfg: RpcConfig = {},
+  entries: Record<string, string> = {},
+) {
+  mockSearchParams(entries);
+  mockBatchRpc(cfg);
+  vi.resetModules();
+  const mod = await import("../batch-detail-view");
+  return render(<mod.BatchDetailView id={id} />);
+}
+
+describe("BatchesListView (live)", () => {
   it("renders the explorer header + recent-batches section", async () => {
-    await renderList();
-    expect(
-      screen.getByRole("heading", { level: 1, name: "Settlement explorer" }),
-    ).toBeDefined();
+    await renderList({ list: [mkZoneBatch(4821)] });
+    await waitFor(() =>
+      expect(
+        screen.getByRole("heading", { level: 1, name: "Settlement explorer" }),
+      ).toBeDefined(),
+    );
     expect(
       screen.getByRole("heading", { level: 2, name: "Recent batches" }),
     ).toBeDefined();
   });
 
-  it("renders the live Ethereum L1 heartbeat indicator", async () => {
-    await renderList();
-    expect(screen.getByLabelText("Live · Ethereum L1")).toBeDefined();
+  it("renders the live Ethereum L1 indicator", async () => {
+    await renderList({ list: [mkZoneBatch(4821)] });
+    await waitFor(() =>
+      expect(screen.getByLabelText("Live · Ethereum L1")).toBeDefined(),
+    );
   });
 
   it("surfaces the search affordance", async () => {
-    await renderList();
-    expect(screen.getByLabelText("Search batches")).toBeDefined();
+    await renderList({ list: [mkZoneBatch(4821)] });
+    await waitFor(() =>
+      expect(screen.getByLabelText("Search batches")).toBeDefined(),
+    );
   });
 
   it("renders batch ids in the kit's #-prefixed grouped form", async () => {
-    const { container } = await renderList();
-    const text = container.textContent ?? "";
-    // The verified default fixture seals batch #4,821 at the top.
-    expect(text).toContain("#4,821");
+    const { container } = await renderList({ list: [mkZoneBatch(4821)] });
+    await waitFor(() =>
+      expect(container.textContent ?? "").toContain("#4,821"),
+    );
   });
 
-  it("never surfaces individual fill IDs or order IDs on the list", async () => {
-    const { container } = await renderList();
-    const text = container.textContent ?? "";
-    expect(text.toLowerCase()).not.toContain("owner");
+  it("never surfaces individual fill IDs or order IDs (no 'owner')", async () => {
+    const { container } = await renderList({ list: [mkZoneBatch(4821)] });
+    await waitFor(() =>
+      expect((container.textContent ?? "").toLowerCase()).not.toContain(
+        "owner",
+      ),
+    );
   });
 
-  it("empty state follows voice rule [what happened] [what to do next]", async () => {
-    await renderList({ state: "empty" });
-    expect(screen.getByText("No zone batches yet.")).toBeDefined();
+  it("empty zone → honest empty state (no demo batches)", async () => {
+    await renderList({ list: [] });
+    await waitFor(() =>
+      expect(screen.getByText("No zone batches yet.")).toBeDefined(),
+    );
     expect(
       screen.getByText(
         "Check back after the zone produces its first block range.",
@@ -178,33 +170,33 @@ describe("BatchesListView", () => {
     ).toBeDefined();
   });
 
-  it("error state shows the recovery hint and a Retry button", async () => {
-    await renderList({ state: "error" });
-    expect(screen.getByText("Failed to load batches.")).toBeDefined();
+  it("unreachable zone → error state with a Retry button (no demo fallback)", async () => {
+    await renderList({ listThrows: true });
+    await waitFor(() =>
+      expect(screen.getByText("Failed to load batches.")).toBeDefined(),
+    );
     expect(screen.getByText("Refresh to retry.")).toBeDefined();
-    expect(screen.getByRole("button", { name: "Retry" })).toBeDefined();
-  });
-
-  it("Button primitive carries the press-down baseline", async () => {
-    await renderList({ state: "error" });
     const retry = screen.getByRole("button", { name: "Retry" });
     expect(retry.className).toMatch(/(^|\s)press-down(\s|$)/);
   });
 
   it("search-no-results echoes the query and offers next steps", async () => {
-    await renderList({ search: "0xdead" });
-    expect(screen.getByText('No batches match "0xdead".')).toBeDefined();
+    await renderList({ search: null }, { search: "0xdead" });
+    await waitFor(() =>
+      expect(screen.getByText('No batches match "0xdead".')).toBeDefined(),
+    );
     expect(screen.getByText("Try a different ID or hash.")).toBeDefined();
   });
 });
 
-describe("BatchDetailView", () => {
+describe("BatchDetailView (live)", () => {
   it("renders the identity header with batch number, status, and privacy note", async () => {
-    await renderDetail("4821");
-    expect(
-      screen.getByRole("heading", { level: 1, name: "#4,821" }),
-    ).toBeDefined();
-    // The verified end state renders the kit's `Settled` label.
+    await renderDetail("4821", { detail: mkZoneBatch(4821, "verified") });
+    await waitFor(() =>
+      expect(
+        screen.getByRole("heading", { level: 1, name: "#4,821" }),
+      ).toBeDefined(),
+    );
     expect(screen.getAllByText("Settled").length).toBeGreaterThan(0);
     expect(
       screen.getByText(/Counterparties are never revealed/i),
@@ -212,49 +204,28 @@ describe("BatchDetailView", () => {
   });
 
   it("renders the Submitted → Proven → Settled lifecycle stepper", async () => {
-    await renderDetail("4821");
-    expect(screen.getByText("Submitted")).toBeDefined();
+    await renderDetail("4821", { detail: mkZoneBatch(4821, "verified") });
+    await waitFor(() => expect(screen.getByText("Submitted")).toBeDefined());
     expect(screen.getByText("Proven")).toBeDefined();
     expect(screen.getAllByText("Settled").length).toBeGreaterThan(0);
   });
 
   it("renders the Overview sidebar and Pairs-in-batch distribution", async () => {
-    await renderDetail("4821");
-    expect(screen.getByText("Overview")).toBeDefined();
+    await renderDetail("4821", { detail: mkZoneBatch(4821, "verified") });
+    await waitFor(() => expect(screen.getByText("Overview")).toBeDefined());
     expect(
       screen.getByRole("heading", { level: 2, name: "Pairs in batch" }),
     ).toBeDefined();
   });
 
-  it("pending detail surfaces a pending settlement tx", async () => {
-    await renderDetail("4818", { state: "detail-pending" });
-    // No settlement tx on a pending batch → the L1 row reads pending.
-    expect(screen.getAllByText("pending").length).toBeGreaterThan(0);
-    // The Pending status label renders in both the header and the Overview.
-    expect(screen.getAllByText("Pending").length).toBeGreaterThan(0);
-  });
-
-  it("failed detail surfaces the failure reason", async () => {
-    await renderDetail("4795", { state: "detail-failed" });
-    expect(
-      screen.getAllByText(/Settlement reverted on L1/i).length,
-    ).toBeGreaterThan(0);
-  });
-
-  it("loading state renders the detail skeleton instead of batch content", async () => {
-    const { container } = await renderDetail("4821", { state: "loading" });
-    expect(
-      screen.queryByRole("heading", { level: 1, name: "#4,821" }),
-    ).toBeNull();
-    expect(container.querySelector('[aria-hidden="true"]')).not.toBeNull();
-  });
-
-  it("empty state follows the not-found copy register", async () => {
-    await renderDetail("9999", { state: "empty" });
-    expect(screen.getByText("Batch not found.")).toBeDefined();
+  it("missing batch → honest not-found state (no demo fixture)", async () => {
+    await renderDetail("9999", { detail: null });
+    await waitFor(() =>
+      expect(screen.getByText("Batch not found.")).toBeDefined(),
+    );
     expect(
       screen.getByText(
-        "The route you tried doesn't exist. Head back to /batches.",
+        "No batch matches this identifier. Head back to /batches.",
       ),
     ).toBeDefined();
     expect(
@@ -262,34 +233,24 @@ describe("BatchDetailView", () => {
     ).toBeDefined();
   });
 
-  it("error state shows the recovery hint and a Retry button", async () => {
-    await renderDetail("4821", { state: "error" });
-    expect(screen.getByText("Failed to load batch.")).toBeDefined();
+  it("unreachable zone → error state with a Retry button", async () => {
+    await renderDetail("4821", { detailThrows: true });
+    await waitFor(() =>
+      expect(screen.getByText("Failed to load batch.")).toBeDefined(),
+    );
     expect(screen.getByText("Refresh to retry.")).toBeDefined();
     expect(screen.getByRole("button", { name: "Retry" })).toBeDefined();
   });
 
-  it("never exposes individual fill IDs or order IDs", async () => {
-    const { container } = await renderDetail("4821");
-    const text = container.textContent ?? "";
-    const fillIds = batchesDetailFixtures.verified.fills.map((f) => f.id);
-    const orderIds = batchesDetailFixtures.verified.orders.map((o) => o.id);
-    for (const id of [...fillIds, ...orderIds]) {
-      expect(text.includes(id)).toBe(false);
-    }
-  });
-
-  it("links to /portfolio for a user's own fills", async () => {
-    await renderDetail("4821");
-    const link = screen.getByRole("link", { name: "/portfolio" });
-    expect(link.getAttribute("href")).toBe("/portfolio");
-  });
-
   it("preserves the lifecycle + metadata hash deep-link anchors", async () => {
-    const { container } = await renderDetail("4821");
+    const { container } = await renderDetail("4821", {
+      detail: mkZoneBatch(4821, "verified"),
+    });
+    await waitFor(() =>
+      expect(container.querySelector("#settled")).not.toBeNull(),
+    );
     expect(container.querySelector("#queued")).not.toBeNull();
     expect(container.querySelector("#proven")).not.toBeNull();
-    expect(container.querySelector("#settled")).not.toBeNull();
     expect(container.querySelector("#sealed")).not.toBeNull();
     expect(container.querySelector("#proof-hash")).not.toBeNull();
     expect(container.querySelector("#settlement-tx")).not.toBeNull();

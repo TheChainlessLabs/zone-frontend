@@ -18,6 +18,12 @@ export interface TempoWalletModalProps {
   errorMessage?: string;
   onCreateAccount?: () => void;
   onSignIn?: () => void;
+  /** Dev-only: connect the key-backed test wallet. Renders an extra button when
+   *  provided (gated by NEXT_PUBLIC_DEV_WALLET_PK upstream). */
+  onDevSignIn?: () => void;
+  /** Dev-only: connect the key-backed maker wallet (for two-party fills).
+   *  Renders an extra button when provided (gated by NEXT_PUBLIC_MAKER_WALLET_PK). */
+  onMakerSignIn?: () => void;
 }
 
 export function TempoWalletModal({
@@ -28,6 +34,8 @@ export function TempoWalletModal({
   errorMessage = "Tempo Wallet could not complete the request. Try again.",
   onCreateAccount,
   onSignIn,
+  onDevSignIn,
+  onMakerSignIn,
 }: TempoWalletModalProps) {
   return (
     <ModalShell
@@ -55,6 +63,26 @@ export function TempoWalletModal({
           <p className="text-xs leading-relaxed text-[var(--muted-foreground)]">
             Omega uses Tempo Wallet for the private-alpha testnet.
           </p>
+          {onDevSignIn ? (
+            <Button
+              variant="ghost"
+              onClick={onDevSignIn}
+              className="min-h-[44px] md:min-h-0"
+            >
+              <Icon.Sign aria-hidden />
+              <span>Sign in with Test Wallet (dev)</span>
+            </Button>
+          ) : null}
+          {onMakerSignIn ? (
+            <Button
+              variant="ghost"
+              onClick={onMakerSignIn}
+              className="min-h-[44px] md:min-h-0"
+            >
+              <Icon.Sign aria-hidden />
+              <span>Sign in with Maker Wallet (dev)</span>
+            </Button>
+          ) : null}
         </div>
       ) : null}
 

@@ -80,6 +80,16 @@ export function DisconnectedState({ routeLabel }: { routeLabel?: string }) {
         }}
         onCreateAccount={() => wallet.signUp()}
         onSignIn={() => wallet.connect("Tempo Wallet")}
+        onDevSignIn={
+          wallet.isDevWalletAvailable
+            ? () => wallet.connect("Test Wallet (dev)")
+            : undefined
+        }
+        onMakerSignIn={
+          wallet.isMakerWalletAvailable
+            ? () => wallet.connect("Maker Wallet (dev)")
+            : undefined
+        }
       />
     </main>
   );

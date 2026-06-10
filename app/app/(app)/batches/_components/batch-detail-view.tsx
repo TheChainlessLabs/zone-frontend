@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 
 import { PageLayout } from "@/components/shell/PageLayout";
 import { SurfaceState } from "@/components/shell/SurfaceState";
@@ -10,8 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Status } from "@/components/ui/status";
 import { Icon } from "@/lib/icons";
 import { cn } from "@/lib/utils";
-import { batchesDetailFixtures, usePageState } from "@/lib/fixtures";
-import type { BatchesDetailFixture, BatchStatus } from "@/lib/fixtures/types";
+import type { BatchesDetailFixture, BatchStatus } from "@/lib/view-types";
 import { formatRelativeTime } from "@/lib/format";
 import { getZoneBatch, type ZoneBatchSummary } from "@/lib/zone";
 
@@ -40,20 +38,6 @@ import styles from "./batches.module.css";
  * order ID, or an individual fill owner.
  */
 
-type DetailStateKey = "detail-verified" | "detail-pending" | "detail-failed";
-
-const STATE_TO_FIXTURE: Record<DetailStateKey, BatchesDetailFixture> = {
-  "detail-verified": batchesDetailFixtures.verified,
-  "detail-pending": batchesDetailFixtures.pending,
-  "detail-failed": batchesDetailFixtures.failed,
-};
-
-const VALID_DETAIL_KEYS = new Set<DetailStateKey>([
-  "detail-verified",
-  "detail-pending",
-  "detail-failed",
-]);
-
 const STATUS_STATE: Record<BatchStatus, "settled" | "pending" | "failed"> = {
   verified: "settled",
   pending: "pending",
@@ -66,20 +50,16 @@ const STATUS_LABEL: Record<BatchStatus, string> = {
 };
 
 export function BatchDetailView({ id }: { id: string }) {
-  const params = useSearchParams();
-  const state = usePageState();
-  const rawState = params.get("state");
   const [liveFixture, setLiveFixture] =
     React.useState<BatchesDetailFixture | null>(null);
   const [liveState, setLiveState] = React.useState<
     "loading" | "ready" | "error" | "empty"
   >("loading");
-  // The live error message is kept only as a debugging affordance; the default
-  // surface renders demo data on failure rather than surfacing the message.
+  // Captured for diagnostics; the surface shows a generic recovery hint rather
+  // than leaking the raw RPC error string.
   const [, setLiveError] = React.useState<string | undefined>();
 
   React.useEffect(() => {
-    if (state !== "default" || rawState) return;
     let cancelled = false;
     async function loadBatch() {
       setLiveState("loading");
@@ -104,40 +84,7 @@ export function BatchDetailView({ id }: { id: string }) {
     return () => {
       cancelled = true;
     };
-  }, [id, rawState, state]);
-
-  // Demo fallback: with no backend the zone RPC errors or returns nothing.
-  // Rather than dead-ending the default detail surface on "Failed to load" or
-  // "Batch not found", fall back to a populated demo fixture so the page shows
-  // a live-looking batch — lifecycle stepper, per-pair distribution, and
-  // settlement metadata. Real data always wins (`liveFixture`); the explicit
-  // `?state=` / `detail-*` review fixtures below are untouched.
-  const liveUnavailable = liveState === "error" || liveState === "empty";
-
-  const fixture: BatchesDetailFixture =
-    state === "loading"
-      ? batchesDetailFixtures.loading
-      : state === "empty"
-        ? batchesDetailFixtures.empty
-        : state === "error"
-          ? batchesDetailFixtures.error
-          : rawState && VALID_DETAIL_KEYS.has(rawState as DetailStateKey)
-            ? STATE_TO_FIXTURE[rawState as DetailStateKey]
-            : liveFixture ??
-              (liveUnavailable
-                ? batchesDetailFixtures.verified
-                : {
-                    ...batchesDetailFixtures.loading,
-                    isLoading: liveState === "loading",
-                  });
-
-  // Honour the route segment for the title even when we render a
-  // status-keyed fixture.
-  const overrideNumber = /^\d+$/.test(id) ? Number(id) : null;
-  const fixtureForVariant: BatchesDetailFixture =
-    overrideNumber !== null
-      ? { ...fixture, batch: { ...fixture.batch, number: overrideNumber } }
-      : fixture;
+  }, [id]);
 
   return (
     <PageLayout width="default" bare>
@@ -147,9 +94,9 @@ export function BatchDetailView({ id }: { id: string }) {
           styles.viewBack,
         )}
       >
-        {fixture.isLoading ? (
+        {liveState === "loading" ? (
           <BatchDetailSkeleton />
-        ) : fixture.error ? (
+        ) : liveState === "error" ? (
           <SurfaceState
             title="Failed to load batch."
             description="Refresh to retry."
@@ -166,10 +113,10 @@ export function BatchDetailView({ id }: { id: string }) {
               </Button>
             }
           />
-        ) : state === "empty" ? (
+        ) : liveState === "empty" || !liveFixture ? (
           <SurfaceState
             title="Batch not found."
-            description="The route you tried doesn't exist. Head back to /batches."
+            description="No batch matches this identifier. Head back to /batches."
             action={
               <Button asChild>
                 <Link href="/batches">Back to /batches</Link>
@@ -178,7 +125,7 @@ export function BatchDetailView({ id }: { id: string }) {
           />
         ) : (
           <div className={cn("flex flex-col gap-4", styles.fade)}>
-            <BatchDetail fixture={fixtureForVariant} />
+            <BatchDetail fixture={liveFixture} />
           </div>
         )}
       </div>

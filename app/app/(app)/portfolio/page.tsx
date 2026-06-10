@@ -45,13 +45,27 @@ import {
 } from "@/components/modals/withdraw-modal";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/lib/icons";
-import { portfolioFixtures, usePageState } from "@/lib/fixtures";
+import { useWalletState } from "@/components/shell/WalletStateProvider";
 import type {
   BalanceFixture,
   DepositFixture,
   PortfolioFixture,
   WithdrawalFixture,
-} from "@/lib/fixtures";
+} from "@/lib/view-types";
+
+/**
+ * Honest empty portfolio — a connected wallet with no zone balances renders
+ * this (all zeros), never a fabricated demo. There is NO populated showcase
+ * fixture anymore: the surface is live data or honest zeros/skeleton/error.
+ */
+const EMPTY_PORTFOLIO: PortfolioFixture = {
+  totalValueUSD: "0.00",
+  balances: [],
+  openOrders: [],
+  recentFills: [],
+  deposits: [],
+  withdrawals: [],
+};
 import {
   OMEGA_TEMPO_L1_CHAIN_ID,
   OMEGA_ZONE_ADDRESSES,
@@ -68,7 +82,7 @@ import {
   getZoneWithdrawalStatus,
   mergeOmegaZoneActivity,
   persistZoneRpcAuthToken,
-  publicZoneClient,
+  waitForZoneTransactionReceipt,
   readPersistedZoneRpcAuthToken,
   readOmegaZoneActivity,
   readPrivateDarkpoolBalance,
@@ -102,13 +116,22 @@ interface ZonePortfolioTokenBalance extends ZonePortfolioToken {
 
 export default function PortfolioPage() {
   const router = useRouter();
-  const state = usePageState();
+  const wallet = useWalletState();
   const account = useAccount();
   const connections = useConnections();
   const { data: walletClient } = useWalletClient();
   const signMessage = useSignMessage();
   const switchChain = useSwitchChain();
   const connectedAddress = account.address;
+
+  // Hydration guard. The wallet connection is client-only (wagmi rehydrates +
+  // the dev connector auto-reconnects only after mount), so the server always
+  // renders "disconnected" while the client's first paint may already be
+  // connected — a different top-level tree, which React flags as a hydration
+  // mismatch. Render a stable skeleton until mounted so SSR and the first
+  // client paint are identical; the real wallet-derived branch swaps in next.
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => setMounted(true), []);
 
   const [depositOpen, setDepositOpen] = React.useState(false);
   const [withdrawOpen, setWithdrawOpen] = React.useState(false);
@@ -178,10 +201,18 @@ export default function PortfolioPage() {
   const refreshZoneBalances = React.useCallback(
     async (authToken: Hex) => {
       if (!connectedAddress) return;
-      const tokenBalances = await fetchZonePortfolioTokenBalances(
-        authToken,
-        connectedAddress,
-      );
+      // Each read is resilient: a missing/zero/erroring balance resolves to null
+      // instead of throwing, so one asset the wallet has no position in (e.g. an
+      // un-traded token or empty darkpool escrow) cannot tank the whole live
+      // snapshot and force the demo fallback. A live-zero balance is real data.
+      const settle = <T,>(p: T | Promise<T>): Promise<T | null> =>
+        Promise.resolve(p).then(
+          (v) => v,
+          () => null,
+        );
+      const tokenBalances = await settle(
+        fetchZonePortfolioTokenBalances(authToken, connectedAddress),
+      ).then((v) => v ?? []);
       const byAddress = new Map(
         tokenBalances.map((balance) => [
           balance.address.toLowerCase(),
@@ -200,18 +231,26 @@ export default function PortfolioPage() {
         oalphaWalletBalance,
         oalphaDarkpoolBalance,
       ] = await Promise.all([
-        pathUsdBalance?.available ??
-          readPrivateZonePathUsdBalance(authToken, connectedAddress),
-        pathUsdBalance?.locked ??
-          readPrivateDarkpoolBalance(authToken, connectedAddress),
-        oalphaBalance?.available ??
-          readPrivateZoneOalphaBalance(authToken, connectedAddress),
-        oalphaBalance?.locked ??
-          readPrivateDarkpoolBalance(
-            authToken,
-            connectedAddress,
-            OMEGA_ZONE_ADDRESSES.oalpha,
-          ),
+        settle(
+          pathUsdBalance?.available ??
+            readPrivateZonePathUsdBalance(authToken, connectedAddress),
+        ),
+        settle(
+          pathUsdBalance?.locked ??
+            readPrivateDarkpoolBalance(authToken, connectedAddress),
+        ),
+        settle(
+          oalphaBalance?.available ??
+            readPrivateZoneOalphaBalance(authToken, connectedAddress),
+        ),
+        settle(
+          oalphaBalance?.locked ??
+            readPrivateDarkpoolBalance(
+              authToken,
+              connectedAddress,
+              OMEGA_ZONE_ADDRESSES.oalpha,
+            ),
+        ),
       ]);
       setZoneTokenBalances(tokenBalances);
       setZonePathUsdBalance(pathUsdWalletBalance);
@@ -287,15 +326,20 @@ export default function PortfolioPage() {
     } finally {
       zoneAuthTokenPromiseRef.current = null;
     }
+    // NB: `zoneAuthToken` is intentionally NOT a dependency. This callback reads
+    // the token via `zoneAuthTokenRef`/the cache, so it does not need it — and
+    // including it churns this callback's identity the moment `setZoneAuthToken`
+    // fires during auth, which re-triggered the live-snapshot effect mid-flight,
+    // cancelled it before `setLiveState("ready")`, and left the page stuck on
+    // "loading" (→ demo) forever behind the one-shot guard.
   }, [
     connectedAddress,
     signMessage,
     walletClient,
-    zoneAuthToken,
   ]);
 
   React.useEffect(() => {
-    if (!connectedAddress || state !== "default") return;
+    if (!connectedAddress) return;
     if (autoAuthAttemptedRef.current) return;
     autoAuthAttemptedRef.current = true;
     let cancelled = false;
@@ -305,12 +349,15 @@ export default function PortfolioPage() {
       setLiveError(undefined);
       try {
         const authToken = await ensureZoneAuthToken();
-        await Promise.all([
-          refreshL1Balance(),
-          refreshZoneBalances(authToken),
-          refreshZoneActivity(authToken),
-        ]);
+        // The balances read is the demo-vs-live signal (`hasLiveData` checks it),
+        // so gate "ready" on it alone. Secondary reads (L1 balance, activity) run
+        // in the background — a slow/hanging/failing activity feed must never keep
+        // the surface stuck on "loading" (and thus on the demo fallback) when the
+        // wallet's real balances already resolved.
+        await refreshZoneBalances(authToken);
         if (!cancelled) setLiveState("ready");
+        void refreshL1Balance().catch(() => {});
+        void refreshZoneActivity(authToken).catch(() => {});
       } catch (error) {
         if (!cancelled) {
           setLiveError(getErrorMessage(error));
@@ -323,14 +370,17 @@ export default function PortfolioPage() {
     return () => {
       cancelled = true;
     };
-  }, [
-    connectedAddress,
-    ensureZoneAuthToken,
-    refreshL1Balance,
-    refreshZoneActivity,
-    refreshZoneBalances,
-    state,
-  ]);
+    // Depend ONLY on the stable inputs that should (re)start a snapshot:
+    // the connected address and the demo page-state. The callbacks
+    // (ensureZoneAuthToken/refreshZoneBalances/…) are intentionally excluded —
+    // their identities churn the instant `walletClient`/`signMessage` settle
+    // right after connect, which would re-run this effect, fire its cleanup
+    // (`cancelled = true`) on the in-flight run, and skip `setLiveState("ready")`
+    // even though the balance read already succeeded — pinning the surface on
+    // the loading skeleton (→ demo fallback) forever. They're read at call time
+    // from the latest closure, so narrowing the deps loses nothing.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [connectedAddress]);
 
   const ensureChain = React.useCallback(
     async (chainId: number) => {
@@ -469,7 +519,7 @@ export default function PortfolioPage() {
         setWithdrawTxHash(txHash);
 
         setWithdrawState("pending");
-        await publicZoneClient.waitForTransactionReceipt({ hash: txHash });
+        await waitForZoneTransactionReceipt(txHash);
         const withdrawalStatus = await pollZoneWithdrawalStatus(authToken, txHash);
         const withdrawal = withdrawalStatus
           ? zoneWithdrawalStatusToFixture(withdrawalStatus)
@@ -522,17 +572,6 @@ export default function PortfolioPage() {
     setWithdrawError(undefined);
   }, []);
 
-  // Disconnected short-circuits — the page is auth-gated.
-  if (state === "disconnected") {
-    return (
-      <DisconnectedState
-        title="Portfolio is private."
-        description="Connect Tempo Wallet to see your balances, positions, and history."
-        onAction={() => {}}
-      />
-    );
-  }
-
   const livePortfolio = React.useMemo(
     () =>
       buildOmegaZonePortfolioFixture({
@@ -553,29 +592,41 @@ export default function PortfolioPage() {
     ],
   );
   // Live data is only "present" once the snapshot resolved AND the wallet
-  // returned at least one balance. No backend is running in this build, so
-  // the snapshot stays idle/errors out and balances stay null — in every one
-  // of those cases we fall back to the populated demo fixture rather than
-  // showing zeros, an error band, or the skeleton. The real-data path still
-  // wins whenever the backend actually answers.
+  // returned at least one balance. There is NO demo fallback anymore: a
+  // connected wallet renders live data, a skeleton while it loads, an error
+  // band if the read fails, or honest zeros (EMPTY_PORTFOLIO) — never
+  // fabricated holdings. A disconnected wallet gets the connect prompt below.
+  const isConnected = Boolean(connectedAddress);
   const hasLiveData =
-    state === "default" &&
     liveState === "ready" &&
     (zonePathUsdBalance !== null ||
       zoneOalphaBalance !== null ||
       (zoneTokenBalances?.length ?? 0) > 0);
-  const fixture =
-    state === "empty"
-      ? portfolioFixtures.empty
-      : state === "default"
-        ? hasLiveData
-          ? livePortfolio
-          : portfolioFixtures.default
-        : portfolioFixtures.default;
-  const isLoading = state === "loading" || state === "skeleton";
-  const isError = state === "error";
-  const errorMessage =
-    liveError ?? portfolioFixtures.error.error?.message ?? "Portfolio unavailable.";
+  const data = hasLiveData ? livePortfolio : EMPTY_PORTFOLIO;
+  const isLoading = liveState === "idle" || liveState === "loading";
+  const isError = liveState === "error";
+  const errorMessage = liveError ?? "Portfolio unavailable.";
+
+  // Stable SSR/first-paint output (see the `mounted` hydration guard above).
+  if (!mounted) {
+    return (
+      <PageLayout width="wide" bare>
+        <PortfolioSkeleton />
+      </PageLayout>
+    );
+  }
+
+  // Auth gate on the REAL wallet connection (not a demo toggle). Placed after
+  // all hooks so hook order stays stable across connect/disconnect.
+  if (!isConnected) {
+    return (
+      <DisconnectedState
+        title="Portfolio is private."
+        description="Connect Tempo Wallet to see your balances, positions, and history."
+        onAction={() => wallet.connect("Tempo Wallet")}
+      />
+    );
+  }
 
   return (
     <>
@@ -586,7 +637,7 @@ export default function PortfolioPage() {
           <PortfolioSkeleton />
         ) : (
           <PortfolioView
-            fixture={fixture}
+            fixture={data}
             onDeposit={() => setDepositOpen(true)}
             onWithdraw={() => setWithdrawOpen(true)}
             onMore={() => router.push("/account")}

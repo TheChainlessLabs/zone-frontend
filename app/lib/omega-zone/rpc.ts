@@ -73,6 +73,38 @@ export const publicZoneClient = createPublicClient({
   transport: http(omegaZoneChain.rpcUrls.default.http[0]),
 });
 
+/**
+ * Wait for a zone transaction receipt by polling `eth_getTransactionReceipt`.
+ *
+ * viem's `waitForTransactionReceipt` watches the chain via
+ * `eth_getBlockByNumber(_, /* includeTransactions *​/ true)`, which the privacy
+ * zone restricts to the sequencer ("Sequencer only / request exceeds defined
+ * limit") — so it throws on the public RPC even after the tx has landed.
+ * Receipts themselves are public, so we poll for the receipt directly instead
+ * of watching full blocks.
+ */
+export async function waitForZoneTransactionReceipt(
+  hash: Hex,
+  {
+    timeoutMs = 30_000,
+    intervalMs = 1_000,
+  }: { timeoutMs?: number; intervalMs?: number } = {},
+) {
+  const deadline = Date.now() + timeoutMs;
+  for (;;) {
+    try {
+      return await publicZoneClient.getTransactionReceipt({ hash });
+    } catch (error) {
+      if (Date.now() >= deadline) {
+        throw new Error(
+          `Timed out waiting for the Omega Zone transaction receipt (${hash}).`,
+        );
+      }
+      await new Promise((resolve) => setTimeout(resolve, intervalMs));
+    }
+  }
+}
+
 export const serverPublicZoneClient = createPublicClient({
   chain: omegaZoneChain,
   transport: http(OMEGA_ZONE_RPC_URLS.publicServer),
@@ -1088,6 +1120,22 @@ export async function getZoneTopOfBook(
   );
 }
 
+/** Public (no-auth) top-of-book. The zone serves zone_getTopOfBook on the
+ *  public RPC with an anonymous AuthContext, so the trade surface can show the
+ *  live midpoint / best bid+ask without a connected wallet. */
+export async function getZonePublicTopOfBook(
+  pair: MarketPair,
+  options?: ZoneRpcFetchOptions,
+): Promise<TopOfBookResponse> {
+  return publicRpcFetch<TopOfBookResponse>(
+    {
+      method: "zone_getTopOfBook",
+      params: [{ base: pair.base, quote: pair.quote }],
+    },
+    options,
+  );
+}
+
 export interface ZoneMyOrdersParams extends ZonePaginationParams {
   account?: Address;
   pair?: string;
@@ -1282,6 +1330,30 @@ export async function getZoneMidpointHistory(
   }
   return privateRpcFetch<ZoneMidpointHistoryResponse>(
     authToken,
+    {
+      method: "zone_getMidpointHistory",
+      params: rpcParams,
+    },
+    options,
+  );
+}
+
+/** Public (no-auth) midpoint history — drives the limit-mode chart enable
+ *  without a wallet. */
+export async function getZonePublicMidpointHistory(
+  params: ZoneMidpointHistoryParams,
+  options?: ZoneRpcFetchOptions,
+): Promise<ZoneMidpointHistoryResponse> {
+  const rpcParams: unknown[] = [
+    { base: params.base, quote: params.quote },
+    params.interval ?? "1m",
+  ];
+  if (params.cursor !== undefined) {
+    rpcParams.push(params.limit ?? 500, params.cursor);
+  } else if (params.limit !== undefined) {
+    rpcParams.push(params.limit);
+  }
+  return publicRpcFetch<ZoneMidpointHistoryResponse>(
     {
       method: "zone_getMidpointHistory",
       params: rpcParams,

@@ -121,7 +121,7 @@ it("renders kit toggle rows: confirm signing, hide balances, fill alerts, proof 
   expect(screen.getByRole("switch", { name: "Proof verified" })).toBeDefined();
 });
 
-it("renders the demo Omega Zone panel as authorized with PATH.USD/OALPHA balances", () => {
+it("renders the Omega Zone connection panel — real status, no demo balances", () => {
   useWalletState.mockReturnValue({
     state: "connected",
     address: "0xa513e6e4b8f2a923d98304ec87f64353c4d5c853",
@@ -132,14 +132,13 @@ it("renders the demo Omega Zone panel as authorized with PATH.USD/OALPHA balance
 
   render(<AccountPage />);
 
-  // Demo snapshot reads live, not empty: authorized status + product-token balances.
-  expect(screen.getByText("Private RPC authorized")).toBeDefined();
-  expect(screen.getByText(/48,250\.00 PATH\.USD/)).toBeDefined();
-  expect(screen.getByText(/12,500\.00 OALPHA/)).toBeDefined();
-  // Never the broken-looking empty states from the live widget.
-  expect(screen.queryByText("Authorize")).toBeNull();
-  expect(screen.queryByText("Not connected")).toBeNull();
-  expect(screen.queryByText("Private RPC pending")).toBeNull();
+  // Real connection status only; balances live on /portfolio.
+  expect(screen.getByText("Connected")).toBeDefined();
+  expect(screen.getByRole("link", { name: "Portfolio" })).toBeDefined();
+  // The fabricated demo balances are gone.
+  expect(screen.queryByText(/48,250/)).toBeNull();
+  expect(screen.queryByText(/12,500/)).toBeNull();
+  expect(screen.queryByText("Private RPC authorized")).toBeNull();
 });
 
 it("renders the kit Sign out button and calls wallet.disconnect", () => {
@@ -161,20 +160,20 @@ it("renders the kit Sign out button and calls wallet.disconnect", () => {
 
 /* ── wiring / fallback ── */
 
-it("falls back to the fixture address when wallet address is absent", () => {
+it("shows 'Not connected' when the wallet address is absent (no demo fallback)", () => {
   useWalletState.mockReturnValue({
-    state: "connected",
+    state: "disconnected",
     address: undefined,
-    chainName: "Omega Local Zone",
-    connector: "Tempo Wallet",
+    chainName: undefined,
+    connector: undefined,
     disconnect,
   });
 
   render(<AccountPage />);
 
-  // fixture address: 0x9A9f2CCfdE556A7E9Ff0848998Aa4a0CFD8863AE
-  // truncateAddress gives 0x9A9f…63AE (slice(0,6) = 0x9A9f, slice(-4).toUpperCase() = 63AE)
-  expect(screen.getByText("0x9A9f…63AE")).toBeDefined();
+  // No fabricated fallback address — identity + zone panel read "Not connected".
+  expect(screen.getAllByText("Not connected").length).toBeGreaterThan(0);
+  expect(screen.queryByText("0x9A9f…63AE")).toBeNull();
 });
 
 /* ── negative assertions — old design elements gone ── */

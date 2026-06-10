@@ -40,8 +40,19 @@ import { tempoAddressUrl } from "@/lib/zone";
 
 export function WalletStatus() {
   const wallet = useWalletState();
-  const { state, address, chainName, errorMessage } = wallet;
+  const { state: liveState, address, chainName, errorMessage } = wallet;
   const [openRequested, setOpenRequested] = React.useState(false);
+
+  // Hydration guard. The wallet connection is a client-only concern: wagmi
+  // rehydrates (and the dev connector auto-reconnects) only after mount, so the
+  // server always renders `disconnected` while the client would otherwise
+  // render `connected` on the very first paint — a different button/span tree
+  // under the same parent, which React flags as a hydration mismatch. Pinning
+  // the rendered state to `disconnected` until mounted makes SSR and the first
+  // client render byte-identical; the real state swaps in on the next paint.
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => setMounted(true), []);
+  const state = mounted ? liveState : "disconnected";
 
   // Auto-open the modal whenever the session is mid-connect so the user can
   // see the live state. Closes follow explicit user action.
@@ -74,6 +85,14 @@ export function WalletStatus() {
 
   const handleSignIn = React.useCallback(() => {
     wallet.connect("Tempo Wallet");
+  }, [wallet]);
+
+  const handleDevSignIn = React.useCallback(() => {
+    wallet.connect("Test Wallet (dev)");
+  }, [wallet]);
+
+  const handleMakerSignIn = React.useCallback(() => {
+    wallet.connect("Maker Wallet (dev)");
   }, [wallet]);
 
   const handleDisconnect = React.useCallback(() => {
@@ -246,6 +265,10 @@ export function WalletStatus() {
         onClose={handleClose}
         onCreateAccount={handleCreateAccount}
         onSignIn={handleSignIn}
+        onDevSignIn={wallet.isDevWalletAvailable ? handleDevSignIn : undefined}
+        onMakerSignIn={
+          wallet.isMakerWalletAvailable ? handleMakerSignIn : undefined
+        }
       />
     </>
   );

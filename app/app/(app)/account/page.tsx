@@ -3,18 +3,16 @@
 /**
  * /account — Settings surface (kit port).
  *
- * Ported from the design-kit Settings.jsx. Wired to real Tempo wallet
- * state (address, chain, connector, disconnect). The Omega Zone snapshot is
- * filled from the demo fixture (backend unwired) so the surface reads live —
- * never empty Authorize/Pending/Not-connected states. Theme persists to
- * localStorage exactly as ThemeToggle did (brand-theme key, dark default).
+ * Wired to real Tempo wallet state (address, chain, connector, disconnect).
+ * The Omega Zone panel reflects the real connection status only — balances
+ * live on /portfolio. No demo data. Theme persists to localStorage exactly as
+ * ThemeToggle did (brand-theme key, dark default).
  */
 
 import * as React from "react";
+import Link from "next/link";
 
 import { Icon } from "@/lib/icons";
-import { accountFixtures } from "@/lib/fixtures";
-import type { AccountZoneFixture } from "@/lib/fixtures/types";
 import {
   truncateAddress,
   useWalletState,
@@ -25,9 +23,6 @@ import { tempoAddressUrl } from "@/lib/zone";
 
 type ThemeMode = "dark" | "light";
 type OrderMode = "market" | "limit";
-// Product denomination — the live pair is OALPHA/PATH.USD (not the kit's demo
-// USDC/EURC roster). ETH/USDC stays as the secondary option.
-type DefaultPair = "OALPHA/PATH.USD" | "ETH/USDC";
 
 /* ─────────────────────────────────── micro-primitives ─── */
 
@@ -301,50 +296,18 @@ function CopyButton({ address }: { address: string }) {
 
 /* ─────────────────────────── ZonePanel ─── */
 
-/** Small balance mini-card — mono-uppercase label over a tabular figure. */
-function ZoneBalance({ label, value }: { label: string; value: string }) {
-  return (
-    <div
-      className="glass"
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: 4,
-        padding: 12,
-        borderRadius: "var(--radius-md)",
-      }}
-    >
-      <span
-        style={{
-          fontFamily: "var(--font-mono)",
-          fontSize: 10,
-          letterSpacing: "0.18em",
-          textTransform: "uppercase",
-          color: "var(--muted-foreground)",
-        }}
-      >
-        {label}
-      </span>
-      <span
-        style={{
-          fontFamily: "var(--font-mono)",
-          fontSize: 16,
-          fontVariantNumeric: "tabular-nums",
-          color: "var(--foreground)",
-        }}
-      >
-        {value}
-      </span>
-    </div>
-  );
-}
-
 /**
- * Omega Zone status — demo snapshot. Renders the private-RPC session as
- * authorized with PATH.USD / OALPHA balances. Replaces the live private-RPC
- * widget while the backend is unwired so the surface reads live, not empty.
+ * Omega Zone status — real connection status only. Shows whether the wallet is
+ * connected to the zone and which chain it settles on. Balances are NOT shown
+ * here (they live on /portfolio, sourced from the private RPC) — never demo.
  */
-function ZonePanel({ zone }: { zone: AccountZoneFixture }) {
+function ZonePanel({
+  connected,
+  chainName,
+}: {
+  connected: boolean;
+  chainName: string;
+}) {
   return (
     <div
       className="glass"
@@ -353,7 +316,7 @@ function ZonePanel({ zone }: { zone: AccountZoneFixture }) {
         padding: 18,
         display: "flex",
         flexDirection: "column",
-        gap: 16,
+        gap: 12,
       }}
     >
       <div
@@ -382,40 +345,35 @@ function ZonePanel({ zone }: { zone: AccountZoneFixture }) {
               width: 6,
               height: 6,
               borderRadius: "50%",
-              background: zone.authorized
+              background: connected
                 ? "var(--success)"
                 : "var(--muted-foreground)",
               flexShrink: 0,
             }}
           />
-          {zone.authorized ? "Private RPC authorized" : "Private RPC pending"}
+          {connected ? "Connected" : "Not connected"}
         </span>
       </div>
 
-      <div
+      <p
         style={{
-          display: "grid",
-          gap: 10,
-          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+          margin: 0,
+          fontFamily: "var(--font-sans)",
+          fontSize: 13,
+          lineHeight: 1.5,
+          color: "var(--muted-foreground)",
         }}
       >
-        <ZoneBalance
-          label="Zone · PATH.USD"
-          value={`${zone.zoneBalances.pathUsd} PATH.USD`}
-        />
-        <ZoneBalance
-          label="Zone · OALPHA"
-          value={`${zone.zoneBalances.oalpha} OALPHA`}
-        />
-        <ZoneBalance
-          label="Darkpool · PATH.USD"
-          value={`${zone.darkpoolBalances.pathUsd} PATH.USD`}
-        />
-        <ZoneBalance
-          label="Darkpool · OALPHA"
-          value={`${zone.darkpoolBalances.oalpha} OALPHA`}
-        />
-      </div>
+        {connected ? `Settling on ${chainName}. ` : "Connect Tempo Wallet to trade. "}
+        Your zone and darkpool balances are on{" "}
+        <Link
+          href="/portfolio"
+          style={{ color: "var(--foreground)", textDecoration: "underline" }}
+        >
+          Portfolio
+        </Link>
+        .
+      </p>
     </div>
   );
 }
@@ -462,26 +420,27 @@ function SettingsContent({
 }: {
   wallet: ReturnType<typeof useWalletState>;
 }) {
-  const fixture = accountFixtures.default;
-  const zone = fixture.zone;
-  const address: string =
-    wallet.address ??
-    fixture.address ??
-    "0x0000000000000000000000000000000000000000";
-  // Settlement layer — prefer the live wallet chain, else the demo zone name.
-  const chainName = wallet.chainName ?? zone?.chainName ?? "Omega Zone";
-  const connector = wallet.connector ?? "Tempo Wallet";
-  const sessionStartedAt = fixture.sessionStartedAt;
-  const truncated = truncateAddress(address);
-  const explorerHref = tempoAddressUrl(address);
+  // Hydration guard — the wallet connection is client-only (wagmi rehydrates
+  // after mount), so SSR renders "disconnected" while the client's first paint
+  // may be connected. Until mounted we render the disconnected identity so SSR
+  // and the first client paint match; real wallet state swaps in next paint.
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => setMounted(true), []);
+
+  // Real wallet state only — no demo identity. When disconnected the panel
+  // reads "Not connected" rather than a placeholder address.
+  const isConnected = mounted && Boolean(wallet.address);
+  const address = mounted ? wallet.address ?? null : null;
+  const chainName = (mounted && wallet.chainName) || "Omega Zone";
+  const connector = (mounted && wallet.connector) || "Tempo Wallet";
+  const truncated = address ? truncateAddress(address) : "Not connected";
+  const explorerHref = address ? tempoAddressUrl(address) : null;
 
   // Theme — dark default, persisted to localStorage (brand-theme key).
   const [theme, setTheme] = useTheme();
 
   // Local preference state (cosmetic / session-local for now; backend deferred).
   const [defaultMode, setDefaultMode] = React.useState<OrderMode>("market");
-  const [defaultPair, setDefaultPair] =
-    React.useState<DefaultPair>("OALPHA/PATH.USD");
   const [confirmSign, setConfirmSign] = React.useState(true);
   const [hideBalances, setHideBalances] = React.useState(false);
   const [fillAlerts, setFillAlerts] = React.useState(true);
@@ -578,38 +537,29 @@ function SettingsContent({
           >
             {truncated}
           </span>
-          {sessionStartedAt ? (
-            <span
-              style={{
-                fontFamily: "var(--font-mono)",
-                fontSize: 11,
-                color: "var(--muted-foreground)",
-              }}
-            >
-              Session since {formatSessionStart(sessionStartedAt)}
-            </span>
-          ) : null}
         </div>
-        <div
-          style={{ marginLeft: "auto", display: "flex", gap: 8, flexShrink: 0 }}
-        >
-          <CopyButton address={address} />
-          <a
-            href={explorerHref}
-            target="_blank"
-            rel="noreferrer noopener"
-            className="glass-pill press-down"
-            style={ghostActionStyle}
-            aria-label="View on Tempo Explorer"
+        {address && explorerHref ? (
+          <div
+            style={{ marginLeft: "auto", display: "flex", gap: 8, flexShrink: 0 }}
           >
-            <Icon.External size={15} aria-hidden />
-            Explorer
-          </a>
-        </div>
+            <CopyButton address={address} />
+            <a
+              href={explorerHref}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="glass-pill press-down"
+              style={ghostActionStyle}
+              aria-label="View on Tempo Explorer"
+            >
+              <Icon.External size={15} aria-hidden />
+              Explorer
+            </a>
+          </div>
+        ) : null}
       </div>
 
-      {/* Omega Zone — demo snapshot (backend unwired; renders live, not empty) */}
-      {zone ? <ZonePanel zone={zone} /> : null}
+      {/* Omega Zone — real connection status (balances live on /portfolio) */}
+      <ZonePanel connected={isConnected} chainName={chainName} />
 
       {/* Preferences section */}
       <Section title="Preferences">
@@ -641,21 +591,6 @@ function SettingsContent({
               value={defaultMode}
               onChange={setDefaultMode}
               aria-label="Default order mode"
-            />
-          }
-        />
-        <Row
-          title="Default pair"
-          desc="The pair selected when you open Trade."
-          control={
-            <Segmented<DefaultPair>
-              options={[
-                ["OALPHA/PATH.USD", "OALPHA/PATH.USD"],
-                ["ETH/USDC", "ETH/USDC"],
-              ]}
-              value={defaultPair}
-              onChange={setDefaultPair}
-              aria-label="Default pair"
             />
           }
         />
@@ -812,20 +747,3 @@ function SettingsContent({
   );
 }
 
-/* ─────────────────────────── helpers ─── */
-
-/** Format `2026-04-27T09:00:00Z` → `Apr 27, 2026 · 09:00 UTC`. */
-function formatSessionStart(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  const months = [
-    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-  ];
-  const mon = months[d.getUTCMonth()];
-  const day = String(d.getUTCDate()).padStart(2, "0");
-  const year = d.getUTCFullYear();
-  const hh = String(d.getUTCHours()).padStart(2, "0");
-  const mm = String(d.getUTCMinutes()).padStart(2, "0");
-  return `${mon} ${day}, ${year} · ${hh}:${mm} UTC`;
-}

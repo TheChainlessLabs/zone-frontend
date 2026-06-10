@@ -94,6 +94,12 @@ export interface WalletStateContextValue {
   setState: (state: WalletState) => void;
   /** Clear the last connector error without changing wallet connection. */
   clearError: () => void;
+  /** True when the dev test-wallet connector is registered (gated by
+   *  NEXT_PUBLIC_DEV_WALLET_PK). Lets the connect modal surface a dev sign-in. */
+  isDevWalletAvailable: boolean;
+  /** True when the dev maker-wallet connector is registered (gated by
+   *  NEXT_PUBLIC_MAKER_WALLET_PK). Used to create real two-party fills locally. */
+  isMakerWalletAvailable: boolean;
 }
 
 interface PersistedShape {
@@ -181,25 +187,47 @@ function TempoBackedWalletStateProvider({ children }: { children: ReactNode }) {
     [connectors],
   );
 
+  // Dev-only key-backed connectors (see lib/omega-zone/config.ts). Matched by
+  // NAME (both are `dangerous_secp256k1`) so each is addressable independently.
+  const devConnector = useMemo(
+    () => connectors.find((c) => c.name === "Test Wallet (dev)"),
+    [connectors],
+  );
+  const makerConnector = useMemo(
+    () => connectors.find((c) => c.name === "Maker Wallet (dev)"),
+    [connectors],
+  );
+
   const beginTempoConnect = useCallback(
     (intent: "connect" | "sign-up", connectorLabel?: string) => {
       setReviewState(null);
       setErrorMessage(undefined);
       setPendingIntent(intent);
+
+      // Honor an explicit connector label (e.g. the dev test wallet); otherwise
+      // fall back to the Tempo connector.
+      const chosen =
+        (connectorLabel
+          ? connectors.find((c) => c.name === connectorLabel)
+          : undefined) ?? tempoConnector;
       setPendingConnector(connectorLabel ?? tempoConnector?.name ?? "Tempo Wallet");
 
-      if (!tempoConnector) {
+      if (!chosen) {
         setPendingIntent(undefined);
         setPendingConnector(undefined);
         setErrorMessage("Tempo Wallet connector is not available.");
         return;
       }
 
+      // Account registration (`sign-up`) is a Tempo-wallet capability; never
+      // request it for a non-Tempo connector such as the dev test wallet.
+      const isTempo = chosen === tempoConnector;
+
       connectMutation.connect(
         {
-          connector: tempoConnector,
+          connector: chosen,
           chainId: OMEGA_TEMPO_L1_CHAIN_ID,
-          ...(intent === "sign-up"
+          ...(intent === "sign-up" && isTempo
             ? { capabilities: { method: "register", name: "Omega" } }
             : {}),
         } as Parameters<typeof connectMutation.connect>[0],
@@ -214,7 +242,7 @@ function TempoBackedWalletStateProvider({ children }: { children: ReactNode }) {
         },
       );
     },
-    [connectMutation, tempoConnector],
+    [connectMutation, connectors, tempoConnector],
   );
 
   const signUp = useCallback(() => {
@@ -311,8 +339,12 @@ function TempoBackedWalletStateProvider({ children }: { children: ReactNode }) {
       switchNetwork,
       setState,
       clearError,
+      isDevWalletAvailable: Boolean(devConnector),
+      isMakerWalletAvailable: Boolean(makerConnector),
     };
   }, [
+    devConnector,
+    makerConnector,
     pendingIntent,
     connectMutation.isPending,
     disconnectMutation.isPending,
@@ -483,6 +515,8 @@ function MockWalletStateProvider({ children }: { children: ReactNode }) {
       switchNetwork,
       setState,
       clearError,
+      isDevWalletAvailable: false,
+      isMakerWalletAvailable: false,
     };
   }, [
     state,

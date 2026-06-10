@@ -26,19 +26,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Icon } from "@/lib/icons";
 import { cn } from "@/lib/utils";
-import { LAUNCH_PAIRS, type LaunchPair } from "@/lib/fixtures/pairs";
+import { LAUNCH_PAIRS, type LaunchPair } from "@/lib/pairs";
 
 import { NumberTicker } from "./motion";
-
-/** Stable demo 24h-change values keyed by pair so the wireframe doesn't flap. */
-const DEMO_CHANGES: Record<string, string> = {
-  "USDC/EURC": "+0.04%",
-  "USDC/USDT": "−0.01%",
-  "USDT/EURC": "+0.06%",
-  "ETH/USDC": "+1.82%",
-  "BTC/USDC": "−0.34%",
-  "OALPHA/PATH.USD": "0.00%",
-};
 
 export interface PairSwitcherProps {
   value: string;
@@ -61,23 +51,6 @@ function TokenChip({ symbol, strong }: { symbol: string; strong?: boolean }) {
       )}
     >
       {symbol}
-    </span>
-  );
-}
-
-function ChangePill({ change }: { change: string }) {
-  const up = change[0] === "+";
-  const tone = up ? "var(--success)" : "var(--destructive)";
-  return (
-    <span
-      className="rounded-full px-1.5 py-0.5 font-mono text-[11px] tabular-nums"
-      style={{
-        color: tone,
-        background: `color-mix(in oklab, ${tone} 10%, transparent)`,
-        border: `1px solid color-mix(in oklab, ${tone} 28%, transparent)`,
-      }}
-    >
-      {change}
     </span>
   );
 }
@@ -151,6 +124,7 @@ export function PairSwitcher({
               key={pair.pair}
               pair={pair}
               active={pair.pair === value}
+              midpoint={pair.pair === value ? liveMid : ""}
               onSelect={() => onChange(pair.pair)}
             />
           ))}
@@ -163,13 +137,15 @@ export function PairSwitcher({
 function PairRow({
   pair,
   active,
+  midpoint,
   onSelect,
 }: {
   pair: LaunchPair;
   active: boolean;
+  /** Live midpoint for the active pair; empty for inactive rows → em-dash. */
+  midpoint?: string;
   onSelect: () => void;
 }) {
-  const change = DEMO_CHANGES[pair.pair] ?? "0.00%";
   return (
     <DropdownMenuItem
       onSelect={onSelect}
@@ -200,10 +176,9 @@ function PairRow({
         </span>
       </span>
       <span className="flex shrink-0 flex-col items-end gap-1.5">
-        <span className="font-mono text-sm tabular-nums">
-          {pair.demoMidpoint}
+        <span className="font-mono text-sm tabular-nums text-[var(--muted-foreground)]">
+          {midpoint && midpoint.length > 0 ? midpoint : "—"}
         </span>
-        <ChangePill change={change} />
       </span>
     </DropdownMenuItem>
   );

@@ -49,18 +49,9 @@ import {
   type OrderMode,
   type OrderFormSubmitPayload,
 } from "@/components/trade";
-import {
-  tradeFixtures,
-  usePageState,
-  DEMO_ZONE_PATH_USD_BALANCE,
-  DEMO_ZONE_OALPHA_BALANCE,
-  DEMO_ZONE_MIDPOINT,
-  DEMO_ZONE_BEST_BID,
-  DEMO_ZONE_BEST_ASK,
-  DEMO_ZONE_FILLS,
-  type LaunchPair,
-} from "@/lib/fixtures";
-import type { FillFixture, OrderFixture } from "@/lib/fixtures/types";
+import type { LaunchPair } from "@/lib/pairs";
+import type { FillFixture, OrderFixture } from "@/lib/view-types";
+import { useWalletState } from "@/components/shell/WalletStateProvider";
 import {
   DARKPOOL_PARSED_ABI,
   OMEGA_ZONE_ADDRESSES,
@@ -76,7 +67,7 @@ import {
   getZonePublicTopOfBook,
   mergeOmegaZoneActivity,
   persistZoneRpcAuthToken,
-  publicZoneClient,
+  waitForZoneTransactionReceipt,
   readPersistedZoneRpcAuthToken,
   readOmegaZoneActivity,
   readPrivateBestAsk,
@@ -93,7 +84,6 @@ const ZONE_PAIR: LaunchPair = {
   pair: "OALPHA/PATH.USD",
   base: "OALPHA",
   quote: "PATH.USD",
-  demoMidpoint: "1.000000",
 };
 
 const ZONE_PAIRS = [ZONE_PAIR];
@@ -103,13 +93,20 @@ export default function TradePage() {
 }
 
 function TradeSurface() {
-  const state = usePageState("default");
-  const fixture = tradeFixtures[state] ?? tradeFixtures.default;
+  const wallet = useWalletState();
   const account = useAccount();
   const connections = useConnections();
   const { data: walletClient } = useWalletClient();
   const signMessage = useSignMessage();
   const connectedAddress = account.address;
+  const isConnected = Boolean(connectedAddress);
+
+  // Hydration guard — wallet connection is client-only (wagmi rehydrates after
+  // mount), so the server renders disconnected while the client's first paint
+  // may be connected. Render a stable skeleton until mounted so SSR and the
+  // first client paint match; the real branch swaps in next paint.
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => setMounted(true), []);
 
   const [pair, setPair] = React.useState<string>(ZONE_PAIR.pair);
   const [mode, setMode] = React.useState<OrderMode>("market");
@@ -175,9 +172,17 @@ function TradeSurface() {
   const refreshZoneSnapshot = React.useCallback(
     async (authToken: Hex) => {
       if (!connectedAddress) return;
+      // Resilient: a failing balance read resolves to null instead of throwing,
+      // so it cannot push the whole snapshot into the "error" state. A live-zero
+      // balance is real data; the gate decides demo-vs-live on null, not on throw.
+      const settle = <T,>(p: T | Promise<T>): Promise<T | null> =>
+        Promise.resolve(p).then(
+          (v) => v,
+          () => null,
+        );
       const [pathUsdBalance, oalphaBalance] = await Promise.all([
-        readPrivateZonePathUsdBalance(authToken, connectedAddress),
-        readPrivateZoneOalphaBalance(authToken, connectedAddress),
+        settle(readPrivateZonePathUsdBalance(authToken, connectedAddress)),
+        settle(readPrivateZoneOalphaBalance(authToken, connectedAddress)),
       ]);
       const [bid, ask, history, ownerActivity] = await Promise.allSettled([
         readPrivateBestBid(
@@ -261,15 +266,20 @@ function TradeSurface() {
     } finally {
       zoneAuthTokenPromiseRef.current = null;
     }
+    // NB: `zoneAuthToken` is intentionally NOT a dependency — this callback reads
+    // the token via `zoneAuthTokenRef` (line above), so it does not need it. If it
+    // were a dep, `setZoneAuthToken` firing during auth would churn this callback's
+    // identity, re-trigger the live-snapshot effect mid-flight, cancel it before
+    // `setLiveState("ready")`, and leave the surface stuck on "loading" (skeleton
+    // fills, midpoint "—") behind the one-shot `autoAuthAttemptedRef` guard.
   }, [
     connectedAddress,
     signMessage,
     walletClient,
-    zoneAuthToken,
   ]);
 
   React.useEffect(() => {
-    if (!connectedAddress || state !== "default") return;
+    if (!connectedAddress) return;
     if (autoAuthAttemptedRef.current) return;
     autoAuthAttemptedRef.current = true;
     let cancelled = false;
@@ -293,7 +303,16 @@ function TradeSurface() {
     return () => {
       cancelled = true;
     };
-  }, [connectedAddress, ensureZoneAuthToken, refreshZoneSnapshot, state]);
+    // Depend ONLY on the stable inputs that should (re)start a snapshot. The
+    // callbacks (ensureZoneAuthToken/refreshZoneSnapshot) are excluded on
+    // purpose: their identities churn the instant walletClient/signMessage
+    // settle right after connect, which would re-run this effect, fire its
+    // cleanup (`cancelled = true`) on the in-flight run, and skip
+    // `setLiveState("ready")` even though the snapshot already succeeded —
+    // pinning the surface on "loading" forever. Read from the latest closure
+    // at call time, so narrowing loses nothing.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [connectedAddress]);
 
   // Wallet-free public market poll — runs regardless of wallet so the trade
   // surface renders the LIVE midpoint + chart-enable from the zone's public
@@ -301,7 +320,6 @@ function TradeSurface() {
   // unreachable). The authed snapshot, when a wallet connects, sets the same
   // fields with owner context.
   React.useEffect(() => {
-    if (state !== "default") return;
     let cancelled = false;
     async function loadPublicMarket() {
       setPublicMarketState((s) => (s === "ready" ? s : "loading"));
@@ -341,7 +359,9 @@ function TradeSurface() {
       cancelled = true;
       window.clearInterval(iv);
     };
-  }, [state]);
+    // Stable callback set; runs once on mount and polls. No page-state gating.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const requireWallet = React.useCallback(() => {
     if (!connectedAddress) throw new Error("Connect Tempo Wallet first.");
@@ -435,9 +455,7 @@ function TradeSurface() {
                 }),
               });
 
-      const receipt = await publicZoneClient.waitForTransactionReceipt({
-        hash: txHash,
-      });
+      const receipt = await waitForZoneTransactionReceipt(txHash);
       const patch = activityFromDarkpoolReceipt({
         receipt,
         fallback: payload,
@@ -468,42 +486,36 @@ function TradeSurface() {
     ],
   );
 
-  // Page-state-driven gate surfaces. Wallet-state-driven gates live in
-  // AppShell — both paths must render cleanly for review.
-  if (state === "disconnected") {
+  // Stable SSR/first-paint output (see the `mounted` hydration guard above).
+  if (!mounted) {
     return (
       <PageLayout width="narrow" bare>
-          <DisconnectedState
+        <div className="h-64 animate-pulse rounded-[var(--radius-lg)] bg-[var(--muted)]/20 motion-reduce:animate-none" />
+      </PageLayout>
+    );
+  }
+
+  // Auth gate on the REAL wallet connection (not a demo toggle). Wrong-network
+  // is handled by AppShell's WrongNetworkBanner above the route.
+  if (!isConnected) {
+    return (
+      <PageLayout width="narrow" bare>
+        <DisconnectedState
           title="Connect Tempo Wallet to trade"
           description="Omega is read-only until your Tempo account is connected."
           actionLabel="Tempo wallet"
           icon={Icon.Wallet}
-          onAction={() => {}}
+          onAction={() => wallet.connect("Tempo Wallet")}
         />
       </PageLayout>
     );
   }
 
-  if (state === "wrong-network") {
-    return (
-      <PageLayout width="narrow" bare>
-          <DisconnectedState
-          title="Unsupported network"
-          description="Switch to Omega Zone to access trading."
-          actionLabel="Switch network"
-          icon={Icon.Warning}
-          onAction={() => {}}
-        />
-      </PageLayout>
-    );
-  }
-
-  // With no backend running, the live zone snapshot is empty. The default view
-  // shows the populated OALPHA/PATH.USD demo fixture whenever no live data has
-  // arrived — including while a load is still in flight — so the surface is
-  // never empty or stuck on a skeleton. A successful live snapshot (`ready`, or
-  // any non-null balance / own fill) always wins and swaps the real values in.
-  // The `?state=loading|skeleton|error` review toggles still force those states.
+  // Live data only — no demo fallback. The public market poll fills the
+  // midpoint + book from the zone's public RPC even while the wallet is still
+  // resolving its authed snapshot; when nothing has arrived yet the surface
+  // shows a brief skeleton, then honest empties ("—" midpoint, blank book,
+  // "No fills yet") rather than fabricated values.
   const liveFills = activity.fills.filter(
     (fill) => fill.pair === ZONE_PAIR.pair,
   );
@@ -513,51 +525,23 @@ function TradeSurface() {
     zonePathUsdBalance !== null ||
     zoneOalphaBalance !== null ||
     liveFills.length > 0;
-  const useDemoData = state === "default" && !hasLiveData;
 
   const isLoading =
-    state === "loading" ||
-    state === "skeleton" ||
-    (state === "default" &&
-      !useDemoData &&
-      liveState === "loading" &&
-      (zonePathUsdBalance === null || zoneOalphaBalance === null));
-  const errorMessage =
-    state === "error"
-      ? fixture.error?.message
-      : useDemoData
-        ? undefined
-        : liveError;
+    !hasLiveData &&
+    (liveState === "loading" ||
+      publicMarketState === "loading" ||
+      publicMarketState === "idle");
+  const errorMessage = liveError;
   const fillsEmptyMessage =
-    state === "empty"
+    liveFills.length === 0
       ? "No fills yet. Your matches will appear here."
       : undefined;
-  const displayedMidpoint =
-    state === "loading" || state === "skeleton" || state === "error"
-      ? ""
-      : useDemoData
-        ? DEMO_ZONE_MIDPOINT
-        : midpoint;
-  const displayedBestBid =
-    state === "loading" || state === "skeleton" || state === "error"
-      ? ""
-      : useDemoData
-        ? DEMO_ZONE_BEST_BID
-        : formatRawPrice(bestBid);
-  const displayedBestAsk =
-    state === "loading" || state === "skeleton" || state === "error"
-      ? ""
-      : useDemoData
-        ? DEMO_ZONE_BEST_ASK
-        : formatRawPrice(bestAsk);
-  const fills = useDemoData
-    ? DEMO_ZONE_FILLS
-    : state === "default"
-      ? liveFills
-      : [];
-  // The trade chart's midpoint trend renders only when real history is indexed;
-  // in demo mode we plot the kit's illustrative trend instead.
-  const chartHistoryEnabled = useDemoData ? true : midpointHistoryEnabled;
+  const displayedMidpoint = midpoint;
+  const displayedBestBid = formatRawPrice(bestBid);
+  const displayedBestAsk = formatRawPrice(bestAsk);
+  const fills = liveFills;
+  // The trade chart's midpoint trend renders only when real history is indexed.
+  const chartHistoryEnabled = midpointHistoryEnabled;
 
   // Order form (shared between Market + Limit) — exact same surface, only
   // the outer width + the chart/fills siblings change.
@@ -575,12 +559,8 @@ function TradeSurface() {
         onModeChange={setMode}
         midpoint={displayedMidpoint}
         availableBySide={{
-          buy: formatTokenAmount(
-            useDemoData ? DEMO_ZONE_PATH_USD_BALANCE : zonePathUsdBalance,
-          ),
-          sell: formatTokenAmount(
-            useDemoData ? DEMO_ZONE_OALPHA_BALANCE : zoneOalphaBalance,
-          ),
+          buy: formatTokenAmount(zonePathUsdBalance),
+          sell: formatTokenAmount(zoneOalphaBalance),
         }}
         loading={isLoading}
         errorMessage={errorMessage}

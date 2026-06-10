@@ -9,6 +9,7 @@ import {
 } from "viem";
 
 import { OMEGA_ZONE } from "./config";
+import { getDevAuthSigner } from "./dev-wallet";
 
 export interface ZoneAuthWindow {
   issuedAt?: number | bigint;
@@ -143,7 +144,10 @@ export function getTempoNativeAuthSigner(
   if (candidate?.signTempoZoneRpcAuthDigest || candidate?.signTempoZoneRpcAuthToken) {
     return candidate as TempoNativeAuthSigner;
   }
-  return undefined;
+  // Dev-only: when the test wallet is enabled (NEXT_PUBLIC_DEV_WALLET_PK) and the
+  // connected client can't sign the zone auth digest natively, sign in-process
+  // with the test key. Inert in production (returns undefined).
+  return getDevAuthSigner();
 }
 
 export function persistZoneRpcAuthToken(

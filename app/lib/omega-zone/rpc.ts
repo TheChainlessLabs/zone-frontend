@@ -73,6 +73,38 @@ export const publicZoneClient = createPublicClient({
   transport: http(omegaZoneChain.rpcUrls.default.http[0]),
 });
 
+/**
+ * Wait for a zone transaction receipt by polling `eth_getTransactionReceipt`.
+ *
+ * viem's `waitForTransactionReceipt` watches the chain via
+ * `eth_getBlockByNumber(_, /* includeTransactions *​/ true)`, which the privacy
+ * zone restricts to the sequencer ("Sequencer only / request exceeds defined
+ * limit") — so it throws on the public RPC even after the tx has landed.
+ * Receipts themselves are public, so we poll for the receipt directly instead
+ * of watching full blocks.
+ */
+export async function waitForZoneTransactionReceipt(
+  hash: Hex,
+  {
+    timeoutMs = 30_000,
+    intervalMs = 1_000,
+  }: { timeoutMs?: number; intervalMs?: number } = {},
+) {
+  const deadline = Date.now() + timeoutMs;
+  for (;;) {
+    try {
+      return await publicZoneClient.getTransactionReceipt({ hash });
+    } catch (error) {
+      if (Date.now() >= deadline) {
+        throw new Error(
+          `Timed out waiting for the Omega Zone transaction receipt (${hash}).`,
+        );
+      }
+      await new Promise((resolve) => setTimeout(resolve, intervalMs));
+    }
+  }
+}
+
 export const serverPublicZoneClient = createPublicClient({
   chain: omegaZoneChain,
   transport: http(OMEGA_ZONE_RPC_URLS.publicServer),

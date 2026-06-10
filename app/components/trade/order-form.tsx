@@ -34,8 +34,8 @@ import { Input } from "@/components/ui/input";
 import { Animate } from "@/components/ui/animate";
 import { Icon } from "@/lib/icons";
 import { cn } from "@/lib/utils";
-import type { LaunchPair } from "@/lib/fixtures/pairs";
-import type { Side } from "@/lib/fixtures/types";
+import type { LaunchPair } from "@/lib/pairs";
+import type { Side } from "@/lib/view-types";
 
 import { NumberTicker } from "./motion";
 

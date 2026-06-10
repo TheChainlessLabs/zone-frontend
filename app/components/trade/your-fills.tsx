@@ -17,7 +17,7 @@ import * as React from "react";
 
 import { Status } from "@/components/ui/status";
 import { cn } from "@/lib/utils";
-import type { FillFixture } from "@/lib/fixtures/types";
+import type { FillFixture } from "@/lib/view-types";
 
 export interface YourFillsProps {
   fills: FillFixture[];

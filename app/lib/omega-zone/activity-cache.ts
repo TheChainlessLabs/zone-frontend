@@ -6,7 +6,7 @@ import type {
   OrderFixture,
   PortfolioFixture,
   WithdrawalFixture,
-} from "@/lib/fixtures";
+} from "@/lib/view-types";
 
 import { OMEGA_ZONE_ADDRESSES } from "./config";
 import {

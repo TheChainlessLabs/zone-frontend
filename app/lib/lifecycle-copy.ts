@@ -16,7 +16,7 @@
  * tooltip bridges).
  */
 import type { StatusState } from "@/components/ui/status";
-import type { BatchStatus } from "@/lib/fixtures/types";
+import type { BatchStatus } from "@/lib/view-types";
 
 export type LifecycleSurface = "deposit" | "withdrawal";
 

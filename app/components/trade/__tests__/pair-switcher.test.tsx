@@ -8,17 +8,17 @@ afterEach(cleanup);
 it("renders the selected pair + a live rolling midpoint on the trigger", () => {
   render(
     <PairSwitcher
-      value="USDC/EURC"
+      value="OALPHA/PATH.USD"
       onChange={() => {}}
       midpoint="0.9213"
     />,
   );
-  expect(screen.getByText("USDC/EURC")).toBeDefined();
+  expect(screen.getByText("OALPHA/PATH.USD")).toBeDefined();
   // The kit renders the midpoint via the rolling-digit NumberTicker: each
   // numeral becomes a vertical 0–9 strip and the non-digit separator renders
   // flat. Assert the ticker is mounted (one "." separator span + a digit strip
   // per numeral) rather than expecting a single "0.9213" text node.
-  const trigger = screen.getByRole("button", { name: /Pair: USDC\/EURC/ });
+  const trigger = screen.getByRole("button", { name: /Pair: OALPHA\/PATH\.USD/ });
   const dotSpans = Array.from(trigger.querySelectorAll("span")).filter(
     (s) => s.textContent === ".",
   );
@@ -31,20 +31,20 @@ it("renders the selected pair + a live rolling midpoint on the trigger", () => {
 });
 
 it("falls back to em-dash when no midpoint is provided", () => {
-  render(<PairSwitcher value="USDC/EURC" onChange={() => {}} />);
+  render(<PairSwitcher value="OALPHA/PATH.USD" onChange={() => {}} />);
   expect(screen.getByText("—")).toBeDefined();
 });
 
 it("exposes the trigger via aria-label naming the active pair", () => {
   render(
     <PairSwitcher
-      value="USDC/USDT"
+      value="OALPHA/PATH.USD"
       onChange={() => {}}
       midpoint="1.0001"
     />,
   );
   expect(
-    screen.getByRole("button", { name: /Pair: USDC\/USDT/ }),
+    screen.getByRole("button", { name: /Pair: OALPHA\/PATH\.USD/ }),
   ).toBeDefined();
 });
 
@@ -54,11 +54,11 @@ it("renders the trigger as a non-disabled button — Radix DropdownMenu portal c
   // here; menu coverage is captured by Storybook visual regression in M2.
   render(
     <PairSwitcher
-      value="USDC/EURC"
+      value="OALPHA/PATH.USD"
       onChange={() => {}}
       midpoint="0.9213"
     />,
   );
-  const trigger = screen.getByRole("button", { name: /Pair: USDC\/EURC/ });
+  const trigger = screen.getByRole("button", { name: /Pair: OALPHA\/PATH\.USD/ });
   expect(trigger.hasAttribute("disabled")).toBe(false);
 });

@@ -11,7 +11,7 @@
  * pruned variants. Fixture-only volume; M6 sources the real price oracle.
  */
 
-import type { FillFixture, MarketPair } from "@/lib/fixtures/types";
+import type { FillFixture, MarketPair } from "@/lib/view-types";
 
 /** Parse a decimal display string ("5,000.00") to a number, comma-tolerant. */
 export function parseNum(s: string | undefined | null): number {

@@ -9,15 +9,11 @@ import { Button } from "@/components/ui/button";
 import { Status } from "@/components/ui/status";
 import { Icon } from "@/lib/icons";
 import { cn } from "@/lib/utils";
-import {
-  batchesListFixtures,
-  usePageState,
-} from "@/lib/fixtures";
 import type {
   BatchFixture,
   BatchStatus,
   MarketPair,
-} from "@/lib/fixtures/types";
+} from "@/lib/view-types";
 import {
   listZoneBatches,
   searchZoneBatch,
@@ -49,13 +45,6 @@ import styles from "./batches.module.css";
  */
 
 const PAGE_SIZE = 7;
-const PAIR_POOL: MarketPair[] = [
-  "OALPHA/PATH.USD",
-  "USDC/EURC",
-  "USDC/USDT",
-  "USDT/EURC",
-  "ETH/USDC",
-];
 
 // `verified` (the app's settled+proven end state) maps onto the kit's
 // `settled` lexicon glyph; pending/failed map directly. Centralised so the
@@ -75,7 +64,6 @@ const STATUS_LABEL: Record<BatchStatus, string> = {
 };
 
 export function BatchesListView() {
-  const state = usePageState();
   const [search, setSearch] = React.useState("");
   const [page, setPage] = React.useState(1);
   const [liveRows, setLiveRows] = React.useState<BatchFixture[]>([]);
@@ -83,19 +71,6 @@ export function BatchesListView() {
     "loading" | "ready" | "error"
   >("loading");
   const [liveError, setLiveError] = React.useState<string | undefined>();
-  // True only when the zone RPC is unreachable and we fall back to demo
-  // fixtures + the synthetic heartbeat. A reachable zone (even live-empty)
-  // keeps this false so we render real data, not demo.
-  const [usingFallback, setUsingFallback] = React.useState(false);
-
-  // Live explorer heartbeat — the ~12s next-batch progress + the ticking
-  // aggregate strip. Seeded near the kit's resting values; reduced motion
-  // parks the bar and stops the seal loop.
-  const [pct, setPct] = React.useState(28);
-  const [batchesToday, setBatchesToday] = React.useState(482);
-  const [volume24h, setVolume24h] = React.useState(38.4e6);
-  const [freshNumber, setFreshNumber] = React.useState<number | null>(null);
-  const nextIdRef = React.useRef<number | null>(null);
 
   const searchParam = useSearchParam("search");
 
@@ -104,7 +79,6 @@ export function BatchesListView() {
   }, [searchParam]);
 
   React.useEffect(() => {
-    if (state !== "default") return;
     let cancelled = false;
     const timeout = window.setTimeout(async () => {
       setLiveState("loading");
@@ -115,34 +89,14 @@ export function BatchesListView() {
           ? compactBatch(await searchZoneBatch(query))
           : (await listZoneBatches({ limit: 60 })).batches;
         if (cancelled) return;
-        const rows = batches.map(zoneBatchToFixture);
-        // Live-empty is a real, correct state (no batches settled yet) — render
-        // it as empty. Demo fixtures are ONLY a fallback when the zone is
-        // unreachable (the catch below), never to paper over a live-empty book.
-        setUsingFallback(false);
-        setLiveRows(rows);
-        if (nextIdRef.current === null && rows.length > 0) {
-          nextIdRef.current = rows[0].number + 1;
-        }
+        // Live data only. A reachable-but-empty zone is a real, correct state
+        // (no batches settled yet) → render it empty. An unreachable zone is an
+        // honest error — NEVER demo batches.
+        setLiveRows(batches.map(zoneBatchToFixture));
         setLiveState("ready");
       } catch (error) {
         if (cancelled) return;
-        // Backend unreachable. For the unfiltered default view, fall back to
-        // the demo fixtures rather than the error state; a live search that
-        // fails still surfaces the error.
-        if (!search.trim()) {
-          // Zone unreachable → keep the explorer alive with demo fixtures and
-          // the synthetic heartbeat. This is the ONLY default-view path that
-          // uses fixtures.
-          setUsingFallback(true);
-          setLiveRows(batchesListFixtures.default.batches);
-          if (nextIdRef.current === null) {
-            nextIdRef.current =
-              batchesListFixtures.default.batches[0].number + 1;
-          }
-          setLiveState("ready");
-          return;
-        }
+        setLiveRows([]);
         setLiveError(getErrorMessage(error));
         setLiveState("error");
       }
@@ -152,95 +106,19 @@ export function BatchesListView() {
       cancelled = true;
       window.clearTimeout(timeout);
     };
-  }, [search, state]);
-
-  // Demo fallback note: with no backend wired up the zone RPC errors or
-  // returns nothing. The fetch effect above already substitutes the populated
-  // demo fixtures into `liveRows` (and parks `liveState` at "ready") for the
-  // unfiltered default view, so the explorer stays alive — heartbeat, stat
-  // strip, and seal loop all run over the demo rows. Real data always wins;
-  // the `?state=` review fixtures are untouched.
-  const isLiveDefault =
-    state === "default" && liveState === "ready" && search.trim() === "";
-
-  // Seal a synthetic batch at the top and advance it Submitted → Proven →
-  // Settled, mirroring the kit. Only runs over the live default list (not a
-  // fixture state, not a filtered search) so it never fights real data.
-  const sealNewBatch = React.useCallback(() => {
-    setLiveRows((prev) => {
-      if (prev.length === 0) return prev;
-      const id = nextIdRef.current ?? prev[0].number + 1;
-      nextIdRef.current = id + 1;
-      const batch = makeBatch(id);
-      setBatchesToday((n) => n + 1);
-      setVolume24h((v) => v + (parseVolume(batch.volumeUsd) ?? 0));
-      setFreshNumber(id);
-      window.setTimeout(() => {
-        setLiveRows((rows) =>
-          rows.map((r) => (r.number === id ? { ...r, status: "verified" } : r)),
-        );
-      }, 4000);
-      return [batch, ...prev].slice(0, 60);
-    });
-  }, []);
-
-  React.useEffect(() => {
-    if (freshNumber === null) return;
-    const t = window.setTimeout(() => setFreshNumber(null), 900);
-    return () => window.clearTimeout(t);
-  }, [freshNumber]);
-
-  // ~12s heartbeat → progress bar; seals a batch on wrap. Skipped under
-  // reduced motion (the bar parks mid-cycle).
-  React.useEffect(() => {
-    // The synthetic ~12s seal heartbeat is a DEMO affordance only — run it
-    // over the demo fixtures when the zone is unreachable, never over real
-    // live data (a live-empty alpha book seals nothing).
-    if (!isLiveDefault || !usingFallback) return;
-    const reduce =
-      typeof window !== "undefined" &&
-      window.matchMedia &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduce) {
-      setPct(64);
-      return;
-    }
-    let acc = pct;
-    const iv = window.setInterval(() => {
-      acc += 100 / 60; // 200ms × 60 ticks = ~12s
-      if (acc >= 100) {
-        acc = 0;
-        sealNewBatch();
-      }
-      setPct(acc);
-    }, 200);
-    return () => window.clearInterval(iv);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLiveDefault, usingFallback, sealNewBatch]);
+  }, [search]);
 
   React.useEffect(() => {
     setPage(1);
   }, [search]);
 
-  const fixture =
-    state === "empty"
-      ? batchesListFixtures.empty
-      : state === "loading"
-        ? batchesListFixtures.loading
-        : state === "error"
-          ? batchesListFixtures.error
-          : null;
-
-  const isLoading =
-    fixture?.isLoading || (state === "default" && liveState === "loading");
+  const isLoading = liveState === "loading";
   const error =
-    fixture?.error ??
-    (state === "default" && liveState === "error"
+    liveState === "error"
       ? { message: liveError ?? "Failed to load batches.", code: "ZONE_RPC" }
-      : undefined);
+      : undefined;
 
-  const rows: BatchFixture[] =
-    state === "default" ? liveRows : fixture?.batches ?? [];
+  const rows: BatchFixture[] = liveRows;
 
   const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
@@ -249,18 +127,19 @@ export function BatchesListView() {
   const rangeStart = rows.length === 0 ? 0 : pageStart + 1;
   const rangeEnd = pageStart + pageRows.length;
 
-  const nextId = nextIdRef.current ?? (rows[0]?.number ?? 48201) + 1;
-  const secsLeft = Math.max(0, 12 - (pct / 100) * 12);
-
-  // Stat strip reflects reality: the synthetic ticking values only on the demo
-  // fallback; otherwise derive from the live rows (0 when the zone is reachable
-  // but empty — never the seeded demo figures).
-  const liveVolume = rows.reduce(
+  // Stat strip reflects reality only — derived from the live rows (0 when the
+  // zone is reachable but empty; never seeded demo figures).
+  const statVolume24h = rows.reduce(
     (sum, r) => sum + (parseVolume(r.volumeUsd) ?? 0),
     0,
   );
-  const statBatchesToday = usingFallback ? batchesToday : rows.length;
-  const statVolume24h = usingFallback ? volume24h : liveVolume;
+  const statBatchesToday = rows.length;
+  const provenPct = rows.length
+    ? Math.round(
+        (100 * rows.filter((r) => r.status === "verified").length) /
+          rows.length,
+      )
+    : 0;
 
   return (
     <PageLayout width="default" bare>
@@ -274,15 +153,11 @@ export function BatchesListView() {
           <BatchesListSkeleton />
         ) : (
           <div className={cn("flex flex-col gap-4", styles.fade)}>
-            <ExplorerHeader
-              pct={pct}
-              secsLeft={secsLeft}
-              nextLabel={batchNo(nextId)}
-              live={isLiveDefault}
-            />
+            <ExplorerHeader />
             <StatStrip
               batchesToday={statBatchesToday}
               volume24h={statVolume24h}
+              provenPct={provenPct}
             />
             <BatchList
               rows={pageRows}
@@ -294,7 +169,7 @@ export function BatchesListView() {
               rangeStart={rangeStart}
               rangeEnd={rangeEnd}
               error={error}
-              freshNumber={freshNumber}
+              freshNumber={null}
               onPage={(p) => setPage(Math.max(1, Math.min(totalPages, p)))}
             />
           </div>
@@ -305,20 +180,10 @@ export function BatchesListView() {
 }
 
 /* ─────────────────────────────────────────────────────────────────────── */
-/*  Explorer header — the live ~12s heartbeat                              */
+/*  Explorer header                                                        */
 /* ─────────────────────────────────────────────────────────────────────── */
 
-function ExplorerHeader({
-  pct,
-  secsLeft,
-  nextLabel,
-  live,
-}: {
-  pct: number;
-  secsLeft: number;
-  nextLabel: string;
-  live: boolean;
-}) {
+function ExplorerHeader() {
   return (
     <section className="glass flex flex-col gap-4 rounded-[var(--radius-xl)] p-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -347,22 +212,6 @@ function ExplorerHeader({
           Live · Ethereum L1
         </span>
       </div>
-      <div className="flex flex-col gap-2">
-        <div className="flex items-baseline justify-between">
-          <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
-            Next batch
-          </span>
-          <span className="whitespace-nowrap font-mono text-[11px] tabular-nums text-[var(--muted-foreground)]">
-            {live ? `~${secsLeft.toFixed(0)}s · sealing ${nextLabel}` : "live"}
-          </span>
-        </div>
-        <div className="h-1.5 overflow-hidden rounded-full bg-[var(--muted)]">
-          <div
-            className="h-full rounded-full bg-[var(--success)] transition-[width] duration-200 ease-linear"
-            style={{ width: `${pct}%` }}
-          />
-        </div>
-      </div>
     </section>
   );
 }
@@ -374,23 +223,29 @@ function ExplorerHeader({
 function StatStrip({
   batchesToday,
   volume24h,
+  provenPct,
 }: {
   batchesToday: number;
   volume24h: number;
+  provenPct: number;
 }) {
   return (
     <section className="glass flex items-stretch rounded-[var(--radius-xl)] py-5">
-      <StatCell label="Batches today" value={formatGroup(Math.round(batchesToday))} />
+      <StatCell label="Batches" value={formatGroup(Math.round(batchesToday))} />
       <Divider />
       <StatCell
-        label="Volume · 24h"
+        label="Volume"
         value={`${(volume24h / 1e6).toFixed(2)}M`}
         unit="USDC"
       />
       <Divider />
       <StatCell label="Avg batch" value="~12" unit="s" />
       <Divider />
-      <StatCell label="Proven" value="100%" tone="var(--success)" />
+      <StatCell
+        label="Proven"
+        value={`${provenPct}%`}
+        tone="var(--success)"
+      />
     </section>
   );
 }
@@ -931,33 +786,8 @@ function getErrorMessage(error: unknown) {
 }
 
 /* ─────────────────────────────────────────────────────────────────────── */
-/*  Synthetic-batch + format helpers (kit personality)                     */
+/*  Format helpers                                                         */
 /* ─────────────────────────────────────────────────────────────────────── */
-
-function makeBatch(id: number): BatchFixture {
-  const fills = 8 + Math.floor(Math.random() * 9); // 8–16
-  const k = 2 + Math.floor(Math.random() * 2); // 2–3 pairs
-  const chosen = [...PAIR_POOL].sort(() => Math.random() - 0.5).slice(0, k);
-  const volume = Math.round(fills * (11000 + Math.random() * 4000));
-  return {
-    number: id,
-    root: randHex(64),
-    status: "pending",
-    sealedAt: new Date().toISOString(),
-    orderCount: fills + Math.floor(Math.random() * 6),
-    fillCount: fills,
-    settlementTx: randHex(64),
-    pairs: chosen,
-    volumeUsd: String(volume),
-  };
-}
-
-function randHex(len: number): `0x${string}` {
-  return ("0x" +
-    Array.from({ length: len }, () =>
-      Math.floor(Math.random() * 16).toString(16),
-    ).join("")) as `0x${string}`;
-}
 
 function parseVolume(value: string | undefined): number | undefined {
   if (!value) return undefined;

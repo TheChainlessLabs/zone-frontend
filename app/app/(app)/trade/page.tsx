@@ -45,6 +45,7 @@ import {
   OrderModeSelector,
   PairSwitcher,
   YourFills,
+  YourOpenOrders,
   type MatchToastFill,
   type OrderMode,
   type OrderFormSubmitPayload,
@@ -581,6 +582,12 @@ function TradeSurface() {
   const liveFills = activity.fills.filter(
     (fill) => fill.pair === ZONE_PAIR.pair,
   );
+  // Resting limit orders for this pair — anything not in a terminal state.
+  const openOrders = activity.orders.filter(
+    (order) =>
+      order.pair === ZONE_PAIR.pair &&
+      !["matched", "settled", "cancelled", "failed"].includes(order.status),
+  );
   const hasLiveData =
     liveState === "ready" ||
     publicMarketState === "ready" ||
@@ -597,6 +604,10 @@ function TradeSurface() {
   const fillsEmptyMessage =
     liveFills.length === 0
       ? "No fills yet. Your matches will appear here."
+      : undefined;
+  const ordersEmptyMessage =
+    openOrders.length === 0
+      ? "No open orders. Your resting limit orders will appear here."
       : undefined;
   const displayedMidpoint = midpoint;
   const displayedBestBid = formatRawPrice(bestBid);
@@ -631,7 +642,7 @@ function TradeSurface() {
     </div>
   );
 
-  // Limit-mode-only side block — chart placeholder + your fills.
+  // Limit-mode-only side block — chart placeholder + open orders + your fills.
   const limitSideBlock = (
     <Animate variant="enter" className="flex flex-col gap-4">
       <ChartPlaceholder
@@ -640,6 +651,12 @@ function TradeSurface() {
         bestBid={displayedBestBid}
         bestAsk={displayedBestAsk}
         historyEnabled={chartHistoryEnabled}
+      />
+      <YourOpenOrders
+        orders={openOrders}
+        loading={isLoading}
+        errorMessage={errorMessage}
+        emptyMessage={ordersEmptyMessage}
       />
       <YourFills
         fills={fills}

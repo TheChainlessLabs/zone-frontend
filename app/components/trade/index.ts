@@ -12,6 +12,10 @@ export {
 export { ChartPlaceholder, type ChartPlaceholderProps } from "./chart-placeholder";
 export { YourFills, type YourFillsProps } from "./your-fills";
 export {
+  YourOpenOrders,
+  type YourOpenOrdersProps,
+} from "./your-open-orders";
+export {
   OrderPipeline,
   type OrderPipelineProps,
   type PipelineStage,

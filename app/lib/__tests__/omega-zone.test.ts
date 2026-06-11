@@ -22,6 +22,9 @@ import {
   decodeZoneRpcAuthTokenFields,
   depositPathUsdToZoneRequest,
   encodeZoneRpcAuthFields,
+  isZoneAuthError,
+  isZoneRpcAuthTokenExpired,
+  ZoneRpcHttpError,
   getZoneBatch,
   getZoneMarketConfig,
   getZoneMidpointHistory,
@@ -193,6 +196,34 @@ describe("zone RPC auth token", () => {
 
     expect(decodeZoneRpcAuthTokenFields(token).expiresAt).toBe(BigInt(2));
     expect(readPersistedZoneRpcAuthToken(ACCOUNT)).toBeNull();
+  });
+
+  it("flags a token as expired within the refresh buffer", () => {
+    const now = Math.floor(Date.now() / 1000);
+    const fresh = `0x${"11".repeat(65)}${encodeZoneRpcAuthFields({
+      issuedAt: BigInt(now),
+      expiresAt: BigInt(now + 15 * 60),
+    }).slice(2)}` as Hex;
+    const nearExpiry = `0x${"11".repeat(65)}${encodeZoneRpcAuthFields({
+      issuedAt: BigInt(now - 15 * 60),
+      expiresAt: BigInt(now + 30),
+    }).slice(2)}` as Hex;
+
+    expect(isZoneRpcAuthTokenExpired(fresh)).toBe(false);
+    // Within the default 60s refresh buffer → treated as expired.
+    expect(isZoneRpcAuthTokenExpired(nearExpiry)).toBe(true);
+    // Unparseable tokens are treated as expired (fail closed).
+    expect(isZoneRpcAuthTokenExpired("0xdeadbeef" as Hex)).toBe(true);
+  });
+
+  it("classifies 401/403 zone RPC errors as auth errors", () => {
+    expect(isZoneAuthError(new ZoneRpcHttpError(403))).toBe(true);
+    expect(isZoneAuthError(new ZoneRpcHttpError(401))).toBe(true);
+    expect(isZoneAuthError(new ZoneRpcHttpError(500))).toBe(false);
+    expect(
+      isZoneAuthError(new Error("Private zone RPC failed with HTTP 403.")),
+    ).toBe(true);
+    expect(isZoneAuthError(new Error("execution reverted"))).toBe(false);
   });
 
   it("prefers a native Tempo signer when the wallet exposes one", async () => {

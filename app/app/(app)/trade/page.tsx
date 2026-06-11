@@ -62,6 +62,9 @@ import {
   darkpoolPlaceOrderRequest,
   fetchOmegaZoneActivity,
   getTempoNativeAuthSigner,
+  isZoneAuthError,
+  isZoneRpcAuthTokenExpired,
+  clearPersistedZoneRpcAuthToken,
   getZoneMidpointHistory,
   getZonePublicMidpointHistory,
   getZonePublicTopOfBook,
@@ -121,6 +124,11 @@ function TradeSurface() {
   );
   const [bestBid, setBestBid] = React.useState<bigint | null>(null);
   const [bestAsk, setBestAsk] = React.useState<bigint | null>(null);
+  // Resting depth at the top of book (base/OALPHA units). Used to guard market
+  // orders against exceeding available liquidity (the darkpool reverts on a
+  // partial fill rather than filling what it can).
+  const [bestBidQty, setBestBidQty] = React.useState<bigint | null>(null);
+  const [bestAskQty, setBestAskQty] = React.useState<bigint | null>(null);
   const [midpointHistoryEnabled, setMidpointHistoryEnabled] =
     React.useState(false);
   const [activity, setActivity] = React.useState(() =>
@@ -208,16 +216,12 @@ function TradeSurface() {
       ]);
       setZonePathUsdBalance(pathUsdBalance);
       setZoneOalphaBalance(oalphaBalance);
-      setBestBid(
-        bid.status === "fulfilled" && bid.value.price > BigInt(0)
-          ? bid.value.price
-          : null,
-      );
-      setBestAsk(
-        ask.status === "fulfilled" && ask.value.price > BigInt(0)
-          ? ask.value.price
-          : null,
-      );
+      const bidLive = bid.status === "fulfilled" && bid.value.price > BigInt(0);
+      const askLive = ask.status === "fulfilled" && ask.value.price > BigInt(0);
+      setBestBid(bidLive ? bid.value.price : null);
+      setBestAsk(askLive ? ask.value.price : null);
+      setBestBidQty(bidLive ? bid.value.quantity : null);
+      setBestAskQty(askLive ? ask.value.quantity : null);
       setMidpointHistoryEnabled(
         history.status === "fulfilled" ? history.value.history.enabled : false,
       );
@@ -230,20 +234,36 @@ function TradeSurface() {
     [connectedAddress],
   );
 
-  const ensureZoneAuthToken = React.useCallback(async () => {
-    if (zoneAuthTokenRef.current) return zoneAuthTokenRef.current;
-    if (zoneAuthToken) {
-      zoneAuthTokenRef.current = zoneAuthToken;
-      return zoneAuthToken;
+  const ensureZoneAuthToken = React.useCallback(
+    async ({ forceRefresh = false }: { forceRefresh?: boolean } = {}) => {
+    // A token is only reusable if it is present AND not within the refresh
+    // buffer of expiring — the private RPC rejects an expired token with HTTP
+    // 403. `forceRefresh` (used after a 403 mid-flight) discards every cached
+    // copy and re-signs.
+    const usable = (token: Hex | null | undefined): token is Hex =>
+      Boolean(token) && !isZoneRpcAuthTokenExpired(token as Hex);
+
+    if (forceRefresh) {
+      zoneAuthTokenRef.current = null;
+      zoneAuthTokenPromiseRef.current = null;
+      clearPersistedZoneRpcAuthToken();
+      setZoneAuthToken(null);
+    } else {
+      if (usable(zoneAuthTokenRef.current)) return zoneAuthTokenRef.current;
+      if (usable(zoneAuthToken)) {
+        zoneAuthTokenRef.current = zoneAuthToken;
+        return zoneAuthToken;
+      }
+      if (zoneAuthTokenPromiseRef.current)
+        return zoneAuthTokenPromiseRef.current;
+      const cachedAuthToken = readPersistedZoneRpcAuthToken(connectedAddress);
+      if (usable(cachedAuthToken)) {
+        zoneAuthTokenRef.current = cachedAuthToken;
+        setZoneAuthToken(cachedAuthToken);
+        return cachedAuthToken;
+      }
     }
-    if (zoneAuthTokenPromiseRef.current) return zoneAuthTokenPromiseRef.current;
     if (!connectedAddress) throw new Error("Connect Tempo Wallet first.");
-    const cachedAuthToken = readPersistedZoneRpcAuthToken(connectedAddress);
-    if (cachedAuthToken) {
-      zoneAuthTokenRef.current = cachedAuthToken;
-      setZoneAuthToken(cachedAuthToken);
-      return cachedAuthToken;
-    }
 
     const authTokenPromise = buildZoneRpcAuthToken({
       account: connectedAddress,
@@ -337,16 +357,12 @@ function TradeSurface() {
           }),
         ]);
         if (cancelled) return;
-        setBestBid(
-          book.bid && BigInt(book.bid.price) > BigInt(0)
-            ? BigInt(book.bid.price)
-            : null,
-        );
-        setBestAsk(
-          book.ask && BigInt(book.ask.price) > BigInt(0)
-            ? BigInt(book.ask.price)
-            : null,
-        );
+        const bidLive = Boolean(book.bid) && BigInt(book.bid!.price) > BigInt(0);
+        const askLive = Boolean(book.ask) && BigInt(book.ask!.price) > BigInt(0);
+        setBestBid(bidLive ? BigInt(book.bid!.price) : null);
+        setBestAsk(askLive ? BigInt(book.ask!.price) : null);
+        setBestBidQty(bidLive ? BigInt(book.bid!.quantity) : null);
+        setBestAskQty(askLive ? BigInt(book.ask!.quantity) : null);
         setMidpointHistoryEnabled(history.history.enabled);
         setPublicMarketState("ready");
       } catch {
@@ -396,64 +412,106 @@ function TradeSurface() {
   const handleOrderSubmit = React.useCallback(
     async (payload: OrderFormSubmitPayload) => {
       const { address } = requireWallet();
-      const authToken = await ensureZoneAuthToken();
       const signer = await getZoneTransactionSigner();
 
       const amount = parseTokenAmount(payload.amount, "OALPHA");
-      if (payload.mode === "market" && !midpoint) {
-        throw new Error("No zone midpoint is available yet. Use a limit order.");
+
+      // Price the order at the side of the book it will actually execute
+      // against. A market BUY clears the resting ASK, so the spend cap
+      // (maxQuoteIn) must be the ask price (+ slippage) — pricing it at the
+      // midpoint under-funds the fill and the darkpool reverts. A market SELL
+      // clears the resting BID, so the floor (minQuoteOut) is the bid price
+      // (− slippage). Limit orders price at the user's stated price.
+      let limitPrice: bigint | null = null;
+      let quoteBound: bigint; // maxQuoteIn (buy) / minQuoteOut (sell) / amount*price (limit)
+
+      if (payload.mode === "limit") {
+        limitPrice = parseRawPrice(payload.price ?? "");
+        quoteBound = quoteForBaseAmount(amount, limitPrice);
+      } else if (payload.side === "buy") {
+        if (bestAsk === null) {
+          throw new Error(
+            "No resting ask to trade against yet. Place a limit order instead.",
+          );
+        }
+        if (bestAskQty !== null && amount > bestAskQty) {
+          throw new Error(
+            `Only ${formatTokenAmount(bestAskQty)} OALPHA is resting at the ask. Reduce the size or place a limit order.`,
+          );
+        }
+        quoteBound = applyMarketSlippage(
+          quoteForBaseAmount(amount, bestAsk),
+          "up",
+        );
+      } else {
+        if (bestBid === null) {
+          throw new Error(
+            "No resting bid to trade against yet. Place a limit order instead.",
+          );
+        }
+        if (bestBidQty !== null && amount > bestBidQty) {
+          throw new Error(
+            `Only ${formatTokenAmount(bestBidQty)} OALPHA of bid depth is available. Reduce the size or place a limit order.`,
+          );
+        }
+        quoteBound = applyMarketSlippage(
+          quoteForBaseAmount(amount, bestBid),
+          "down",
+        );
       }
-      const price =
-        payload.mode === "limit"
-          ? parseRawPrice(payload.price ?? "")
-          : parseRawPrice(midpoint);
-      const quoteAmount = quoteForBaseAmount(amount, price);
 
-      await ensureTradeBalance({
-        account: address,
-        authToken,
-        token:
-          payload.side === "buy"
-            ? OMEGA_ZONE_ADDRESSES.pathUsd
-            : OMEGA_ZONE_ADDRESSES.oalpha,
-        requiredAmount: payload.side === "buy" ? quoteAmount : amount,
-        tokenLabel: payload.side === "buy" ? "PATH.USD" : "OALPHA",
-      });
-
-      const txHash =
+      const request =
         payload.mode === "limit"
-          ? await signAndSendPrivateZoneContractWrite({
-              authToken,
-              signer,
-              account: address,
-              request: darkpoolPlaceOrderRequest({
-                base: OMEGA_ZONE_ADDRESSES.oalpha,
-                amount,
-                price,
-                isBid: payload.side === "buy",
-              }),
+          ? darkpoolPlaceOrderRequest({
+              base: OMEGA_ZONE_ADDRESSES.oalpha,
+              amount,
+              price: limitPrice as bigint,
+              isBid: payload.side === "buy",
             })
           : payload.side === "buy"
-            ? await signAndSendPrivateZoneContractWrite({
-                authToken,
-                signer,
-                account: address,
-                request: darkpoolMarketBuyRequest({
-                  base: OMEGA_ZONE_ADDRESSES.oalpha,
-                  amount,
-                  maxQuoteIn: quoteAmount,
-                }),
+            ? darkpoolMarketBuyRequest({
+                base: OMEGA_ZONE_ADDRESSES.oalpha,
+                amount,
+                maxQuoteIn: quoteBound,
               })
-            : await signAndSendPrivateZoneContractWrite({
-                authToken,
-                signer,
-                account: address,
-                request: darkpoolMarketSellRequest({
-                  base: OMEGA_ZONE_ADDRESSES.oalpha,
-                  amount,
-                  minQuoteOut: quoteAmount,
-                }),
+            : darkpoolMarketSellRequest({
+                base: OMEGA_ZONE_ADDRESSES.oalpha,
+                amount,
+                minQuoteOut: quoteBound,
               });
+
+      // One submit attempt against a given auth token: balance pre-check +
+      // signed contract write. Both touch the private RPC and can 403 on an
+      // expired token, so the caller retries once with a fresh token.
+      const submitWith = async (token: Hex) => {
+        await ensureTradeBalance({
+          account: address,
+          authToken: token,
+          token:
+            payload.side === "buy"
+              ? OMEGA_ZONE_ADDRESSES.pathUsd
+              : OMEGA_ZONE_ADDRESSES.oalpha,
+          requiredAmount: payload.side === "buy" ? quoteBound : amount,
+          tokenLabel: payload.side === "buy" ? "PATH.USD" : "OALPHA",
+        });
+        return signAndSendPrivateZoneContractWrite({
+          authToken: token,
+          signer,
+          account: address,
+          request,
+        });
+      };
+
+      let authToken = await ensureZoneAuthToken();
+      let txHash: Hex;
+      try {
+        txHash = await submitWith(authToken);
+      } catch (error) {
+        if (!isZoneAuthError(error)) throw error;
+        // Auth token expired/rejected mid-flight — re-sign once and retry.
+        authToken = await ensureZoneAuthToken({ forceRefresh: true });
+        txHash = await submitWith(authToken);
+      }
 
       const receipt = await waitForZoneTransactionReceipt(txHash);
       const patch = activityFromDarkpoolReceipt({
@@ -478,6 +536,10 @@ function TradeSurface() {
       await refreshZoneSnapshot(authToken);
     },
     [
+      bestAsk,
+      bestAskQty,
+      bestBid,
+      bestBidQty,
       ensureZoneAuthToken,
       getZoneTransactionSigner,
       midpoint,
@@ -784,6 +846,18 @@ function parseRawPrice(value: string): bigint {
 
 function quoteForBaseAmount(amount: bigint, price: bigint): bigint {
   return amount * price;
+}
+
+// Slippage tolerance for market orders, in basis points. The cap (buy) or floor
+// (sell) is derived from the top-of-book price and padded by this much so a fill
+// that walks slightly into the book — or a price that moves between preview and
+// settle — still clears instead of reverting on the darkpool's exact-fill check.
+const MARKET_SLIPPAGE_BPS = BigInt(100); // 1%
+const BPS_DENOMINATOR = BigInt(10_000);
+
+function applyMarketSlippage(quote: bigint, direction: "up" | "down"): bigint {
+  const delta = (quote * MARKET_SLIPPAGE_BPS) / BPS_DENOMINATOR;
+  return direction === "up" ? quote + delta : quote - delta;
 }
 
 function formatRawPrice(value: bigint | null): string {

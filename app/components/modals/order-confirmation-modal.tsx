@@ -193,6 +193,12 @@ function formatOrderErrorMessage(message: string): string {
   if (message.includes("Invalid params") && message.includes("eth_sendTransaction")) {
     return "Tempo Wallet rejected the zone transaction request. Retry once; if it repeats, the wallet likely does not support this Omega Zone transaction path yet.";
   }
+  if (/HTTP 40[13]\b/.test(message) || /unauthorized|forbidden/i.test(message)) {
+    return "Your Omega Zone session expired. Reconnect your wallet to sign a fresh session, then retry the order.";
+  }
+  if (/execution reverted/i.test(message)) {
+    return "The zone rejected this order — usually the size exceeds resting book depth or your zone balance. Reduce the size or deposit more, then retry.";
+  }
   if (message.length <= 320) return message;
   return `${message.slice(0, 320).trim()}...`;
 }

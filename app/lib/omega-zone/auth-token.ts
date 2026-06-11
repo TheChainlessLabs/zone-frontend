@@ -215,6 +215,23 @@ export function readPersistedZoneRpcAuthToken(
   }
 }
 
+/**
+ * True when `authToken` is expired or within `bufferSeconds` of expiring (or is
+ * unparseable). Callers re-mint a fresh token before using it so a stale token
+ * never reaches the private RPC (which rejects it with HTTP 403).
+ */
+export function isZoneRpcAuthTokenExpired(
+  authToken: Hex,
+  bufferSeconds = 60,
+): boolean {
+  try {
+    const { expiresAt } = decodeZoneRpcAuthTokenFields(authToken);
+    return Number(expiresAt) <= Math.floor(Date.now() / 1000) + bufferSeconds;
+  } catch {
+    return true;
+  }
+}
+
 export function clearPersistedZoneRpcAuthToken() {
   if (typeof document === "undefined") return;
   if (typeof window !== "undefined") {

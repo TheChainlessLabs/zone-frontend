@@ -27,6 +27,33 @@ import {
   TIP20_PARSED_ABI,
 } from "./abi";
 
+/**
+ * Thrown when a zone RPC proxy returns a non-2xx HTTP status. Carries the status
+ * so callers can distinguish auth failures (401/403 → re-mint the auth token and
+ * retry) from other transport errors. See {@link isZoneAuthError}.
+ */
+export class ZoneRpcHttpError extends Error {
+  readonly status: number;
+  constructor(status: number, scope: "private" | "public" = "private") {
+    super(`${scope === "public" ? "Public" : "Private"} zone RPC failed with HTTP ${status}.`);
+    this.name = "ZoneRpcHttpError";
+    this.status = status;
+  }
+}
+
+/**
+ * True when `error` is an auth failure (HTTP 401/403) from the private zone RPC —
+ * i.e. the wallet-signed auth token was missing/expired/rejected. Callers re-mint
+ * a fresh token and retry once.
+ */
+export function isZoneAuthError(error: unknown): boolean {
+  if (error instanceof ZoneRpcHttpError) {
+    return error.status === 401 || error.status === 403;
+  }
+  const message = error instanceof Error ? error.message : String(error);
+  return /HTTP 40[13]\b/.test(message) || /unauthorized|forbidden/i.test(message);
+}
+
 export interface ZoneRpcRequest {
   method: string;
   params?: readonly unknown[];
@@ -139,7 +166,7 @@ export async function privateRpcFetch<T>(
   });
 
   if (!response.ok) {
-    throw new Error(`Private zone RPC failed with HTTP ${response.status}.`);
+    throw new ZoneRpcHttpError(response.status, "private");
   }
 
   const payload = (await response.json()) as {
@@ -856,7 +883,7 @@ export async function publicRpcFetch<T>(
   });
 
   if (!response.ok) {
-    throw new Error(`Public zone RPC failed with HTTP ${response.status}.`);
+    throw new ZoneRpcHttpError(response.status, "public");
   }
 
   const payload = (await response.json()) as {

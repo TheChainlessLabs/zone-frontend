@@ -227,8 +227,14 @@ function TradeSurface() {
         history.status === "fulfilled" ? history.value.history.enabled : false,
       );
       if (ownerActivity.status === "fulfilled") {
+        // The owner-activity fetch returns the COMPLETE set of resting orders
+        // (zone_getMyOrders, filtered to open/partiallyFilled), so it is
+        // authoritative — replace the order list rather than merge, which drops
+        // optimistic place-time "pending" rows once they fill or cancel.
         setActivity(
-          mergeOmegaZoneActivity(connectedAddress, ownerActivity.value),
+          mergeOmegaZoneActivity(connectedAddress, ownerActivity.value, {
+            ordersAuthoritative: true,
+          }),
         );
       }
     },
@@ -379,6 +385,24 @@ function TradeSurface() {
     // Stable callback set; runs once on mount and polls. No page-state gating.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Authed snapshot poll — keeps balances, resting open orders, and fills
+  // current while connected, so an order that fills (here or via another
+  // party's match) leaves the open-orders card promptly instead of lingering
+  // as a stale "pending" row. Uses the cached auth token only (never re-signs
+  // on a timer — that would surprise the user with a passkey prompt); when the
+  // token has expired the poll simply no-ops until the next user action.
+  React.useEffect(() => {
+    if (!connectedAddress) return;
+    const tick = () => {
+      const token = zoneAuthTokenRef.current;
+      if (!token || isZoneRpcAuthTokenExpired(token)) return;
+      void refreshZoneSnapshot(token).catch(() => {});
+    };
+    const iv = window.setInterval(tick, 8_000);
+    return () => window.clearInterval(iv);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [connectedAddress]);
 
   const requireWallet = React.useCallback(() => {
     if (!connectedAddress) throw new Error("Connect Tempo Wallet first.");

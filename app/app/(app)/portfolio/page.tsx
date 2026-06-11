@@ -82,6 +82,7 @@ import {
   getZoneWithdrawalStatus,
   mergeOmegaZoneActivity,
   persistZoneRpcAuthToken,
+  isZoneRpcAuthTokenExpired,
   waitForZoneTransactionReceipt,
   readPersistedZoneRpcAuthToken,
   readOmegaZoneActivity,
@@ -268,7 +269,13 @@ export default function PortfolioPage() {
         authToken,
         account: connectedAddress,
       });
-      setActivity(mergeOmegaZoneActivity(connectedAddress, nextActivity));
+      // Authoritative resting-order set (zone_getMyOrders) — replace, don't
+      // merge, so filled/cancelled orders drop out instead of lingering.
+      setActivity(
+        mergeOmegaZoneActivity(connectedAddress, nextActivity, {
+          ordersAuthoritative: true,
+        }),
+      );
     },
     [connectedAddress],
   );
@@ -379,6 +386,24 @@ export default function PortfolioPage() {
     // even though the balance read already succeeded — pinning the surface on
     // the loading skeleton (→ demo fallback) forever. They're read at call time
     // from the latest closure, so narrowing the deps loses nothing.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [connectedAddress]);
+
+  // Live refresh — poll balances, holdings, and resting orders while connected
+  // so the portfolio reflects fills/deposits/withdrawals without a manual
+  // reload. Uses the cached auth token only (never re-signs on a timer); when
+  // the token has expired the poll no-ops until the next user action.
+  React.useEffect(() => {
+    if (!connectedAddress) return;
+    const tick = () => {
+      const token = zoneAuthTokenRef.current;
+      if (!token || isZoneRpcAuthTokenExpired(token)) return;
+      void refreshZoneBalances(token).catch(() => {});
+      void refreshZoneActivity(token).catch(() => {});
+      void refreshL1Balance().catch(() => {});
+    };
+    const iv = window.setInterval(tick, 8_000);
+    return () => window.clearInterval(iv);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [connectedAddress]);
 

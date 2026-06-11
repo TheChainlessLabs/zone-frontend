@@ -48,13 +48,30 @@ export function writeOmegaZoneActivity(
   optimisticActivity.set(activityKey(account), trimActivity(activity));
 }
 
+export interface MergeActivityOptions {
+  /**
+   * Treat `patch.orders` as the authoritative, complete set of resting orders
+   * (e.g. from `zone_getMyOrders`) and REPLACE the cached order list rather than
+   * merging by id. Orders are not append-only history — once an order fills or
+   * is cancelled it leaves the open set, so an authoritative snapshot must be
+   * able to drop stale entries (including optimistic place-time "pending" rows).
+   * Fills/deposits/withdrawals remain append-only and always merge.
+   */
+  ordersAuthoritative?: boolean;
+}
+
 export function mergeOmegaZoneActivity(
   account: Address,
   patch: Partial<OmegaZoneActivity>,
+  options: MergeActivityOptions = {},
 ): OmegaZoneActivity {
   const current = readOmegaZoneActivity(account);
+  const orders =
+    options.ordersAuthoritative && patch.orders !== undefined
+      ? patch.orders
+      : mergeById(patch.orders, current.orders);
   const next = trimActivity({
-    orders: mergeById(patch.orders, current.orders),
+    orders,
     fills: mergeById(patch.fills, current.fills),
     deposits: mergeById(patch.deposits, current.deposits),
     withdrawals: mergeById(patch.withdrawals, current.withdrawals),

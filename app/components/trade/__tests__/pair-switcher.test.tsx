@@ -8,17 +8,17 @@ afterEach(cleanup);
 it("renders the selected pair + a live rolling midpoint on the trigger", () => {
   render(
     <PairSwitcher
-      value="OALPHA/PATH.USD"
+      value="ALPHAUSD/PATH.USD"
       onChange={() => {}}
       midpoint="0.9213"
     />,
   );
-  expect(screen.getByText("OALPHA/PATH.USD")).toBeDefined();
+  expect(screen.getByText("ALPHAUSD/PATH.USD")).toBeDefined();
   // The kit renders the midpoint via the rolling-digit NumberTicker: each
   // numeral becomes a vertical 0–9 strip and the non-digit separator renders
   // flat. Assert the ticker is mounted (one "." separator span + a digit strip
   // per numeral) rather than expecting a single "0.9213" text node.
-  const trigger = screen.getByRole("button", { name: /Pair: OALPHA\/PATH\.USD/ });
+  const trigger = screen.getByRole("button", { name: /Pair: ALPHAUSD\/PATH\.USD/ });
   const dotSpans = Array.from(trigger.querySelectorAll("span")).filter(
     (s) => s.textContent === ".",
   );
@@ -31,20 +31,20 @@ it("renders the selected pair + a live rolling midpoint on the trigger", () => {
 });
 
 it("falls back to em-dash when no midpoint is provided", () => {
-  render(<PairSwitcher value="OALPHA/PATH.USD" onChange={() => {}} />);
+  render(<PairSwitcher value="ALPHAUSD/PATH.USD" onChange={() => {}} />);
   expect(screen.getByText("—")).toBeDefined();
 });
 
 it("exposes the trigger via aria-label naming the active pair", () => {
   render(
     <PairSwitcher
-      value="OALPHA/PATH.USD"
+      value="ALPHAUSD/PATH.USD"
       onChange={() => {}}
       midpoint="1.0001"
     />,
   );
   expect(
-    screen.getByRole("button", { name: /Pair: OALPHA\/PATH\.USD/ }),
+    screen.getByRole("button", { name: /Pair: ALPHAUSD\/PATH\.USD/ }),
   ).toBeDefined();
 });
 
@@ -54,11 +54,11 @@ it("renders the trigger as a non-disabled button — Radix DropdownMenu portal c
   // here; menu coverage is captured by Storybook visual regression in M2.
   render(
     <PairSwitcher
-      value="OALPHA/PATH.USD"
+      value="ALPHAUSD/PATH.USD"
       onChange={() => {}}
       midpoint="0.9213"
     />,
   );
-  const trigger = screen.getByRole("button", { name: /Pair: OALPHA\/PATH\.USD/ });
+  const trigger = screen.getByRole("button", { name: /Pair: ALPHAUSD\/PATH\.USD/ });
   expect(trigger.hasAttribute("disabled")).toBe(false);
 });

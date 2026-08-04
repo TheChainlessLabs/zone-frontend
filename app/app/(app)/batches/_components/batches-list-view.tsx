@@ -9,36 +9,32 @@ import { Button } from "@/components/ui/button";
 import { Status } from "@/components/ui/status";
 import { Icon } from "@/lib/icons";
 import { cn } from "@/lib/utils";
-import type {
-  BatchFixture,
-  BatchStatus,
-  MarketPair,
-} from "@/lib/view-types";
 import {
   listZoneBatches,
   searchZoneBatch,
   type ZoneBatchSummary,
-  type ZoneBatchStatus,
 } from "@/lib/zone";
 
+import {
+  averageSettlementInterval,
+  type BatchRecord,
+  type BatchRecordStatus,
+  formatBatchNumber,
+  formatBatchVolumes,
+  formatDuration,
+  zoneBatchToRecord,
+} from "./batch-data";
 import { CopyButton } from "./copy-button";
-import { EtherscanTxLink } from "./etherscan-link";
+import { TempoTxLink } from "./etherscan-link";
 import styles from "./batches.module.css";
 
 /**
  * BatchesListView — the dark pool's one public surface, ported to the
  * design-kit settlement explorer.
  *
- * Composition (kit `Batches.jsx`): ExplorerHeader (the live next-batch ~12s
- * heartbeat), StatStrip (ticking aggregate metrics), and a searchable,
- * paginated Recent-batches table (7 per page). A new batch seals at the top
- * every ~12s and flashes once; the strip ticks alongside it.
- *
- * Behaviour preserved from the app: `usePageState()` drives the `?state=`
- * fixtures (default/empty/loading/error); in the default state the rows come
- * from the live Omega Zone RPC (`listZoneBatches` / `searchZoneBatch`).
- * `?search=` seeds the query. The surface is public/no-auth and renders
- * regardless of wallet state.
+ * Rows and metrics come exclusively from the live Omega Zone batch RPC. The
+ * cursor returned by `zone_listBatches` drives pagination; `?search=` seeds a
+ * server-side batch/settlement-transaction search.
  *
  * Privacy hard rule: aggregate + per-pair metadata only — never a
  * counterparty, an order ID, or an individual fill owner.
@@ -46,33 +42,39 @@ import styles from "./batches.module.css";
 
 const PAGE_SIZE = 7;
 
-// `verified` (the app's settled+proven end state) maps onto the kit's
-// `settled` lexicon glyph; pending/failed map directly. Centralised so the
-// table cells and the detail page never drift.
+// Map RPC states onto the existing status glyph vocabulary without changing
+// their user-facing labels.
 const STATUS_STATE: Record<
-  BatchStatus,
-  "settled" | "pending" | "failed"
+  BatchRecordStatus,
+  "settled" | "pending" | "proven" | "failed"
 > = {
-  verified: "settled",
   pending: "pending",
+  submitted: "settled",
+  verified: "proven",
   failed: "failed",
 };
-const STATUS_LABEL: Record<BatchStatus, string> = {
-  verified: "Settled",
+const STATUS_LABEL: Record<BatchRecordStatus, string> = {
   pending: "Pending",
+  submitted: "Submitted",
+  verified: "Verified",
   failed: "Failed",
 };
 
 export function BatchesListView() {
   const [search, setSearch] = React.useState("");
   const [page, setPage] = React.useState(1);
-  const [liveRows, setLiveRows] = React.useState<BatchFixture[]>([]);
+  const [cursors, setCursors] = React.useState<(string | undefined)[]>([
+    undefined,
+  ]);
+  const [nextCursor, setNextCursor] = React.useState<string | undefined>();
+  const [liveRows, setLiveRows] = React.useState<BatchRecord[]>([]);
   const [liveState, setLiveState] = React.useState<
     "loading" | "ready" | "error"
   >("loading");
   const [liveError, setLiveError] = React.useState<string | undefined>();
 
   const searchParam = useSearchParam("search");
+  const cursor = cursors[page - 1];
 
   React.useEffect(() => {
     if (searchParam) setSearch(searchParam);
@@ -85,14 +87,15 @@ export function BatchesListView() {
       setLiveError(undefined);
       try {
         const query = search.trim();
-        const batches = query
-          ? compactBatch(await searchZoneBatch(query))
-          : (await listZoneBatches({ limit: 60 })).batches;
+        const response = query
+          ? {
+              batches: compactBatch(await searchZoneBatch(query)),
+              nextCursor: undefined,
+            }
+          : await listZoneBatches({ limit: PAGE_SIZE, cursor });
         if (cancelled) return;
-        // Live data only. A reachable-but-empty zone is a real, correct state
-        // (no batches settled yet) → render it empty. An unreachable zone is an
-        // honest error — NEVER demo batches.
-        setLiveRows(batches.map(zoneBatchToFixture));
+        setLiveRows(response.batches.map(zoneBatchToRecord));
+        setNextCursor(query ? undefined : response.nextCursor);
         setLiveState("ready");
       } catch (error) {
         if (cancelled) return;
@@ -106,10 +109,11 @@ export function BatchesListView() {
       cancelled = true;
       window.clearTimeout(timeout);
     };
-  }, [search]);
+  }, [cursor, search]);
 
   React.useEffect(() => {
     setPage(1);
+    setCursors([undefined]);
   }, [search]);
 
   const isLoading = liveState === "loading";
@@ -118,25 +122,17 @@ export function BatchesListView() {
       ? { message: liveError ?? "Failed to load batches.", code: "ZONE_RPC" }
       : undefined;
 
-  const rows: BatchFixture[] = liveRows;
-
-  const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
-  const safePage = Math.min(page, totalPages);
-  const pageStart = (safePage - 1) * PAGE_SIZE;
-  const pageRows = rows.slice(pageStart, pageStart + PAGE_SIZE);
-  const rangeStart = rows.length === 0 ? 0 : pageStart + 1;
-  const rangeEnd = pageStart + pageRows.length;
-
-  // Stat strip reflects reality only — derived from the live rows (0 when the
-  // zone is reachable but empty; never seeded demo figures).
-  const statVolume24h = rows.reduce(
-    (sum, r) => sum + (parseVolume(r.volumeUsd) ?? 0),
-    0,
-  );
-  const statBatchesToday = rows.length;
-  const provenPct = rows.length
+  const rows = liveRows;
+  const rangeStart = rows.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const rangeEnd = rangeStart + Math.max(0, rows.length - 1);
+  const orderCount = rows.reduce((sum, row) => sum + row.orderCount, BigInt(0));
+  const fillCount = rows.reduce((sum, row) => sum + row.fillCount, BigInt(0));
+  const l1PostedPct = rows.length
     ? Math.round(
-        (100 * rows.filter((r) => r.status === "verified").length) /
+        (100 *
+          rows.filter(
+            (row) => row.status === "submitted" || row.status === "verified",
+          ).length) /
           rows.length,
       )
     : 0;
@@ -153,24 +149,36 @@ export function BatchesListView() {
           <BatchesListSkeleton />
         ) : (
           <div className={cn("flex flex-col gap-4", styles.fade)}>
-            <ExplorerHeader />
-            <StatStrip
-              batchesToday={statBatchesToday}
-              volume24h={statVolume24h}
-              provenPct={provenPct}
-            />
+            <ExplorerHeader connected={!error} />
+            {!error ? (
+              <StatStrip
+                loadedBatches={rows.length}
+                orderCount={orderCount}
+                fillCount={fillCount}
+                averageInterval={averageSettlementInterval(rows)}
+                l1PostedPct={l1PostedPct}
+              />
+            ) : null}
             <BatchList
-              rows={pageRows}
+              rows={rows}
               total={rows.length}
               query={search}
               onQuery={setSearch}
-              page={safePage}
-              pageCount={totalPages}
+              page={page}
               rangeStart={rangeStart}
               rangeEnd={rangeEnd}
               error={error}
-              freshNumber={null}
-              onPage={(p) => setPage(Math.max(1, Math.min(totalPages, p)))}
+              hasNextPage={Boolean(nextCursor)}
+              onPreviousPage={() => setPage((current) => Math.max(1, current - 1))}
+              onNextPage={() => {
+                if (!nextCursor) return;
+                setCursors((current) => {
+                  const next = current.slice(0, page);
+                  next[page] = nextCursor;
+                  return next;
+                });
+                setPage((current) => current + 1);
+              }}
             />
           </div>
         )}
@@ -183,33 +191,33 @@ export function BatchesListView() {
 /*  Explorer header                                                        */
 /* ─────────────────────────────────────────────────────────────────────── */
 
-function ExplorerHeader() {
+function ExplorerHeader({ connected }: { connected: boolean }) {
   return (
     <section className="glass flex flex-col gap-4 rounded-[var(--radius-xl)] p-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex flex-col gap-2">
           <h1 className="t-h2 m-0">Settlement explorer</h1>
           <p className="font-serif m-0 max-w-[460px] text-[15px] font-light text-[var(--muted-foreground)]">
-            Every match settles onchain in batches. Aggregate and verifiable —
-            never a counterparty in sight.
+            Zone block ranges and Tempo L1 submissions, with privacy-safe
+            trading aggregates.
           </p>
         </div>
         <span
           role="status"
-          aria-label="Live · Ethereum L1"
+          aria-label={connected ? "Zone RPC connected" : "Zone RPC unavailable"}
           className="inline-flex h-7 items-center gap-[7px] whitespace-nowrap rounded-full border px-3 font-mono text-[11px] uppercase tracking-[0.1em]"
           style={{
             borderColor:
-              "color-mix(in oklab, var(--success) 30%, transparent)",
-            background: "color-mix(in oklab, var(--success) 10%, transparent)",
-            color: "var(--success)",
+              `color-mix(in oklab, var(--${connected ? "success" : "destructive"}) 30%, transparent)`,
+            background: `color-mix(in oklab, var(--${connected ? "success" : "destructive"}) 10%, transparent)`,
+            color: `var(--${connected ? "success" : "destructive"})`,
           }}
         >
           <span
             aria-hidden
             className={cn("h-1.5 w-1.5 rounded-full bg-current", styles.pulse)}
           />
-          Live · Ethereum L1
+          {connected ? "Connected · Tempo L1" : "Zone RPC unavailable"}
         </span>
       </div>
     </section>
@@ -221,29 +229,31 @@ function ExplorerHeader() {
 /* ─────────────────────────────────────────────────────────────────────── */
 
 function StatStrip({
-  batchesToday,
-  volume24h,
-  provenPct,
+  loadedBatches,
+  orderCount,
+  fillCount,
+  averageInterval,
+  l1PostedPct,
 }: {
-  batchesToday: number;
-  volume24h: number;
-  provenPct: number;
+  loadedBatches: number;
+  orderCount: bigint;
+  fillCount: bigint;
+  averageInterval?: number;
+  l1PostedPct: number;
 }) {
   return (
     <section className="glass flex items-stretch rounded-[var(--radius-xl)] py-5">
-      <StatCell label="Batches" value={formatGroup(Math.round(batchesToday))} />
+      <StatCell label="Loaded" value={loadedBatches.toLocaleString("en-US")} />
+      <Divider />
+      <StatCell label="Orders" value={orderCount.toLocaleString("en-US")} />
+      <Divider />
+      <StatCell label="Fills" value={fillCount.toLocaleString("en-US")} />
+      <Divider />
+      <StatCell label="Avg interval" value={formatDuration(averageInterval)} />
       <Divider />
       <StatCell
-        label="Volume"
-        value={`${(volume24h / 1e6).toFixed(2)}M`}
-        unit="USDC"
-      />
-      <Divider />
-      <StatCell label="Avg batch" value="~12" unit="s" />
-      <Divider />
-      <StatCell
-        label="Proven"
-        value={`${provenPct}%`}
+        label="L1 posted"
+        value={`${l1PostedPct}%`}
         tone="var(--success)"
       />
     </section>
@@ -297,24 +307,24 @@ function BatchList({
   query,
   onQuery,
   page,
-  pageCount,
   rangeStart,
   rangeEnd,
   error,
-  freshNumber,
-  onPage,
+  hasNextPage,
+  onPreviousPage,
+  onNextPage,
 }: {
-  rows: BatchFixture[];
+  rows: BatchRecord[];
   total: number;
   query: string;
   onQuery: (next: string) => void;
   page: number;
-  pageCount: number;
   rangeStart: number;
   rangeEnd: number;
   error?: { message: string; code: string };
-  freshNumber: number | null;
-  onPage: (page: number) => void;
+  hasNextPage: boolean;
+  onPreviousPage: () => void;
+  onNextPage: () => void;
 }) {
   return (
     <section className="glass flex flex-col gap-4 rounded-[var(--radius-xl)] p-5">
@@ -322,7 +332,7 @@ function BatchList({
         <div className="flex flex-col gap-0.5">
           <h2 className="t-h3 m-0">Recent batches</h2>
           <span className="text-[13px] text-[var(--muted-foreground)]">
-            Sealing onchain every ~12s · newest first
+            Zone batches · newest first
           </span>
         </div>
         <SearchBar value={query} onChange={onQuery} />
@@ -361,9 +371,11 @@ function BatchList({
             <thead>
               <tr>
                 <Th>Batch</Th>
+                <Th>Zone blocks</Th>
+                <Th align="right">Orders</Th>
                 <Th align="right">Fills</Th>
-                <Th align="right">Volume</Th>
-                <Th title="On-chain Ethereum transaction that settled this batch">
+                <Th>Token volume</Th>
+                <Th title="Tempo L1 transaction that submitted this batch">
                   Settlement
                 </Th>
                 <Th>Status</Th>
@@ -372,13 +384,7 @@ function BatchList({
               </tr>
             </thead>
             <tbody>
-              {rows.map((batch) => (
-                <BatchRow
-                  key={batch.number}
-                  batch={batch}
-                  fresh={batch.number === freshNumber}
-                />
-              ))}
+              {rows.map((batch) => <BatchRow key={batch.number} batch={batch} />)}
             </tbody>
           </table>
         )}
@@ -387,19 +393,19 @@ function BatchList({
       {!error && total > 0 ? (
         <div className="flex items-center justify-between gap-3 border-t border-[var(--border)] pt-1">
           <span className="whitespace-nowrap font-mono text-[11px] tracking-[0.06em] tabular-nums text-[var(--muted-foreground)]">
-            {rangeStart}–{rangeEnd} of {total}
+            {rangeStart}–{rangeEnd}
           </span>
           <div className="flex items-center gap-2.5">
-            <PageButton dir={-1} disabled={page <= 1} onClick={() => onPage(page - 1)}>
+            <PageButton dir={-1} disabled={page <= 1} onClick={onPreviousPage}>
               Prev
             </PageButton>
             <span className="whitespace-nowrap font-mono text-[11px] tracking-[0.08em] tabular-nums text-[var(--foreground)]">
-              {page} / {pageCount}
+              Page {page}
             </span>
             <PageButton
               dir={1}
-              disabled={page >= pageCount}
-              onClick={() => onPage(page + 1)}
+              disabled={!hasNextPage}
+              onClick={onNextPage}
             >
               Next
             </PageButton>
@@ -458,14 +464,13 @@ function Th({
   );
 }
 
-function BatchRow({ batch, fresh }: { batch: BatchFixture; fresh: boolean }) {
+function BatchRow({ batch }: { batch: BatchRecord }) {
   const router = useRouter();
   return (
     <tr
       onClick={() => router.push(`/batches/${batch.number}`)}
       className={cn(
         "group cursor-pointer border-t border-[var(--border)] transition-[background-color] duration-75 ease-[var(--ease-standard)] hover:bg-[var(--muted)]/30",
-        fresh ? styles.freshRow : undefined,
       )}
     >
       <Td>
@@ -473,19 +478,18 @@ function BatchRow({ batch, fresh }: { batch: BatchFixture; fresh: boolean }) {
           href={`/batches/${batch.number}`}
           className="font-medium text-[var(--foreground)] underline-offset-4 hover:underline"
         >
-          {batchNo(batch.number)}
+          {formatBatchNumber(batch.number)}
         </Link>
       </Td>
-      <Td align="right">{batch.fillCount}</Td>
-      <Td align="right">
-        {batch.volumeUsd ? (
-          <>
-            {fmtVol(parseVolume(batch.volumeUsd) ?? 0)}{" "}
-            <span className="text-[10px] text-[var(--muted-foreground)]">USDC</span>
-          </>
-        ) : (
-          <span className="text-[var(--muted-foreground)]">—</span>
-        )}
+      <Td className="text-[var(--muted-foreground)]">
+        {batch.zoneBlockFrom != null && batch.zoneBlockTo != null
+          ? `${batch.zoneBlockFrom.toLocaleString("en-US")}–${batch.zoneBlockTo.toLocaleString("en-US")}`
+          : "—"}
+      </Td>
+      <Td align="right">{batch.orderCount.toLocaleString("en-US")}</Td>
+      <Td align="right">{batch.fillCount.toLocaleString("en-US")}</Td>
+      <Td className="max-w-[260px] whitespace-normal text-[var(--muted-foreground)]">
+        {batch.volumes.length > 0 ? formatBatchVolumes(batch.volumes) : "—"}
       </Td>
       <Td className="text-[var(--muted-foreground)]">
         {batch.settlementTx ? (
@@ -493,7 +497,7 @@ function BatchRow({ batch, fresh }: { batch: BatchFixture; fresh: boolean }) {
             className="inline-flex items-center gap-1"
             onClick={(event) => event.stopPropagation()}
           >
-            <EtherscanTxLink
+            <TempoTxLink
               hash={batch.settlementTx}
               label={shortHash(batch.settlementTx)}
             />
@@ -511,7 +515,7 @@ function BatchRow({ batch, fresh }: { batch: BatchFixture; fresh: boolean }) {
         <Status state={STATUS_STATE[batch.status]} label={STATUS_LABEL[batch.status]} />
       </Td>
       <Td align="right" className="text-[var(--muted-foreground)]">
-        {ageOf(batch.sealedAt)}
+        {ageOf(batch.sealedAt ?? batch.settledAt)}
       </Td>
       <Td align="right" className="pr-0">
         <Link
@@ -657,166 +661,20 @@ export function SkelRows({ n }: { n: number }) {
   );
 }
 
-/* ─────────────────────────────────────────────────────────────────────── */
-/*  Zone → fixture mapping (shared with the detail view)                   */
-/* ─────────────────────────────────────────────────────────────────────── */
-
-export function zoneBatchToFixture(batch: ZoneBatchSummary): BatchFixture {
-  const aggregatePairs = Array.isArray(batch.aggregatePairs)
-    ? batch.aggregatePairs
-    : [];
-  return {
-    number: Number(BigInt(batch.batchNumber)),
-    zoneBlockFrom: formatZoneBlockNumber(batch.zoneBlockFrom),
-    zoneBlockTo: formatZoneBlockNumber(batch.zoneBlockTo),
-    root: asHex(batch.root),
-    status: zoneStatusToFixture(batch.status),
-    sealedAt: timestampToIso(batch.sealedAt ?? batch.settledAt),
-    orderCount: Number(batch.orderCount ?? 0),
-    fillCount: Number(batch.fillCount ?? 0),
-    settlementTx: isHexString(batch.settlementTxHash)
-      ? batch.settlementTxHash
-      : null,
-    proofRef: isHexString(batch.proofRef) ? batch.proofRef : undefined,
-    pairs: aggregatePairs.filter(isKnownPair),
-    volumeUsd: aggregateVolumeToUsd(batch.aggregateVolume),
-  };
-}
-
-function zoneStatusToFixture(status: ZoneBatchStatus): BatchStatus {
-  if (status === "failed") return "failed";
-  if (status === "settled" || status === "verified") return "verified";
-  return "pending";
-}
-
 function compactBatch(batch: ZoneBatchSummary | null): ZoneBatchSummary[] {
   return batch ? [batch] : [];
-}
-
-function aggregateVolumeToUsd(value: unknown): string | undefined {
-  if (!value || (Array.isArray(value) && value.length === 0)) return undefined;
-  if (typeof value === "string") return value;
-  if (Array.isArray(value)) {
-    const total = value.reduce<number>((sum, entry) => {
-      if (!entry || typeof entry !== "object") return sum;
-      const amount = (entry as { amount?: unknown }).amount;
-      if (typeof amount === "number") return sum + amount;
-      if (typeof amount === "string") {
-        const parsed = Number(amount.startsWith("0x") ? BigInt(amount) : amount);
-        return Number.isFinite(parsed) ? sum + parsed / 1_000_000 : sum;
-      }
-      return sum;
-    }, 0);
-    return total > 0 ? String(total) : undefined;
-  }
-  if (typeof value !== "object") return undefined;
-  const values = Object.values(value as Record<string, unknown>);
-  if (values.length === 0) return undefined;
-  const total = values.reduce<number>((sum, next) => {
-    if (typeof next === "number") return sum + next;
-    if (typeof next === "string") {
-      const parsed = Number(next);
-      return Number.isFinite(parsed) ? sum + parsed : sum;
-    }
-    return sum;
-  }, 0);
-  return total > 0 ? String(total) : undefined;
-}
-
-function isKnownPair(value: string): value is MarketPair {
-  return (
-    value === "OALPHA/PATH.USD" ||
-    value === "USDC/EURC" ||
-    value === "USDC/USDT" ||
-    value === "USDT/EURC" ||
-    value === "ETH/USDC" ||
-    value === "BTC/USDC"
-  );
-}
-
-function isHexString(value: unknown): value is `0x${string}` {
-  return typeof value === "string" && value.startsWith("0x");
-}
-
-function asHex(value: string): `0x${string}` {
-  return isHexString(value)
-    ? value
-    : "0x0000000000000000000000000000000000000000000000000000000000000000";
-}
-
-function formatZoneBlockNumber(value: unknown): string | undefined {
-  if (value == null) return undefined;
-  try {
-    const parsed =
-      typeof value === "bigint"
-        ? value
-        : typeof value === "number"
-          ? BigInt(value)
-          : typeof value === "string"
-            ? BigInt(value)
-            : null;
-    if (parsed === null) return undefined;
-    return parsed.toLocaleString("en-US");
-  } catch {
-    return undefined;
-  }
-}
-
-function timestampToIso(value: unknown): string {
-  const fallback = new Date().toISOString();
-  if (value == null) return fallback;
-  try {
-    const seconds =
-      typeof value === "number"
-        ? value
-        : typeof value === "bigint"
-          ? Number(value)
-          : typeof value === "string"
-            ? Number(BigInt(value))
-            : Number.NaN;
-    if (!Number.isFinite(seconds) || seconds <= 0) return fallback;
-    return new Date(seconds * 1000).toISOString();
-  } catch {
-    return fallback;
-  }
 }
 
 function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : "Failed to load batches.";
 }
 
-/* ─────────────────────────────────────────────────────────────────────── */
-/*  Format helpers                                                         */
-/* ─────────────────────────────────────────────────────────────────────── */
-
-function parseVolume(value: string | undefined): number | undefined {
-  if (!value) return undefined;
-  const n = Number(value.replace(/,/g, ""));
-  return Number.isFinite(n) ? n : undefined;
-}
-
-function fmtVol(n: number): string {
-  if (n >= 1e6) return (n / 1e6).toFixed(2) + "M";
-  if (n >= 1e3) return (n / 1e3).toFixed(1) + "K";
-  return String(Math.round(n));
-}
-
-function formatGroup(value: number | string): string {
-  const [whole, frac] = String(value).split(".");
-  const grouped = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-  return frac ? `${grouped}.${frac}` : grouped;
-}
-
 function shortHash(h: string): string {
   return h.length > 18 ? `${h.slice(0, 10)}…${h.slice(-8)}` : h;
 }
 
-function batchNo(id: number): string {
-  return "#" + formatGroup(id);
-}
-
-/** Deterministic-ish age string from an ISO seal time. */
-function ageOf(iso: string): string {
+function ageOf(iso: string | undefined): string {
+  if (!iso) return "—";
   const then = new Date(iso).getTime();
   if (Number.isNaN(then)) return "—";
   const sec = Math.max(0, Math.floor((Date.now() - then) / 1000));

@@ -27,6 +27,7 @@ export type StatusState =
   | "pending"
   | "submitting"
   | "awaiting-signature"
+  | "credited"
   | "matched"
   | "settled"
   | "proven"
@@ -57,6 +58,7 @@ const STATE_SPECS: Record<StatusState, StateSpec> = {
     variant: "outline",
     icon: Icon.Sign,
   },
+  credited: { label: "Credited", variant: "success", icon: Icon.Settled },
   matched: { label: "Matched", variant: "success", icon: Icon.Match },
   settled: { label: "Settled", variant: "success", icon: Icon.Settled },
   proven: { label: "Proven", variant: "success", icon: Icon.Proof },

@@ -8,7 +8,7 @@ afterEach(cleanup);
 
 const order: OrderFixture = {
   id: "o-1",
-  pair: "OALPHA/PATH.USD",
+  pair: "ALPHAUSD/PATH.USD",
   side: "buy",
   type: "limit",
   amount: "5.00",
@@ -38,7 +38,7 @@ it("renders a row with side, amount, price and status for each order", () => {
   expect(within(table).getByText("Buy")).toBeDefined();
   expect(within(table).getByText("5.00")).toBeDefined();
   expect(within(table).getByText("1.000000")).toBeDefined();
-  expect(within(table).getByText("OALPHA/PATH.USD")).toBeDefined();
+  expect(within(table).getByText("ALPHAUSD/PATH.USD")).toBeDefined();
 });
 
 it("shows an error row instead of the table when errorMessage is set", () => {

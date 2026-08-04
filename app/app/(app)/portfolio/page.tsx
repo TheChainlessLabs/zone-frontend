@@ -16,7 +16,7 @@
  * and cancelable open orders — under Overview / Tokens / Orders /
  * Activity tabs. This page owns the data + behaviour (wagmi/zone
  * wiring, EIP-712 signing, the deposit/withdraw modals) and feeds the
- * live OALPHA / PATH.USD fixture into the ported view.
+ * live ALPHAUSD / PATH.USD fixture into the ported view.
  *
  * State coverage (driven by `?state=`):
  *   default · empty · loading · error · skeleton · disconnected.
@@ -28,7 +28,6 @@ import { formatUnits, isAddress, parseUnits, type Address, type Hex } from "viem
 import {
   useAccount,
   useConnections,
-  useSignMessage,
   useSwitchChain,
   useWalletClient,
 } from "wagmi";
@@ -38,6 +37,7 @@ import { DisconnectedState } from "@/components/DisconnectedState";
 import {
   DepositModal,
   type DepositState,
+  type DepositToken,
 } from "@/components/modals/deposit-modal";
 import {
   WithdrawModal,
@@ -49,6 +49,7 @@ import { useWalletState } from "@/components/shell/WalletStateProvider";
 import type {
   BalanceFixture,
   DepositFixture,
+  OrderFixture,
   PortfolioFixture,
   WithdrawalFixture,
 } from "@/lib/view-types";
@@ -71,33 +72,44 @@ import {
   OMEGA_ZONE_ADDRESSES,
   OMEGA_ZONE_CHAIN_ID,
   TIP20_PARSED_ABI,
-  approvePathUsdToPortalRequest,
-  buildZoneRpcAuthToken,
-  depositPathUsdToZoneRequest,
+  approveTokenToPortalRequest,
+  bufferTempoGasEstimate,
+  cancelPrivateZoneOrder,
+  depositTokenToZoneRequest,
+  estimatePrivateZoneContractWriteNetworkFee,
   fetchOmegaZoneActivity,
-  getTempoNativeAuthSigner,
+  formatNetworkFeeUsd,
+  getOrCreateZoneRpcAuthToken,
   getZoneInfo,
   getZoneMarketConfig,
   getZoneDepositStatus,
   getZoneWithdrawalStatus,
   mergeOmegaZoneActivity,
-  persistZoneRpcAuthToken,
   isZoneRpcAuthTokenExpired,
   waitForZoneTransactionReceipt,
   readPersistedZoneRpcAuthToken,
   readOmegaZoneActivity,
   readPrivateDarkpoolBalance,
+  readPrivateTokenAllowance,
+  readPrivateZoneWithdrawalFee,
   readPrivateZoneTokenBalance,
-  readPrivateZoneOalphaBalance,
+  readPrivateZoneAlphaUsdBalance,
   readPrivateZonePathUsdBalance,
+  resolveZoneTransactionSigner,
   signAndSendPrivateZoneContractWrite,
+  SIMPLE_WITHDRAWAL_GAS_LIMIT,
+  submitPrivateZoneWithdrawal,
+  TEMPO_L1_GAS_PRICE_DECIMALS,
+  tempoL1Chain,
   tempoL1Client,
-  type ZoneTransactionSigner,
+  useZoneLiveSnapshot,
   zoneWithdrawalStatusToFixture,
   zoneOutboxRequestWithdrawal,
 } from "@/lib/zone";
 
 import { PortfolioView, PortfolioSkeleton } from "./_components/PortfolioView";
+
+const PORTAL_APPROVE_GAS_LIMIT = BigInt(500_000);
 
 interface WithdrawFormValues {
   recipient: string;
@@ -121,7 +133,6 @@ export default function PortfolioPage() {
   const account = useAccount();
   const connections = useConnections();
   const { data: walletClient } = useWalletClient();
-  const signMessage = useSignMessage();
   const switchChain = useSwitchChain();
   const connectedAddress = account.address;
 
@@ -139,64 +150,79 @@ export default function PortfolioPage() {
   const [depositState, setDepositState] = React.useState<DepositState>("idle");
   const [withdrawState, setWithdrawState] = React.useState<WithdrawState>("idle");
   const [depositAmount, setDepositAmount] = React.useState("");
+  const [depositToken, setDepositToken] = React.useState<DepositToken>("PATH.USD");
   const [permitSigned, setPermitSigned] = React.useState(false);
   const [depositTxHash, setDepositTxHash] = React.useState<Hex | undefined>();
   const [withdrawTxHash, setWithdrawTxHash] = React.useState<Hex | undefined>();
+  const [withdrawBatchIndex, setWithdrawBatchIndex] = React.useState<
+    string | undefined
+  >();
+  const [withdrawL1TxHash, setWithdrawL1TxHash] = React.useState<
+    Hex | undefined
+  >();
   const [depositError, setDepositError] = React.useState<string | undefined>();
   const [withdrawError, setWithdrawError] = React.useState<string | undefined>();
+  const [depositNetworkFeeUsd, setDepositNetworkFeeUsd] =
+    React.useState("—");
+  const [withdrawNetworkFeeUsd, setWithdrawNetworkFeeUsd] =
+    React.useState("—");
+  const [withdrawDraft, setWithdrawDraft] = React.useState<WithdrawFormValues>({
+    recipient: "",
+    amount: "",
+  });
   const [zoneAuthToken, setZoneAuthToken] = React.useState<Hex | null>(null);
   const [l1PathUsdBalance, setL1PathUsdBalance] = React.useState<bigint | null>(
+    null,
+  );
+  const [l1AlphaUsdBalance, setL1AlphaUsdBalance] = React.useState<bigint | null>(
     null,
   );
   const [zonePathUsdBalance, setZonePathUsdBalance] =
     React.useState<bigint | null>(null);
   const [darkpoolPathUsdBalance, setDarkpoolPathUsdBalance] =
     React.useState<bigint | null>(null);
-  const [zoneOalphaBalance, setZoneOalphaBalance] =
+  const [zoneAlphaUsdBalance, setZoneAlphaUsdBalance] =
     React.useState<bigint | null>(null);
-  const [darkpoolOalphaBalance, setDarkpoolOalphaBalance] =
+  const [darkpoolAlphaUsdBalance, setDarkpoolAlphaUsdBalance] =
     React.useState<bigint | null>(null);
   const [zoneTokenBalances, setZoneTokenBalances] =
     React.useState<ZonePortfolioTokenBalance[] | null>(null);
   const [activity, setActivity] = React.useState(() =>
     readOmegaZoneActivity(connectedAddress),
   );
-  const [liveState, setLiveState] = React.useState<
-    "idle" | "loading" | "ready" | "error"
-  >("idle");
-  const [liveError, setLiveError] = React.useState<string | undefined>();
   const [lastWithdrawForm, setLastWithdrawForm] =
     React.useState<WithdrawFormValues | null>(null);
   const zoneAuthTokenRef = React.useRef<Hex | null>(null);
   const zoneAuthTokenPromiseRef = React.useRef<Promise<Hex> | null>(null);
-  const autoAuthAttemptedRef = React.useRef(false);
+  const selectedDepositTokenAddress = depositTokenAddress(depositToken);
 
   React.useEffect(() => {
     const cachedAuthToken = readPersistedZoneRpcAuthToken(connectedAddress);
     zoneAuthTokenRef.current = cachedAuthToken;
     zoneAuthTokenPromiseRef.current = null;
-    autoAuthAttemptedRef.current = false;
     setZoneAuthToken(cachedAuthToken);
     setZoneTokenBalances(null);
     setZonePathUsdBalance(null);
     setDarkpoolPathUsdBalance(null);
-    setZoneOalphaBalance(null);
-    setDarkpoolOalphaBalance(null);
+    setZoneAlphaUsdBalance(null);
+    setDarkpoolAlphaUsdBalance(null);
   }, [connectedAddress]);
 
   const refreshL1Balance = React.useCallback(async () => {
     if (!connectedAddress) return;
-    try {
-      const balance = await tempoL1Client.readContract({
-        address: OMEGA_ZONE_ADDRESSES.pathUsd,
+    const readBalance = async (token: Address) =>
+      tempoL1Client.readContract({
+        address: token,
         abi: TIP20_PARSED_ABI,
         functionName: "balanceOf",
         args: [connectedAddress],
-      });
-      setL1PathUsdBalance(balance as bigint);
-    } catch {
-      setL1PathUsdBalance(null);
-    }
+      }) as Promise<bigint>;
+    const [pathUsd, alphaUsd] = await Promise.allSettled([
+      readBalance(OMEGA_ZONE_ADDRESSES.pathUsd),
+      readBalance(OMEGA_ZONE_ADDRESSES.alphaUsd),
+    ]);
+    setL1PathUsdBalance(pathUsd.status === "fulfilled" ? pathUsd.value : null);
+    setL1AlphaUsdBalance(alphaUsd.status === "fulfilled" ? alphaUsd.value : null);
   }, [connectedAddress]);
 
   const refreshZoneBalances = React.useCallback(
@@ -223,14 +249,14 @@ export default function PortfolioPage() {
       const pathUsdBalance = byAddress.get(
         OMEGA_ZONE_ADDRESSES.pathUsd.toLowerCase(),
       );
-      const oalphaBalance = byAddress.get(
-        OMEGA_ZONE_ADDRESSES.oalpha.toLowerCase(),
+      const alphaUsdBalance = byAddress.get(
+        OMEGA_ZONE_ADDRESSES.alphaUsd.toLowerCase(),
       );
       const [
         pathUsdWalletBalance,
         pathUsdDarkpoolBalance,
-        oalphaWalletBalance,
-        oalphaDarkpoolBalance,
+        alphaUsdWalletBalance,
+        alphaUsdDarkpoolBalance,
       ] = await Promise.all([
         settle(
           pathUsdBalance?.available ??
@@ -241,23 +267,23 @@ export default function PortfolioPage() {
             readPrivateDarkpoolBalance(authToken, connectedAddress),
         ),
         settle(
-          oalphaBalance?.available ??
-            readPrivateZoneOalphaBalance(authToken, connectedAddress),
+          alphaUsdBalance?.available ??
+            readPrivateZoneAlphaUsdBalance(authToken, connectedAddress),
         ),
         settle(
-          oalphaBalance?.locked ??
+          alphaUsdBalance?.locked ??
             readPrivateDarkpoolBalance(
               authToken,
               connectedAddress,
-              OMEGA_ZONE_ADDRESSES.oalpha,
+              OMEGA_ZONE_ADDRESSES.alphaUsd,
             ),
         ),
       ]);
       setZoneTokenBalances(tokenBalances);
       setZonePathUsdBalance(pathUsdWalletBalance);
       setDarkpoolPathUsdBalance(pathUsdDarkpoolBalance);
-      setZoneOalphaBalance(oalphaWalletBalance);
-      setDarkpoolOalphaBalance(oalphaDarkpoolBalance);
+      setZoneAlphaUsdBalance(alphaUsdWalletBalance);
+      setDarkpoolAlphaUsdBalance(alphaUsdDarkpoolBalance);
     },
     [connectedAddress],
   );
@@ -267,13 +293,13 @@ export default function PortfolioPage() {
       if (!connectedAddress) return;
       const nextActivity = await fetchOmegaZoneActivity({
         authToken,
-        account: connectedAddress,
       });
-      // Authoritative resting-order set (zone_getMyOrders) — replace, don't
-      // merge, so filled/cancelled orders drop out instead of lingering.
+      // The index response is authoritative. Replace the resting-order set so
+      // filled/cancelled orders drop out instead of lingering.
       setActivity(
         mergeOmegaZoneActivity(connectedAddress, nextActivity, {
           ordersAuthoritative: true,
+          depositsAuthoritative: true,
         }),
       );
     },
@@ -297,34 +323,46 @@ export default function PortfolioPage() {
     };
   }, [connectedAddress, walletClient]);
 
-  const ensureZoneAuthToken = React.useCallback(async () => {
-    if (zoneAuthTokenRef.current) return zoneAuthTokenRef.current;
-    if (zoneAuthToken) {
-      zoneAuthTokenRef.current = zoneAuthToken;
-      return zoneAuthToken;
-    }
-    if (zoneAuthTokenPromiseRef.current) return zoneAuthTokenPromiseRef.current;
-    if (!connectedAddress) throw new Error("Connect Tempo Wallet first.");
-    const cachedAuthToken = readPersistedZoneRpcAuthToken(connectedAddress);
-    if (cachedAuthToken) {
-      zoneAuthTokenRef.current = cachedAuthToken;
-      setZoneAuthToken(cachedAuthToken);
-      return cachedAuthToken;
-    }
+  const ensureZoneAuthToken = React.useCallback(async (
+    { forceRefresh = false }: { forceRefresh?: boolean } = {},
+  ) => {
+    const usable = (token: Hex | null | undefined): token is Hex =>
+      Boolean(token) && !isZoneRpcAuthTokenExpired(token as Hex);
 
-    const authTokenPromise = buildZoneRpcAuthToken({
+    if (forceRefresh) {
+      zoneAuthTokenRef.current = null;
+      zoneAuthTokenPromiseRef.current = null;
+      setZoneAuthToken(null);
+    } else {
+      if (usable(zoneAuthTokenRef.current)) return zoneAuthTokenRef.current;
+      if (usable(zoneAuthToken)) {
+        zoneAuthTokenRef.current = zoneAuthToken;
+        return zoneAuthToken;
+      }
+      if (zoneAuthTokenPromiseRef.current) {
+        return zoneAuthTokenPromiseRef.current;
+      }
+      const cachedAuthToken = readPersistedZoneRpcAuthToken(connectedAddress);
+      if (usable(cachedAuthToken)) {
+        zoneAuthTokenRef.current = cachedAuthToken;
+        setZoneAuthToken(cachedAuthToken);
+        return cachedAuthToken;
+      }
+    }
+    if (!connectedAddress) throw new Error("Connect Tempo Wallet first.");
+
+    const authTokenPromise = getOrCreateZoneRpcAuthToken({
       account: connectedAddress,
-      signMessage: ({ account: signerAccount, message }) =>
-        signMessage.signMessageAsync({
-          account: signerAccount,
-          message,
+      forceRefresh,
+      getProvider: () =>
+        resolveZoneTransactionSigner({
+          connector: account.connector ?? connections[0]?.connector,
+          fallback: walletClient,
         }),
-      nativeSigner: getTempoNativeAuthSigner(walletClient),
-    }).then((authToken) => {
-      zoneAuthTokenRef.current = authToken;
-      setZoneAuthToken(authToken);
-      persistZoneRpcAuthToken(authToken, connectedAddress);
-      return authToken;
+      onToken: (authToken) => {
+        zoneAuthTokenRef.current = authToken;
+        setZoneAuthToken(authToken);
+      },
     });
 
     zoneAuthTokenPromiseRef.current = authTokenPromise;
@@ -333,61 +371,33 @@ export default function PortfolioPage() {
     } finally {
       zoneAuthTokenPromiseRef.current = null;
     }
-    // NB: `zoneAuthToken` is intentionally NOT a dependency. This callback reads
-    // the token via `zoneAuthTokenRef`/the cache, so it does not need it — and
-    // including it churns this callback's identity the moment `setZoneAuthToken`
-    // fires during auth, which re-triggered the live-snapshot effect mid-flight,
-    // cancelled it before `setLiveState("ready")`, and left the page stuck on
-    // "loading" (→ demo) forever behind the one-shot guard.
+    // `zoneAuthToken` is intentionally not a dependency: the current token is
+    // read from the ref/cache and mirrored to state only for rendering.
   }, [
+    account.connector,
     connectedAddress,
-    signMessage,
+    connections,
     walletClient,
   ]);
 
-  React.useEffect(() => {
-    if (!connectedAddress) return;
-    if (autoAuthAttemptedRef.current) return;
-    autoAuthAttemptedRef.current = true;
-    let cancelled = false;
-
-    async function loadLiveSnapshot() {
-      setLiveState("loading");
-      setLiveError(undefined);
-      try {
-        const authToken = await ensureZoneAuthToken();
-        // The balances read is the demo-vs-live signal (`hasLiveData` checks it),
-        // so gate "ready" on it alone. Secondary reads (L1 balance, activity) run
-        // in the background — a slow/hanging/failing activity feed must never keep
-        // the surface stuck on "loading" (and thus on the demo fallback) when the
-        // wallet's real balances already resolved.
-        await refreshZoneBalances(authToken);
-        if (!cancelled) setLiveState("ready");
-        void refreshL1Balance().catch(() => {});
-        void refreshZoneActivity(authToken).catch(() => {});
-      } catch (error) {
-        if (!cancelled) {
-          setLiveError(getErrorMessage(error));
-          setLiveState("error");
-        }
-      }
-    }
-
-    void loadLiveSnapshot();
-    return () => {
-      cancelled = true;
-    };
-    // Depend ONLY on the stable inputs that should (re)start a snapshot:
-    // the connected address and the demo page-state. The callbacks
-    // (ensureZoneAuthToken/refreshZoneBalances/…) are intentionally excluded —
-    // their identities churn the instant `walletClient`/`signMessage` settle
-    // right after connect, which would re-run this effect, fire its cleanup
-    // (`cancelled = true`) on the in-flight run, and skip `setLiveState("ready")`
-    // even though the balance read already succeeded — pinning the surface on
-    // the loading skeleton (→ demo fallback) forever. They're read at call time
-    // from the latest closure, so narrowing the deps loses nothing.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [connectedAddress]);
+  const loadLiveSnapshot = React.useCallback(async () => {
+    const authToken = await ensureZoneAuthToken();
+    // Balances are the live-data signal. Secondary reads stay in the background
+    // so slow activity or Tempo L1 requests cannot hold the page in loading.
+    await refreshZoneBalances(authToken);
+    void refreshL1Balance().catch(() => {});
+    void refreshZoneActivity(authToken).catch(() => {});
+  }, [
+    ensureZoneAuthToken,
+    refreshL1Balance,
+    refreshZoneActivity,
+    refreshZoneBalances,
+  ]);
+  const { state: liveState, error: liveError } = useZoneLiveSnapshot({
+    enabled: Boolean(connectedAddress) && wallet.state === "connected",
+    identity: connectedAddress,
+    load: loadLiveSnapshot,
+  });
 
   // Live refresh — poll balances, holdings, and resting orders while connected
   // so the portfolio reflects fills/deposits/withdrawals without a manual
@@ -407,6 +417,47 @@ export default function PortfolioPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [connectedAddress]);
 
+  // Keep the withdraw modal's settlement status live while it's open in the
+  // `queued` state. A fresh withdrawal lands in `queued` as soon as the L2
+  // request confirms, but L1 settlement (batch post + processWithdrawal)
+  // takes minutes to hours. Without this poll the modal would sit on
+  // "Awaiting L1 settlement" forever — even after the batch has settled on
+  // L1 (the activity table updates via the 8s tick above, but the modal
+  // itself is driven by `withdrawState`, which this effect advances to
+  // `success`/`failed` once the zone reports `processed`/`failed`/`bounced`).
+  React.useEffect(() => {
+    if (!withdrawOpen || withdrawState !== "queued" || !withdrawTxHash) return;
+    let cancelled = false;
+    const poll = async () => {
+      const token = zoneAuthTokenRef.current;
+      if (!token || isZoneRpcAuthTokenExpired(token)) return;
+      try {
+        const status = await getZoneWithdrawalStatus(token, withdrawTxHash);
+        if (cancelled || !status) return;
+        if (status.withdrawalBatchIndex)
+          setWithdrawBatchIndex(status.withdrawalBatchIndex);
+        const l1 =
+          status.l1ProcessWithdrawalTxHash ?? status.l1SubmitBatchTxHash;
+        if (l1) setWithdrawL1TxHash(l1);
+        if (status.status === "processed") {
+          setWithdrawState("success");
+        } else if (status.status === "failed" || status.status === "bounced") {
+          setWithdrawError(status.error ?? "Withdrawal did not settle on L1.");
+          setWithdrawState("failed");
+        }
+      } catch {
+        // Transient RPC error — retry on the next tick.
+      }
+    };
+    void poll();
+    const iv = window.setInterval(poll, 10_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(iv);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [withdrawOpen, withdrawState, withdrawTxHash]);
+
   const ensureChain = React.useCallback(
     async (chainId: number) => {
       if (account.chainId === chainId) return;
@@ -415,20 +466,191 @@ export default function PortfolioPage() {
     [account.chainId, switchChain],
   );
 
+  const readPortalAllowance = React.useCallback(async (owner: Address, token: Address) => {
+    const allowance = await tempoL1Client.readContract({
+      address: token,
+      abi: TIP20_PARSED_ABI,
+      functionName: "allowance",
+      args: [owner, OMEGA_ZONE_ADDRESSES.portal],
+      account: owner,
+    });
+    return allowance as bigint;
+  }, []);
+
+  const waitForPortalAllowance = React.useCallback(
+    async (owner: Address, token: Address, required: bigint) => {
+      const deadline = Date.now() + 30_000;
+      let latest = BigInt(0);
+      while (Date.now() < deadline) {
+        latest = await readPortalAllowance(owner, token);
+        if (latest >= required) return latest;
+        await delay(800);
+      }
+      return latest;
+    },
+    [readPortalAllowance],
+  );
+
+  React.useEffect(() => {
+    if (!depositOpen || !connectedAddress) {
+      setDepositNetworkFeeUsd("—");
+      return;
+    }
+
+    let cancelled = false;
+
+    async function estimateDepositFee() {
+      try {
+        const address = connectedAddress as Address;
+        const amount = parseDepositAmount(depositAmount, depositToken);
+        const [estimatedGas, gasPrice] = await Promise.all([
+          permitSigned
+            ? tempoL1Client.estimateContractGas({
+                account: address,
+                ...depositTokenToZoneRequest({
+                  token: selectedDepositTokenAddress,
+                  to: address,
+                  amount,
+                  bouncebackRecipient: address,
+                }),
+              })
+            : tempoL1Client.estimateContractGas({
+                account: address,
+                ...approveTokenToPortalRequest(selectedDepositTokenAddress, amount),
+              }),
+          tempoL1Client.getGasPrice(),
+        ]);
+        if (!cancelled) {
+          setDepositNetworkFeeUsd(
+            formatNetworkFeeUsd(
+              bufferTempoGasEstimate(estimatedGas) * gasPrice,
+              TEMPO_L1_GAS_PRICE_DECIMALS,
+            ),
+          );
+        }
+      } catch {
+        if (!cancelled) setDepositNetworkFeeUsd("—");
+      }
+    }
+
+    void estimateDepositFee();
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    connectedAddress,
+    depositAmount,
+    depositOpen,
+    depositToken,
+    permitSigned,
+    selectedDepositTokenAddress,
+  ]);
+
+  React.useEffect(() => {
+    if (!withdrawOpen || !connectedAddress) {
+      setWithdrawNetworkFeeUsd("—");
+      return;
+    }
+
+    const authToken = zoneAuthTokenRef.current;
+    if (!authToken || isZoneRpcAuthTokenExpired(authToken)) {
+      setWithdrawNetworkFeeUsd("—");
+      return;
+    }
+
+    let cancelled = false;
+
+    async function estimateWithdrawFee() {
+      try {
+        const address = connectedAddress as Address;
+        if (!isAddress(withdrawDraft.recipient)) {
+          throw new Error("Recipient required.");
+        }
+        const recipient = withdrawDraft.recipient as Address;
+        const amount = parsePathUsdAmount(withdrawDraft.amount);
+        const [withdrawalFee, allowance] = await Promise.all([
+          readPrivateZoneWithdrawalFee(
+            authToken as Hex,
+            address,
+            SIMPLE_WITHDRAWAL_GAS_LIMIT,
+          ),
+          readPrivateTokenAllowance(
+            authToken as Hex,
+            address,
+            OMEGA_ZONE_ADDRESSES.pathUsd,
+            OMEGA_ZONE_ADDRESSES.zoneOutbox,
+          ),
+        ]);
+        if (allowance < amount + withdrawalFee) {
+          if (!cancelled) setWithdrawNetworkFeeUsd("—");
+          return;
+        }
+        const fee = await estimatePrivateZoneContractWriteNetworkFee({
+          authToken: authToken as Hex,
+          account: address,
+          request: zoneOutboxRequestWithdrawal({
+            to: recipient,
+            amount,
+            gasLimit: SIMPLE_WITHDRAWAL_GAS_LIMIT,
+            withdrawalFee,
+            fallbackRecipient: recipient,
+          }),
+        });
+        if (!cancelled) setWithdrawNetworkFeeUsd(formatNetworkFeeUsd(fee));
+      } catch {
+        if (!cancelled) setWithdrawNetworkFeeUsd("—");
+      }
+    }
+
+    void estimateWithdrawFee();
+    return () => {
+      cancelled = true;
+    };
+  }, [connectedAddress, withdrawDraft, withdrawOpen]);
+
   const handleSignPermit = React.useCallback(async () => {
     setDepositError(undefined);
     try {
       const { address, walletClient: client } = requireWallet();
-      const amount = parsePathUsdAmount(depositAmount);
+      const amount = parseDepositAmount(depositAmount, depositToken);
 
       await ensureChain(OMEGA_TEMPO_L1_CHAIN_ID);
+      const currentAllowance = await readPortalAllowance(address, selectedDepositTokenAddress);
+      if (currentAllowance >= amount) {
+        setPermitSigned(true);
+        setDepositState("idle");
+        return;
+      }
+
       setDepositState("approving");
+      const nonce = await tempoL1Client.getTransactionCount({
+        address,
+        blockTag: "pending",
+      });
       const txHash = await client.writeContract({
         account: address,
-        ...approvePathUsdToPortalRequest(amount),
+        chain: tempoL1Chain,
+        nonce,
+        gas: PORTAL_APPROVE_GAS_LIMIT,
+        ...approveTokenToPortalRequest(selectedDepositTokenAddress, amount),
       });
       setDepositTxHash(txHash);
-      await tempoL1Client.waitForTransactionReceipt({ hash: txHash });
+      const receipt = await tempoL1Client.waitForTransactionReceipt({
+        hash: txHash,
+      });
+      if (!receiptSucceeded(receipt.status)) {
+        throw new Error("Approval transaction reverted. Deposit was not submitted.");
+      }
+
+      const nextAllowance = await waitForPortalAllowance(address, selectedDepositTokenAddress, amount);
+      if (nextAllowance < amount) {
+        throw new Error(
+          `Approval confirmed, but portal allowance is still ${formatTokenAmount(
+            nextAllowance,
+            6,
+          )} ${depositToken}. Wait a few seconds and retry.`,
+        );
+      }
       setPermitSigned(true);
       setDepositState("idle");
       await refreshL1Balance();
@@ -436,23 +658,51 @@ export default function PortfolioPage() {
       setDepositError(getErrorMessage(error));
       setDepositState("failed");
     }
-  }, [depositAmount, ensureChain, refreshL1Balance, requireWallet]);
+  }, [
+    depositAmount,
+    depositToken,
+    ensureChain,
+    readPortalAllowance,
+    refreshL1Balance,
+    requireWallet,
+    selectedDepositTokenAddress,
+    waitForPortalAllowance,
+  ]);
 
   const handleSignDeposit = React.useCallback(async () => {
     setDepositError(undefined);
     try {
       const { address, walletClient: client } = requireWallet();
-      const amount = parsePathUsdAmount(depositAmount);
+      const amount = parseDepositAmount(depositAmount, depositToken);
       const authToken = await ensureZoneAuthToken();
 
       await ensureChain(OMEGA_TEMPO_L1_CHAIN_ID);
+      const currentAllowance = await readPortalAllowance(address, selectedDepositTokenAddress);
+      if (currentAllowance < amount) {
+        throw new Error("Sign the permit before signing the deposit.");
+      }
+
       setDepositState("depositing");
+      const depositRequest = depositTokenToZoneRequest({
+        token: selectedDepositTokenAddress,
+        to: address,
+        amount,
+        bouncebackRecipient: address,
+      });
+      const estimatedGas = await tempoL1Client.estimateContractGas({
+        account: address,
+        ...depositRequest,
+      });
+      const nonce = await tempoL1Client.getTransactionCount({
+        address,
+        blockTag: "pending",
+      });
       const txHash = await client.writeContract({
         account: address,
-        ...depositPathUsdToZoneRequest({
-          to: address,
-          amount,
-        }),
+        chain: tempoL1Chain,
+        nonce,
+        gas: bufferTempoGasEstimate(estimatedGas),
+        ...depositRequest,
       });
       setDepositTxHash(txHash);
 
@@ -460,53 +710,81 @@ export default function PortfolioPage() {
       const receipt = await tempoL1Client.waitForTransactionReceipt({
         hash: txHash,
       });
-      await waitForZoneDeposit(authToken, receipt.blockNumber);
+      if (!receiptSucceeded(receipt.status)) {
+        throw new Error("Deposit transaction reverted.");
+      }
       const deposit: DepositFixture = {
         id: `d-${txHash.slice(2, 10)}`,
-        token: "PATH.USD",
-        amount: formatPathUsdAmount(amount),
-        status: "settled",
+        token: depositToken,
+        amount: formatTokenAmount(amount, 6),
+        status: "pending",
         initiatedAt: new Date().toISOString(),
         txHash,
       };
       setActivity(mergeOmegaZoneActivity(address, { deposits: [deposit] }));
-      await Promise.all([
-        refreshL1Balance(),
-        refreshZoneBalances(authToken),
-        refreshZoneActivity(authToken),
-      ]);
-      setDepositState("success");
+      setDepositState("queued");
+      void refreshL1Balance().catch(() => {});
+      void reconcileZoneDeposit({
+        authToken,
+        account: address,
+        tempoBlockNumber: receipt.blockNumber,
+        deposit,
+        refreshZoneBalances,
+        refreshZoneActivity,
+        setActivity,
+        onCredited: () => setDepositState((current) => (current === "queued" ? "success" : current)),
+      });
     } catch (error) {
       setDepositError(getErrorMessage(error));
       setDepositState("failed");
     }
   }, [
     depositAmount,
+    depositToken,
     ensureChain,
     ensureZoneAuthToken,
+    readPortalAllowance,
     refreshL1Balance,
     refreshZoneActivity,
     refreshZoneBalances,
     requireWallet,
+    selectedDepositTokenAddress,
   ]);
 
   const getZoneTransactionSigner = React.useCallback(async () => {
     const connector = account.connector ?? connections[0]?.connector;
-    const provider = connector
-      ? await connector
-          .getProvider({ chainId: OMEGA_ZONE_CHAIN_ID })
-          .catch(() => connector.getProvider())
-      : walletClient;
-
-    if (
-      !provider ||
-      typeof (provider as { request?: unknown }).request !== "function"
-    ) {
-      throw new Error("Tempo Wallet provider is not ready for Omega Zone signing.");
-    }
-
-    return provider as ZoneTransactionSigner;
+    return resolveZoneTransactionSigner({
+      connector,
+      fallback: walletClient,
+      chainId: OMEGA_ZONE_CHAIN_ID,
+    });
   }, [account.connector, connections, walletClient]);
+
+  const handleCancelOrder = React.useCallback(
+    async (order: OrderFixture) => {
+      const { address } = requireWallet();
+      const signer = await getZoneTransactionSigner();
+      await cancelPrivateZoneOrder({
+        orderFixtureId: order.id,
+        account: address,
+        signer,
+        getAuthToken: ensureZoneAuthToken,
+        refresh: async (authToken) => {
+          await Promise.all([
+            refreshZoneActivity(authToken),
+            refreshZoneBalances(authToken),
+          ]);
+        },
+      });
+    },
+    [
+      ensureZoneAuthToken,
+      getZoneTransactionSigner,
+      refreshZoneActivity,
+      refreshZoneBalances,
+      requireWallet,
+    ],
+  );
 
   const handleDepositRetry = React.useCallback(() => {
     if (permitSigned) {
@@ -530,21 +808,17 @@ export default function PortfolioPage() {
 
         const signer = await getZoneTransactionSigner();
         setWithdrawState("signing");
-        const txHash = await signAndSendPrivateZoneContractWrite({
+        const { txHash } = await submitPrivateZoneWithdrawal({
           authToken,
           signer,
           account: address,
-          request: zoneOutboxRequestWithdrawal({
-            to: values.recipient,
-            amount,
-            gasLimit: BigInt(250_000),
-            fallbackRecipient: values.recipient,
-          }),
+          to: values.recipient,
+          amount,
         });
         setWithdrawTxHash(txHash);
 
         setWithdrawState("pending");
-        await waitForZoneTransactionReceipt(txHash);
+        await waitForZoneTransactionReceipt(txHash, { authToken });
         const withdrawalStatus = await pollZoneWithdrawalStatus(authToken, txHash);
         const withdrawal = withdrawalStatus
           ? zoneWithdrawalStatusToFixture(withdrawalStatus)
@@ -556,12 +830,33 @@ export default function PortfolioPage() {
               initiatedAt: new Date().toISOString(),
               txHash,
             } satisfies WithdrawalFixture);
+        setWithdrawBatchIndex(withdrawalStatus?.withdrawalBatchIndex);
+        setWithdrawL1TxHash(
+          (withdrawalStatus?.l1ProcessWithdrawalTxHash ??
+            withdrawalStatus?.l1SubmitBatchTxHash) as Hex | undefined,
+        );
         setActivity(mergeOmegaZoneActivity(address, { withdrawals: [withdrawal] }));
         await Promise.all([
           refreshZoneBalances(authToken),
           refreshZoneActivity(authToken),
         ]);
-        setWithdrawState("success");
+        // Only show "Settled" once the withdrawal is actually processed on L1.
+        // A fresh withdrawal almost always lands here as `queued` (L2 confirmed,
+        // awaiting batch settlement on L1); `success` is reserved for the rare
+        // case where `processed` is already reported within the poll window.
+        const terminal: WithdrawState =
+          withdrawalStatus?.status === "processed"
+            ? "success"
+            : withdrawalStatus?.status === "failed" ||
+                withdrawalStatus?.status === "bounced"
+              ? "failed"
+              : "queued";
+        if (terminal === "failed") {
+          setWithdrawError(
+            withdrawalStatus?.error ?? "Withdrawal did not settle on L1.",
+          );
+        }
+        setWithdrawState(terminal);
       } catch (error) {
         setWithdrawError(getErrorMessage(error));
         setWithdrawState("failed");
@@ -595,6 +890,11 @@ export default function PortfolioPage() {
     setWithdrawOpen(false);
     setWithdrawState("idle");
     setWithdrawError(undefined);
+    setWithdrawTxHash(undefined);
+    setWithdrawBatchIndex(undefined);
+    setWithdrawL1TxHash(undefined);
+    setLastWithdrawForm(null);
+    setWithdrawDraft({ recipient: "", amount: "" });
   }, []);
 
   const livePortfolio = React.useMemo(
@@ -603,15 +903,15 @@ export default function PortfolioPage() {
         tokenBalances: zoneTokenBalances,
         zonePathUsdBalance,
         darkpoolPathUsdBalance,
-        zoneOalphaBalance,
-        darkpoolOalphaBalance,
+        zoneAlphaUsdBalance,
+        darkpoolAlphaUsdBalance,
         activity,
       }),
     [
       activity,
-      darkpoolOalphaBalance,
+      darkpoolAlphaUsdBalance,
       darkpoolPathUsdBalance,
-      zoneOalphaBalance,
+      zoneAlphaUsdBalance,
       zonePathUsdBalance,
       zoneTokenBalances,
     ],
@@ -625,7 +925,7 @@ export default function PortfolioPage() {
   const hasLiveData =
     liveState === "ready" &&
     (zonePathUsdBalance !== null ||
-      zoneOalphaBalance !== null ||
+      zoneAlphaUsdBalance !== null ||
       (zoneTokenBalances?.length ?? 0) > 0);
   const data = hasLiveData ? livePortfolio : EMPTY_PORTFOLIO;
   const isLoading = liveState === "idle" || liveState === "loading";
@@ -648,7 +948,7 @@ export default function PortfolioPage() {
       <DisconnectedState
         title="Portfolio is private."
         description="Connect Tempo Wallet to see your balances, positions, and history."
-        onAction={() => wallet.connect("Tempo Wallet")}
+        onAction={() => wallet.reviewLogin()}
       />
     );
   }
@@ -666,6 +966,7 @@ export default function PortfolioPage() {
             onDeposit={() => setDepositOpen(true)}
             onWithdraw={() => setWithdrawOpen(true)}
             onMore={() => router.push("/account")}
+            onCancelOrder={handleCancelOrder}
           />
         )}
       </PageLayout>
@@ -674,11 +975,23 @@ export default function PortfolioPage() {
         open={depositOpen}
         onClose={closeDeposit}
         state={depositState}
+        token={depositToken}
         amount={depositAmount}
-        walletBalance={formatPathUsdAmount(l1PathUsdBalance)}
+        walletBalance={formatPathUsdAmount(selectedDepositL1Balance({
+          token: depositToken,
+          pathUsd: l1PathUsdBalance,
+          alphaUsd: l1AlphaUsdBalance,
+        }))}
+        networkFeeUsd={depositNetworkFeeUsd}
         permitSigned={permitSigned}
         txHash={depositTxHash}
         errorMessage={depositError}
+        onTokenChange={(next) => {
+          setDepositToken(next);
+          setPermitSigned(false);
+          setDepositError(undefined);
+          if (depositState === "failed") setDepositState("idle");
+        }}
         onAmountChange={(next) => {
           setDepositAmount(next);
           setPermitSigned(false);
@@ -693,9 +1006,14 @@ export default function PortfolioPage() {
         open={withdrawOpen}
         onClose={closeWithdraw}
         state={withdrawState}
+        defaultRecipient={connectedAddress}
         available={formatPathUsdAmount(zonePathUsdBalance)}
+        networkFeeUsd={withdrawNetworkFeeUsd}
         txHash={withdrawTxHash}
+        withdrawalBatchIndex={withdrawBatchIndex}
+        l1SettlementTxHash={withdrawL1TxHash}
         errorMessage={withdrawError}
+        onValuesChange={setWithdrawDraft}
         onSubmit={(values) => void handleWithdraw(values)}
         onRetry={handleWithdrawRetry}
       />
@@ -731,32 +1049,55 @@ function ErrorBand({ message }: { message: string }) {
   );
 }
 
-function parsePathUsdAmount(value: string): bigint {
+function parseDepositAmount(value: string, token: DepositToken): bigint {
   const trimmed = value.trim().replace(/,/g, "");
   if (!trimmed) throw new Error("Enter an amount.");
   if (!/^\d+(\.\d{1,6})?$/.test(trimmed)) {
-    throw new Error("Enter a PATH.USD amount with up to 6 decimals.");
+    throw new Error(`Enter a ${token} amount with up to 6 decimals.`);
   }
   const amount = parseUnits(trimmed, 6);
   if (amount <= BigInt(0)) throw new Error("Amount must be greater than zero.");
   return amount;
 }
 
+function parsePathUsdAmount(value: string): bigint {
+  return parseDepositAmount(value, "PATH.USD");
+}
+
+function depositTokenAddress(token: DepositToken): Address {
+  return token === "ALPHAUSD"
+    ? OMEGA_ZONE_ADDRESSES.alphaUsd
+    : OMEGA_ZONE_ADDRESSES.pathUsd;
+}
+
+function selectedDepositL1Balance({
+  token,
+  pathUsd,
+  alphaUsd,
+}: {
+  token: DepositToken;
+  pathUsd: bigint | null;
+  alphaUsd: bigint | null;
+}): bigint | null {
+  return token === "ALPHAUSD" ? alphaUsd : pathUsd;
+}
+
 function buildOmegaZonePortfolioFixture({
   tokenBalances,
   zonePathUsdBalance,
   darkpoolPathUsdBalance,
-  zoneOalphaBalance,
-  darkpoolOalphaBalance,
+  zoneAlphaUsdBalance,
+  darkpoolAlphaUsdBalance,
   activity,
 }: {
   tokenBalances: ZonePortfolioTokenBalance[] | null;
   zonePathUsdBalance: bigint | null;
   darkpoolPathUsdBalance: bigint | null;
-  zoneOalphaBalance: bigint | null;
-  darkpoolOalphaBalance: bigint | null;
+  zoneAlphaUsdBalance: bigint | null;
+  darkpoolAlphaUsdBalance: bigint | null;
   activity: {
     orders: PortfolioFixture["openOrders"];
+    orderHistory: NonNullable<PortfolioFixture["activityOrders"]>;
     fills: PortfolioFixture["recentFills"];
     deposits: PortfolioFixture["deposits"];
     withdrawals: PortfolioFixture["withdrawals"];
@@ -786,6 +1127,7 @@ function buildOmegaZonePortfolioFixture({
       totalValueUSD: formatPathUsdAmount(total),
       balances,
       openOrders: activity.orders,
+      activityOrders: activity.orderHistory,
       recentFills: activity.fills,
       deposits: activity.deposits,
       withdrawals: activity.withdrawals,
@@ -795,10 +1137,10 @@ function buildOmegaZonePortfolioFixture({
   const pathUsdAvailable = zonePathUsdBalance ?? BigInt(0);
   const pathUsdLocked = darkpoolPathUsdBalance ?? BigInt(0);
   const pathUsdTotal = pathUsdAvailable + pathUsdLocked;
-  const oalphaAvailable = zoneOalphaBalance ?? BigInt(0);
-  const oalphaLocked = darkpoolOalphaBalance ?? BigInt(0);
-  const oalphaTotal = oalphaAvailable + oalphaLocked;
-  const total = pathUsdTotal + oalphaTotal;
+  const alphaUsdAvailable = zoneAlphaUsdBalance ?? BigInt(0);
+  const alphaUsdLocked = darkpoolAlphaUsdBalance ?? BigInt(0);
+  const alphaUsdTotal = alphaUsdAvailable + alphaUsdLocked;
+  const total = pathUsdTotal + alphaUsdTotal;
 
   return {
     totalValueUSD: formatPathUsdAmount(total),
@@ -810,13 +1152,14 @@ function buildOmegaZonePortfolioFixture({
         total: formatPathUsdAmount(pathUsdTotal),
       },
       {
-        token: "OALPHA",
-        available: formatPathUsdAmount(oalphaAvailable),
-        locked: formatPathUsdAmount(oalphaLocked),
-        total: formatPathUsdAmount(oalphaTotal),
+        token: "ALPHAUSD",
+        available: formatPathUsdAmount(alphaUsdAvailable),
+        locked: formatPathUsdAmount(alphaUsdLocked),
+        total: formatPathUsdAmount(alphaUsdTotal),
       },
     ],
     openOrders: activity.orders,
+    activityOrders: activity.orderHistory,
     recentFills: activity.fills,
     deposits: activity.deposits,
     withdrawals: activity.withdrawals,
@@ -871,8 +1214,8 @@ async function fetchZonePortfolioTokens(
       decimals: 6,
     },
     {
-      token: "OALPHA",
-      address: OMEGA_ZONE_ADDRESSES.oalpha,
+      token: "ALPHAUSD",
+      address: OMEGA_ZONE_ADDRESSES.alphaUsd,
       decimals: 6,
     },
   ] satisfies ZonePortfolioToken[];
@@ -902,7 +1245,7 @@ function toPortfolioTokenSymbol(symbol: string): BalanceFixture["token"] | null 
     "ETH",
     "BTC",
     "PATH.USD",
-    "OALPHA",
+    "ALPHAUSD",
   ] satisfies BalanceFixture["token"][];
   return known.find((token) => token === symbol) ?? null;
 }
@@ -929,24 +1272,83 @@ function normalizeTokenAmountToPathUsdDecimals(
   return value * (BigInt(10) ** BigInt(6 - decimals));
 }
 
-async function waitForZoneDeposit(authToken: Hex, tempoBlockNumber: bigint) {
+async function waitForZoneDeposit(
+  authToken: Hex,
+  tempoBlockNumber: bigint,
+): Promise<DepositFixture["status"]> {
   for (let attempt = 0; attempt < 30; attempt += 1) {
-    const status = await getZoneDepositStatus(authToken, tempoBlockNumber);
+    const status = await getZoneDepositStatus(authToken, tempoBlockNumber).catch(
+      () => null,
+    );
+    if (!status) {
+      await delay(2000);
+      continue;
+    }
+    if (status.deposits.some((deposit) => deposit.status === "failed")) {
+      throw new Error("Deposit failed while processing in Omega Zone.");
+    }
     if (
       status.processed ||
       status.deposits.some((deposit) => deposit.status === "processed")
     ) {
-      return;
+      return "credited";
     }
     await delay(2000);
   }
-  throw new Error("Deposit is still pending in Omega Zone. Refresh in a moment.");
+  return "pending";
+}
+
+async function reconcileZoneDeposit({
+  authToken,
+  account,
+  tempoBlockNumber,
+  deposit,
+  refreshZoneBalances,
+  refreshZoneActivity,
+  setActivity,
+  onCredited,
+}: {
+  authToken: Hex;
+  account: Address;
+  tempoBlockNumber: bigint;
+  deposit: DepositFixture;
+  refreshZoneBalances: (authToken: Hex) => Promise<void>;
+  refreshZoneActivity: (authToken: Hex) => Promise<void>;
+  setActivity: (activity: ReturnType<typeof mergeOmegaZoneActivity>) => void;
+  onCredited: () => void;
+}) {
+  try {
+    const status = await waitForZoneDeposit(authToken, tempoBlockNumber);
+    if (status === "pending") return;
+
+    setActivity(
+      mergeOmegaZoneActivity(account, {
+        deposits: [{ ...deposit, status }],
+      }),
+    );
+    onCredited();
+    await Promise.allSettled([
+      refreshZoneBalances(authToken),
+      refreshZoneActivity(authToken),
+    ]);
+  } catch {
+    setActivity(
+      mergeOmegaZoneActivity(account, {
+        deposits: [{ ...deposit, status: "failed" }],
+      }),
+    );
+  }
 }
 
 async function pollZoneWithdrawalStatus(authToken: Hex, txHash: Hex) {
   for (let attempt = 0; attempt < 10; attempt += 1) {
     try {
       const status = await getZoneWithdrawalStatus(authToken, txHash);
+      if (!status) {
+        if (attempt >= 2) return null;
+        await delay(2000);
+        continue;
+      }
       if (
         status.status === "processed" ||
         status.status === "failed" ||
@@ -965,6 +1367,11 @@ async function pollZoneWithdrawalStatus(authToken: Hex, txHash: Hex) {
 
 function delay(ms: number) {
   return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
+
+function receiptSucceeded(status: unknown): boolean {
+  const normalized = String(status ?? "");
+  return normalized === "success" || normalized === "0x1";
 }
 
 function getErrorMessage(error: unknown): string {

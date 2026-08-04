@@ -30,7 +30,6 @@ import {
 import {
   useAccount,
   useConnections,
-  useSignMessage,
   useWalletClient,
 } from "wagmi";
 
@@ -57,36 +56,34 @@ import {
   DARKPOOL_PARSED_ABI,
   OMEGA_ZONE_ADDRESSES,
   OMEGA_ZONE_CHAIN_ID,
-  buildZoneRpcAuthToken,
   darkpoolMarketBuyRequest,
   darkpoolMarketSellRequest,
   darkpoolPlaceOrderRequest,
   fetchOmegaZoneActivity,
-  getTempoNativeAuthSigner,
+  getOrCreateZoneRpcAuthToken,
   isZoneAuthError,
   isZoneRpcAuthTokenExpired,
-  clearPersistedZoneRpcAuthToken,
   getZoneMidpointHistory,
   getZonePublicMidpointHistory,
   getZonePublicTopOfBook,
+  ensurePrivateZoneTradeBalance,
   mergeOmegaZoneActivity,
-  persistZoneRpcAuthToken,
+  resolveZoneTransactionSigner,
   waitForZoneTransactionReceipt,
   readPersistedZoneRpcAuthToken,
   readOmegaZoneActivity,
   readPrivateBestAsk,
   readPrivateBestBid,
-  readPrivateZoneOalphaBalance,
-  readPrivateZonePathUsdBalance,
-  readPrivateZoneTokenBalance,
+  readPrivateZoneTradeBalance,
   signAndSendPrivateZoneContractWrite,
+  useZoneLiveSnapshot,
+  zoneFillIdentity,
   type OmegaZoneActivity,
-  type ZoneTransactionSigner,
 } from "@/lib/zone";
 
 const ZONE_PAIR: LaunchPair = {
-  pair: "OALPHA/PATH.USD",
-  base: "OALPHA",
+  pair: "ALPHAUSD/PATH.USD",
+  base: "ALPHAUSD",
   quote: "PATH.USD",
 };
 
@@ -101,7 +98,6 @@ function TradeSurface() {
   const account = useAccount();
   const connections = useConnections();
   const { data: walletClient } = useWalletClient();
-  const signMessage = useSignMessage();
   const connectedAddress = account.address;
   const isConnected = Boolean(connectedAddress);
 
@@ -115,17 +111,17 @@ function TradeSurface() {
   const [pair, setPair] = React.useState<string>(ZONE_PAIR.pair);
   const [mode, setMode] = React.useState<OrderMode>("market");
   const [zoneAuthToken, setZoneAuthToken] = React.useState<Hex | null>(null);
-  const [zonePathUsdBalance, setZonePathUsdBalance] = React.useState<
+  const [pathUsdSpendable, setPathUsdSpendable] = React.useState<
     bigint | null
   >(null);
-  const [zoneOalphaBalance, setZoneOalphaBalance] = React.useState<
+  const [alphaUsdSpendable, setAlphaUsdSpendable] = React.useState<
     bigint | null
   >(
     null,
   );
   const [bestBid, setBestBid] = React.useState<bigint | null>(null);
   const [bestAsk, setBestAsk] = React.useState<bigint | null>(null);
-  // Resting depth at the top of book (base/OALPHA units). Used to guard market
+  // Resting depth at the top of book (base/ALPHAUSD units). Used to guard market
   // orders against exceeding available liquidity (the darkpool reverts on a
   // partial fill rather than filling what it can).
   const [bestBidQty, setBestBidQty] = React.useState<bigint | null>(null);
@@ -135,10 +131,6 @@ function TradeSurface() {
   const [activity, setActivity] = React.useState(() =>
     readOmegaZoneActivity(connectedAddress),
   );
-  const [liveState, setLiveState] = React.useState<
-    "idle" | "loading" | "ready" | "error"
-  >("idle");
-  const [liveError, setLiveError] = React.useState<string | undefined>();
   // Wallet-free public market snapshot (midpoint + chart enable). The zone
   // serves zone_getTopOfBook / zone_getMidpointHistory on the public RPC with
   // an anonymous AuthContext, so the trade surface shows the live midpoint even
@@ -162,7 +154,6 @@ function TradeSurface() {
   );
   const zoneAuthTokenRef = React.useRef<Hex | null>(null);
   const zoneAuthTokenPromiseRef = React.useRef<Promise<Hex> | null>(null);
-  const autoAuthAttemptedRef = React.useRef(false);
 
   const launchPair = ZONE_PAIRS.find((p) => p.pair === pair) ?? ZONE_PAIR;
 
@@ -174,7 +165,6 @@ function TradeSurface() {
     const cachedAuthToken = readPersistedZoneRpcAuthToken(connectedAddress);
     zoneAuthTokenRef.current = cachedAuthToken;
     zoneAuthTokenPromiseRef.current = null;
-    autoAuthAttemptedRef.current = false;
     setZoneAuthToken(cachedAuthToken);
   }, [connectedAddress]);
 
@@ -189,34 +179,45 @@ function TradeSurface() {
           (v) => v,
           () => null,
         );
-      const [pathUsdBalance, oalphaBalance] = await Promise.all([
-        settle(readPrivateZonePathUsdBalance(authToken, connectedAddress)),
-        settle(readPrivateZoneOalphaBalance(authToken, connectedAddress)),
+      const [pathUsdSpendable, alphaUsdSpendable] = await Promise.all([
+        settle(
+          readPrivateZoneTradeBalance(
+            authToken,
+            connectedAddress,
+            OMEGA_ZONE_ADDRESSES.pathUsd,
+          ),
+        ),
+        settle(
+          readPrivateZoneTradeBalance(
+            authToken,
+            connectedAddress,
+            OMEGA_ZONE_ADDRESSES.alphaUsd,
+          ),
+        ),
       ]);
       const [bid, ask, history, ownerActivity] = await Promise.allSettled([
         readPrivateBestBid(
           authToken,
           connectedAddress,
-          OMEGA_ZONE_ADDRESSES.oalpha,
+          OMEGA_ZONE_ADDRESSES.alphaUsd,
         ),
         readPrivateBestAsk(
           authToken,
           connectedAddress,
-          OMEGA_ZONE_ADDRESSES.oalpha,
+          OMEGA_ZONE_ADDRESSES.alphaUsd,
         ),
         getZoneMidpointHistory(authToken, {
-          base: OMEGA_ZONE_ADDRESSES.oalpha,
+          base: OMEGA_ZONE_ADDRESSES.alphaUsd,
           quote: OMEGA_ZONE_ADDRESSES.pathUsd,
           interval: "1m",
           limit: 50,
         }),
         fetchOmegaZoneActivity({
           authToken,
-          account: connectedAddress,
         }),
       ]);
-      setZonePathUsdBalance(pathUsdBalance);
-      setZoneOalphaBalance(oalphaBalance);
+      setPathUsdSpendable(pathUsdSpendable);
+      setAlphaUsdSpendable(alphaUsdSpendable);
       const bidLive = bid.status === "fulfilled" && bid.value.price > BigInt(0);
       const askLive = ask.status === "fulfilled" && ask.value.price > BigInt(0);
       setBestBid(bidLive ? bid.value.price : null);
@@ -234,6 +235,7 @@ function TradeSurface() {
         setActivity(
           mergeOmegaZoneActivity(connectedAddress, ownerActivity.value, {
             ordersAuthoritative: true,
+            depositsAuthoritative: true,
           }),
         );
       }
@@ -253,7 +255,6 @@ function TradeSurface() {
     if (forceRefresh) {
       zoneAuthTokenRef.current = null;
       zoneAuthTokenPromiseRef.current = null;
-      clearPersistedZoneRpcAuthToken();
       setZoneAuthToken(null);
     } else {
       if (usable(zoneAuthTokenRef.current)) return zoneAuthTokenRef.current;
@@ -272,19 +273,18 @@ function TradeSurface() {
     }
     if (!connectedAddress) throw new Error("Connect Tempo Wallet first.");
 
-    const authTokenPromise = buildZoneRpcAuthToken({
+    const authTokenPromise = getOrCreateZoneRpcAuthToken({
       account: connectedAddress,
-      signMessage: ({ account: signerAccount, message }) =>
-        signMessage.signMessageAsync({
-          account: signerAccount,
-          message,
+      forceRefresh,
+      getProvider: () =>
+        resolveZoneTransactionSigner({
+          connector: account.connector ?? connections[0]?.connector,
+          fallback: walletClient,
         }),
-      nativeSigner: getTempoNativeAuthSigner(walletClient),
-    }).then((authToken) => {
-      zoneAuthTokenRef.current = authToken;
-      setZoneAuthToken(authToken);
-      persistZoneRpcAuthToken(authToken, connectedAddress);
-      return authToken;
+      onToken: (authToken) => {
+        zoneAuthTokenRef.current = authToken;
+        setZoneAuthToken(authToken);
+      },
     });
 
     zoneAuthTokenPromiseRef.current = authTokenPromise;
@@ -293,53 +293,24 @@ function TradeSurface() {
     } finally {
       zoneAuthTokenPromiseRef.current = null;
     }
-    // NB: `zoneAuthToken` is intentionally NOT a dependency — this callback reads
-    // the token via `zoneAuthTokenRef` (line above), so it does not need it. If it
-    // were a dep, `setZoneAuthToken` firing during auth would churn this callback's
-    // identity, re-trigger the live-snapshot effect mid-flight, cancel it before
-    // `setLiveState("ready")`, and leave the surface stuck on "loading" (skeleton
-    // fills, midpoint "—") behind the one-shot `autoAuthAttemptedRef` guard.
+    // `zoneAuthToken` is intentionally not a dependency: the current token is
+    // read from the ref/cache and mirrored to state only for rendering.
   }, [
+    account.connector,
     connectedAddress,
-    signMessage,
+    connections,
     walletClient,
   ]);
 
-  React.useEffect(() => {
-    if (!connectedAddress) return;
-    if (autoAuthAttemptedRef.current) return;
-    autoAuthAttemptedRef.current = true;
-    let cancelled = false;
-
-    async function loadLiveSnapshot() {
-      setLiveState("loading");
-      setLiveError(undefined);
-      try {
-        const authToken = await ensureZoneAuthToken();
-        await refreshZoneSnapshot(authToken);
-        if (!cancelled) setLiveState("ready");
-      } catch (error) {
-        if (!cancelled) {
-          setLiveError(getErrorMessage(error));
-          setLiveState("error");
-        }
-      }
-    }
-
-    void loadLiveSnapshot();
-    return () => {
-      cancelled = true;
-    };
-    // Depend ONLY on the stable inputs that should (re)start a snapshot. The
-    // callbacks (ensureZoneAuthToken/refreshZoneSnapshot) are excluded on
-    // purpose: their identities churn the instant walletClient/signMessage
-    // settle right after connect, which would re-run this effect, fire its
-    // cleanup (`cancelled = true`) on the in-flight run, and skip
-    // `setLiveState("ready")` even though the snapshot already succeeded —
-    // pinning the surface on "loading" forever. Read from the latest closure
-    // at call time, so narrowing loses nothing.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [connectedAddress]);
+  const loadLiveSnapshot = React.useCallback(async () => {
+    const authToken = await ensureZoneAuthToken();
+    await refreshZoneSnapshot(authToken);
+  }, [ensureZoneAuthToken, refreshZoneSnapshot]);
+  const { state: liveState, error: liveError } = useZoneLiveSnapshot({
+    enabled: Boolean(connectedAddress) && wallet.state === "connected",
+    identity: connectedAddress,
+    load: loadLiveSnapshot,
+  });
 
   // Wallet-free public market poll — runs regardless of wallet so the trade
   // surface renders the LIVE midpoint + chart-enable from the zone's public
@@ -353,11 +324,11 @@ function TradeSurface() {
       try {
         const [book, history] = await Promise.all([
           getZonePublicTopOfBook({
-            base: OMEGA_ZONE_ADDRESSES.oalpha,
+            base: OMEGA_ZONE_ADDRESSES.alphaUsd,
             quote: OMEGA_ZONE_ADDRESSES.pathUsd,
           }),
           getZonePublicMidpointHistory({
-            base: OMEGA_ZONE_ADDRESSES.oalpha,
+            base: OMEGA_ZONE_ADDRESSES.alphaUsd,
             quote: OMEGA_ZONE_ADDRESSES.pathUsd,
             interval: "1m",
             limit: 50,
@@ -384,7 +355,7 @@ function TradeSurface() {
     };
     // Stable callback set; runs once on mount and polls. No page-state gating.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [connectedAddress, wallet.state]);
 
   // Authed snapshot poll — keeps balances, resting open orders, and fills
   // current while connected, so an order that fills (here or via another
@@ -413,20 +384,11 @@ function TradeSurface() {
 
   const getZoneTransactionSigner = React.useCallback(async () => {
     const connector = account.connector ?? connections[0]?.connector;
-    const provider = connector
-      ? await connector
-          .getProvider({ chainId: OMEGA_ZONE_CHAIN_ID })
-          .catch(() => connector.getProvider())
-      : walletClient;
-
-    if (
-      !provider ||
-      typeof (provider as { request?: unknown }).request !== "function"
-    ) {
-      throw new Error("Tempo Wallet provider is not ready for Omega Zone signing.");
-    }
-
-    return provider as ZoneTransactionSigner;
+    return resolveZoneTransactionSigner({
+      connector,
+      fallback: walletClient,
+      chainId: OMEGA_ZONE_CHAIN_ID,
+    });
   }, [account.connector, connections, walletClient]);
 
   const midpoint = React.useMemo(
@@ -439,7 +401,7 @@ function TradeSurface() {
       const { address } = requireWallet();
       const signer = await getZoneTransactionSigner();
 
-      const amount = parseTokenAmount(payload.amount, "OALPHA");
+      const amount = parseTokenAmount(payload.amount, "ALPHAUSD");
 
       // Price the order at the side of the book it will actually execute
       // against. A market BUY clears the resting ASK, so the spend cap
@@ -461,7 +423,7 @@ function TradeSurface() {
         }
         if (bestAskQty !== null && amount > bestAskQty) {
           throw new Error(
-            `Only ${formatTokenAmount(bestAskQty)} OALPHA is resting at the ask. Reduce the size or place a limit order.`,
+            `Only ${formatTokenAmount(bestAskQty)} ALPHAUSD is resting at the ask. Reduce the size or place a limit order.`,
           );
         }
         quoteBound = applyMarketSlippage(
@@ -476,7 +438,7 @@ function TradeSurface() {
         }
         if (bestBidQty !== null && amount > bestBidQty) {
           throw new Error(
-            `Only ${formatTokenAmount(bestBidQty)} OALPHA of bid depth is available. Reduce the size or place a limit order.`,
+            `Only ${formatTokenAmount(bestBidQty)} ALPHAUSD of bid depth is available. Reduce the size or place a limit order.`,
           );
         }
         quoteBound = applyMarketSlippage(
@@ -488,19 +450,19 @@ function TradeSurface() {
       const request =
         payload.mode === "limit"
           ? darkpoolPlaceOrderRequest({
-              base: OMEGA_ZONE_ADDRESSES.oalpha,
+              base: OMEGA_ZONE_ADDRESSES.alphaUsd,
               amount,
               price: limitPrice as bigint,
               isBid: payload.side === "buy",
             })
           : payload.side === "buy"
             ? darkpoolMarketBuyRequest({
-                base: OMEGA_ZONE_ADDRESSES.oalpha,
+                base: OMEGA_ZONE_ADDRESSES.alphaUsd,
                 amount,
                 maxQuoteIn: quoteBound,
               })
             : darkpoolMarketSellRequest({
-                base: OMEGA_ZONE_ADDRESSES.oalpha,
+                base: OMEGA_ZONE_ADDRESSES.alphaUsd,
                 amount,
                 minQuoteOut: quoteBound,
               });
@@ -515,9 +477,9 @@ function TradeSurface() {
           token:
             payload.side === "buy"
               ? OMEGA_ZONE_ADDRESSES.pathUsd
-              : OMEGA_ZONE_ADDRESSES.oalpha,
+              : OMEGA_ZONE_ADDRESSES.alphaUsd,
           requiredAmount: payload.side === "buy" ? quoteBound : amount,
-          tokenLabel: payload.side === "buy" ? "PATH.USD" : "OALPHA",
+          tokenLabel: payload.side === "buy" ? "PATH.USD" : "ALPHAUSD",
         });
         return signAndSendPrivateZoneContractWrite({
           authToken: token,
@@ -538,26 +500,51 @@ function TradeSurface() {
         txHash = await submitWith(authToken);
       }
 
-      const receipt = await waitForZoneTransactionReceipt(txHash);
-      const patch = activityFromDarkpoolReceipt({
-        receipt,
-        fallback: payload,
-        txHash,
-        midpoint,
-      });
-      setActivity(mergeOmegaZoneActivity(address, patch));
+      const applyReceiptPatch = (receipt: TransactionReceipt) => {
+        const patch = activityFromDarkpoolReceipt({
+          receipt,
+          fallback: payload,
+          txHash,
+          midpoint,
+        });
+        setActivity(mergeOmegaZoneActivity(address, patch));
 
-      // Surface the settlement moment (the kit's MatchToast) for the fill the
-      // submit just produced. Reflects the real fill status (matched at
-      // midpoint) — limit orders that rest without a fill don't toast.
-      const settledFill = patch.fills?.[0];
-      if (settledFill) {
-        if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-        setToastFill({ status: settledFill.status, price: settledFill.price });
-        setToastKey((k) => k + 1);
-        toastTimerRef.current = setTimeout(() => setToastFill(null), 4800);
+        // Surface the settlement moment (the kit's MatchToast) for the fill the
+        // submit just produced. Reflects the real fill status (matched at
+        // midpoint) — limit orders that rest without a fill don't toast.
+        const settledFill = patch.fills?.[0];
+        if (settledFill) {
+          if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+          setToastFill({ status: settledFill.status, price: settledFill.price });
+          setToastKey((k) => k + 1);
+          toastTimerRef.current = setTimeout(() => setToastFill(null), 4800);
+        }
+      };
+
+      if (payload.mode === "limit") {
+        setActivity(
+          mergeOmegaZoneActivity(
+            address,
+            activityFromSubmittedOrder({ fallback: payload, txHash, midpoint }),
+          ),
+        );
+
+        void (async () => {
+          try {
+            const receipt = await waitForZoneTransactionReceipt(txHash, {
+              authToken,
+            });
+            applyReceiptPatch(receipt);
+            await refreshZoneSnapshot(authToken);
+          } catch {
+            await refreshZoneSnapshot(authToken).catch(() => {});
+          }
+        })();
+        return;
       }
 
+      const receipt = await waitForZoneTransactionReceipt(txHash, { authToken });
+      applyReceiptPatch(receipt);
       await refreshZoneSnapshot(authToken);
     },
     [
@@ -592,7 +579,7 @@ function TradeSurface() {
           description="Omega is read-only until your Tempo account is connected."
           actionLabel="Tempo wallet"
           icon={Icon.Wallet}
-          onAction={() => wallet.connect("Tempo Wallet")}
+          onAction={() => wallet.reviewLogin()}
         />
       </PageLayout>
     );
@@ -615,8 +602,8 @@ function TradeSurface() {
   const hasLiveData =
     liveState === "ready" ||
     publicMarketState === "ready" ||
-    zonePathUsdBalance !== null ||
-    zoneOalphaBalance !== null ||
+    pathUsdSpendable !== null ||
+    alphaUsdSpendable !== null ||
     liveFills.length > 0;
 
   const isLoading =
@@ -656,8 +643,8 @@ function TradeSurface() {
         onModeChange={setMode}
         midpoint={displayedMidpoint}
         availableBySide={{
-          buy: formatTokenAmount(zonePathUsdBalance),
-          sell: formatTokenAmount(zoneOalphaBalance),
+          buy: formatTokenAmount(pathUsdSpendable),
+          sell: formatTokenAmount(alphaUsdSpendable),
         }}
         loading={isLoading}
         errorMessage={errorMessage}
@@ -743,17 +730,13 @@ async function ensureTradeBalance({
   requiredAmount: bigint;
   tokenLabel: string;
 }) {
-  const currentZoneBalance = await readPrivateZoneTokenBalance(
-    authToken,
+  await ensurePrivateZoneTradeBalance({
     account,
+    authToken,
     token,
-  );
-
-  if (currentZoneBalance < requiredAmount) {
-    throw new Error(
-      `Deposit at least ${formatTokenAmount(requiredAmount)} ${tokenLabel} to Omega Zone first.`,
-    );
-  }
+    requiredAmount,
+    tokenLabel,
+  });
 }
 
 function activityFromDarkpoolReceipt({
@@ -770,6 +753,7 @@ function activityFromDarkpoolReceipt({
   const orders: OrderFixture[] = [];
   const fills: FillFixture[] = [];
   const now = new Date().toISOString();
+  let submittedOrderId: bigint | null = null;
 
   for (const log of receipt.logs) {
     try {
@@ -779,6 +763,11 @@ function activityFromDarkpoolReceipt({
         topics: log.topics,
       });
       const args = event.args as Record<string, unknown>;
+
+      if (event.eventName === "OrderSubmitted") {
+        submittedOrderId = bigintArg(args.orderId);
+        continue;
+      }
 
       if (event.eventName === "OrderPlaced") {
         const orderId = bigintArg(args.orderId);
@@ -791,10 +780,12 @@ function activityFromDarkpoolReceipt({
           side: isBid ? "buy" : "sell",
           type: "limit",
           amount: formatTokenAmount(amount),
+          amountRaw: amount.toString(),
           price: formatRawPrice(price),
           filledPercent: 0,
           status: "pending",
           submittedAt: now,
+          txHash,
         });
       }
 
@@ -803,11 +794,16 @@ function activityFromDarkpoolReceipt({
         const amount = bigintArg(args.amountFilled);
         const price = bigintArg(args.price);
         fills.push({
-          id: `f-${orderId.toString()}-${log.logIndex ?? 0}`,
-          orderId: `o-${orderId.toString()}`,
+          id: zoneFillIdentity(txHash, log.logIndex ?? 0, "taker"),
+          orderId:
+            submittedOrderId === null
+              ? `o-${txHash.slice(2, 10)}`
+              : `o-${submittedOrderId.toString()}`,
           pair: ZONE_PAIR.pair,
           side: fallback.side,
+          type: fallback.mode,
           amount: formatTokenAmount(amount),
+          amountRaw: amount.toString(),
           price: formatRawPrice(price),
           matchedAt: now,
           status: "matched",
@@ -820,34 +816,67 @@ function activityFromDarkpoolReceipt({
   }
 
   if (orders.length === 0 && fills.length === 0) {
-    if (fallback.mode === "limit") {
-      orders.push({
-        id: `o-${txHash.slice(2, 10)}`,
-        pair: ZONE_PAIR.pair,
-        side: fallback.side,
-        type: "limit",
-        amount: formatTokenAmount(parseTokenAmount(fallback.amount, "OALPHA")),
-        price: formatRawPrice(parseRawPrice(fallback.price ?? "0")),
-        filledPercent: 0,
-        status: "pending",
-        submittedAt: now,
-      });
-    } else {
-      fills.push({
+    return activityFromSubmittedOrder({
+      fallback,
+      txHash,
+      midpoint,
+      submittedAt: now,
+    });
+  }
+
+  return { orders, fills };
+}
+
+function activityFromSubmittedOrder({
+  fallback,
+  txHash,
+  midpoint,
+  submittedAt = new Date().toISOString(),
+}: {
+  fallback: OrderFormSubmitPayload;
+  txHash: Hex;
+  midpoint: string;
+  submittedAt?: string;
+}): Partial<OmegaZoneActivity> {
+  if (fallback.mode === "limit") {
+    const amountRaw = parseTokenAmount(fallback.amount, "ALPHAUSD");
+    return {
+      orders: [
+        {
+          id: `o-${txHash.slice(2, 10)}`,
+          pair: ZONE_PAIR.pair,
+          side: fallback.side,
+          type: "limit",
+          amount: formatTokenAmount(amountRaw),
+          amountRaw: amountRaw.toString(),
+          price: formatRawPrice(parseRawPrice(fallback.price ?? "0")),
+          filledPercent: 0,
+          status: "pending",
+          submittedAt,
+          txHash,
+        },
+      ],
+    };
+  }
+
+  const amountRaw = parseTokenAmount(fallback.amount, "ALPHAUSD");
+  return {
+    fills: [
+      {
         id: `f-${txHash.slice(2, 10)}`,
         orderId: `o-${txHash.slice(2, 10)}`,
         pair: ZONE_PAIR.pair,
         side: fallback.side,
-        amount: formatTokenAmount(parseTokenAmount(fallback.amount, "OALPHA")),
+        type: "market",
+        amount: formatTokenAmount(amountRaw),
+        amountRaw: amountRaw.toString(),
         price: midpoint,
-        matchedAt: now,
+        matchedAt: submittedAt,
         status: "matched",
         txHash,
-      });
-    }
-  }
-
-  return { orders, fills };
+      },
+    ],
+  };
 }
 
 function bigintArg(value: unknown): bigint {

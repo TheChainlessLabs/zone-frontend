@@ -9,49 +9,51 @@ import { Button } from "@/components/ui/button";
 import { Status } from "@/components/ui/status";
 import { Icon } from "@/lib/icons";
 import { cn } from "@/lib/utils";
-import type { BatchesDetailFixture, BatchStatus } from "@/lib/view-types";
 import { formatRelativeTime } from "@/lib/format";
-import { getZoneBatch, type ZoneBatchSummary } from "@/lib/zone";
+import { getZoneBatch } from "@/lib/zone";
 
-import { aggregateByPair, parseNum } from "./aggregate";
+import {
+  type BatchRecord,
+  type BatchRecordStatus,
+  formatBatchNumber,
+  formatBatchVolumes,
+  formatBlockRange,
+  zoneBatchToRecord,
+} from "./batch-data";
 import { CopyButton } from "./copy-button";
-import { EtherscanTxLink } from "./etherscan-link";
-import { zoneBatchToFixture } from "./batches-list-view";
+import { TempoTxLink } from "./etherscan-link";
 import styles from "./batches.module.css";
 
 /**
  * BatchDetailView — the per-batch verification surface, ported to the
  * design-kit `BatchDetail`.
  *
- * Composition (kit `Batches.jsx`): a back pill, an identity header
- * (batch glyph · #number · status · seal time · Etherscan + Verify-proof
- * actions), then a split of an Overview sidebar (settlement metadata) and a
- * main column carrying the lifecycle stepper (Submitted → Proven → Settled),
- * the per-pair fill distribution, and the privacy note.
- *
- * Behaviour preserved from the app: in the default state the batch comes
- * from the live Omega Zone RPC keyed on the route segment; `?state=loading|
- * empty|error` and the legacy `detail-verified|detail-pending|detail-failed`
- * fixtures still resolve. Public/no-auth.
+ * The batch comes from `zone_getBatch`; all metadata shown below is present in
+ * that aggregate-only RPC response. Optional settlement/proof fields remain
+ * absent until the zone reports them.
  *
  * Privacy hard rule: aggregate + per-pair only — never a counterparty, an
  * order ID, or an individual fill owner.
  */
 
-const STATUS_STATE: Record<BatchStatus, "settled" | "pending" | "failed"> = {
-  verified: "settled",
+const STATUS_STATE: Record<
+  BatchRecordStatus,
+  "settled" | "pending" | "proven" | "failed"
+> = {
   pending: "pending",
+  submitted: "settled",
+  verified: "proven",
   failed: "failed",
 };
-const STATUS_LABEL: Record<BatchStatus, string> = {
-  verified: "Settled",
+const STATUS_LABEL: Record<BatchRecordStatus, string> = {
   pending: "Pending",
+  submitted: "Submitted",
+  verified: "Verified",
   failed: "Failed",
 };
 
 export function BatchDetailView({ id }: { id: string }) {
-  const [liveFixture, setLiveFixture] =
-    React.useState<BatchesDetailFixture | null>(null);
+  const [liveBatch, setLiveBatch] = React.useState<BatchRecord | null>(null);
   const [liveState, setLiveState] = React.useState<
     "loading" | "ready" | "error" | "empty"
   >("loading");
@@ -68,11 +70,11 @@ export function BatchDetailView({ id }: { id: string }) {
         const batch = await getZoneBatch(parseBatchRouteId(id));
         if (cancelled) return;
         if (!batch) {
-          setLiveFixture(null);
+          setLiveBatch(null);
           setLiveState("empty");
           return;
         }
-        setLiveFixture(zoneBatchToDetailFixture(batch));
+        setLiveBatch(zoneBatchToRecord(batch));
         setLiveState("ready");
       } catch (error) {
         if (cancelled) return;
@@ -113,7 +115,7 @@ export function BatchDetailView({ id }: { id: string }) {
               </Button>
             }
           />
-        ) : liveState === "empty" || !liveFixture ? (
+        ) : liveState === "empty" || !liveBatch ? (
           <SurfaceState
             title="Batch not found."
             description="No batch matches this identifier. Head back to /batches."
@@ -125,16 +127,12 @@ export function BatchDetailView({ id }: { id: string }) {
           />
         ) : (
           <div className={cn("flex flex-col gap-4", styles.fade)}>
-            <BatchDetail fixture={liveFixture} />
+            <BatchDetail batch={liveBatch} />
           </div>
         )}
       </div>
     </PageLayout>
   );
-}
-
-function zoneBatchToDetailFixture(batch: ZoneBatchSummary): BatchesDetailFixture {
-  return { batch: zoneBatchToFixture(batch), orders: [], fills: [] };
 }
 
 function parseBatchRouteId(id: string) {
@@ -151,11 +149,10 @@ function getErrorMessage(error: unknown) {
 /*  Detail body                                                            */
 /* ─────────────────────────────────────────────────────────────────────── */
 
-function BatchDetail({ fixture }: { fixture: BatchesDetailFixture }) {
-  const { batch, fills } = fixture;
-  const aggregates = aggregateByPair(fills, batch.pairs ?? []);
-  const pairCount = (batch.pairs ?? []).length;
-  const sealedRel = formatRelativeTime(batch.sealedAt);
+function BatchDetail({ batch }: { batch: BatchRecord }) {
+  const pairCount = batch.pairs.length;
+  const observedAt = batch.sealedAt ?? batch.settledAt;
+  const observedRel = observedAt ? formatRelativeTime(observedAt) : "Unavailable";
 
   return (
     <>
@@ -181,10 +178,10 @@ function BatchDetail({ fixture }: { fixture: BatchesDetailFixture }) {
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center gap-3">
               <h1 className="m-0 font-mono text-2xl font-medium leading-tight tracking-[-0.01em] text-[var(--foreground)]">
-                {batchNo(batch.number)}
+                {formatBatchNumber(batch.number)}
               </h1>
               <CopyButton
-                value={`Batch #${batch.number}`}
+                value={batch.number.toString()}
                 label={`Copy batch number ${batch.number}`}
               />
               <Status
@@ -193,22 +190,18 @@ function BatchDetail({ fixture }: { fixture: BatchesDetailFixture }) {
               />
             </div>
             <span className="whitespace-nowrap font-mono text-xs text-[var(--muted-foreground)]">
-              Sealed {sealedRel}
+              {batch.sealedAt ? `Sealed ${observedRel}` : `Observed ${observedRel}`}
             </span>
           </div>
         </div>
         <div className="flex items-center gap-2.5">
           {batch.settlementTx ? (
-            <EtherscanTxLink
+            <TempoTxLink
               hash={batch.settlementTx}
-              label="Etherscan"
+              label="Explorer"
               className="h-9 rounded-[var(--radius-md)] border border-[var(--input)] bg-[var(--background)] px-3.5 font-sans text-[13px] font-medium text-[var(--foreground)] no-underline hover:no-underline"
             />
           ) : null}
-          <Button className="h-9 px-3.5 text-[13px]">
-            <Icon.Proof aria-hidden />
-            Verify proof
-          </Button>
         </div>
       </header>
 
@@ -225,91 +218,95 @@ function BatchDetail({ fixture }: { fixture: BatchesDetailFixture }) {
               label={STATUS_LABEL[batch.status]}
             />
           </OverviewRow>
-          <OverviewRow label="Sealed">{sealedRel}</OverviewRow>
-          <OverviewRow label="Fills">{String(batch.fillCount)}</OverviewRow>
-          <OverviewRow label="Volume">
-            {batch.volumeUsd
-              ? `${formatGroup(roundStr(batch.volumeUsd))} USDC`
-              : "—"}
+          <OverviewRow label="Zone blocks">{formatBlockRange(batch)}</OverviewRow>
+          <OverviewRow label="Tempo block">
+            {batch.tempoBlockNumber.toLocaleString("en-US")}
           </OverviewRow>
-          <OverviewRow label="Pairs">{String(pairCount)}</OverviewRow>
-          <OverviewRow label="Batch time">~12s</OverviewRow>
-          <OverviewRow label="Sequencer">Sequencer #1 — TEE</OverviewRow>
+          <OverviewRow label="Orders">
+            {batch.orderCount.toLocaleString("en-US")}
+          </OverviewRow>
+          <OverviewRow label="Fills">
+            {batch.fillCount.toLocaleString("en-US")}
+          </OverviewRow>
+          <OverviewRow label="Pairs">{pairCount.toLocaleString("en-US")}</OverviewRow>
+          <OverviewRow label="Sealed">{batch.sealedAt ? observedRel : "Unavailable"}</OverviewRow>
+          <OverviewRow label="L1 submitted">
+            {batch.settledAt ? formatRelativeTime(batch.settledAt) : "Pending"}
+          </OverviewRow>
           <OverviewRow label="L1 settlement tx" stack>
             {batch.settlementTx ? (
               <span id="settlement-tx">
-                <HashLine hash={batch.settlementTx} copyLabel="Copy settlement transaction hash" />
+                <HashLine
+                  hash={batch.settlementTx}
+                  copyLabel="Copy settlement transaction hash"
+                  transaction
+                />
               </span>
             ) : (
               <span className="text-[var(--muted-foreground)]">pending</span>
             )}
           </OverviewRow>
-          <OverviewRow label="State root" stack>
-            <span id="sealed">
-              <HashLine hash={batch.root} copyLabel="Copy batch root hash" />
-            </span>
-          </OverviewRow>
-          <OverviewRow label="Proof system" stack>
-            {batch.proofRef ? (
-              <span id="proof-hash">
-                <HashLine hash={batch.proofRef} copyLabel="Copy proof hash" />
+          {batch.root ? (
+            <OverviewRow label="Withdrawal root" stack>
+              <span id="sealed">
+                <HashLine hash={batch.root} copyLabel="Copy withdrawal root" />
               </span>
-            ) : (
-              "TEE-attested"
-            )}
+            </OverviewRow>
+          ) : null}
+          <OverviewRow label="Previous block hash" stack>
+            <HashLine hash={batch.prevBlockHash} copyLabel="Copy previous block hash" />
           </OverviewRow>
+          <OverviewRow label="Next block hash" stack>
+            <HashLine hash={batch.nextBlockHash} copyLabel="Copy next block hash" />
+          </OverviewRow>
+          {batch.proofRef ? (
+            <OverviewRow label="Proof reference" stack>
+              <span id="proof-hash">
+                <HashLine hash={batch.proofRef} copyLabel="Copy proof reference" />
+              </span>
+            </OverviewRow>
+          ) : null}
         </aside>
 
         {/* Main content */}
         <div className="flex min-w-0 flex-col gap-4">
-          <LifecycleStepper status={batch.status} sealedRel={sealedRel} />
+          <LifecycleStepper status={batch.status} />
 
           <section className="glass flex flex-col gap-3 rounded-[var(--radius-xl)] p-5">
             <div className="flex flex-col gap-0.5">
               <h2 className="t-h3 m-0">Pairs in batch</h2>
               <span className="text-[13px] text-[var(--muted-foreground)]">
-                {pairCount} {pairCount === 1 ? "pair" : "pairs"} · {batch.fillCount} fills
+                {pairCount} {pairCount === 1 ? "pair" : "pairs"} ·{" "}
+                {batch.fillCount.toLocaleString("en-US")} fills
               </span>
             </div>
 
-            {batch.status === "failed" && batch.failureReason ? (
-              <p className="text-xs leading-relaxed text-[var(--muted-foreground)]">
-                {batch.failureReason}
-              </p>
-            ) : null}
-
             <div className="flex flex-col">
-              {aggregates.length === 0 ? (
+              {batch.pairs.length === 0 ? (
                 <span className="py-3 font-mono text-xs text-[var(--muted-foreground)]">
                   —
                 </span>
               ) : (
-                aggregates.map((aggregate, i) => (
+                batch.pairs.map((pair, index) => (
                   <div
-                    key={aggregate.pair}
+                    key={pair}
                     className={cn(
-                      "flex items-center gap-4 py-3",
-                      i > 0 ? "border-t border-[var(--border)]" : undefined,
+                      "py-3 font-mono text-sm font-medium",
+                      index > 0 ? "border-t border-[var(--border)]" : undefined,
                     )}
                   >
-                    <span className="w-[120px] flex-shrink-0 font-mono text-sm font-medium">
-                      {aggregate.pair}
-                    </span>
-                    <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-[var(--muted)]">
-                      <div
-                        className="h-full rounded-full bg-[var(--foreground)]"
-                        style={{ width: `${Math.round(aggregate.share * 100)}%` }}
-                      />
-                    </div>
-                    <span className="w-[88px] flex-shrink-0 whitespace-nowrap text-right font-mono text-xs tabular-nums text-[var(--muted-foreground)]">
-                      {aggregate.fillCount > 0
-                        ? `${aggregate.fillCount} fill${aggregate.fillCount > 1 ? "s" : ""}`
-                        : `${(aggregate.share * 100).toFixed(0)}%`}
-                    </span>
+                    {pair}
                   </div>
                 ))
               )}
             </div>
+          </section>
+
+          <section className="glass flex flex-col gap-3 rounded-[var(--radius-xl)] p-5">
+            <h2 className="t-h3 m-0">Aggregate token volume</h2>
+            <span className="font-mono text-sm text-[var(--foreground)]">
+              {formatBatchVolumes(batch.volumes)}
+            </span>
           </section>
 
           <PrivacyNote />
@@ -320,31 +317,22 @@ function BatchDetail({ fixture }: { fixture: BatchesDetailFixture }) {
 }
 
 /* ─────────────────────────────────────────────────────────────────────── */
-/*  Lifecycle stepper (Submitted → Proven → Settled)                       */
+/*  Lifecycle stepper                                                       */
 /* ─────────────────────────────────────────────────────────────────────── */
 
 const LIFECYCLE = [
-  { key: "submitted", label: "Submitted", sub: "Batch sealed", icon: "batches" },
-  { key: "proven", label: "Proven", sub: "Proof attested", icon: "proof" },
-  { key: "settled", label: "Settled", sub: "Onchain · L1", icon: "settled" },
+  { key: "produced", label: "Produced", sub: "Zone blocks", icon: "batches" },
+  { key: "submitted", label: "L1 submitted", sub: "Tempo L1", icon: "settled" },
+  { key: "verified", label: "Proof verified", sub: "When available", icon: "proof" },
 ] as const;
 
-// The app's three batch statuses collapse onto the kit's three lifecycle
-// stops: pending = Submitted, verified = Settled (fully advanced). A failed
-// settlement is shown as reaching Proven but not Settled.
-function activeIndexFor(status: BatchStatus): number {
+function activeIndexFor(status: BatchRecordStatus): number {
   if (status === "verified") return 2;
-  if (status === "failed") return 1;
+  if (status === "submitted") return 1;
   return 0;
 }
 
-function LifecycleStepper({
-  status,
-  sealedRel,
-}: {
-  status: BatchStatus;
-  sealedRel: string;
-}) {
+function LifecycleStepper({ status }: { status: BatchRecordStatus }) {
   const activeIdx = activeIndexFor(status);
   return (
     <div className="glass flex items-start rounded-[var(--radius-xl)] px-6 py-[22px]">
@@ -390,7 +378,7 @@ function LifecycleStepper({
                   {step.label}
                 </span>
                 <span className="whitespace-nowrap text-[11px] text-[var(--muted-foreground)]">
-                  {current && status === "pending" ? sealedRel : step.sub}
+                  {step.sub}
                 </span>
               </div>
             </div>
@@ -420,9 +408,9 @@ const STEP_ICON = {
 
 // Hash deep-link anchors preserved so `/batches/N#proven` etc. still land.
 const STEP_ID: Record<(typeof LIFECYCLE)[number]["key"], string> = {
-  submitted: "queued",
-  proven: "proven",
-  settled: "settled",
+  produced: "queued",
+  submitted: "settled",
+  verified: "proven",
 };
 
 /* ─────────────────────────────────────────────────────────────────────── */
@@ -463,14 +451,24 @@ function OverviewRow({
   );
 }
 
-function HashLine({ hash, copyLabel }: { hash: string; copyLabel: string }) {
+function HashLine({
+  hash,
+  copyLabel,
+  transaction = false,
+}: {
+  hash: string;
+  copyLabel: string;
+  transaction?: boolean;
+}) {
   return (
     <span className="inline-flex flex-wrap items-center gap-x-1 gap-y-0.5">
       <span className="font-mono text-xs text-[var(--foreground)]">
         {shortHash(hash)}
       </span>
       <CopyButton value={hash} label={copyLabel} />
-      <EtherscanTxLink hash={hash} label="Etherscan" className="text-[11px]" />
+      {transaction ? (
+        <TempoTxLink hash={hash} label="Explorer" className="text-[11px]" />
+      ) : null}
     </span>
   );
 }
@@ -480,9 +478,9 @@ function PrivacyNote() {
     <div className="flex items-start gap-2 px-1">
       <Icon.Sign className="mt-px h-[13px] w-[13px] flex-shrink-0 text-[var(--muted-foreground)]" aria-hidden />
       <span className="text-xs leading-relaxed text-[var(--muted-foreground)]">
-        Counterparties are never revealed — the proof attests correct midpoint
-        matching without disclosing identities. Individual fills are visible
-        only to their owner via{" "}
+        Public batch data contains aggregate counts and volume only. It never
+        includes counterparties, order IDs, or fill IDs. Owner-scoped activity
+        is available via{" "}
         <Link
           href="/portfolio"
           className="underline-offset-4 hover:text-[var(--foreground)] hover:underline"
@@ -557,25 +555,6 @@ function SkelRows({ n }: { n: number }) {
   );
 }
 
-/* ─────────────────────────────────────────────────────────────────────── */
-/*  Format helpers                                                         */
-/* ─────────────────────────────────────────────────────────────────────── */
-
-function formatGroup(value: number | string): string {
-  const [whole, frac] = String(value).split(".");
-  const grouped = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-  return frac ? `${grouped}.${frac}` : grouped;
-}
-
-function roundStr(value: string): string {
-  const n = parseNum(value);
-  return String(Math.round(n));
-}
-
 function shortHash(h: string): string {
   return h.length > 18 ? `${h.slice(0, 10)}…${h.slice(-8)}` : h;
-}
-
-function batchNo(id: number): string {
-  return "#" + formatGroup(id);
 }

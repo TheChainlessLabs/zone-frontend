@@ -2490,6 +2490,7 @@ const WITHDRAW_STATES: WithdrawState[] = [
   "idle",
   "signing",
   "pending",
+  "queued",
   "success",
   "failed",
 ];
@@ -2502,6 +2503,9 @@ const ORDER_STATES: OrderConfirmationState[] = [
 const TEMPO_WALLET_STATES: TempoWalletState[] = [
   "idle",
   "connecting",
+  "reviewing-login",
+  "authenticating-zone",
+  "authorizing-session",
   "connected",
   "failed",
 ];
@@ -2632,6 +2636,8 @@ function WithdrawModalDemo() {
         open={open}
         state={state}
         token="PATH.USD"
+        withdrawalBatchIndex="7"
+        l1SettlementTxHash="0xb47ad4f63f3f782cf19c778ee39015e1bfccd03ece71c1c60f06e9a533eabc29"
         onClose={() => setOpen(false)}
         onSubmit={() => setState("signing")}
         onRetry={() => setState("signing")}

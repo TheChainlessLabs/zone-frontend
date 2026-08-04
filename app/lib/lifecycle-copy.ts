@@ -16,7 +16,7 @@
  * tooltip bridges).
  */
 import type { StatusState } from "@/components/ui/status";
-import type { BatchStatus } from "@/lib/view-types";
+import type { ZoneBatchStatus } from "@/lib/zone";
 
 export type LifecycleSurface = "deposit" | "withdrawal";
 
@@ -29,8 +29,10 @@ export type LifecycleKey =
   | "sealed"
   | "proven"
   | "settled"
+  | "submitted"
   | "pending-deposit"
   | "pending-withdrawal"
+  | "pending-batch"
   | "failed"
   | "verified"
   | "matched"
@@ -42,14 +44,15 @@ export type LifecycleKey =
 
 export const LIFECYCLE_COPY: Record<LifecycleKey, string> = {
   queued: "Submitted, waiting for the next batch sealing.",
-  sealed: "Matched in batch — awaiting proof generation.",
-  proven: "Proof generated, awaiting L1 settlement.",
-  settled: "Anchored on Ethereum L1. Funds usable for withdrawal.",
+  sealed: "Included in a finalized zone block range.",
+  proven: "The zone reports this batch proof as verified.",
+  settled: "Submitted to Tempo L1.",
+  submitted: "Submitted to Tempo L1.",
   "pending-deposit": "Awaiting on-chain confirmation.",
   "pending-withdrawal": "Awaiting batch sealing then L1 anchor.",
-  failed:
-    "Settlement reverted on L1. Fills remain valid offchain — no action required.",
-  verified: "Sealed and proven. Anchored on Ethereum L1.",
+  "pending-batch": "Zone blocks produced; awaiting Tempo L1 submission.",
+  failed: "Batch submission failed.",
+  verified: "Proof verified for the Tempo L1 submission.",
   matched: "Matched in batch — awaiting proof generation.",
   submitting: "Sending the order to the matching engine.",
   "awaiting-signature": "Confirm in your wallet to proceed.",
@@ -93,12 +96,11 @@ export function copyForStatusState(
  * `verified` uses its own line because the batch detail surface frames
  * the end state as "sealed and proven" rather than just "settled".
  */
-export function copyForBatchStatus(status: BatchStatus): string {
+export function copyForBatchStatus(status: ZoneBatchStatus): string {
   if (status === "verified") return LIFECYCLE_COPY.verified;
+  if (status === "submitted") return LIFECYCLE_COPY.submitted;
   if (status === "failed") return LIFECYCLE_COPY.failed;
-  // Pending batch = sealed but proof + L1 pending. The withdrawal-pending
-  // copy reads cleanly here: "awaiting batch sealing then L1 anchor."
-  return LIFECYCLE_COPY["pending-withdrawal"];
+  return LIFECYCLE_COPY["pending-batch"];
 }
 
 /**
@@ -125,7 +127,7 @@ export const BATCH_STAGE_MEANING: Record<
   string
 > = {
   queued: "We received your trade and grouped it with others for privacy.",
-  sealed: "The batch was finalized inside the secure execution environment.",
-  proven: "A cryptographic proof of correct execution was generated.",
-  settled: "The batch landed on Ethereum L1 and is now publicly verifiable.",
+  sealed: "The zone finalized this block range as a batch.",
+  proven: "The zone reports the batch proof as verified.",
+  settled: "The batch submission landed on Tempo L1.",
 };

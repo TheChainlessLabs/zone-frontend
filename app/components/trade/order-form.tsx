@@ -14,7 +14,7 @@
  *   • Amount input (large mono tabular) with the available balance inline above
  *   • Percentage shortcuts (25 / 50 / 75 / MAX)
  *   • Context strip: Midpoint · Est. received · Fee
- *   • Submit CTA (`Buy OALPHA` / `Sell OALPHA`) with an ↵ badge
+ *   • Submit CTA (`Buy ALPHAUSD` / `Sell ALPHAUSD`) with an ↵ badge
  *
  * Wiring the app keeps (behaviour, not look): the EIP-712 submit flow runs
  * through `onSubmit` and the OrderConfirmationModal; ticket-pad keyboard

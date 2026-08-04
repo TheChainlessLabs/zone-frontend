@@ -1,7 +1,7 @@
 /**
  * Launch markets.
  *
- * The live product market is OALPHA/PATH.USD on the Omega Zone. Pair
+ * The live product market is ALPHAUSD/PATH.USD on the Omega Zone. Pair
  * convention (omega-docs/03-brand/naming.md): BASE/QUOTE token tickers only.
  */
 
@@ -14,7 +14,7 @@ export interface LaunchPair {
 }
 
 export const LAUNCH_PAIRS: LaunchPair[] = [
-  { pair: "OALPHA/PATH.USD", base: "OALPHA", quote: "PATH.USD" },
+  { pair: "ALPHAUSD/PATH.USD", base: "ALPHAUSD", quote: "PATH.USD" },
 ];
 
 export const DEFAULT_PAIR: LaunchPair = LAUNCH_PAIRS[0];

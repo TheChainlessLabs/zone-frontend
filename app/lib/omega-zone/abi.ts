@@ -1,6 +1,7 @@
 import { parseAbi } from "viem";
 
 export const DARKPOOL_ABI = [
+  "event OrderSubmitted(uint128 indexed orderId,address indexed maker,address base,address quote,uint128 amount,uint128 price,bool isBid)",
   "event OrderPlaced(uint128 indexed orderId,address indexed maker,address base,address quote,uint128 amount,uint128 price,bool isBid)",
   "event OrderFilled(uint128 indexed orderId,address indexed maker,address indexed taker,uint128 amountFilled,uint128 price)",
   "event OrderCancelled(uint128 indexed orderId,address indexed maker)",
@@ -10,6 +11,7 @@ export const DARKPOOL_ABI = [
   "function deposit(address token,uint128 amount) external",
   "function withdraw(address token,uint128 amount) external",
   "function balanceOf(address user,address token) external view returns (uint128)",
+  "function availableBalanceOf(address user,address token) external view returns (uint128)",
   "function pairKey(address base,address quote) external pure returns (bytes32)",
   "function createPair(address base) external returns (bytes32)",
   "function bestBid(address base) external view returns (uint128 price,uint128 quantity)",
@@ -26,20 +28,24 @@ export const TIP20_ABI = [
   "function totalSupply() external view returns (uint256)",
   "function balanceOf(address account) external view returns (uint256)",
   "function allowance(address owner,address spender) external view returns (uint256)",
+  "function nonces(address owner) external view returns (uint256)",
+  "function DOMAIN_SEPARATOR() external view returns (bytes32)",
   "function approve(address spender,uint256 amount) external returns (bool)",
+  "function permit(address owner,address spender,uint256 value,uint256 deadline,uint8 v,bytes32 r,bytes32 s) external",
   "function transfer(address to,uint256 amount) external returns (bool)",
   "function transferFrom(address from,address to,uint256 amount) external returns (bool)",
 ] as const;
 
 export const ZONE_PORTAL_ABI = [
   "struct EncryptedDepositPayload { bytes32 ephemeralPubkeyX; uint8 ephemeralPubkeyYParity; bytes ciphertext; bytes12 nonce; bytes16 tag; }",
-  "event DepositMade(bytes32 indexed newCurrentDepositQueueHash,address indexed sender,address token,address to,uint128 netAmount,uint128 fee,bytes32 memo)",
-  "event EncryptedDepositMade(bytes32 indexed newCurrentDepositQueueHash,address indexed sender,address token,uint128 netAmount,uint128 fee,uint256 keyIndex,bytes32 ephemeralPubkeyX,uint8 ephemeralPubkeyYParity,bytes ciphertext,bytes12 nonce,bytes16 tag,uint64 depositNumber)",
+  "event DepositMade(bytes32 indexed newCurrentDepositQueueHash,address indexed sender,address token,address to,uint128 netAmount,uint128 fee,bytes32 memo,address bouncebackRecipient,uint64 depositNumber)",
+  "event EncryptedDepositMade(bytes32 indexed newCurrentDepositQueueHash,address indexed sender,address token,uint128 netAmount,uint128 fee,uint256 keyIndex,bytes32 ephemeralPubkeyX,uint8 ephemeralPubkeyYParity,bytes ciphertext,bytes12 nonce,bytes16 tag,address bouncebackRecipient,uint64 depositNumber)",
   "event TokenEnabled(address indexed token,string name,string symbol,string currency)",
   "event WithdrawalProcessed(address indexed to,address token,uint128 amount,bool callbackSuccess)",
-  "function deposit(address token,address to,uint128 amount,bytes32 memo) external returns (bytes32 newCurrentDepositQueueHash)",
-  "function depositEncrypted(address token,uint128 amount,uint256 keyIndex,EncryptedDepositPayload encrypted) external returns (bytes32 newCurrentDepositQueueHash)",
+  "function deposit(address token,address to,uint128 amount,bytes32 memo,address bouncebackRecipient) external returns (bytes32 newCurrentDepositQueueHash)",
+  "function depositEncrypted(address token,uint128 amount,uint256 keyIndex,EncryptedDepositPayload encrypted,address bouncebackRecipient) external returns (bytes32 newCurrentDepositQueueHash)",
   "function calculateDepositFee() external view returns (uint128 fee)",
+  "function calculateBouncebackFee() external view returns (uint128 fee)",
   "function depositCount() external view returns (uint64)",
   "function lastProcessedDepositNumber() external view returns (uint64)",
   "function isTokenEnabled(address token) external view returns (bool)",

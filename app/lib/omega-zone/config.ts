@@ -1,21 +1,19 @@
 import { defineChain, http, type Address, type Hex } from "viem";
+import { tempoModerato } from "viem/chains";
 import { createConfig } from "wagmi";
 import { dangerous_secp256k1, tempoWallet } from "wagmi/tempo";
-import { Dialog } from "accounts";
 
 const DEFAULT_TEMPO_RPC_URL = "https://rpc.moderato.tempo.xyz";
-const DEFAULT_ZONE_PUBLIC_RPC_URL = "https://omega-zone.example.com/";
-const DEFAULT_ZONE_PRIVATE_RPC_URL =
-  "https://omega-zone.example.com/private";
-const DEFAULT_ZONE_SERVER_PUBLIC_RPC_URL = "http://omega-zone-gateway:8080/";
-const DEFAULT_ZONE_SERVER_PRIVATE_RPC_URL =
-  "http://omega-zone-gateway:8080/private";
+const DEFAULT_ZONE_PUBLIC_RPC_URL = "http://localhost:8546";
+const DEFAULT_ZONE_PRIVATE_RPC_URL = "http://localhost:8544";
+const DEFAULT_ZONE_SERVER_PUBLIC_RPC_URL = DEFAULT_ZONE_PUBLIC_RPC_URL;
+const DEFAULT_ZONE_SERVER_PRIVATE_RPC_URL = DEFAULT_ZONE_PRIVATE_RPC_URL;
 
 // Zone-specific identifiers are env-driven with NO hardcoded default zone — the
 // committed source pins no particular zone. Provide them via env (.env.local for
 // local dev, deployment env for prod, vitest `test.env` for tests):
 //   NEXT_PUBLIC_OMEGA_ZONE_ID, NEXT_PUBLIC_OMEGA_ZONE_CHAIN_ID,
-//   NEXT_PUBLIC_OMEGA_ZONE_PORTAL, NEXT_PUBLIC_OMEGA_ZONE_OALPHA.
+//   NEXT_PUBLIC_OMEGA_ZONE_PORTAL.
 // chainIdHex is derived from the chainId. The remaining addresses (pathUsd,
 // darkpool, tempoState, zone in/outbox) are fixed precompiles, identical across
 // zones, so they stay in source.
@@ -44,7 +42,7 @@ export const OMEGA_ZONE = {
 
   portal: (process.env.NEXT_PUBLIC_OMEGA_ZONE_PORTAL ?? "") as Address,
   pathUsd: "0x20c0000000000000000000000000000000000000" as Address,
-  oalpha: (process.env.NEXT_PUBLIC_OMEGA_ZONE_OALPHA ?? "") as Address,
+  alphaUsd: "0x20c0000000000000000000000000000000000001" as Address,
   darkpool: "0x0b00000000000000000000000000000000000001" as Address,
 
   tempoState: "0x1c00000000000000000000000000000000000000" as Address,
@@ -55,7 +53,7 @@ export const OMEGA_ZONE = {
 export const OMEGA_ZONE_ADDRESSES = {
   portal: OMEGA_ZONE.portal,
   pathUsd: OMEGA_ZONE.pathUsd,
-  oalpha: OMEGA_ZONE.oalpha,
+  alphaUsd: OMEGA_ZONE.alphaUsd,
   darkpool: OMEGA_ZONE.darkpool,
   tempoState: OMEGA_ZONE.tempoState,
   zoneInbox: OMEGA_ZONE.zoneInbox,
@@ -118,27 +116,20 @@ const makerWalletPrivateKey = parseDevKey(
 );
 
 export const tempoL1Chain = defineChain({
-  id: 42431,
-  name: "Tempo Testnet (Moderato)",
-  nativeCurrency: {
-    name: "USD",
-    symbol: "USD",
-    decimals: 6,
-  },
+  ...tempoModerato,
   rpcUrls: {
     default: {
       http: [OMEGA_ZONE.tempoRpc],
-      webSocket: ["wss://rpc.moderato.tempo.xyz"],
+      webSocket: tempoModerato.rpcUrls.default.webSocket,
     },
   },
   blockExplorers: {
     default: {
-      name: "Tempo Explorer",
+      name: tempoModerato.blockExplorers.default.name,
       url: process.env.NEXT_PUBLIC_TEMPO_EXPLORER_URL ??
-        "https://explore.testnet.tempo.xyz",
+        tempoModerato.blockExplorers.default.url,
     },
   },
-  testnet: true,
 });
 
 export const omegaZoneChain = defineChain({
@@ -170,22 +161,10 @@ export const omegaZoneConfig = createConfig({
     tempoWallet({
       name: "Tempo Wallet",
       testnet: true,
-      // Force the in-page iframe dialog. The connector's default picks
-      // `Dialog.popup()` whenever `isInsecureContext()` is true, and that
-      // helper flags *any* `http:` origin as insecure — including
-      // `http://localhost`, which browsers actually treat as a secure context
-      // (WebAuthn works there). On dev that fallback popped a separate browser
-      // window on connect. `Dialog.iframe()` keeps the wallet in the same
-      // window and still self-falls-back to a popup only where the browser
-      // genuinely can't embed it (Safari `wallet_connect`, or an untrusted
-      // host without IntersectionObserver v2). SSR-safe: `iframe()` returns a
-      // no-op when `window` is undefined.
-      //
-      // Skipped under vitest/jsdom: the iframe bootstrap touches browser
-      // globals that jsdom tears down mid-async, spraying noise into the test
-      // log. Tests don't exercise the dialog, so we let the connector keep its
-      // library default there.
-      ...(isVitest ? {} : { dialog: Dialog.iframe() }),
+      // Let the Tempo/accounts SDK choose iframe vs popup. WebAuthn passkeys
+      // cannot reliably run in cross-origin iframes when the host origin is
+      // HTTP or has TLS certificate errors, so the SDK falls back to popup for
+      // those WebAuthn-sensitive cases.
     }),
     // Dev-only: a key-backed test wallet that connects without the interactive
     // Tempo iframe, for verifying owner-scoped zone surfaces locally. Only

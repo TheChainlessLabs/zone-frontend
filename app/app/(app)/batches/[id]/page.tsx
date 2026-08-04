@@ -3,15 +3,9 @@ import { Suspense } from "react";
 import { BatchDetailView } from "../_components/batch-detail-view";
 
 /**
- * /batches/[id] — per-batch settlement detail (M3.4 wireframe).
+ * Public per-batch settlement detail backed by `zone_getBatch`.
  *
- * Public surface, no wallet gating. The route segment `id` is informational
- * at the wireframe stage — fixtures drive the data via `?state=
- * detail-verified|detail-pending|detail-failed`. M6 swaps this for a real
- * fetch keyed on the segment.
- *
- * Privacy hard rule: aggregate-by-pair only. No counterparty IDs, no
- * individual fills with owner mapping.
+ * Privacy hard rule: aggregate-only. No counterparty, order, or fill IDs.
  */
 export default function BatchDetailPage({
   params,

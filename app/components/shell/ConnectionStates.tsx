@@ -32,10 +32,19 @@ export function DisconnectedState({ routeLabel }: { routeLabel?: string }) {
     openRequested ||
     wallet.state === "signing-up" ||
     wallet.state === "connecting" ||
+    wallet.state === "reviewing-login" ||
+    wallet.state === "authenticating-zone" ||
+    wallet.state === "authorizing-session" ||
     Boolean(wallet.errorMessage);
   const modalState =
     wallet.errorMessage
       ? ("failed" as const)
+      : wallet.state === "reviewing-login"
+      ? ("reviewing-login" as const)
+      : wallet.state === "authenticating-zone"
+      ? ("authenticating-zone" as const)
+      : wallet.state === "authorizing-session"
+      ? ("authorizing-session" as const)
       : wallet.state === "signing-up" || wallet.state === "connecting"
       ? ("connecting" as const)
       : wallet.state === "connected"
@@ -80,6 +89,7 @@ export function DisconnectedState({ routeLabel }: { routeLabel?: string }) {
         }}
         onCreateAccount={() => wallet.signUp()}
         onSignIn={() => wallet.connect("Tempo Wallet")}
+        onContinue={() => wallet.connect("Tempo Wallet")}
         onDevSignIn={
           wallet.isDevWalletAvailable
             ? () => wallet.connect("Test Wallet (dev)")

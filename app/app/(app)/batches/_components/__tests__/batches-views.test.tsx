@@ -8,11 +8,22 @@
  * rule (no counterparty, no order/fill IDs, no owner).
  */
 
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
+
+beforeEach(() => {
+  vi.useRealTimers();
+});
 
 afterEach(() => {
   cleanup();
+  vi.useRealTimers();
   vi.unstubAllGlobals();
 });
 
@@ -36,24 +47,37 @@ function mockSearchParams(entries: Record<string, string> = {}) {
 // A zone batch summary as the public RPC returns it (see ZoneBatchSummary).
 function mkZoneBatch(
   number: number,
-  status: "verified" | "pending" | "failed" = "verified",
+  status: "submitted" | "verified" | "pending" | "failed" = "submitted",
 ) {
   const sealed = 1_700_000_000;
+  const settled = status === "submitted" || status === "verified";
   return {
-    batchNumber: String(number),
-    tempoBlockNumber: "1",
-    root: `0x${"ab".repeat(32)}`,
+    batchNumber: `0x${number.toString(16)}`,
+    zoneBlockFrom: "0x64",
+    zoneBlockTo: "0xc8",
+    tempoBlockNumber: "0x1",
+    root: status === "pending" ? `0x${"00".repeat(32)}` : `0x${"ab".repeat(32)}`,
     prevBlockHash: `0x${"cd".repeat(32)}`,
     nextBlockHash: `0x${"ef".repeat(32)}`,
     status,
-    sealedAt: String(sealed),
-    settledAt: status === "verified" ? String(sealed + 120) : null,
-    orderCount: 12,
-    fillCount: 9,
-    aggregatePairs: ["OALPHA/PATH.USD"],
-    aggregateVolume: [],
-    settlementTxHash:
-      status === "pending" ? null : `0x${"12".repeat(32)}`,
+    sealedAt: status === "pending" ? undefined : `0x${sealed.toString(16)}`,
+    settledAt: settled ? `0x${(sealed + 120).toString(16)}` : undefined,
+    orderCount: "0xc",
+    fillCount: "0x9",
+    aggregatePairs: [
+      "0x20c0000000000000000000000000000000000001/0x20c0000000000000000000000000000000000000",
+    ],
+    aggregateVolume: [
+      {
+        token: "0x20c0000000000000000000000000000000000001",
+        amount: "0x16e360",
+      },
+      {
+        token: "0x20c0000000000000000000000000000000000000",
+        amount: "0x2dc6c0",
+      },
+    ],
+    settlementTxHash: settled ? `0x${"12".repeat(32)}` : undefined,
     proofRef: status === "verified" ? `0x${"34".repeat(32)}` : undefined,
   };
 }
@@ -64,6 +88,7 @@ type RpcConfig = {
   detail?: unknown | null;
   detailThrows?: boolean;
   search?: unknown | null;
+  nextCursor?: string;
 };
 
 function json(result: unknown) {
@@ -81,7 +106,7 @@ function mockBatchRpc(cfg: RpcConfig = {}) {
     };
     if (body.method === "zone_listBatches") {
       if (cfg.listThrows) return new Response("boom", { status: 500 });
-      return json({ batches: cfg.list ?? [], nextCursor: null });
+      return json({ batches: cfg.list ?? [], nextCursor: cfg.nextCursor });
     }
     if (body.method === "zone_getBatch") {
       if (cfg.detailThrows) return new Response("boom", { status: 500 });
@@ -93,14 +118,15 @@ function mockBatchRpc(cfg: RpcConfig = {}) {
     return json(null);
   });
   vi.stubGlobal("fetch", fetchMock);
+  return fetchMock;
 }
 
 async function renderList(cfg: RpcConfig = {}, entries: Record<string, string> = {}) {
   mockSearchParams(entries);
-  mockBatchRpc(cfg);
+  const fetchMock = mockBatchRpc(cfg);
   vi.resetModules();
   const mod = await import("../batches-list-view");
-  return render(<mod.BatchesListView />);
+  return { ...render(<mod.BatchesListView />), fetchMock };
 }
 
 async function renderDetail(
@@ -126,13 +152,14 @@ describe("BatchesListView (live)", () => {
     expect(
       screen.getByRole("heading", { level: 2, name: "Recent batches" }),
     ).toBeDefined();
-  });
+  }, 10_000);
 
-  it("renders the live Ethereum L1 indicator", async () => {
+  it("reports a successful zone RPC connection to Tempo L1", async () => {
     await renderList({ list: [mkZoneBatch(4821)] });
     await waitFor(() =>
-      expect(screen.getByLabelText("Live · Ethereum L1")).toBeDefined(),
+      expect(screen.getByLabelText("Zone RPC connected")).toBeDefined(),
     );
+    expect(screen.getByText("Connected · Tempo L1")).toBeDefined();
   });
 
   it("surfaces the search affordance", async () => {
@@ -147,6 +174,33 @@ describe("BatchesListView (live)", () => {
     await waitFor(() =>
       expect(container.textContent ?? "").toContain("#4,821"),
     );
+  });
+
+  it("renders real block, count, pair, and token-volume aggregates", async () => {
+    const { container } = await renderList({ list: [mkZoneBatch(4821)] });
+    await waitFor(() =>
+      expect(container.textContent ?? "").toContain("1.5 ALPHAUSD"),
+    );
+    expect(container.textContent ?? "").toContain("3 PATH.USD");
+    expect(container.textContent ?? "").toContain("100–200");
+    expect(container.textContent ?? "").not.toContain("USDC");
+    expect(container.textContent ?? "").not.toContain("~12");
+  });
+
+  it("uses the zone cursor instead of client-only pagination", async () => {
+    const { fetchMock } = await renderList({
+      list: [mkZoneBatch(4821)],
+      nextCursor: "0x12d",
+    });
+    await waitFor(() =>
+      expect(screen.getByRole<HTMLButtonElement>("button", { name: "Next" }).disabled).toBe(false),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    const secondRequest = JSON.parse(
+      String((fetchMock.mock.calls[1]?.[1] as RequestInit | undefined)?.body),
+    ) as { params: unknown[] };
+    expect(secondRequest.params).toEqual([{ limit: 7, cursor: "0x12d" }]);
   });
 
   it("never surfaces individual fill IDs or order IDs (no 'owner')", async () => {
@@ -191,31 +245,48 @@ describe("BatchesListView (live)", () => {
 
 describe("BatchDetailView (live)", () => {
   it("renders the identity header with batch number, status, and privacy note", async () => {
-    await renderDetail("4821", { detail: mkZoneBatch(4821, "verified") });
+    await renderDetail("4821", { detail: mkZoneBatch(4821, "submitted") });
     await waitFor(() =>
       expect(
         screen.getByRole("heading", { level: 1, name: "#4,821" }),
       ).toBeDefined(),
     );
-    expect(screen.getAllByText("Settled").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Submitted").length).toBeGreaterThan(0);
     expect(
-      screen.getByText(/Counterparties are never revealed/i),
+      screen.getByText(/Public batch data contains aggregate counts/i),
     ).toBeDefined();
   });
 
-  it("renders the Submitted → Proven → Settled lifecycle stepper", async () => {
+  it("renders only lifecycle states represented by the RPC contract", async () => {
     await renderDetail("4821", { detail: mkZoneBatch(4821, "verified") });
-    await waitFor(() => expect(screen.getByText("Submitted")).toBeDefined());
-    expect(screen.getByText("Proven")).toBeDefined();
-    expect(screen.getAllByText("Settled").length).toBeGreaterThan(0);
+    await waitFor(() => expect(screen.getByText("Produced")).toBeDefined());
+    expect(screen.getAllByText("L1 submitted").length).toBeGreaterThan(0);
+    expect(screen.getByText("Proof verified")).toBeDefined();
   });
 
-  it("renders the Overview sidebar and Pairs-in-batch distribution", async () => {
+  it("renders the Overview sidebar and aggregate pair/token data", async () => {
     await renderDetail("4821", { detail: mkZoneBatch(4821, "verified") });
     await waitFor(() => expect(screen.getByText("Overview")).toBeDefined());
     expect(
       screen.getByRole("heading", { level: 2, name: "Pairs in batch" }),
     ).toBeDefined();
+    expect(screen.getByText("ALPHAUSD/PATH.USD")).toBeDefined();
+    expect(screen.getByText("1.5 ALPHAUSD · 3 PATH.USD")).toBeDefined();
+    expect(screen.queryByText(/TEE/i)).toBeNull();
+    expect(screen.queryByRole("button", { name: /Verify proof/i })).toBeNull();
+  });
+
+  it("does not fabricate pending settlement timestamps, roots, or proofs", async () => {
+    const { container } = await renderDetail("4822", {
+      detail: mkZoneBatch(4822, "pending"),
+    });
+    await waitFor(() =>
+      expect(screen.getAllByText("Pending").length).toBeGreaterThan(0),
+    );
+    expect(screen.getByText("Observed Unavailable")).toBeDefined();
+    expect(container.querySelector("#sealed")).toBeNull();
+    expect(container.querySelector("#proof-hash")).toBeNull();
+    expect(screen.queryByText(/TEE-attested/i)).toBeNull();
   });
 
   it("missing batch → honest not-found state (no demo fixture)", async () => {

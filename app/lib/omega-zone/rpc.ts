@@ -1,30 +1,36 @@
 import {
-  createPublicClient,
-  custom,
-  decodeFunctionResult,
-  encodeFunctionData,
-  http,
-  numberToHex,
-  toFunctionSelector,
-  type Abi,
-  type Address,
-  type Hex,
+    createPublicClient,
+    custom,
+    decodeFunctionResult,
+    encodeFunctionData,
+    http,
+    numberToHex,
+    toFunctionSelector,
+    TransactionReceiptNotFoundError,
+    type Abi,
+    type Address,
+    type Hex,
+    type TransactionReceipt,
 } from "viem";
-import { Account as TempoAccount, Transaction as TempoTransaction } from "viem/tempo";
+import {
+    Account as TempoAccount,
+    Transaction as TempoTransaction,
+} from "viem/tempo";
 
 import {
-  OMEGA_ZONE_ADDRESSES,
-  OMEGA_ZONE_CHAIN_ID,
-  OMEGA_ZONE_RPC_PROXY_URLS,
-  OMEGA_ZONE_RPC_URLS,
-  omegaZoneChain,
-  tempoL1Chain,
-  zonePrivateRpcUrl,
-  zonePublicRpcUrl,
+    OMEGA_ZONE_ADDRESSES,
+    OMEGA_ZONE_CHAIN_ID,
+    OMEGA_ZONE_RPC_PROXY_URLS,
+    OMEGA_ZONE_RPC_URLS,
+    omegaZoneChain,
+    tempoL1Chain,
+    zonePrivateRpcUrl,
+    zonePublicRpcUrl,
 } from "./config";
 import {
-  DARKPOOL_PARSED_ABI,
-  TIP20_PARSED_ABI,
+    DARKPOOL_PARSED_ABI,
+    TIP20_PARSED_ABI,
+    ZONE_OUTBOX_PARSED_ABI,
 } from "./abi";
 
 /**
@@ -33,12 +39,35 @@ import {
  * retry) from other transport errors. See {@link isZoneAuthError}.
  */
 export class ZoneRpcHttpError extends Error {
-  readonly status: number;
-  constructor(status: number, scope: "private" | "public" = "private") {
-    super(`${scope === "public" ? "Public" : "Private"} zone RPC failed with HTTP ${status}.`);
-    this.name = "ZoneRpcHttpError";
-    this.status = status;
-  }
+    readonly status: number;
+    readonly detail?: string;
+    constructor(
+        status: number,
+        scope: "private" | "public" = "private",
+        detail?: string | null,
+    ) {
+        super(
+            detail
+                ? `${scope === "public" ? "Public" : "Private"} zone RPC failed with HTTP ${status}: ${detail}`
+                : `${scope === "public" ? "Public" : "Private"} zone RPC failed with HTTP ${status}.`,
+        );
+        this.name = "ZoneRpcHttpError";
+        this.status = status;
+        this.detail = detail ?? undefined;
+    }
+}
+
+/** JSON-RPC error returned by the authenticated zone endpoint. */
+export class ZoneRpcError extends Error {
+    readonly code: number;
+    readonly data?: unknown;
+
+    constructor(code: number, message: string, data?: unknown) {
+        super(message);
+        this.name = "ZoneRpcError";
+        this.code = code;
+        this.data = data;
+    }
 }
 
 /**
@@ -47,58 +76,73 @@ export class ZoneRpcHttpError extends Error {
  * a fresh token and retry once.
  */
 export function isZoneAuthError(error: unknown): boolean {
-  if (error instanceof ZoneRpcHttpError) {
-    return error.status === 401 || error.status === 403;
-  }
-  const message = error instanceof Error ? error.message : String(error);
-  return /HTTP 40[13]\b/.test(message) || /unauthorized|forbidden/i.test(message);
+    if (error instanceof ZoneRpcHttpError) {
+        return error.status === 401 || error.status === 403;
+    }
+    const message = error instanceof Error ? error.message : String(error);
+    return (
+        /HTTP 40[13]\b/.test(message) || /unauthorized|forbidden/i.test(message)
+    );
 }
 
 export interface ZoneRpcRequest {
-  method: string;
-  params?: readonly unknown[];
-  id?: number | string;
+    method: string;
+    params?: readonly unknown[];
+    id?: number | string;
 }
 
 export interface ZoneRpcFetchOptions {
-  rpcUrl?: string;
+    rpcUrl?: string;
 }
 
 export interface AuthorizationTokenInfoResponse {
-  account: Address;
-  expiresAt: Hex;
+    account: Address;
+    expiresAt: Hex;
 }
 
 export interface ZoneInfoResponse {
-  zoneId: Hex;
-  zoneTokens: Address[];
-  chainId: Hex;
+    zoneId: Hex;
+    zoneTokens: Address[];
+    chainId: Hex;
 }
 
 export interface DepositStatusEntry {
-  depositHash: Hex;
-  kind: "regular" | "encrypted";
-  token: Address;
-  sender: Address;
-  recipient: Address | null;
-  amount: Hex;
-  memo: Hex | null;
-  status: "pending" | "processed" | "failed";
+    depositHash: Hex;
+    kind: "regular" | "encrypted";
+    token: Address;
+    sender: Address;
+    recipient: Address | null;
+    amount: Hex;
+    memo: Hex | null;
+    status: "pending" | "processed" | "failed";
 }
 
 export interface DepositStatusResponse {
-  tempoBlockNumber: Hex;
-  zoneProcessedThrough: Hex;
-  processed: boolean;
-  deposits: DepositStatusEntry[];
+    tempoBlockNumber: Hex;
+    zoneProcessedThrough: Hex;
+    processed: boolean;
+    deposits: DepositStatusEntry[];
 }
 
 export type RpcQuantity = Hex;
 
 export const publicZoneClient = createPublicClient({
-  chain: omegaZoneChain,
-  transport: http(omegaZoneChain.rpcUrls.default.http[0]),
+    chain: omegaZoneChain,
+    transport: http(omegaZoneChain.rpcUrls.default.http[0]),
 });
+
+export const ZONE_TRANSACTION_RECEIPT_TIMEOUT_MS = 120_000;
+
+interface ZoneTransactionReceiptClient {
+    getTransactionReceipt(args: { hash: Hex }): Promise<TransactionReceipt>;
+}
+
+export interface WaitForZoneTransactionReceiptOptions {
+    timeoutMs?: number;
+    intervalMs?: number;
+    authToken?: Hex;
+    client?: ZoneTransactionReceiptClient;
+}
 
 /**
  * Wait for a zone transaction receipt by polling `eth_getTransactionReceipt`.
@@ -111,1280 +155,2135 @@ export const publicZoneClient = createPublicClient({
  * of watching full blocks.
  */
 export async function waitForZoneTransactionReceipt(
-  hash: Hex,
-  {
-    timeoutMs = 30_000,
-    intervalMs = 1_000,
-  }: { timeoutMs?: number; intervalMs?: number } = {},
+    hash: Hex,
+    {
+        timeoutMs = ZONE_TRANSACTION_RECEIPT_TIMEOUT_MS,
+        intervalMs = 1_000,
+        authToken,
+        client = authToken
+            ? createPrivateZoneClient(authToken)
+            : publicZoneClient,
+    }: WaitForZoneTransactionReceiptOptions = {},
 ) {
-  const deadline = Date.now() + timeoutMs;
-  for (;;) {
-    try {
-      return await publicZoneClient.getTransactionReceipt({ hash });
-    } catch (error) {
-      if (Date.now() >= deadline) {
-        throw new Error(
-          `Timed out waiting for the Omega Zone transaction receipt (${hash}).`,
-        );
-      }
-      await new Promise((resolve) => setTimeout(resolve, intervalMs));
+    const deadline = Date.now() + timeoutMs;
+    for (;;) {
+        try {
+            return await client.getTransactionReceipt({ hash });
+        } catch (error) {
+            if (!isTransactionReceiptPendingError(error)) {
+                throw error;
+            }
+            if (Date.now() >= deadline) {
+                throw new Error(
+                    `Timed out after ${Math.round(
+                        timeoutMs / 1000,
+                    )}s waiting for the Omega Zone transaction receipt (${hash}). The transaction was submitted, but the receipt is not visible yet.`,
+                );
+            }
+            await new Promise((resolve) => setTimeout(resolve, intervalMs));
+        }
     }
-  }
+}
+
+function isTransactionReceiptPendingError(error: unknown): boolean {
+    return (
+        error instanceof TransactionReceiptNotFoundError ||
+        (error instanceof Error &&
+            error.name === "TransactionReceiptNotFoundError")
+    );
 }
 
 export const serverPublicZoneClient = createPublicClient({
-  chain: omegaZoneChain,
-  transport: http(OMEGA_ZONE_RPC_URLS.publicServer),
+    chain: omegaZoneChain,
+    transport: http(OMEGA_ZONE_RPC_URLS.publicServer),
 });
 
 export const tempoL1Client = createPublicClient({
-  chain: tempoL1Chain,
-  transport: http(tempoL1Chain.rpcUrls.default.http[0]),
+    chain: tempoL1Chain,
+    transport: http(tempoL1Chain.rpcUrls.default.http[0]),
 });
 
 export function toRpcQuantity(value: number | bigint | Hex): RpcQuantity {
-  return typeof value === "string" ? value : numberToHex(value);
+    return typeof value === "string" ? value : numberToHex(value);
 }
 
 export async function privateRpcFetch<T>(
-  authToken: Hex,
-  { method, params = [], id = 1 }: ZoneRpcRequest,
-  { rpcUrl = zonePrivateRpcUrl() }: ZoneRpcFetchOptions = {},
+    authToken: Hex,
+    { method, params = [], id = 1 }: ZoneRpcRequest,
+    { rpcUrl = zonePrivateRpcUrl() }: ZoneRpcFetchOptions = {},
 ): Promise<T> {
-  const response = await fetch(rpcUrl, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      "x-authorization-token": authToken,
-    },
-    body: JSON.stringify({
-      jsonrpc: "2.0",
-      id,
-      method,
-      params,
-    }),
-  });
+    const response = await fetch(rpcUrl, {
+        method: "POST",
+        headers: {
+            "content-type": "application/json",
+            "x-authorization-token": authToken,
+        },
+        body: JSON.stringify({
+            jsonrpc: "2.0",
+            id,
+            method,
+            params,
+        }),
+    });
 
-  if (!response.ok) {
-    throw new ZoneRpcHttpError(response.status, "private");
-  }
+    if (!response.ok) {
+        const detail = await readRpcFailureDetail(response);
+        throw new ZoneRpcHttpError(response.status, "private", detail);
+    }
 
-  const payload = (await response.json()) as {
-    result?: T;
-    error?: { message?: string; code?: number };
-  };
-  if (payload.error) {
-    throw new Error(
-      payload.error.message ??
-        `Private zone RPC failed with code ${payload.error.code ?? "unknown"}.`,
-    );
-  }
-  return payload.result as T;
+    const payload = (await response.json()) as {
+        result?: T;
+        error?: { message?: string; code?: number; data?: unknown };
+    };
+    if (payload.error) {
+        throw new ZoneRpcError(
+            payload.error.code ?? -32603,
+            payload.error.message ??
+                `Private zone RPC failed with code ${payload.error.code ?? "unknown"}.`,
+            payload.error.data,
+        );
+    }
+    return payload.result as T;
+}
+
+async function readRpcFailureDetail(
+    response: Response,
+): Promise<string | null> {
+    const contentType = response.headers.get("content-type") ?? "";
+
+    if (contentType.includes("json")) {
+        const payload = (await response
+            .clone()
+            .json()
+            .catch(() => null)) as {
+            error?: string | { message?: string };
+            detail?: string;
+        } | null;
+
+        if (typeof payload?.detail === "string") return payload.detail;
+        if (typeof payload?.error === "string") return payload.error;
+        if (typeof payload?.error?.message === "string") {
+            return payload.error.message;
+        }
+    }
+
+    const text = await response
+        .clone()
+        .text()
+        .catch(() => "");
+    const trimmed = text.trim();
+    return trimmed ? trimmed.slice(0, 500) : null;
 }
 
 export const callPrivateZoneRpc = privateRpcFetch;
 
 export function createPrivateZoneClient(authToken: Hex, rpcUrl?: string) {
-  return createPublicClient({
-    chain: omegaZoneChain,
-    transport: custom({
-      async request({ method, params }) {
-        return privateRpcFetch(authToken, {
-          method,
-          params: Array.isArray(params) ? params : [],
-        }, rpcUrl ? { rpcUrl } : undefined);
-      },
-    }),
-  });
+    return createPublicClient({
+        chain: omegaZoneChain,
+        transport: custom({
+            async request({ method, params }) {
+                return privateRpcFetch(
+                    authToken,
+                    {
+                        method,
+                        params: Array.isArray(params) ? params : [],
+                    },
+                    rpcUrl ? { rpcUrl } : undefined,
+                );
+            },
+        }),
+    });
 }
 
 export async function getZoneAuthorizationTokenInfo(
-  authToken: Hex,
-  options?: ZoneRpcFetchOptions,
+    authToken: Hex,
+    options?: ZoneRpcFetchOptions,
 ) {
-  return privateRpcFetch<AuthorizationTokenInfoResponse>(
-    authToken,
-    {
-      method: "zone_getAuthorizationTokenInfo",
-      params: [],
-    },
-    options,
-  );
+    return privateRpcFetch<AuthorizationTokenInfoResponse>(
+        authToken,
+        {
+            method: "zone_getAuthorizationTokenInfo",
+            params: [],
+        },
+        options,
+    );
 }
 
 export async function getZoneInfo(
-  authToken: Hex,
-  options?: ZoneRpcFetchOptions,
+    authToken: Hex,
+    options?: ZoneRpcFetchOptions,
 ) {
-  return privateRpcFetch<ZoneInfoResponse>(
-    authToken,
-    {
-      method: "zone_getZoneInfo",
-      params: [],
-    },
-    options,
-  );
+    return privateRpcFetch<ZoneInfoResponse>(
+        authToken,
+        {
+            method: "zone_getZoneInfo",
+            params: [],
+        },
+        options,
+    );
 }
 
 export async function getZoneDepositStatus(
-  authToken: Hex,
-  tempoBlockNumber: number | bigint | Hex,
-  options?: ZoneRpcFetchOptions,
+    authToken: Hex,
+    tempoBlockNumber: number | bigint | Hex,
+    options?: ZoneRpcFetchOptions,
 ) {
-  return privateRpcFetch<DepositStatusResponse>(
-    authToken,
-    {
-      method: "zone_getDepositStatus",
-      params: [toRpcQuantity(tempoBlockNumber)],
-    },
-    options,
-  );
+    return privateRpcFetch<DepositStatusResponse>(
+        authToken,
+        {
+            method: "zone_getDepositStatus",
+            params: [toRpcQuantity(tempoBlockNumber)],
+        },
+        options,
+    );
 }
 
 export interface PrivateZoneCall {
-  from: Address;
-  to: Address;
-  data: Hex;
-  blockTag?: "latest" | "earliest" | "pending" | RpcQuantity;
+    from: Address;
+    to: Address;
+    data: Hex;
+    blockTag?: "latest" | "earliest" | "pending" | RpcQuantity;
 }
 
 export async function privateZoneEthCall(
-  authToken: Hex,
-  { from, to, data, blockTag = "latest" }: PrivateZoneCall,
-  options?: ZoneRpcFetchOptions,
+    authToken: Hex,
+    { from, to, data, blockTag = "latest" }: PrivateZoneCall,
+    options?: ZoneRpcFetchOptions,
 ): Promise<Hex> {
-  return privateRpcFetch<Hex>(
-    authToken,
-    {
-      method: "eth_call",
-      params: [
+    return privateRpcFetch<Hex>(
+        authToken,
         {
-          from,
-          to,
-          data,
+            method: "eth_call",
+            params: [
+                {
+                    from,
+                    to,
+                    data,
+                },
+                blockTag,
+            ],
         },
-        blockTag,
-      ],
-    },
-    options,
-  );
+        options,
+    );
 }
 
 export interface PrivateZoneTransactionRequest {
-  from: Address;
-  to: Address;
-  data: Hex;
-  value?: bigint;
+    from: Address;
+    to: Address;
+    data: Hex;
+    value?: bigint;
 }
 
 export interface ZoneContractWriteRequest {
-  address: Address;
-  abi: Abi | readonly unknown[];
-  functionName: string;
-  args?: readonly unknown[];
-  value?: bigint;
+    address: Address;
+    abi: Abi | readonly unknown[];
+    functionName: string;
+    args?: readonly unknown[];
+    value?: bigint;
+    accessKeySpends?: readonly { token: Address; amount: bigint }[];
 }
 
 export interface ZoneTransactionSigner {
-  request(args: {
-    method: string;
-    params?: readonly unknown[];
-  }, options?: unknown): Promise<unknown>;
-  store?: {
-    getState?: () => {
-      accessKeys?: readonly StoredTempoAccessKey[];
+    request(
+        args: {
+            method: string;
+            params?: readonly unknown[];
+        },
+        options?: unknown,
+    ): Promise<unknown>;
+    store?: {
+        getState?: () => {
+            accessKeys?: readonly StoredTempoAccessKey[];
+        };
+        setState?: (state: {
+            accessKeys?: readonly StoredTempoAccessKey[];
+        }) => void;
     };
-    setState?: (state: {
-      accessKeys?: readonly StoredTempoAccessKey[];
-    }) => void;
-  };
-  getZoneTransactionDefaults?(account: Address): Promise<{
-    chainId: number;
-    nonce: number;
-    maxFeePerGas: bigint;
-    maxPriorityFeePerGas: bigint;
-  }>;
-  signTempoTransaction?(parameters: TempoAccessKeyTransaction): Promise<Hex>;
+    getZoneTransactionDefaults?(account: Address): Promise<{
+        chainId: number;
+        nonce: number;
+        maxFeePerGas: bigint;
+        maxPriorityFeePerGas: bigint;
+    }>;
+    signTempoTransaction?(parameters: TempoAccessKeyTransaction): Promise<Hex>;
+}
+
+interface ZoneTransactionSignerConnector {
+    getProvider: (
+        parameters?: { chainId?: number },
+    ) => Promise<unknown> | unknown;
+}
+
+export class ZoneTransactionSignerUnavailableError extends Error {
+    constructor() {
+        super("Tempo Wallet provider is not ready for Omega Zone signing.");
+        this.name = "ZoneTransactionSignerUnavailableError";
+    }
+}
+
+export async function resolveZoneTransactionSigner({
+    connector,
+    fallback,
+    chainId,
+}: {
+    connector?: unknown;
+    fallback?: unknown;
+    chainId?: number;
+}): Promise<ZoneTransactionSigner> {
+    const connectorProvider = await getConnectorProvider(connector, chainId);
+    if (isZoneTransactionSigner(connectorProvider)) {
+        return connectorProvider;
+    }
+    if (isZoneTransactionSigner(fallback)) {
+        return fallback;
+    }
+    throw new ZoneTransactionSignerUnavailableError();
+}
+
+async function getConnectorProvider(
+    connector: unknown,
+    chainId: number | undefined,
+): Promise<unknown> {
+    if (!isZoneTransactionSignerConnector(connector)) return undefined;
+
+    if (chainId !== undefined) {
+        try {
+            return await connector.getProvider({ chainId });
+        } catch {
+            // Some connectors expose `getProvider` but do not accept a chain hint.
+        }
+    }
+
+    try {
+        return await connector.getProvider();
+    } catch {
+        return undefined;
+    }
+}
+
+function isZoneTransactionSignerConnector(
+    value: unknown,
+): value is ZoneTransactionSignerConnector {
+    return (
+        typeof value === "object" &&
+        value !== null &&
+        typeof (value as { getProvider?: unknown }).getProvider === "function"
+    );
+}
+
+function isZoneTransactionSigner(value: unknown): value is ZoneTransactionSigner {
+    return (
+        typeof value === "object" &&
+        value !== null &&
+        typeof (value as { request?: unknown }).request === "function"
+    );
 }
 
 type TempoP256KeyPair = Parameters<typeof TempoAccount.fromWebCryptoP256>[0];
 
 interface StoredAccessKeyScope {
-  address: Address;
-  selector?: Hex | string;
+    address: Address;
+    selector?: Hex | string;
+    recipients?: readonly Address[];
 }
 
 interface StoredAccessKeyLimit {
-  token: Address;
-  limit?: bigint | number | string;
-  amount?: bigint | number | string;
+    token: Address;
+    limit?: bigint | number | string;
+    amount?: bigint | number | string;
 }
 
 interface StoredTempoAccessKey {
-  access: Address;
-  address?: Address;
-  keyPair?: TempoP256KeyPair;
-  keyAuthorization?: unknown;
-  expiry?: number;
-  limits?: readonly StoredAccessKeyLimit[];
-  scopes?: readonly StoredAccessKeyScope[];
+    access: Address;
+    address?: Address;
+    chainId?: number;
+    keyPair?: TempoP256KeyPair;
+    keyAuthorization?: unknown;
+    expiry?: number;
+    limits?: readonly StoredAccessKeyLimit[];
+    scopes?: readonly StoredAccessKeyScope[];
 }
 
 interface TempoAccessKeyTransaction {
-  account: Address;
-  to: Address;
-  data: Hex;
-  gas: bigint;
-  chainId: number;
-  nonce: number;
-  maxFeePerGas: bigint;
-  maxPriorityFeePerGas: bigint;
-  keyAuthorization?: unknown;
+    account: Address;
+    to: Address;
+    data: Hex;
+    gas: bigint;
+    chainId: number;
+    nonce: number;
+    maxFeePerGas: bigint;
+    maxPriorityFeePerGas: bigint;
+    keyAuthorization?: unknown;
 }
 
 const DARKPOOL_ACCESS_KEY_TTL_SECONDS = 24 * 60 * 60;
 const ACCESS_KEY_REFRESH_BUFFER_SECONDS = 60;
 const ACCESS_KEY_AUTHORIZATION_GAS_OVERHEAD = BigInt(16_000_000);
-const UINT128_MAX = (BigInt(1) << BigInt(128)) - BigInt(1);
 const GAS_ESTIMATE_BUFFER_BPS = BigInt(2_000);
 const GAS_ESTIMATE_FIXED_BUFFER = BigInt(50_000);
-const DARKPOOL_ACCESS_KEY_SCOPES = [
-  {
-    address: OMEGA_ZONE_ADDRESSES.darkpool,
-    selector: toFunctionSelector("deposit(address,uint128)"),
-  },
-  {
-    address: OMEGA_ZONE_ADDRESSES.darkpool,
-    selector: toFunctionSelector("withdraw(address,uint128)"),
-  },
-  {
-    address: OMEGA_ZONE_ADDRESSES.darkpool,
-    selector: toFunctionSelector("place(address,uint128,uint128,bool)"),
-  },
-  {
-    address: OMEGA_ZONE_ADDRESSES.darkpool,
-    selector: toFunctionSelector("cancel(uint128)"),
-  },
-  {
-    address: OMEGA_ZONE_ADDRESSES.darkpool,
-    selector: toFunctionSelector("marketBuy(address,uint128,uint128)"),
-  },
-  {
-    address: OMEGA_ZONE_ADDRESSES.darkpool,
-    selector: toFunctionSelector("marketSell(address,uint128,uint128)"),
-  },
-] as const;
-const DARKPOOL_ACCESS_KEY_TOKENS = [
-  OMEGA_ZONE_ADDRESSES.pathUsd,
-  OMEGA_ZONE_ADDRESSES.oalpha,
-] as const;
-
-export async function privateZoneEstimateGas(
-  authToken: Hex,
-  { from, to, data, value }: PrivateZoneTransactionRequest,
-  options?: ZoneRpcFetchOptions,
-): Promise<bigint> {
-  const result = await privateRpcFetch<Hex>(
-    authToken,
+const MINIMUM_ZONE_WRITE_ESTIMATED_GAS = BigInt(21_000);
+const UINT128_MAX = (BigInt(1) << BigInt(128)) - BigInt(1);
+const ZONE_SESSION_ACCESS_KEY_TOKEN_SPEND_LIMIT =
+    BigInt(1_000) * BigInt(1_000_000);
+const ZONE_SESSION_ACCESS_KEY_FEE_WRITE_BUDGET = BigInt(25);
+const ZONE_GAS_FEE_TO_PATH_USD_DENOMINATOR = BigInt(1_000_000_000_000);
+const ZONE_SESSION_ACCESS_KEY_MIN_WRITE_GAS =
+    MINIMUM_ZONE_WRITE_ESTIMATED_GAS +
+    (MINIMUM_ZONE_WRITE_ESTIMATED_GAS * GAS_ESTIMATE_BUFFER_BPS) /
+        BigInt(10_000) +
+    GAS_ESTIMATE_FIXED_BUFFER +
+    ACCESS_KEY_AUTHORIZATION_GAS_OVERHEAD;
+const ZONE_SESSION_ACCESS_KEY_FEE_SPEND_LIMIT =
+    zoneGasFeeToPathUsdLimit(
+        ZONE_SESSION_ACCESS_KEY_MIN_WRITE_GAS *
+            BigInt(1_000_000_000) *
+            ZONE_SESSION_ACCESS_KEY_FEE_WRITE_BUDGET,
+    );
+const TIP20_APPROVE_SELECTOR = toFunctionSelector("approve(address,uint256)");
+const ZONE_SESSION_ACCESS_KEY_SCOPES: readonly StoredAccessKeyScope[] = [
     {
-      method: "eth_estimateGas",
-      params: [
-        {
-          from,
-          to,
-          data,
-          ...(typeof value === "bigint" ? { value: toRpcQuantity(value) } : {}),
-        },
-      ],
+        address: OMEGA_ZONE_ADDRESSES.pathUsd,
+        selector: TIP20_APPROVE_SELECTOR,
+        recipients: [
+            OMEGA_ZONE_ADDRESSES.darkpool,
+            OMEGA_ZONE_ADDRESSES.zoneOutbox,
+        ],
     },
-    options,
-  );
-  return BigInt(result);
+    {
+        address: OMEGA_ZONE_ADDRESSES.alphaUsd,
+        selector: TIP20_APPROVE_SELECTOR,
+        recipients: [OMEGA_ZONE_ADDRESSES.darkpool],
+    },
+    {
+        address: OMEGA_ZONE_ADDRESSES.darkpool,
+        selector: toFunctionSelector("deposit(address,uint128)"),
+    },
+    {
+        address: OMEGA_ZONE_ADDRESSES.darkpool,
+        selector: toFunctionSelector("withdraw(address,uint128)"),
+    },
+    {
+        address: OMEGA_ZONE_ADDRESSES.darkpool,
+        selector: toFunctionSelector("createPair(address)"),
+    },
+    {
+        address: OMEGA_ZONE_ADDRESSES.darkpool,
+        selector: toFunctionSelector("place(address,uint128,uint128,bool)"),
+    },
+    {
+        address: OMEGA_ZONE_ADDRESSES.darkpool,
+        selector: toFunctionSelector("cancel(uint128)"),
+    },
+    {
+        address: OMEGA_ZONE_ADDRESSES.darkpool,
+        selector: toFunctionSelector("marketBuy(address,uint128,uint128)"),
+    },
+    {
+        address: OMEGA_ZONE_ADDRESSES.darkpool,
+        selector: toFunctionSelector("marketSell(address,uint128,uint128)"),
+    },
+    {
+        address: OMEGA_ZONE_ADDRESSES.zoneOutbox,
+        selector: toFunctionSelector(
+            "requestWithdrawal(address,address,uint128,bytes32,uint64,address,bytes,bytes)",
+        ),
+    },
+];
+export async function privateZoneEstimateGas(
+    authToken: Hex,
+    { from, to, data, value }: PrivateZoneTransactionRequest,
+    options?: ZoneRpcFetchOptions,
+): Promise<bigint> {
+    const result = await privateRpcFetch<Hex>(
+        authToken,
+        {
+            method: "eth_estimateGas",
+            params: [
+                {
+                    from,
+                    to,
+                    data,
+                    ...(typeof value === "bigint"
+                        ? { value: toRpcQuantity(value) }
+                        : {}),
+                },
+            ],
+        },
+        options,
+    );
+    return BigInt(result);
 }
 
 export async function privateZoneGasPrice(
-  authToken: Hex,
-  options?: ZoneRpcFetchOptions,
+    authToken: Hex,
+    options?: ZoneRpcFetchOptions,
 ): Promise<bigint> {
-  const result = await privateRpcFetch<Hex>(
-    authToken,
-    {
-      method: "eth_gasPrice",
-      params: [],
-    },
-    options,
-  );
-  return BigInt(result);
+    const result = await privateRpcFetch<Hex>(
+        authToken,
+        {
+            method: "eth_gasPrice",
+            params: [],
+        },
+        options,
+    );
+    return BigInt(result);
 }
 
 export async function privateZoneTransactionCount(
-  authToken: Hex,
-  account: Address,
-  blockTag: "latest" | "pending" = "pending",
-  options?: ZoneRpcFetchOptions,
+    authToken: Hex,
+    account: Address,
+    blockTag: "latest" | "pending" = "pending",
+    options?: ZoneRpcFetchOptions,
 ): Promise<number> {
-  const result = await privateRpcFetch<Hex>(
-    authToken,
-    {
-      method: "eth_getTransactionCount",
-      params: [account, blockTag],
-    },
-    options,
-  );
-  return Number(BigInt(result));
+    const result = await privateRpcFetch<Hex>(
+        authToken,
+        {
+            method: "eth_getTransactionCount",
+            params: [account, blockTag],
+        },
+        options,
+    );
+    return Number(BigInt(result));
 }
 
 export async function sendPrivateZoneRawTransaction(
-  authToken: Hex,
-  serializedTransaction: Hex,
-  options?: ZoneRpcFetchOptions,
+    authToken: Hex,
+    serializedTransaction: Hex,
+    options?: ZoneRpcFetchOptions,
 ): Promise<Hex> {
-  return privateRpcFetch<Hex>(
-    authToken,
-    {
-      method: "eth_sendRawTransaction",
-      params: [serializedTransaction],
-    },
-    options,
-  );
+    return privateRpcFetch<Hex>(
+        authToken,
+        {
+            method: "eth_sendRawTransaction",
+            params: [serializedTransaction],
+        },
+        options,
+    );
 }
 
 async function getZoneTransactionDefaults(account: Address) {
-  const [nonce, fees] = await Promise.all([
-    publicZoneClient.getTransactionCount({
-      address: account,
-      blockTag: "pending",
-    }),
-    publicZoneClient.estimateFeesPerGas(),
-  ]);
+    const [nonce, fees] = await Promise.all([
+        publicZoneClient.getTransactionCount({
+            address: account,
+            blockTag: "pending",
+        }),
+        publicZoneClient.estimateFeesPerGas(),
+    ]);
 
-  if (
-    !("maxFeePerGas" in fees) ||
-    fees.maxFeePerGas == null ||
-    !("maxPriorityFeePerGas" in fees) ||
-    fees.maxPriorityFeePerGas == null
-  ) {
-    throw new Error("Omega Zone EIP-1559 fee data is unavailable.");
-  }
+    if (
+        !("maxFeePerGas" in fees) ||
+        fees.maxFeePerGas == null ||
+        !("maxPriorityFeePerGas" in fees) ||
+        fees.maxPriorityFeePerGas == null
+    ) {
+        throw new Error("Omega Zone EIP-1559 fee data is unavailable.");
+    }
 
-  return {
-    chainId: OMEGA_ZONE_CHAIN_ID,
-    nonce,
-    maxFeePerGas: fees.maxFeePerGas,
-    maxPriorityFeePerGas: fees.maxPriorityFeePerGas,
-  };
+    return {
+        chainId: OMEGA_ZONE_CHAIN_ID,
+        nonce,
+        maxFeePerGas: fees.maxFeePerGas,
+        maxPriorityFeePerGas: fees.maxPriorityFeePerGas,
+    };
 }
 
-function accessKeyRequest() {
-  return {
-    chainId: BigInt(OMEGA_ZONE_CHAIN_ID),
-    expiry: Math.floor(Date.now() / 1000) + DARKPOOL_ACCESS_KEY_TTL_SECONDS,
-    limits: DARKPOOL_ACCESS_KEY_TOKENS.map((token) => ({
-      token,
-      limit: UINT128_MAX,
-    })),
-    scopes: DARKPOOL_ACCESS_KEY_SCOPES,
-  };
+function accessKeyRequest(
+    request: ZoneContractWriteRequest,
+    data: Hex,
+    feeLimit: bigint,
+) {
+    const sessionRequest = sessionAccessKeyRequest(request, data, feeLimit);
+    if (sessionRequest) return sessionRequest;
+    return transactionAccessKeyRequest(request, data, feeLimit);
+}
+
+function sessionAccessKeyRequest(
+    request: ZoneContractWriteRequest,
+    data: Hex,
+    feeLimit: bigint,
+) {
+    if (!supportsSessionAccessKey(request, data)) return null;
+    return zoneSessionAccessKeyAuthorizationRequest({ request, feeLimit });
+}
+
+export function zoneSessionAccessKeyAuthorizationRequest({
+    request,
+    feeLimit = BigInt(0),
+}: {
+    request?: ZoneContractWriteRequest;
+    feeLimit?: bigint;
+} = {}) {
+    return {
+        chainId: BigInt(OMEGA_ZONE_CHAIN_ID),
+        expiry: Math.floor(Date.now() / 1000) + DARKPOOL_ACCESS_KEY_TTL_SECONDS,
+        limits: sessionAccessKeyLimits(request, feeLimit),
+        scopes: ZONE_SESSION_ACCESS_KEY_SCOPES,
+    };
+}
+
+function transactionAccessKeyRequest(
+    request: ZoneContractWriteRequest,
+    data: Hex,
+    feeLimit: bigint,
+) {
+    const selector = data.slice(0, 10) as Hex;
+    return {
+        chainId: BigInt(OMEGA_ZONE_CHAIN_ID),
+        expiry: Math.floor(Date.now() / 1000) + DARKPOOL_ACCESS_KEY_TTL_SECONDS,
+        limits: requiredAccessKeyLimits(request, feeLimit),
+        scopes: [
+            {
+                address: request.address,
+                selector,
+            },
+        ],
+    };
+}
+
+function supportsSessionAccessKey(
+    request: ZoneContractWriteRequest,
+    data: Hex,
+) {
+    return (
+        scopesCoverRequest(ZONE_SESSION_ACCESS_KEY_SCOPES, request, data) &&
+        accessKeyLimitsForRequest(request).every((limit) =>
+            isSessionAccessKeyToken(limit.token),
+        )
+    );
+}
+
+function isSessionAccessKeyToken(token: Address) {
+    const normalized = token.toLowerCase();
+    return (
+        normalized === OMEGA_ZONE_ADDRESSES.pathUsd.toLowerCase() ||
+        normalized === OMEGA_ZONE_ADDRESSES.alphaUsd.toLowerCase()
+    );
+}
+
+function sessionAccessKeyLimits(
+    request: ZoneContractWriteRequest | undefined,
+    feeLimit: bigint,
+) {
+    const actionLimits = request ? accessKeyLimitsForRequest(request) : [];
+    const pathUsdActionLimit = maxAccessKeyLimitForToken(
+        actionLimits,
+        OMEGA_ZONE_ADDRESSES.pathUsd,
+    );
+    const alphaUsdActionLimit = maxAccessKeyLimitForToken(
+        actionLimits,
+        OMEGA_ZONE_ADDRESSES.alphaUsd,
+    );
+
+    return mergeAccessKeyLimits([
+        {
+            token: OMEGA_ZONE_ADDRESSES.pathUsd,
+            limit: clampAccessKeyLimit(
+                maxBigInt(
+                    ZONE_SESSION_ACCESS_KEY_TOKEN_SPEND_LIMIT,
+                    pathUsdActionLimit,
+                ) +
+                    maxBigInt(
+                        ZONE_SESSION_ACCESS_KEY_FEE_SPEND_LIMIT,
+                        zoneGasFeeToPathUsdLimit(
+                            feeLimit * ZONE_SESSION_ACCESS_KEY_FEE_WRITE_BUDGET,
+                        ),
+                    ),
+            ),
+        },
+        {
+            token: OMEGA_ZONE_ADDRESSES.alphaUsd,
+            limit: maxBigInt(
+                ZONE_SESSION_ACCESS_KEY_TOKEN_SPEND_LIMIT,
+                alphaUsdActionLimit,
+            ),
+        },
+    ]);
+}
+
+function maxAccessKeyLimitForToken(
+    limits: readonly { token: Address; limit: bigint }[],
+    token: Address,
+) {
+    return limits
+        .filter((limit) => limit.token.toLowerCase() === token.toLowerCase())
+        .reduce(
+            (max, limit) => (limit.limit > max ? limit.limit : max),
+            BigInt(0),
+        );
+}
+
+function maxBigInt(a: bigint, b: bigint) {
+    return a > b ? a : b;
 }
 
 function getAccessKeys(signer: ZoneTransactionSigner) {
-  return signer.store?.getState?.().accessKeys ?? [];
+    return signer.store?.getState?.().accessKeys ?? [];
 }
 
 function setAccessKeys(
-  signer: ZoneTransactionSigner,
-  accessKeys: readonly StoredTempoAccessKey[],
+    signer: ZoneTransactionSigner,
+    accessKeys: readonly StoredTempoAccessKey[],
 ) {
-  signer.store?.setState?.({ accessKeys });
+    signer.store?.setState?.({ accessKeys });
 }
 
 function accessKeyLimitAmount(limit: StoredAccessKeyLimit) {
-  const value = limit.limit ?? limit.amount;
-  if (typeof value === "bigint") return value;
-  if (typeof value === "number") return BigInt(value);
-  if (typeof value === "string") return BigInt(value);
-  return null;
+    const value = limit.limit ?? limit.amount;
+    if (typeof value === "bigint") return value;
+    if (typeof value === "number") return BigInt(value);
+    if (typeof value === "string") return BigInt(value);
+    return null;
 }
 
-function scopesCoverDarkpool(scopes: readonly StoredAccessKeyScope[] | undefined) {
-  if (!scopes) return false;
-  return DARKPOOL_ACCESS_KEY_SCOPES.every((required) =>
-    scopes.some((scope) => {
-      const sameAddress =
-        scope.address.toLowerCase() === required.address.toLowerCase();
-      const sameSelector =
-        !scope.selector ||
-        scope.selector.toLowerCase() === required.selector.toLowerCase();
-      return sameAddress && sameSelector;
-    }),
-  );
+function scopesCoverRequest(
+    scopes: readonly StoredAccessKeyScope[] | undefined,
+    request: ZoneContractWriteRequest,
+    data: Hex,
+) {
+    if (!scopes) return false;
+    const selector = data.slice(0, 10).toLowerCase();
+    return scopes.some((scope) => {
+        const sameAddress =
+            scope.address.toLowerCase() === request.address.toLowerCase();
+        const sameSelector =
+            !scope.selector || scope.selector.toLowerCase() === selector;
+        return sameAddress && sameSelector && recipientsCoverRequest(scope, request);
+    });
 }
 
-function limitsCoverDarkpool(limits: readonly StoredAccessKeyLimit[] | undefined) {
-  if (!limits) return false;
-  return DARKPOOL_ACCESS_KEY_TOKENS.every((token) =>
-    limits.some((limit) => {
-      const amount = accessKeyLimitAmount(limit);
-      return (
-        limit.token.toLowerCase() === token.toLowerCase() &&
-        amount === UINT128_MAX
-      );
-    }),
-  );
+function recipientsCoverRequest(
+    scope: StoredAccessKeyScope,
+    request: ZoneContractWriteRequest,
+) {
+    if (!scope.recipients?.length) return true;
+    const recipient = scopedRecipientForRequest(request);
+    if (!recipient) return false;
+    return scope.recipients.some(
+        (allowed) => allowed.toLowerCase() === recipient.toLowerCase(),
+    );
+}
+
+function scopedRecipientForRequest(request: ZoneContractWriteRequest) {
+    if (request.functionName === "approve") {
+        return addressAt(request.args ?? [], 0);
+    }
+    return null;
+}
+
+function limitsCoverRequest(
+    limits: readonly StoredAccessKeyLimit[] | undefined,
+    request: ZoneContractWriteRequest,
+    feeLimit: bigint,
+) {
+    if (!limits) return false;
+    return requiredAccessKeyLimits(request, feeLimit).every((required) =>
+        limits.some((limit) => {
+            const amount = accessKeyLimitAmount(limit);
+            return (
+                limit.token.toLowerCase() === required.token.toLowerCase() &&
+                amount !== null &&
+                amount >= required.limit
+            );
+        }),
+    );
+}
+
+function requiredAccessKeyLimits(
+    request: ZoneContractWriteRequest,
+    feeLimit: bigint,
+) {
+    return mergeAccessKeyLimits([
+        ...accessKeyLimitsForRequest(request),
+        {
+            token: OMEGA_ZONE_ADDRESSES.pathUsd,
+            limit: zoneGasFeeToPathUsdLimit(feeLimit),
+        },
+    ]);
+}
+
+function zoneGasFeeToPathUsdLimit(feeLimit: bigint) {
+    return divCeil(feeLimit, ZONE_GAS_FEE_TO_PATH_USD_DENOMINATOR);
+}
+
+function divCeil(value: bigint, divisor: bigint) {
+    if (value <= BigInt(0)) return BigInt(0);
+    return (value + divisor - BigInt(1)) / divisor;
+}
+
+function mergeAccessKeyLimits(
+    limits: readonly { token: Address; limit: bigint }[],
+) {
+    const merged = new Map<string, { token: Address; limit: bigint }>();
+    for (const limit of limits) {
+        const key = limit.token.toLowerCase();
+        const current = merged.get(key);
+        merged.set(key, {
+            token: current?.token ?? limit.token,
+            limit: clampAccessKeyLimit((current?.limit ?? BigInt(0)) + limit.limit),
+        });
+    }
+    return [...merged.values()].filter((limit) => limit.limit > BigInt(0));
+}
+
+function clampAccessKeyLimit(amount: bigint) {
+    if (amount < BigInt(0)) return BigInt(0);
+    return amount > UINT128_MAX ? UINT128_MAX : amount;
+}
+
+function accessKeyLimitsForRequest(request: ZoneContractWriteRequest) {
+    const limit = (token: Address, amount: bigint) => ({
+        token,
+        limit: clampAccessKeyLimit(amount),
+    });
+    if (request.accessKeySpends?.length) {
+        return request.accessKeySpends.map((spend) =>
+            limit(spend.token, spend.amount),
+        );
+    }
+    const args = request.args ?? [];
+
+    if (request.functionName === "approve") {
+        return [limit(request.address, bigintAt(args, 1))];
+    }
+
+    if (
+        request.functionName === "deposit" ||
+        request.functionName === "withdraw"
+    ) {
+        return [limit(addressAt(args, 0), bigintAt(args, 1))];
+    }
+
+    if (request.functionName === "place") {
+        const base = addressAt(args, 0);
+        const amount = bigintAt(args, 1);
+        const price = bigintAt(args, 2);
+        const isBid = Boolean(args[3]);
+        return [
+            limit(
+                isBid ? OMEGA_ZONE_ADDRESSES.pathUsd : base,
+                isBid ? amount * price : amount,
+            ),
+        ];
+    }
+
+    if (request.functionName === "marketBuy") {
+        return [limit(OMEGA_ZONE_ADDRESSES.pathUsd, bigintAt(args, 2))];
+    }
+
+    if (request.functionName === "marketSell") {
+        return [limit(addressAt(args, 0), bigintAt(args, 1))];
+    }
+
+    if (request.functionName === "requestWithdrawal") {
+        return [limit(addressAt(args, 0), bigintAt(args, 2))];
+    }
+
+    return [limit(OMEGA_ZONE_ADDRESSES.pathUsd, BigInt(0))];
+}
+
+function bigintAt(args: readonly unknown[], index: number): bigint {
+    const value = args[index];
+    if (typeof value === "bigint") return value;
+    if (typeof value === "number") return BigInt(value);
+    if (typeof value === "string") return BigInt(value);
+    return BigInt(0);
+}
+
+function addressAt(args: readonly unknown[], index: number): Address {
+    const value = args[index];
+    return typeof value === "string"
+        ? (value as Address)
+        : OMEGA_ZONE_ADDRESSES.pathUsd;
 }
 
 function keyAuthorizationChainId(keyAuthorization: unknown) {
-  if (!keyAuthorization || typeof keyAuthorization !== "object") return null;
-  const value = (keyAuthorization as { chainId?: unknown }).chainId;
-  if (typeof value === "bigint") return value;
-  if (typeof value === "number") return BigInt(value);
-  if (typeof value === "string") return BigInt(value);
-  return null;
+    if (!keyAuthorization || typeof keyAuthorization !== "object") return null;
+    const value = (keyAuthorization as { chainId?: unknown }).chainId;
+    if (typeof value === "bigint") return value;
+    if (typeof value === "number") return BigInt(value);
+    if (typeof value === "string") return BigInt(value);
+    return null;
+}
+
+function scopesCoverSession(scopes: readonly StoredAccessKeyScope[] | undefined) {
+    if (!scopes) return false;
+    return ZONE_SESSION_ACCESS_KEY_SCOPES.every((required) =>
+        scopes.some((scope) => scopeCoversScope(scope, required)),
+    );
+}
+
+function scopeCoversScope(
+    available: StoredAccessKeyScope,
+    required: StoredAccessKeyScope,
+) {
+    if (available.address.toLowerCase() !== required.address.toLowerCase()) {
+        return false;
+    }
+    if (
+        required.selector &&
+        available.selector &&
+        available.selector.toLowerCase() !== required.selector.toLowerCase()
+    ) {
+        return false;
+    }
+    if (!required.selector && available.selector) return false;
+    if (!required.recipients?.length) return true;
+    if (!available.recipients?.length) return true;
+    return required.recipients.every((requiredRecipient) =>
+        available.recipients?.some(
+            (allowed) =>
+                allowed.toLowerCase() === requiredRecipient.toLowerCase(),
+        ),
+    );
+}
+
+function limitsCoverRequired(
+    limits: readonly StoredAccessKeyLimit[] | undefined,
+    requiredLimits: readonly { token: Address; limit: bigint }[],
+) {
+    if (!limits) return false;
+    return requiredLimits.every((required) =>
+        limits.some((limit) => {
+            const amount = accessKeyLimitAmount(limit);
+            return (
+                limit.token.toLowerCase() === required.token.toLowerCase() &&
+                amount !== null &&
+                amount >= required.limit
+            );
+        }),
+    );
 }
 
 function findDarkpoolAccessKey(
-  signer: ZoneTransactionSigner,
-  account: Address,
+    signer: ZoneTransactionSigner,
+    account: Address,
+    request: ZoneContractWriteRequest,
+    data: Hex,
+    feeLimit: bigint,
 ) {
-  const now = Math.floor(Date.now() / 1000);
-  return getAccessKeys(signer).find((key) => {
-    const hasLocalKey = key.keyPair != null;
-    const sameOwner = key.access.toLowerCase() === account.toLowerCase();
-    const notExpiring =
-      !key.expiry || key.expiry > now + ACCESS_KEY_REFRESH_BUFFER_SECONDS;
-    const matchingAuthorization =
-      !key.keyAuthorization ||
-      keyAuthorizationChainId(key.keyAuthorization) === BigInt(OMEGA_ZONE_CHAIN_ID);
-    return (
-      hasLocalKey &&
-      sameOwner &&
-      notExpiring &&
-      matchingAuthorization &&
-      limitsCoverDarkpool(key.limits) &&
-      scopesCoverDarkpool(key.scopes)
-    );
-  });
+    const now = Math.floor(Date.now() / 1000);
+    return getAccessKeys(signer).find((key) => {
+        const hasLocalKey = key.keyPair != null;
+        const sameOwner = key.access.toLowerCase() === account.toLowerCase();
+        const notExpiring =
+            !key.expiry || key.expiry > now + ACCESS_KEY_REFRESH_BUFFER_SECONDS;
+        const matchingChainId =
+            key.chainId == null || key.chainId === OMEGA_ZONE_CHAIN_ID;
+        const matchingAuthorization =
+            !key.keyAuthorization ||
+            keyAuthorizationChainId(key.keyAuthorization) ===
+                BigInt(OMEGA_ZONE_CHAIN_ID);
+        return (
+            hasLocalKey &&
+            sameOwner &&
+            notExpiring &&
+            matchingChainId &&
+            matchingAuthorization &&
+            limitsCoverRequest(key.limits, request, feeLimit) &&
+            scopesCoverRequest(key.scopes, request, data)
+        );
+    });
 }
 
-function clearLocalAccessKeys(
-  signer: ZoneTransactionSigner,
-  account: Address,
-) {
-  const accessKeys = getAccessKeys(signer);
-  if (!accessKeys.length) return;
-  setAccessKeys(
+function findSessionAccessKey(signer: ZoneTransactionSigner, account: Address) {
+    const now = Math.floor(Date.now() / 1000);
+    const requiredLimits = sessionAccessKeyLimits(undefined, BigInt(0));
+    return getAccessKeys(signer).find((key) => {
+        const hasLocalKey = key.keyPair != null;
+        const sameOwner = key.access.toLowerCase() === account.toLowerCase();
+        const notExpiring =
+            !key.expiry || key.expiry > now + ACCESS_KEY_REFRESH_BUFFER_SECONDS;
+        const matchingChainId =
+            key.chainId == null || key.chainId === OMEGA_ZONE_CHAIN_ID;
+        const matchingAuthorization =
+            !key.keyAuthorization ||
+            keyAuthorizationChainId(key.keyAuthorization) ===
+                BigInt(OMEGA_ZONE_CHAIN_ID);
+        return (
+            hasLocalKey &&
+            sameOwner &&
+            notExpiring &&
+            matchingChainId &&
+            matchingAuthorization &&
+            limitsCoverRequired(key.limits, requiredLimits) &&
+            scopesCoverSession(key.scopes)
+        );
+    });
+}
+
+function clearLocalAccessKeys(signer: ZoneTransactionSigner, account: Address) {
+    const accessKeys = getAccessKeys(signer);
+    if (!accessKeys.length) return;
+    setAccessKeys(
+        signer,
+        accessKeys.filter((key) => {
+            const sameOwner =
+                key.access.toLowerCase() === account.toLowerCase();
+            return !sameOwner;
+        }),
+    );
+}
+
+export async function ensureZoneSessionAccessKey({
     signer,
-    accessKeys.filter((key) => {
-      const sameOwner = key.access.toLowerCase() === account.toLowerCase();
-      return !(sameOwner && key.keyPair != null);
-    }),
-  );
+    account,
+}: {
+    signer: ZoneTransactionSigner;
+    account: Address;
+}) {
+    const existing = findSessionAccessKey(signer, account);
+    if (existing) return false;
+
+    await signer.request({
+        method: "wallet_authorizeAccessKey",
+        params: [zoneSessionAccessKeyAuthorizationRequest()],
+    });
+
+    const next = findSessionAccessKey(signer, account);
+    if (!next) {
+        throw new Error(
+            "Tempo Wallet did not return a usable Omega Zone session access key.",
+        );
+    }
+    return true;
+}
+
+export function hasUsableZoneSessionAccessKey({
+    signer,
+    account,
+}: {
+    signer: ZoneTransactionSigner;
+    account: Address;
+}) {
+    return Boolean(findSessionAccessKey(signer, account));
 }
 
 function markAccessKeyAuthorizationUsed(
-  signer: ZoneTransactionSigner,
-  accessKey: StoredTempoAccessKey,
+    signer: ZoneTransactionSigner,
+    accessKey: StoredTempoAccessKey,
 ) {
-  if (!accessKey.address) return;
-  const accessKeys = getAccessKeys(signer);
-  if (!accessKeys.length) return;
-  setAccessKeys(
-    signer,
-    accessKeys.map((key) =>
-      key.address?.toLowerCase() === accessKey.address?.toLowerCase()
-        ? { ...key, keyAuthorization: undefined }
-        : key,
-    ),
-  );
+    if (!accessKey.address) return;
+    const accessKeys = getAccessKeys(signer);
+    if (!accessKeys.length) return;
+    setAccessKeys(
+        signer,
+        accessKeys.map((key) =>
+            key.address?.toLowerCase() === accessKey.address?.toLowerCase()
+                ? { ...key, keyAuthorization: undefined }
+                : key,
+        ),
+    );
 }
 
 async function ensureDarkpoolAccessKey(
-  signer: ZoneTransactionSigner,
-  account: Address,
+    signer: ZoneTransactionSigner,
+    account: Address,
+    request: ZoneContractWriteRequest,
+    data: Hex,
+    feeLimit: bigint,
 ) {
-  const existing = findDarkpoolAccessKey(signer, account);
-  if (existing) return existing;
+    const existing = findDarkpoolAccessKey(
+        signer,
+        account,
+        request,
+        data,
+        feeLimit,
+    );
+    if (existing) return existing;
 
-  clearLocalAccessKeys(signer, account);
-  await signer.request({
-    method: "wallet_authorizeAccessKey",
-    params: [accessKeyRequest()],
-  });
+    await signer.request({
+        method: "wallet_authorizeAccessKey",
+        params: [accessKeyRequest(request, data, feeLimit)],
+    });
 
-  const next = findDarkpoolAccessKey(signer, account);
-  if (!next) {
-    throw new Error("Tempo Wallet did not return a usable Omega Zone access key.");
-  }
-  return next;
+    const next = findDarkpoolAccessKey(
+        signer,
+        account,
+        request,
+        data,
+        feeLimit,
+    );
+    if (!next) {
+        throw new Error(
+            "Tempo Wallet did not return a usable Omega Zone access key.",
+        );
+    }
+    return next;
+}
+
+function isTempoKeychainMissingError(error: unknown): boolean {
+    const message = error instanceof Error ? error.message : String(error);
+    return (
+        /keychain validation failed/i.test(message) ||
+        /AccountKeychainError.*KeyNotFound/i.test(message)
+    );
+}
+
+function isTempoSpendingLimitExceededError(error: unknown): boolean {
+    const message = error instanceof Error ? error.message : String(error);
+    return /SpendingLimitExceeded/i.test(message);
+}
+
+function isRecoverableTempoAccessKeyError(error: unknown): boolean {
+    return (
+        isTempoKeychainMissingError(error) ||
+        isTempoSpendingLimitExceededError(error)
+    );
+}
+
+function tempoKeychainRecoveryError(): Error {
+    return new Error(
+        "Tempo Wallet could not find the local key material for this Omega Zone approval. Reconnect Tempo Wallet and try again.",
+    );
 }
 
 async function signTempoAccessKeyTransaction(
-  signer: ZoneTransactionSigner,
-  accessKey: StoredTempoAccessKey,
-  transaction: TempoAccessKeyTransaction,
+    signer: ZoneTransactionSigner,
+    accessKey: StoredTempoAccessKey,
+    transaction: TempoAccessKeyTransaction,
 ) {
-  if (signer.signTempoTransaction) {
-    return signer.signTempoTransaction(transaction);
-  }
-  if (!accessKey.keyPair) {
-    throw new Error("Tempo Wallet access key is missing local signing material.");
-  }
+    if (signer.signTempoTransaction) {
+        return signer.signTempoTransaction(transaction);
+    }
+    if (!accessKey.keyPair) {
+        throw new Error(
+            "Tempo Wallet access key is missing local signing material.",
+        );
+    }
 
-  const accessKeyAccount = TempoAccount.fromWebCryptoP256(accessKey.keyPair, {
-    access: transaction.account,
-    internal_version: "v2",
-  });
+    const accessKeyAccount = TempoAccount.fromWebCryptoP256(accessKey.keyPair, {
+        access: transaction.account,
+        internal_version: "v2",
+    });
 
-  return accessKeyAccount.signTransaction(
-    {
-      type: "tempo",
-      chainId: transaction.chainId,
-      nonce: transaction.nonce,
-      maxFeePerGas: transaction.maxFeePerGas,
-      maxPriorityFeePerGas: transaction.maxPriorityFeePerGas,
-      calls: [
+    return accessKeyAccount.signTransaction(
         {
-          to: transaction.to,
-          data: transaction.data,
-        },
-      ],
-      gas: transaction.gas,
-      keyAuthorization: transaction.keyAuthorization as never,
-    } as never,
-    { serializer: TempoTransaction.serialize as never },
-  );
+            type: "tempo",
+            chainId: transaction.chainId,
+            nonce: transaction.nonce,
+            maxFeePerGas: transaction.maxFeePerGas,
+            maxPriorityFeePerGas: transaction.maxPriorityFeePerGas,
+            calls: [
+                {
+                    to: transaction.to,
+                    data: transaction.data,
+                },
+            ],
+            gas: transaction.gas,
+            keyAuthorization: transaction.keyAuthorization as never,
+        } as never,
+        { serializer: TempoTransaction.serialize as never },
+    );
 }
 
 export async function signAndSendPrivateZoneContractWrite({
-  authToken,
-  signer,
-  account,
-  request,
-}: {
-  authToken: Hex;
-  signer: ZoneTransactionSigner;
-  account: Address;
-  request: ZoneContractWriteRequest;
-}): Promise<Hex> {
-  const data = encodeFunctionData({
-    abi: request.abi as Abi,
-    functionName: request.functionName,
-    args: request.args as readonly unknown[] | undefined,
-  });
-  const transaction = {
-    from: account,
-    to: request.address,
-    data,
-    value: request.value,
-  };
-  const estimatedGas = await privateZoneEstimateGas(authToken, transaction);
-  const accessKey = await ensureDarkpoolAccessKey(signer, account);
-  const defaults = await (
-    signer.getZoneTransactionDefaults ?? getZoneTransactionDefaults
-  )(account);
-  const gas =
-    estimatedGas +
-    (estimatedGas * GAS_ESTIMATE_BUFFER_BPS) / BigInt(10_000) +
-    GAS_ESTIMATE_FIXED_BUFFER +
-    (accessKey.keyAuthorization
-      ? ACCESS_KEY_AUTHORIZATION_GAS_OVERHEAD
-      : BigInt(0));
-  const serializedTransaction = await signTempoAccessKeyTransaction(
+    authToken,
     signer,
-    accessKey,
-    {
-      account,
-      to: request.address,
-      data,
-      gas,
-      ...defaults,
-      keyAuthorization: accessKey.keyAuthorization,
-    },
-  );
-  markAccessKeyAuthorizationUsed(signer, accessKey);
-  return sendPrivateZoneRawTransaction(authToken, serializedTransaction as Hex);
+    account,
+    request,
+}: {
+    authToken: Hex;
+    signer: ZoneTransactionSigner;
+    account: Address;
+    request: ZoneContractWriteRequest;
+}): Promise<Hex> {
+    const data = encodeFunctionData({
+        abi: request.abi as Abi,
+        functionName: request.functionName,
+        args: request.args as readonly unknown[] | undefined,
+    });
+    const transaction = {
+        from: account,
+        to: request.address,
+        data,
+        value: request.value,
+    };
+    const estimatedGas = await privateZoneEstimateGas(authToken, transaction);
+
+    for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+            const defaults = await (
+                signer.getZoneTransactionDefaults ?? getZoneTransactionDefaults
+            )(account);
+            const gasWithAuthorization =
+                estimatedGas +
+                (estimatedGas * GAS_ESTIMATE_BUFFER_BPS) / BigInt(10_000) +
+                GAS_ESTIMATE_FIXED_BUFFER +
+                ACCESS_KEY_AUTHORIZATION_GAS_OVERHEAD;
+            const feeLimit = gasWithAuthorization * defaults.maxFeePerGas;
+            const accessKey = await ensureDarkpoolAccessKey(
+                signer,
+                account,
+                request,
+                data,
+                feeLimit,
+            );
+            const gas =
+                estimatedGas +
+                (estimatedGas * GAS_ESTIMATE_BUFFER_BPS) / BigInt(10_000) +
+                GAS_ESTIMATE_FIXED_BUFFER +
+                (accessKey.keyAuthorization
+                    ? ACCESS_KEY_AUTHORIZATION_GAS_OVERHEAD
+                    : BigInt(0));
+            const serializedTransaction = await signTempoAccessKeyTransaction(
+                signer,
+                accessKey,
+                {
+                    account,
+                    to: request.address,
+                    data,
+                    gas,
+                    ...defaults,
+                    keyAuthorization: accessKey.keyAuthorization,
+                },
+            );
+            const txHash = await sendPrivateZoneRawTransaction(
+                authToken,
+                serializedTransaction as Hex,
+            );
+            markAccessKeyAuthorizationUsed(signer, accessKey);
+            return txHash;
+        } catch (error) {
+            if (!isRecoverableTempoAccessKeyError(error)) throw error;
+            clearLocalAccessKeys(signer, account);
+            if (attempt === 0) continue;
+            if (isTempoKeychainMissingError(error)) {
+                throw tempoKeychainRecoveryError();
+            }
+            throw error;
+        }
+    }
+
+    throw tempoKeychainRecoveryError();
+}
+
+export async function estimatePrivateZoneContractWriteNetworkFee({
+    authToken,
+    account,
+    request,
+}: {
+    authToken: Hex;
+    account: Address;
+    request: ZoneContractWriteRequest;
+}): Promise<bigint> {
+    const data = encodeFunctionData({
+        abi: request.abi as Abi,
+        functionName: request.functionName,
+        args: request.args as readonly unknown[] | undefined,
+    });
+    const estimatedGas = await privateZoneEstimateGas(authToken, {
+        from: account,
+        to: request.address,
+        data,
+        value: request.value,
+    });
+    const gas =
+        estimatedGas +
+        (estimatedGas * GAS_ESTIMATE_BUFFER_BPS) / BigInt(10_000) +
+        GAS_ESTIMATE_FIXED_BUFFER;
+    const gasPrice = await privateZoneGasPrice(authToken);
+    return gas * gasPrice;
 }
 
 export async function readPrivateZonePathUsdBalance(
-  authToken: Hex,
-  account: Address,
-  options?: ZoneRpcFetchOptions,
+    authToken: Hex,
+    account: Address,
+    options?: ZoneRpcFetchOptions,
 ): Promise<bigint> {
-  return readPrivateZoneTokenBalance(
-    authToken,
-    account,
-    OMEGA_ZONE_ADDRESSES.pathUsd,
-    options,
-  );
+    return readPrivateZoneTokenBalance(
+        authToken,
+        account,
+        OMEGA_ZONE_ADDRESSES.pathUsd,
+        options,
+    );
 }
 
-export async function readPrivateZoneOalphaBalance(
-  authToken: Hex,
-  account: Address,
-  options?: ZoneRpcFetchOptions,
+export async function readPrivateZoneAlphaUsdBalance(
+    authToken: Hex,
+    account: Address,
+    options?: ZoneRpcFetchOptions,
 ): Promise<bigint> {
-  return readPrivateZoneTokenBalance(
-    authToken,
-    account,
-    OMEGA_ZONE_ADDRESSES.oalpha,
-    options,
-  );
+    return readPrivateZoneTokenBalance(
+        authToken,
+        account,
+        OMEGA_ZONE_ADDRESSES.alphaUsd,
+        options,
+    );
 }
 
 export async function readPrivateZoneTokenBalance(
-  authToken: Hex,
-  account: Address,
-  token: Address,
-  options?: ZoneRpcFetchOptions,
+    authToken: Hex,
+    account: Address,
+    token: Address,
+    options?: ZoneRpcFetchOptions,
 ): Promise<bigint> {
-  const data = encodeFunctionData({
-    abi: TIP20_PARSED_ABI,
-    functionName: "balanceOf",
-    args: [account],
-  });
-  const result = await privateZoneEthCall(
-    authToken,
-    {
-      from: account,
-      to: token,
-      data,
-    },
-    options,
-  );
-  return decodeFunctionResult({
-    abi: TIP20_PARSED_ABI,
-    functionName: "balanceOf",
-    data: result,
-  }) as bigint;
+    const data = encodeFunctionData({
+        abi: TIP20_PARSED_ABI,
+        functionName: "balanceOf",
+        args: [account],
+    });
+    const result = await privateZoneEthCall(
+        authToken,
+        {
+            from: account,
+            to: token,
+            data,
+        },
+        options,
+    );
+    return decodeFunctionResult({
+        abi: TIP20_PARSED_ABI,
+        functionName: "balanceOf",
+        data: result,
+    }) as bigint;
 }
 
 export async function readPrivateTokenAllowance(
-  authToken: Hex,
-  account: Address,
-  token: Address,
-  spender: Address,
-  options?: ZoneRpcFetchOptions,
+    authToken: Hex,
+    account: Address,
+    token: Address,
+    spender: Address,
+    options?: ZoneRpcFetchOptions,
 ): Promise<bigint> {
-  const data = encodeFunctionData({
-    abi: TIP20_PARSED_ABI,
-    functionName: "allowance",
-    args: [account, spender],
-  });
-  const result = await privateZoneEthCall(
-    authToken,
-    {
-      from: account,
-      to: token,
-      data,
-    },
-    options,
-  );
-  return decodeFunctionResult({
-    abi: TIP20_PARSED_ABI,
-    functionName: "allowance",
-    data: result,
-  }) as bigint;
+    const data = encodeFunctionData({
+        abi: TIP20_PARSED_ABI,
+        functionName: "allowance",
+        args: [account, spender],
+    });
+    const result = await privateZoneEthCall(
+        authToken,
+        {
+            from: account,
+            to: token,
+            data,
+        },
+        options,
+    );
+    return decodeFunctionResult({
+        abi: TIP20_PARSED_ABI,
+        functionName: "allowance",
+        data: result,
+    }) as bigint;
+}
+
+export async function readPrivateZoneWithdrawalFee(
+    authToken: Hex,
+    account: Address,
+    gasLimit: bigint,
+    options?: ZoneRpcFetchOptions,
+): Promise<bigint> {
+    const data = encodeFunctionData({
+        abi: ZONE_OUTBOX_PARSED_ABI,
+        functionName: "calculateWithdrawalFee",
+        args: [gasLimit],
+    });
+    const result = await privateZoneEthCall(
+        authToken,
+        {
+            from: account,
+            to: OMEGA_ZONE_ADDRESSES.zoneOutbox,
+            data,
+        },
+        options,
+    );
+    return decodeFunctionResult({
+        abi: ZONE_OUTBOX_PARSED_ABI,
+        functionName: "calculateWithdrawalFee",
+        data: result,
+    }) as bigint;
 }
 
 export async function readPrivateDarkpoolBalance(
-  authToken: Hex,
-  account: Address,
-  token: Address = OMEGA_ZONE_ADDRESSES.pathUsd,
-  options?: ZoneRpcFetchOptions,
+    authToken: Hex,
+    account: Address,
+    token: Address = OMEGA_ZONE_ADDRESSES.pathUsd,
+    options?: ZoneRpcFetchOptions,
 ): Promise<bigint> {
-  const data = encodeFunctionData({
-    abi: DARKPOOL_PARSED_ABI,
-    functionName: "balanceOf",
-    args: [account, token],
-  });
-  const result = await privateZoneEthCall(
-    authToken,
-    {
-      from: account,
-      to: OMEGA_ZONE_ADDRESSES.darkpool,
-      data,
-    },
-    options,
-  );
-  return decodeFunctionResult({
-    abi: DARKPOOL_PARSED_ABI,
-    functionName: "balanceOf",
-    data: result,
-  }) as bigint;
+    const data = encodeFunctionData({
+        abi: DARKPOOL_PARSED_ABI,
+        functionName: "balanceOf",
+        args: [account, token],
+    });
+    const result = await privateZoneEthCall(
+        authToken,
+        {
+            from: account,
+            to: OMEGA_ZONE_ADDRESSES.darkpool,
+            data,
+        },
+        options,
+    );
+    return decodeFunctionResult({
+        abi: DARKPOOL_PARSED_ABI,
+        functionName: "balanceOf",
+        data: result,
+    }) as bigint;
+}
+
+export async function readPrivateDarkpoolAvailableBalance(
+    authToken: Hex,
+    account: Address,
+    token: Address = OMEGA_ZONE_ADDRESSES.pathUsd,
+    options?: ZoneRpcFetchOptions,
+): Promise<bigint> {
+    const data = encodeFunctionData({
+        abi: DARKPOOL_PARSED_ABI,
+        functionName: "availableBalanceOf",
+        args: [account, token],
+    });
+    const result = await privateZoneEthCall(
+        authToken,
+        {
+            from: account,
+            to: OMEGA_ZONE_ADDRESSES.darkpool,
+            data,
+        },
+        options,
+    );
+    return decodeFunctionResult({
+        abi: DARKPOOL_PARSED_ABI,
+        functionName: "availableBalanceOf",
+        data: result,
+    }) as bigint;
 }
 
 export interface PriceLevel {
-  price: bigint;
-  quantity: bigint;
+    price: bigint;
+    quantity: bigint;
 }
 
 export async function readPrivateBestBid(
-  authToken: Hex,
-  account: Address,
-  base: Address,
-  options?: ZoneRpcFetchOptions,
+    authToken: Hex,
+    account: Address,
+    base: Address,
+    options?: ZoneRpcFetchOptions,
 ): Promise<PriceLevel> {
-  return readPrivatePriceLevel(authToken, account, base, "bestBid", options);
+    return readPrivatePriceLevel(authToken, account, base, "bestBid", options);
 }
 
 export async function readPrivateBestAsk(
-  authToken: Hex,
-  account: Address,
-  base: Address,
-  options?: ZoneRpcFetchOptions,
+    authToken: Hex,
+    account: Address,
+    base: Address,
+    options?: ZoneRpcFetchOptions,
 ): Promise<PriceLevel> {
-  return readPrivatePriceLevel(authToken, account, base, "bestAsk", options);
+    return readPrivatePriceLevel(authToken, account, base, "bestAsk", options);
 }
 
 async function readPrivatePriceLevel(
-  authToken: Hex,
-  account: Address,
-  base: Address,
-  functionName: "bestBid" | "bestAsk",
-  options?: ZoneRpcFetchOptions,
+    authToken: Hex,
+    account: Address,
+    base: Address,
+    functionName: "bestBid" | "bestAsk",
+    options?: ZoneRpcFetchOptions,
 ): Promise<PriceLevel> {
-  const data = encodeFunctionData({
-    abi: DARKPOOL_PARSED_ABI,
-    functionName,
-    args: [base],
-  });
-  const result = await privateZoneEthCall(
-    authToken,
-    {
-      from: account,
-      to: OMEGA_ZONE_ADDRESSES.darkpool,
-      data,
-    },
-    options,
-  );
-  const [price, quantity] = decodeFunctionResult({
-    abi: DARKPOOL_PARSED_ABI,
-    functionName,
-    data: result,
-  }) as readonly [bigint, bigint];
-  return { price, quantity };
+    const data = encodeFunctionData({
+        abi: DARKPOOL_PARSED_ABI,
+        functionName,
+        args: [base],
+    });
+    const result = await privateZoneEthCall(
+        authToken,
+        {
+            from: account,
+            to: OMEGA_ZONE_ADDRESSES.darkpool,
+            data,
+        },
+        options,
+    );
+    const [price, quantity] = decodeFunctionResult({
+        abi: DARKPOOL_PARSED_ABI,
+        functionName,
+        data: result,
+    }) as readonly [bigint, bigint];
+    return { price, quantity };
 }
 
 export async function publicRpcFetch<T>(
-  { method, params = [], id = 1 }: ZoneRpcRequest,
-  { rpcUrl = browserPublicRpcUrl() }: ZoneRpcFetchOptions = {},
+    { method, params = [], id = 1 }: ZoneRpcRequest,
+    { rpcUrl = browserPublicRpcUrl() }: ZoneRpcFetchOptions = {},
 ): Promise<T> {
-  const response = await fetch(rpcUrl, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      jsonrpc: "2.0",
-      id,
-      method,
-      params,
-    }),
-  });
+    const response = await fetch(rpcUrl, {
+        method: "POST",
+        headers: {
+            "content-type": "application/json",
+        },
+        body: JSON.stringify({
+            jsonrpc: "2.0",
+            id,
+            method,
+            params,
+        }),
+    });
 
-  if (!response.ok) {
-    throw new ZoneRpcHttpError(response.status, "public");
-  }
+    if (!response.ok) {
+        throw new ZoneRpcHttpError(response.status, "public");
+    }
 
-  const payload = (await response.json()) as {
-    result?: T;
-    error?: { message?: string; code?: number };
-  };
-  if (payload.error) {
-    throw new Error(
-      payload.error.message ??
-        `Public zone RPC failed with code ${payload.error.code ?? "unknown"}.`,
-    );
-  }
-  return payload.result as T;
+    const payload = (await response.json()) as {
+        result?: T;
+        error?: { message?: string; code?: number };
+    };
+    if (payload.error) {
+        throw new Error(
+            payload.error.message ??
+                `Public zone RPC failed with code ${payload.error.code ?? "unknown"}.`,
+        );
+    }
+    return payload.result as T;
 }
 
 export const callPublicZoneRpc = publicRpcFetch;
 
 function browserPublicRpcUrl(): string {
-  return typeof window === "undefined"
-    ? zonePublicRpcUrl()
-    : OMEGA_ZONE_RPC_PROXY_URLS.public;
+    return typeof window === "undefined"
+        ? zonePublicRpcUrl()
+        : OMEGA_ZONE_RPC_PROXY_URLS.public;
 }
 
 export interface MarketToken {
-  address: Address;
-  symbol: string;
-  decimals: number;
+    address: Address;
+    symbol: string;
+    decimals: number;
 }
 
 export interface MarketPair {
-  base: Address;
-  quote: Address;
+    base: Address;
+    quote: Address;
 }
 
 export type AllowedMarketAction =
-  | "marketBuy"
-  | "marketSell"
-  | "limitBid"
-  | "limitAsk";
+    | "marketBuy"
+    | "marketSell"
+    | "limitBid"
+    | "limitAsk";
 
 export interface MarketEntry {
-  pair: string;
-  base: MarketToken;
-  quote: MarketToken;
-  minOrderAmount: string;
-  priceUnit: string;
-  allowedActions: readonly AllowedMarketAction[];
+    pair: string;
+    base: MarketToken;
+    quote: MarketToken;
+    minOrderAmount: string;
+    priceUnit: string;
+    allowedActions: readonly AllowedMarketAction[];
 }
 
 export interface MarketConfigResponse {
-  darkpool: Address;
-  markets: readonly MarketEntry[];
+    darkpool: Address;
+    markets: readonly MarketEntry[];
 }
 
 export interface OrderLevel {
-  price: string;
-  quantity: string;
+    price: string;
+    quantity: string;
 }
 
 export interface TopOfBookResponse {
-  pair: string;
-  base: Address;
-  quote: Address;
-  bid: OrderLevel | null;
-  ask: OrderLevel | null;
-  midpoint: string | null;
-  spread: string | null;
-  asOfBlock: Hex;
+    pair: string;
+    base: Address;
+    quote: Address;
+    bid: OrderLevel | null;
+    ask: OrderLevel | null;
+    midpoint: string | null;
+    spread: string | null;
+    asOfBlock: Hex;
 }
 
 export interface ZonePageEnvelope<T> {
-  items: readonly T[];
-  nextCursor?: string;
+    items: readonly T[];
+    nextCursor?: string;
 }
 
 export type ZoneOrderSide = "bid" | "ask";
 export type ZoneOrderStatus =
-  | "open"
-  | "partiallyFilled"
-  | "filled"
-  | "cancelled";
+    | "open"
+    | "partiallyFilled"
+    | "filled"
+    | "cancelled";
 
 export interface ZoneOrder {
-  orderId: string;
-  side: ZoneOrderSide;
-  status: ZoneOrderStatus;
-  baseToken: Address;
-  quoteToken: Address;
-  amount: string;
-  remaining: string;
-  filled: string;
-  price: string;
-  createdAtBlock: Hex;
-  updatedAtBlock: Hex;
-  createdTxHash: Hex;
-  cancelTxHash?: Hex;
+    orderId: string;
+    side: ZoneOrderSide;
+    status: ZoneOrderStatus;
+    baseToken: Address;
+    quoteToken: Address;
+    amount: string;
+    remaining: string;
+    filled: string;
+    price: string;
+    createdAtBlock: Hex;
+    updatedAtBlock: Hex;
+    createdTxHash: Hex;
+    cancelTxHash?: Hex;
 }
 
 export type ZoneFillRole = "maker" | "taker";
 
 export interface ZoneFill {
-  orderId?: string;
-  role: ZoneFillRole;
-  baseToken: Address;
-  quoteToken: Address;
-  amountFilled: string;
-  price: string;
-  blockNumber: Hex;
-  txHash: Hex;
+    orderId?: string;
+    role: ZoneFillRole;
+    baseToken: Address;
+    quoteToken: Address;
+    amountFilled: string;
+    price: string;
+    blockNumber: Hex;
+    txHash: Hex;
+    logIndex: Hex;
+}
+
+export interface PrivateZoneTransaction {
+    hash: Hex;
+    from: Address;
+    to?: Address | null;
+    input: Hex;
 }
 
 export type ZoneTransferDirection = "in" | "out";
 
 export interface ZoneTransfer {
-  token: Address;
-  counterparty: Address;
-  amount: string;
-  direction: ZoneTransferDirection;
-  blockNumber: Hex;
-  txHash: Hex;
-  logIndex: number;
+    token: Address;
+    counterparty: Address;
+    amount: string;
+    direction: ZoneTransferDirection;
+    blockNumber: Hex;
+    txHash: Hex;
+    logIndex: number;
+}
+
+export type ZoneActivitySourceChain = "zone" | "tempo";
+export type ZoneActivityKind =
+    | "order"
+    | "fill"
+    | "transfer"
+    | "deposit"
+    | "withdrawal";
+export type ZoneActivitySide = "buy" | "sell";
+export type ZoneActivityOrderType = "market" | "limit";
+export type ZoneActivityOrderStatus =
+    | "open"
+    | "partiallyFilled"
+    | "filled"
+    | "cancelled";
+
+export interface ZoneActivitySource {
+    chain: ZoneActivitySourceChain;
+    blockNumber: Hex;
+    txHash: Hex;
+    txIndex: Hex;
+    logIndex: Hex;
+}
+
+export interface ZoneOrderActivityPayload {
+    type: "order";
+    details: {
+        orderId: string;
+        side: ZoneActivitySide;
+        orderType: ZoneActivityOrderType;
+        status: ZoneActivityOrderStatus;
+        baseToken: Address;
+        quoteToken: Address;
+        amount: string;
+        remaining: string;
+        filled: string;
+        price: string;
+    };
+}
+
+export interface ZoneFillActivityPayload {
+    type: "fill";
+    details: {
+        orderId?: string;
+        role: ZoneFillRole;
+        side: ZoneActivitySide;
+        orderType: ZoneActivityOrderType;
+        baseToken: Address;
+        quoteToken: Address;
+        amountFilled: string;
+        price: string;
+    };
+}
+
+export interface ZoneTransferActivityPayload {
+    type: "transfer";
+    details: {
+        token: Address;
+        counterparty: Address;
+        amount: string;
+        direction: ZoneTransferDirection;
+    };
+}
+
+export interface ZoneDepositActivityPayload {
+    type: "deposit";
+    details: {
+        depositHash: Hex;
+        kind: "regular" | "encrypted";
+        token: Address;
+        sender: Address;
+        recipient?: Address;
+        amount: string;
+        memo?: Hex;
+        status: "pending" | "processed" | "failed";
+        l1TxHash?: Hex;
+        zoneTxHash?: Hex;
+    };
+}
+
+export interface ZoneWithdrawalActivityPayload {
+    type: "withdrawal";
+    details: {
+        withdrawalIndex: Hex;
+        token: Address;
+        to: Address;
+        amount: string;
+        fee: string;
+        memo: Hex;
+        fallbackRecipient: Address;
+        status: ZoneWithdrawalStatusValue;
+        zoneTxHash: Hex;
+        l1SubmitBatchTxHash?: Hex;
+        l1ProcessWithdrawalTxHash?: Hex;
+        error?: string;
+    };
+}
+
+export type ZoneActivityPayload =
+    | ZoneOrderActivityPayload
+    | ZoneFillActivityPayload
+    | ZoneTransferActivityPayload
+    | ZoneDepositActivityPayload
+    | ZoneWithdrawalActivityPayload;
+
+export interface ZoneActivityEntry {
+    id: string;
+    kind: ZoneActivityKind;
+    occurredAt: Hex;
+    updatedAt: Hex;
+    source: ZoneActivitySource;
+    payload: ZoneActivityPayload;
+}
+
+export interface ZoneActivityPage {
+    items: readonly ZoneActivityEntry[];
+    nextCursor?: string;
+    indexedThrough: {
+        zoneBlock: Hex;
+        tempoBlock: Hex;
+    };
 }
 
 export type ZoneWithdrawalStatusValue =
-  | "pending"
-  | "batched"
-  | "submitted"
-  | "processed"
-  | "failed"
-  | "bounced";
+    | "pending"
+    | "batched"
+    | "submitted"
+    | "processed"
+    | "failed"
+    | "bounced";
 
 export interface ZoneWithdrawalStatus {
-  withdrawalIndex: string;
-  zoneTxHash: Hex;
-  status: ZoneWithdrawalStatusValue;
-  token: Address;
-  amount: string;
-  to: Address;
-  fallbackRecipient: Address;
-  memo: Hex;
-  zoneBlockNumber: Hex;
-  withdrawalBatchIndex?: string;
-  portalSlot?: string;
-  l1SubmitBatchTxHash?: Hex;
-  l1ProcessWithdrawalTxHash?: Hex;
-  callbackSuccess?: boolean;
-  error?: string;
+    withdrawalIndex: string;
+    zoneTxHash: Hex;
+    status: ZoneWithdrawalStatusValue;
+    token: Address;
+    amount: string;
+    to: Address;
+    fallbackRecipient: Address;
+    memo: Hex;
+    zoneBlockNumber: Hex;
+    withdrawalBatchIndex?: string;
+    portalSlot?: string;
+    l1SubmitBatchTxHash?: Hex;
+    l1ProcessWithdrawalTxHash?: Hex;
+    callbackSuccess?: boolean;
+    error?: string;
 }
 
 export type ZoneBatchStatus =
-  | "pending"
-  | "sealed"
-  | "submitted"
-  | "verified"
-  | "settled"
-  | "failed";
+    | "pending"
+    | "submitted"
+    | "verified"
+    | "failed";
 
 export interface ZoneBatchSummary {
-  batchNumber: string;
-  zoneBlockFrom?: Hex;
-  zoneBlockTo?: Hex;
-  tempoBlockNumber: Hex;
-  root: Hex;
-  prevBlockHash: Hex;
-  nextBlockHash: Hex;
-  status: ZoneBatchStatus;
-  sealedAt?: string;
-  settledAt?: string;
-  orderCount: number;
-  fillCount: number;
-  aggregatePairs: readonly string[];
-  aggregateVolume: readonly { token: Address; amount: string }[] | Readonly<Record<string, string>>;
-  settlementTxHash?: Hex;
-  proofRef?: string;
+    batchNumber: Hex;
+    zoneBlockFrom?: Hex;
+    zoneBlockTo?: Hex;
+    tempoBlockNumber: Hex;
+    root: Hex;
+    prevBlockHash: Hex;
+    nextBlockHash: Hex;
+    status: ZoneBatchStatus;
+    sealedAt?: Hex;
+    settledAt?: Hex;
+    orderCount: Hex;
+    fillCount: Hex;
+    aggregatePairs: readonly string[];
+    aggregateVolume: readonly { token: Address; amount: Hex }[];
+    settlementTxHash?: Hex;
+    proofRef?: string;
 }
 
 export interface ZoneBatchListResponse {
-  batches: readonly ZoneBatchSummary[];
-  nextCursor?: string;
+    batches: readonly ZoneBatchSummary[];
+    nextCursor?: Hex;
 }
 
 export interface ZoneMidpointSample {
-  timestamp: Hex;
-  midpoint: string;
+    timestamp: Hex;
+    midpoint: string;
 }
 
 export interface ZoneMidpointHistoryResponse {
-  pair: string;
-  base: Address;
-  quote: Address;
-  interval: string;
-  samples: readonly ZoneMidpointSample[];
-  nextCursor?: string;
-  history: {
-    enabled: boolean;
-    reason?: string;
-  };
+    pair: string;
+    base: Address;
+    quote: Address;
+    interval: string;
+    samples: readonly ZoneMidpointSample[];
+    nextCursor?: string;
+    history: {
+        enabled: boolean;
+        reason?: string;
+    };
 }
 
 export interface ZonePaginationParams {
-  cursor?: string;
-  limit?: number;
+    cursor?: string;
+    limit?: number;
+}
+
+export async function getZoneMyActivity(
+    authToken: Hex,
+    params: ZonePaginationParams = {},
+    options?: ZoneRpcFetchOptions,
+): Promise<ZoneActivityPage> {
+    return privateRpcFetch<ZoneActivityPage>(
+        authToken,
+        {
+            method: "zone_getMyActivity",
+            params: [
+                stripUndefined({
+                    cursor: params.cursor,
+                    limit: params.limit,
+                }),
+            ],
+        },
+        options,
+    );
 }
 
 export function toBatchNumberHex(batchNumber: number | bigint | Hex): Hex {
-  return toRpcQuantity(batchNumber);
+    return toRpcQuantity(batchNumber);
 }
 
 function assertOwnerScopedAccount({
-  authenticatedAccount,
-  requestedAccount,
+    authenticatedAccount,
+    requestedAccount,
 }: {
-  authenticatedAccount: Address;
-  requestedAccount?: Address;
+    authenticatedAccount: Address;
+    requestedAccount?: Address;
 }): Address {
-  if (
-    requestedAccount &&
-    requestedAccount.toLowerCase() !== authenticatedAccount.toLowerCase()
-  ) {
-    throw new Error(
-      "Omega Zone RPC: requested account does not match the authenticated account.",
-    );
-  }
-  return requestedAccount ?? authenticatedAccount;
+    if (
+        requestedAccount &&
+        requestedAccount.toLowerCase() !== authenticatedAccount.toLowerCase()
+    ) {
+        throw new Error(
+            "Omega Zone RPC: requested account does not match the authenticated account.",
+        );
+    }
+    return requestedAccount ?? authenticatedAccount;
 }
 
-function stripUndefined<T extends Record<string, unknown>>(value: T): Partial<T> {
-  const out: Partial<T> = {};
-  for (const [key, entry] of Object.entries(value)) {
-    if (entry !== undefined) (out as Record<string, unknown>)[key] = entry;
-  }
-  return out;
+function stripUndefined<T extends Record<string, unknown>>(
+    value: T,
+): Partial<T> {
+    const out: Partial<T> = {};
+    for (const [key, entry] of Object.entries(value)) {
+        if (entry !== undefined) (out as Record<string, unknown>)[key] = entry;
+    }
+    return out;
 }
 
 export async function getZoneMarketConfig(
-  authToken: Hex,
-  options?: ZoneRpcFetchOptions,
+    authToken: Hex,
+    options?: ZoneRpcFetchOptions,
 ): Promise<MarketConfigResponse> {
-  return privateRpcFetch<MarketConfigResponse>(
-    authToken,
-    {
-      method: "zone_getMarketConfig",
-      params: [],
-    },
-    options,
-  );
+    return privateRpcFetch<MarketConfigResponse>(
+        authToken,
+        {
+            method: "zone_getMarketConfig",
+            params: [],
+        },
+        options,
+    );
 }
 
 export async function getZoneTopOfBook(
-  authToken: Hex,
-  pair: MarketPair,
-  options?: ZoneRpcFetchOptions,
+    authToken: Hex,
+    pair: MarketPair,
+    options?: ZoneRpcFetchOptions,
 ): Promise<TopOfBookResponse> {
-  return privateRpcFetch<TopOfBookResponse>(
-    authToken,
-    {
-      method: "zone_getTopOfBook",
-      params: [{ base: pair.base, quote: pair.quote }],
-    },
-    options,
-  );
+    return privateRpcFetch<TopOfBookResponse>(
+        authToken,
+        {
+            method: "zone_getTopOfBook",
+            params: [{ base: pair.base, quote: pair.quote }],
+        },
+        options,
+    );
 }
 
 /** Public (no-auth) top-of-book. The zone serves zone_getTopOfBook on the
  *  public RPC with an anonymous AuthContext, so the trade surface can show the
  *  live midpoint / best bid+ask without a connected wallet. */
 export async function getZonePublicTopOfBook(
-  pair: MarketPair,
-  options?: ZoneRpcFetchOptions,
+    pair: MarketPair,
+    options?: ZoneRpcFetchOptions,
 ): Promise<TopOfBookResponse> {
-  return publicRpcFetch<TopOfBookResponse>(
-    {
-      method: "zone_getTopOfBook",
-      params: [{ base: pair.base, quote: pair.quote }],
-    },
-    options,
-  );
+    return publicRpcFetch<TopOfBookResponse>(
+        {
+            method: "zone_getTopOfBook",
+            params: [{ base: pair.base, quote: pair.quote }],
+        },
+        options,
+    );
 }
 
 export interface ZoneMyOrdersParams extends ZonePaginationParams {
-  account?: Address;
-  pair?: string;
-  status?: ZoneOrderStatus;
+    account?: Address;
+    pair?: string;
+    status?: ZoneOrderStatus;
 }
 
 export async function getZoneMyOrders(
-  authToken: Hex,
-  authenticatedAccount: Address,
-  params: ZoneMyOrdersParams = {},
-  options?: ZoneRpcFetchOptions,
+    authToken: Hex,
+    authenticatedAccount: Address,
+    params: ZoneMyOrdersParams = {},
+    options?: ZoneRpcFetchOptions,
 ): Promise<ZonePageEnvelope<ZoneOrder>> {
-  const account = assertOwnerScopedAccount({
-    authenticatedAccount,
-    requestedAccount: params.account,
-  });
-  return privateRpcFetch<ZonePageEnvelope<ZoneOrder>>(
-    authToken,
-    {
-      method: "zone_getMyOrders",
-      params: [
-        stripUndefined({
-          account,
-          pair: params.pair,
-          status: params.status,
-          cursor: params.cursor,
-          limit: params.limit,
-        }),
-      ],
-    },
-    options,
-  );
+    const account = assertOwnerScopedAccount({
+        authenticatedAccount,
+        requestedAccount: params.account,
+    });
+    return privateRpcFetch<ZonePageEnvelope<ZoneOrder>>(
+        authToken,
+        {
+            method: "zone_getMyOrders",
+            params: [
+                stripUndefined({
+                    account,
+                    pair: params.pair,
+                    status: params.status,
+                    cursor: params.cursor,
+                    limit: params.limit,
+                }),
+            ],
+        },
+        options,
+    );
 }
 
 export interface ZoneMyFillsParams extends ZonePaginationParams {
-  account?: Address;
-  pair?: string;
-  status?: ZoneOrderStatus;
+    account?: Address;
+    pair?: string;
+    status?: ZoneOrderStatus;
 }
 
 export async function getZoneMyFills(
-  authToken: Hex,
-  authenticatedAccount: Address,
-  params: ZoneMyFillsParams = {},
-  options?: ZoneRpcFetchOptions,
+    authToken: Hex,
+    authenticatedAccount: Address,
+    params: ZoneMyFillsParams = {},
+    options?: ZoneRpcFetchOptions,
 ): Promise<ZonePageEnvelope<ZoneFill>> {
-  const account = assertOwnerScopedAccount({
-    authenticatedAccount,
-    requestedAccount: params.account,
-  });
-  return privateRpcFetch<ZonePageEnvelope<ZoneFill>>(
-    authToken,
-    {
-      method: "zone_getMyFills",
-      params: [
-        stripUndefined({
-          account,
-          pair: params.pair,
-          status: params.status,
-          cursor: params.cursor,
-          limit: params.limit,
-        }),
-      ],
-    },
-    options,
-  );
+    const account = assertOwnerScopedAccount({
+        authenticatedAccount,
+        requestedAccount: params.account,
+    });
+    return privateRpcFetch<ZonePageEnvelope<ZoneFill>>(
+        authToken,
+        {
+            method: "zone_getMyFills",
+            params: [
+                stripUndefined({
+                    account,
+                    pair: params.pair,
+                    status: params.status,
+                    cursor: params.cursor,
+                    limit: params.limit,
+                }),
+            ],
+        },
+        options,
+    );
+}
+
+export async function getPrivateZoneTransactionByHash(
+    authToken: Hex,
+    hash: Hex,
+    options?: ZoneRpcFetchOptions,
+): Promise<PrivateZoneTransaction | null> {
+    return privateRpcFetch<PrivateZoneTransaction | null>(
+        authToken,
+        {
+            method: "eth_getTransactionByHash",
+            params: [hash],
+        },
+        options,
+    );
 }
 
 export interface ZoneMyTransfersParams extends ZonePaginationParams {
-  account?: Address;
+    account?: Address;
 }
 
 export async function getZoneMyTransfers(
-  authToken: Hex,
-  authenticatedAccount: Address,
-  params: ZoneMyTransfersParams = {},
-  options?: ZoneRpcFetchOptions,
+    authToken: Hex,
+    authenticatedAccount: Address,
+    params: ZoneMyTransfersParams = {},
+    options?: ZoneRpcFetchOptions,
 ): Promise<ZonePageEnvelope<ZoneTransfer>> {
-  const account = assertOwnerScopedAccount({
-    authenticatedAccount,
-    requestedAccount: params.account,
-  });
-  return privateRpcFetch<ZonePageEnvelope<ZoneTransfer>>(
-    authToken,
-    {
-      method: "zone_getMyTransfers",
-      params: [
-        stripUndefined({
-          account,
-          cursor: params.cursor,
-          limit: params.limit,
-        }),
-      ],
-    },
-    options,
-  );
+    const account = assertOwnerScopedAccount({
+        authenticatedAccount,
+        requestedAccount: params.account,
+    });
+    return privateRpcFetch<ZonePageEnvelope<ZoneTransfer>>(
+        authToken,
+        {
+            method: "zone_getMyTransfers",
+            params: [
+                stripUndefined({
+                    account,
+                    cursor: params.cursor,
+                    limit: params.limit,
+                }),
+            ],
+        },
+        options,
+    );
 }
 
 export async function getZoneOrder(
-  authToken: Hex,
-  orderId: number | bigint | Hex,
-  options?: ZoneRpcFetchOptions,
+    authToken: Hex,
+    orderId: number | bigint | Hex,
+    options?: ZoneRpcFetchOptions,
 ): Promise<ZoneOrder> {
-  return privateRpcFetch<ZoneOrder>(
-    authToken,
-    {
-      method: "zone_getOrder",
-      params: [toRpcQuantity(orderId)],
-    },
-    options,
-  );
+    return privateRpcFetch<ZoneOrder>(
+        authToken,
+        {
+            method: "zone_getOrder",
+            params: [toRpcQuantity(orderId)],
+        },
+        options,
+    );
 }
 
 export async function getZoneWithdrawalStatus(
-  authToken: Hex,
-  txHashOrWithdrawalIndex: Hex | string,
-  options?: ZoneRpcFetchOptions,
-): Promise<ZoneWithdrawalStatus> {
-  return privateRpcFetch<ZoneWithdrawalStatus>(
-    authToken,
-    {
-      method: "zone_getWithdrawalStatus",
-      params: [txHashOrWithdrawalIndex],
-    },
-    options,
-  );
+    authToken: Hex,
+    txHashOrWithdrawalIndex: Hex | string,
+    options?: ZoneRpcFetchOptions,
+): Promise<ZoneWithdrawalStatus | null> {
+    return privateRpcFetch<ZoneWithdrawalStatus | null>(
+        authToken,
+        {
+            method: "zone_getWithdrawalStatus",
+            params: [txHashOrWithdrawalIndex],
+        },
+        options,
+    );
 }
 
 export async function listZoneBatches(
-  params: ZonePaginationParams = {},
-  options?: ZoneRpcFetchOptions,
+    params: ZonePaginationParams = {},
+    options?: ZoneRpcFetchOptions,
 ): Promise<ZoneBatchListResponse> {
-  const payload = stripUndefined({
-    cursor: params.cursor,
-    limit: params.limit,
-  });
-  const rpcParams = Object.keys(payload).length === 0 ? [] : [payload];
-  return publicRpcFetch<ZoneBatchListResponse>(
-    {
-      method: "zone_listBatches",
-      params: rpcParams,
-    },
-    options,
-  );
+    const payload = stripUndefined({
+        cursor: params.cursor,
+        limit: params.limit,
+    });
+    const rpcParams = Object.keys(payload).length === 0 ? [] : [payload];
+    return publicRpcFetch<ZoneBatchListResponse>(
+        {
+            method: "zone_listBatches",
+            params: rpcParams,
+        },
+        options,
+    );
 }
 
 export async function getZoneBatch(
-  batchNumber: number | bigint | Hex,
-  options?: ZoneRpcFetchOptions,
+    batchNumber: number | bigint | Hex,
+    options?: ZoneRpcFetchOptions,
 ): Promise<ZoneBatchSummary | null> {
-  return publicRpcFetch<ZoneBatchSummary | null>(
-    {
-      method: "zone_getBatch",
-      params: [toBatchNumberHex(batchNumber)],
-    },
-    options,
-  );
+    return publicRpcFetch<ZoneBatchSummary | null>(
+        {
+            method: "zone_getBatch",
+            params: [toBatchNumberHex(batchNumber)],
+        },
+        options,
+    );
 }
 
 export async function searchZoneBatch(
-  query: string,
-  options?: ZoneRpcFetchOptions,
+    query: string,
+    options?: ZoneRpcFetchOptions,
 ): Promise<ZoneBatchSummary | null> {
-  return publicRpcFetch<ZoneBatchSummary | null>(
-    {
-      method: "zone_searchBatch",
-      params: [query],
-    },
-    options,
-  );
+    return publicRpcFetch<ZoneBatchSummary | null>(
+        {
+            method: "zone_searchBatch",
+            params: [query],
+        },
+        options,
+    );
 }
 
 export interface ZoneMidpointHistoryParams extends ZonePaginationParams {
-  base: Address;
-  quote: Address;
-  interval?: string;
+    base: Address;
+    quote: Address;
+    interval?: string;
 }
 
 export async function getZoneMidpointHistory(
-  authToken: Hex,
-  params: ZoneMidpointHistoryParams,
-  options?: ZoneRpcFetchOptions,
+    authToken: Hex,
+    params: ZoneMidpointHistoryParams,
+    options?: ZoneRpcFetchOptions,
 ): Promise<ZoneMidpointHistoryResponse> {
-  const rpcParams: unknown[] = [
-    { base: params.base, quote: params.quote },
-    params.interval ?? "1m",
-  ];
-  if (params.cursor !== undefined) {
-    rpcParams.push(params.limit ?? 500, params.cursor);
-  } else if (params.limit !== undefined) {
-    rpcParams.push(params.limit);
-  }
-  return privateRpcFetch<ZoneMidpointHistoryResponse>(
-    authToken,
-    {
-      method: "zone_getMidpointHistory",
-      params: rpcParams,
-    },
-    options,
-  );
+    const rpcParams: unknown[] = [
+        { base: params.base, quote: params.quote },
+        params.interval ?? "1m",
+    ];
+    if (params.cursor !== undefined) {
+        rpcParams.push(params.limit ?? 500, params.cursor);
+    } else if (params.limit !== undefined) {
+        rpcParams.push(params.limit);
+    }
+    return privateRpcFetch<ZoneMidpointHistoryResponse>(
+        authToken,
+        {
+            method: "zone_getMidpointHistory",
+            params: rpcParams,
+        },
+        options,
+    );
 }
 
 /** Public (no-auth) midpoint history — drives the limit-mode chart enable
  *  without a wallet. */
 export async function getZonePublicMidpointHistory(
-  params: ZoneMidpointHistoryParams,
-  options?: ZoneRpcFetchOptions,
+    params: ZoneMidpointHistoryParams,
+    options?: ZoneRpcFetchOptions,
 ): Promise<ZoneMidpointHistoryResponse> {
-  const rpcParams: unknown[] = [
-    { base: params.base, quote: params.quote },
-    params.interval ?? "1m",
-  ];
-  if (params.cursor !== undefined) {
-    rpcParams.push(params.limit ?? 500, params.cursor);
-  } else if (params.limit !== undefined) {
-    rpcParams.push(params.limit);
-  }
-  return publicRpcFetch<ZoneMidpointHistoryResponse>(
-    {
-      method: "zone_getMidpointHistory",
-      params: rpcParams,
-    },
-    options,
-  );
+    const rpcParams: unknown[] = [
+        { base: params.base, quote: params.quote },
+        params.interval ?? "1m",
+    ];
+    if (params.cursor !== undefined) {
+        rpcParams.push(params.limit ?? 500, params.cursor);
+    } else if (params.limit !== undefined) {
+        rpcParams.push(params.limit);
+    }
+    return publicRpcFetch<ZoneMidpointHistoryResponse>(
+        {
+            method: "zone_getMidpointHistory",
+            params: rpcParams,
+        },
+        options,
+    );
 }

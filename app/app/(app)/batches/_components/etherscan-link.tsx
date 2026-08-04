@@ -2,17 +2,12 @@ import * as React from "react";
 import { Icon } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 import { truncateHash } from "@/lib/format";
+import { tempoTxUrl } from "@/lib/zone";
 
 /**
- * EtherscanLink — outbound link to a transaction or block on Etherscan.
- *
- * Wireframe-time the host is hard-coded to mainnet Etherscan. M6 swaps
- * this for a chain-aware resolver that picks the correct explorer based
- * on the connected chain ID.
+ * Outbound link to a transaction on the configured Tempo explorer.
  */
-const ETHERSCAN_TX_BASE = "https://etherscan.io/tx";
-
-export interface EtherscanTxLinkProps
+export interface TempoTxLinkProps
   extends Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, "children" | "href"> {
   hash: string;
   /** Optional override for the visible label; defaults to the truncated hash. */
@@ -21,18 +16,18 @@ export interface EtherscanTxLinkProps
   hideIcon?: boolean;
 }
 
-export function EtherscanTxLink({
+export function TempoTxLink({
   hash,
   label,
   hideIcon,
   className,
   onClick,
   ...rest
-}: EtherscanTxLinkProps) {
+}: TempoTxLinkProps) {
   const display = label ?? truncateHash(hash);
   return (
     <a
-      href={`${ETHERSCAN_TX_BASE}/${hash}`}
+      href={tempoTxUrl(hash)}
       target="_blank"
       rel="noreferrer noopener"
       onClick={(event) => {

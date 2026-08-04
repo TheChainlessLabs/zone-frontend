@@ -13,25 +13,25 @@ describe("lifecycle-copy", () => {
       "Submitted, waiting for the next batch sealing.",
     );
     expect(LIFECYCLE_COPY.sealed).toBe(
-      "Matched in batch — awaiting proof generation.",
+      "Included in a finalized zone block range.",
     );
     expect(LIFECYCLE_COPY.proven).toBe(
-      "Proof generated, awaiting L1 settlement.",
+      "The zone reports this batch proof as verified.",
     );
-    expect(LIFECYCLE_COPY.settled).toBe(
-      "Anchored on Ethereum L1. Funds usable for withdrawal.",
-    );
+    expect(LIFECYCLE_COPY.settled).toBe("Submitted to Tempo L1.");
+    expect(LIFECYCLE_COPY.submitted).toBe("Submitted to Tempo L1.");
     expect(LIFECYCLE_COPY["pending-deposit"]).toBe(
       "Awaiting on-chain confirmation.",
     );
     expect(LIFECYCLE_COPY["pending-withdrawal"]).toBe(
       "Awaiting batch sealing then L1 anchor.",
     );
-    expect(LIFECYCLE_COPY.failed).toBe(
-      "Settlement reverted on L1. Fills remain valid offchain — no action required.",
+    expect(LIFECYCLE_COPY["pending-batch"]).toBe(
+      "Zone blocks produced; awaiting Tempo L1 submission.",
     );
+    expect(LIFECYCLE_COPY.failed).toBe("Batch submission failed.");
     expect(LIFECYCLE_COPY.verified).toBe(
-      "Sealed and proven. Anchored on Ethereum L1.",
+      "Proof verified for the Tempo L1 submission.",
     );
   });
 
@@ -66,11 +66,10 @@ describe("lifecycle-copy", () => {
 
   it("maps every BatchStatus onto plain language", () => {
     expect(copyForBatchStatus("verified")).toBe(LIFECYCLE_COPY.verified);
+    expect(copyForBatchStatus("submitted")).toBe(LIFECYCLE_COPY.submitted);
     expect(copyForBatchStatus("failed")).toBe(LIFECYCLE_COPY.failed);
-    // pending batch surfaces the withdrawal-style "awaiting batch sealing
-    // then L1 anchor" line — same shape, different surface label.
     expect(copyForBatchStatus("pending")).toBe(
-      LIFECYCLE_COPY["pending-withdrawal"],
+      LIFECYCLE_COPY["pending-batch"],
     );
   });
 

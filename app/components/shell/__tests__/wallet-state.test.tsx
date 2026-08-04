@@ -6,7 +6,17 @@ import {
   it,
   vi,
 } from "vitest";
-import { act, cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
+import type { Address, Hex } from "viem";
+
+const wagmiMocks = vi.hoisted(() => ({
+  useConnect: vi.fn(),
+  useConnection: vi.fn(),
+  useConnectors: vi.fn(),
+  useDisconnect: vi.fn(),
+  useSwitchChain: vi.fn(),
+  useWalletClient: vi.fn(),
+}));
 
 // next/navigation's `useSearchParams` is mocked at module scope so the
 // provider can be driven without a real router. Tests mutate
@@ -15,24 +25,75 @@ let currentParams = new URLSearchParams();
 vi.mock("next/navigation", () => ({
   useSearchParams: () => currentParams,
 }));
+vi.mock("wagmi", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("wagmi")>()),
+  ...wagmiMocks,
+}));
 
 import {
   WalletStateProvider,
+  getWalletConnectionErrorMessage,
   truncateAddress,
   useWalletState,
   type WalletState,
   type WalletStateContextValue,
 } from "@/components/shell/WalletStateProvider";
+import {
+  OMEGA_ZONE,
+  OMEGA_ZONE_CHAIN_ID,
+  clearPersistedZoneRpcAuthToken,
+  encodeZoneRpcAuthFields,
+  persistZoneRpcAuthToken,
+  zoneSessionAccessKeyAuthorizationRequest,
+} from "@/lib/zone";
 
 const STORAGE_KEY = "omega:wallet-state";
+const CONNECTED_ADDRESS = "0xa513e6e4b8f2a923d98304ec87f64353c4d5c853";
+
+beforeEach(() => {
+  resetWagmiMocks();
+});
 
 afterEach(() => {
   cleanup();
   currentParams = new URLSearchParams();
+  clearPersistedZoneRpcAuthToken();
   if (typeof window !== "undefined") {
     window.localStorage.clear();
+    window.sessionStorage.clear();
   }
 });
+
+function resetWagmiMocks() {
+  wagmiMocks.useConnect.mockReturnValue({
+    connect: vi.fn(),
+    isPending: false,
+  });
+  wagmiMocks.useConnection.mockReturnValue({
+    address: undefined,
+    addresses: undefined,
+    chain: undefined,
+    chainId: undefined,
+    connector: undefined,
+    isConnected: false,
+    isConnecting: false,
+    isDisconnected: true,
+    isReconnecting: false,
+    status: "disconnected",
+  });
+  wagmiMocks.useConnectors.mockReturnValue([]);
+  wagmiMocks.useDisconnect.mockReturnValue({
+    disconnect: vi.fn(),
+    isPending: false,
+  });
+  wagmiMocks.useSwitchChain.mockReturnValue({
+    switchChain: vi.fn(),
+    isPending: false,
+  });
+  wagmiMocks.useWalletClient.mockReturnValue({
+    data: undefined,
+  });
+}
 
 function Probe({
   capture,
@@ -47,6 +108,17 @@ function Probe({
       {ctx.connector ?? ""}
     </div>
   );
+}
+
+function persistValidZoneAuthToken(account = CONNECTED_ADDRESS as Address) {
+  const now = Math.floor(Date.now() / 1000);
+  const fields = encodeZoneRpcAuthFields({
+    issuedAt: BigInt(now),
+    expiresAt: BigInt(now + 10 * 60),
+  });
+  const authToken = `0x${"11".repeat(65)}${fields.slice(2)}` as Hex;
+  persistZoneRpcAuthToken(authToken, account);
+  return authToken;
 }
 
 const CASES: Array<{
@@ -72,6 +144,24 @@ const CASES: Array<{
     param: "connecting",
     expected: "connecting",
     hasAddress: false,
+    chain: "Tempo Testnet (Moderato)",
+  },
+  {
+    param: "reviewing-login",
+    expected: "reviewing-login",
+    hasAddress: true,
+    chain: "Tempo Testnet (Moderato)",
+  },
+  {
+    param: "authenticating-zone",
+    expected: "authenticating-zone",
+    hasAddress: true,
+    chain: "Tempo Testnet (Moderato)",
+  },
+  {
+    param: "authorizing-session",
+    expected: "authorizing-session",
+    hasAddress: true,
     chain: "Tempo Testnet (Moderato)",
   },
   {
@@ -177,6 +267,24 @@ describe("WalletStateProvider — interactive flow", () => {
       "0xa513e6e4b8f2a923d98304ec87f64353c4d5c853"
     );
     expect(captured!.chainName).toBe("Tempo Testnet (Moderato)");
+  });
+
+  it("reviewLogin() opens the login review before connecting", () => {
+    let captured: WalletStateContextValue | null = null;
+
+    render(
+      <WalletStateProvider mode="mock">
+        <Probe capture={(ctx) => (captured = ctx)} />
+      </WalletStateProvider>
+    );
+
+    expect(captured!.state).toBe("disconnected");
+
+    act(() => {
+      captured!.reviewLogin();
+    });
+    expect(captured!.state).toBe("reviewing-login");
+    expect(captured!.connector).toBe("Tempo Wallet");
   });
 
   it("disconnect() resets to disconnected and clears connector", () => {
@@ -334,6 +442,114 @@ describe("WalletStateProvider — interactive flow", () => {
   });
 });
 
+describe("WalletStateProvider — Tempo-backed refresh", () => {
+  it("stops at the login review instead of prompting when wagmi reconnects", async () => {
+    const tempoConnector = {
+      id: "xyz.tempo",
+      name: "Tempo Wallet",
+    };
+    wagmiMocks.useConnection.mockReturnValue({
+      address: CONNECTED_ADDRESS,
+      addresses: [CONNECTED_ADDRESS],
+      chain: { name: "Tempo Testnet (Moderato)" },
+      chainId: OMEGA_ZONE_CHAIN_ID,
+      connector: tempoConnector,
+      isConnected: true,
+      isConnecting: false,
+      isDisconnected: false,
+      isReconnecting: false,
+      status: "connected",
+    });
+    wagmiMocks.useConnectors.mockReturnValue([tempoConnector]);
+
+    let captured: WalletStateContextValue | null = null;
+    render(
+      <WalletStateProvider>
+        <Probe capture={(ctx) => (captured = ctx)} />
+      </WalletStateProvider>,
+    );
+
+    await waitFor(() => {
+      expect(captured!.state).toBe("reviewing-login");
+      expect(captured!.errorMessage).toBeUndefined();
+    });
+  });
+
+  it("stays connected on refresh when auth token and session access key are usable", async () => {
+    const account = CONNECTED_ADDRESS as Address;
+    persistValidZoneAuthToken(account);
+    const fetchMock = vi.fn(async (_url: string, init?: RequestInit) => {
+      const request = JSON.parse(String(init?.body)) as { method: string };
+      const result =
+        request.method === "zone_getAuthorizationTokenInfo"
+          ? { account, expiresAt: "0xffffffff" }
+          : {
+              zoneId: `0x${OMEGA_ZONE.zoneId.toString(16)}`,
+              chainId: `0x${OMEGA_ZONE_CHAIN_ID.toString(16)}`,
+              zoneTokens: [],
+            };
+      return new Response(JSON.stringify({ result }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const accessKeyRequest = zoneSessionAccessKeyAuthorizationRequest();
+    const signer = {
+      request: vi.fn(),
+      store: {
+        getState: vi.fn(() => ({
+          accessKeys: [
+            {
+              access: account,
+              address:
+                "0x00000000000000000000000000000000000000aa" as Address,
+              chainId: OMEGA_ZONE_CHAIN_ID,
+              keyPair: {},
+              keyAuthorization: { chainId: BigInt(OMEGA_ZONE_CHAIN_ID) },
+              limits: accessKeyRequest.limits,
+              scopes: accessKeyRequest.scopes,
+              expiry: accessKeyRequest.expiry,
+            },
+          ],
+        })),
+      },
+    };
+    const tempoConnector = {
+      id: "xyz.tempo",
+      name: "Tempo Wallet",
+      getProvider: vi.fn(async () => signer),
+    };
+    wagmiMocks.useConnection.mockReturnValue({
+      address: CONNECTED_ADDRESS,
+      addresses: [CONNECTED_ADDRESS],
+      chain: { name: "Tempo Testnet (Moderato)" },
+      chainId: OMEGA_ZONE_CHAIN_ID,
+      connector: tempoConnector,
+      isConnected: true,
+      isConnecting: false,
+      isDisconnected: false,
+      isReconnecting: false,
+      status: "connected",
+    });
+    wagmiMocks.useConnectors.mockReturnValue([tempoConnector]);
+
+    let captured: WalletStateContextValue | null = null;
+    render(
+      <WalletStateProvider>
+        <Probe capture={(ctx) => (captured = ctx)} />
+      </WalletStateProvider>,
+    );
+
+    await waitFor(() => {
+      expect(tempoConnector.getProvider).toHaveBeenCalled();
+    });
+    expect(captured!.state).toBe("connected");
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(signer.request).not.toHaveBeenCalled();
+  });
+});
+
 describe("useWalletState — outside provider", () => {
   it("throws when used without a provider", () => {
     // Suppress React's expected error log + jsdom's unhandled-error event
@@ -350,6 +566,26 @@ describe("useWalletState — outside provider", () => {
       window.removeEventListener("error", swallow, true);
       errorSpy.mockRestore();
     }
+  });
+});
+
+describe("getWalletConnectionErrorMessage", () => {
+  it("turns WebAuthn TLS certificate failures into an actionable origin message", () => {
+    expect(
+      getWalletConnectionErrorMessage(
+        new Error(
+          "Failed to request credential. Details: WebAuthn is not supported on sites with TLS certificate errors."
+        )
+      )
+    ).toBe(
+      "Tempo Wallet passkeys require a trusted browser origin. Open Omega on http://localhost for local dev, or use HTTPS with a valid trusted certificate."
+    );
+  });
+
+  it("preserves unrelated connector errors", () => {
+    expect(
+      getWalletConnectionErrorMessage(new Error("User rejected the request."))
+    ).toBe("User rejected the request.");
   });
 });
 

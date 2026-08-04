@@ -20,7 +20,7 @@ export type MarketPair =
   | "USDT/EURC"
   | "ETH/USDC"
   | "BTC/USDC"
-  | "OALPHA/PATH.USD";
+  | "ALPHAUSD/PATH.USD";
 
 export type PageState =
   | "default"
@@ -51,12 +51,16 @@ export interface OrderFixture {
   type: OrderType;
   /** Decimal string of base-token amount (e.g. "5000.00" USDC). */
   amount: string;
+  /** Exact integer base-token units when sourced from a transaction or index. */
+  amountRaw?: string;
   /** Decimal string of QUOTE-per-1-BASE price (e.g. "0.9215"). */
   price: string;
   filledPercent: number;
   status: OrderStatus;
   /** ISO8601. */
   submittedAt: string;
+  /** Zone tx hash that created the order, present for local pending rows and backend rows when available. */
+  txHash?: `0x${string}`;
 }
 
 export interface FillFixture {
@@ -64,8 +68,11 @@ export interface FillFixture {
   orderId: string;
   pair: MarketPair;
   side: Side;
+  type: OrderType;
   /** Decimal string of base-token amount filled. */
   amount: string;
+  /** Exact integer base-token units when sourced from a transaction or index. */
+  amountRaw?: string;
   /** Decimal string of midpoint price the fill cleared at. */
   price: string;
   /** ISO8601. */
@@ -79,49 +86,15 @@ export interface FillFixture {
   txHash?: `0x${string}` | null;
 }
 
-export type BatchStatus = "pending" | "verified" | "failed";
-
-export interface BatchFixture {
-  /** Sequential batch number (e.g. 4821). */
-  number: number;
-  /** Inclusive Omega Zone block range, present for local pending ranges. */
-  zoneBlockFrom?: string;
-  zoneBlockTo?: string;
-  /** Hex digest of batch root (0x… 32-byte). */
-  root: `0x${string}`;
-  status: BatchStatus;
-  /** ISO8601 of seal time. */
-  sealedAt: string;
-  /** Number of orders included. */
-  orderCount: number;
-  /** Number of fills included. */
-  fillCount: number;
-  /** Hex tx hash if settled, null otherwise. */
-  settlementTx: `0x${string}` | null;
-  /** Optional proof reference for verified batches. */
-  proofRef?: `0x${string}`;
-  /**
-   * Aggregate pairs that cleared in this batch. Aggregate-only — never
-   * paired with counterparty IDs. The list view renders a chip cluster;
-   * the detail page renders a pair-level fill breakdown.
-   */
-  pairs?: MarketPair[];
-  /**
-   * Aggregate USD-equivalent volume across all fills, decimal string.
-   * Fixture-only field for the wireframe; M6 sources from the price
-   * oracle.
-   */
-  volumeUsd?: string;
-  /**
-   * Human-readable failure reason for `status: "failed"` batches. Surfaced
-   * in the detail-page banner. Aggregate context only — never references
-   * an individual order/fill counterparty.
-   */
-  failureReason?: string;
-}
-
 export interface BalanceFixture {
-  token: "USDC" | "EURC" | "USDT" | "ETH" | "BTC" | "PATH.USD" | "OALPHA";
+  token:
+    | "USDC"
+    | "EURC"
+    | "USDT"
+    | "ETH"
+    | "BTC"
+    | "PATH.USD"
+    | "ALPHAUSD";
   /** Decimal string. Available to trade. */
   available: string;
   /** Decimal string. Locked in open orders. */
@@ -132,7 +105,7 @@ export interface BalanceFixture {
 
 export type DepositStatus = Extract<
   StatusState,
-  "pending" | "settled" | "failed"
+  "pending" | "credited" | "failed"
 >;
 
 export interface DepositFixture {
@@ -158,8 +131,14 @@ export interface WithdrawalFixture {
   status: WithdrawalStatus;
   /** ISO8601. */
   initiatedAt: string;
-  /** L1 tx hash if broadcast, null if still awaiting sig. */
+  /** L2 zone tx hash if broadcast, null if still awaiting sig. NOT the L1
+   *  settlement tx — link `l1SettlementTxHash` to the L1 explorer instead. */
   txHash: `0x${string}` | null;
+  /** Portal batch index the withdrawal was grouped into, once batched. */
+  withdrawalBatchIndex?: string;
+  /** L1 tx that settled the withdrawal on Tempo (processWithdrawal, falling
+   *  back to the submitBatch tx). Null until the batch lands on L1. */
+  l1SettlementTxHash?: `0x${string}` | null;
 }
 
 export interface OrderBookLevel {
@@ -193,6 +172,8 @@ export interface PortfolioFixture {
   totalValueUSD: string;
   balances: BalanceFixture[];
   openOrders: OrderFixture[];
+  /** Complete order-submission history used by Activity; defaults to openOrders for fixtures. */
+  activityOrders?: OrderFixture[];
   recentFills: FillFixture[];
   deposits: DepositFixture[];
   withdrawals: WithdrawalFixture[];
@@ -200,32 +181,11 @@ export interface PortfolioFixture {
   error?: ErrorEnvelope;
 }
 
-export interface BatchesListFixture {
-  batches: BatchFixture[];
-  isLoading?: boolean;
-  error?: ErrorEnvelope;
-}
-
-export interface BatchesDetailFixture {
-  batch: BatchFixture;
-  /** Orders included in this batch. */
-  orders: OrderFixture[];
-  /** Fills produced by this batch. */
-  fills: FillFixture[];
-  isLoading?: boolean;
-  error?: ErrorEnvelope;
-}
-
-export interface BatchesSearchFixture {
-  query: string;
-  results: BatchFixture[];
-}
-
 /**
  * Demo Omega Zone snapshot for the Settings surface. Backend is not wired
  * yet, so the Settings page renders this fixture instead of the live private
  * RPC — never empty `Authorize` / `Not connected` / `Pending` states.
- * Denominated in OALPHA / PATH.USD (the product tokens).
+ * Denominated in ALPHAUSD / PATH.USD (the product tokens).
  */
 export interface AccountZoneFixture {
   /** Whether the private RPC session is authorized (demo: always true). */
@@ -233,9 +193,9 @@ export interface AccountZoneFixture {
   /** Human-readable settlement chain name. */
   chainName: string;
   /** Decimal-string zone balances, keyed by product token. */
-  zoneBalances: { pathUsd: string; oalpha: string };
+  zoneBalances: { pathUsd: string; alphaUsd: string };
   /** Decimal-string darkpool balances, keyed by product token. */
-  darkpoolBalances: { pathUsd: string; oalpha: string };
+  darkpoolBalances: { pathUsd: string; alphaUsd: string };
 }
 
 export interface AccountFixture {
@@ -281,6 +241,7 @@ export type WithdrawModalState =
   | "idle"
   | "signing"
   | "pending"
+  | "queued"
   | "success"
   | "failed";
 
@@ -289,6 +250,10 @@ export interface WithdrawModalFixture {
   token: "PATH.USD";
   amount: string;
   txHash?: `0x${string}`;
+  /** Portal batch index the withdrawal will settle in, once known. */
+  withdrawalBatchIndex?: string;
+  /** L1 settlement tx (processWithdrawal / submitBatch). Null until settled. */
+  l1SettlementTxHash?: `0x${string}` | null;
   error?: ErrorEnvelope;
 }
 

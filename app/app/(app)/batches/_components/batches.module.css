@@ -1,13 +1,13 @@
 /* Batches explorer — surface-local motion.
    Co-located CSS Module so these classes stay scoped to the settlement
    explorer and never touch the shared globals.css surface. Mirrors the
-   design-kit Batches.jsx personality layer: the ~12s live pulse, the
-   fresh-row seal flash, the list⇄detail slide, the skeleton shimmer.
+   design-kit Batches.jsx personality layer: the connection/status pulse,
+   fresh-row seal flash, the list⇄detail slide, and skeleton shimmer.
    Every animation is composite-only and collapses under reduced motion
    (the global prefers-reduced-motion override in globals.css also catches
    these as a backstop). */
 
-/* Live pulse — the heartbeat dot on the explorer header + lifecycle "current"
+/* Status pulse — the status dot on the explorer header + lifecycle "current"
    node. Soft opacity breathe, no layout. */
 @keyframes batchesPulse {
   0%,

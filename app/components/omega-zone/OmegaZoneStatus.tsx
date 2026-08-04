@@ -4,7 +4,6 @@ import * as React from "react";
 import { formatUnits, type Address, type Hex } from "viem";
 import {
   useAccount,
-  useSignMessage,
   useSwitchChain,
   useWalletClient,
 } from "wagmi";
@@ -19,15 +18,13 @@ import {
   OMEGA_ZONE_ADDRESSES,
   OMEGA_ZONE_CHAIN_ID,
   OMEGA_ZONE_CHAIN_NAME,
-  buildZoneRpcAuthToken,
-  getTempoNativeAuthSigner,
+  getOrCreateZoneRpcAuthToken,
   getZoneAuthorizationTokenInfo,
   getZoneInfo,
-  persistZoneRpcAuthToken,
-  readPersistedZoneRpcAuthToken,
   readPrivateDarkpoolBalance,
-  readPrivateZoneOalphaBalance,
+  readPrivateZoneAlphaUsdBalance,
   readPrivateZonePathUsdBalance,
+  resolveZoneTransactionSigner,
   type AuthorizationTokenInfoResponse,
   type ZoneInfoResponse,
 } from "@/lib/zone";
@@ -37,23 +34,23 @@ interface ZoneSnapshot {
   authInfo: AuthorizationTokenInfoResponse;
   zoneInfo: ZoneInfoResponse;
   pathUsdBalance: bigint;
-  oalphaBalance: bigint;
+  alphaUsdBalance: bigint;
   darkpoolPathUsdBalance: bigint;
-  darkpoolOalphaBalance: bigint;
+  darkpoolAlphaUsdBalance: bigint;
 }
 
 export function OmegaZoneStatus() {
   const account = useAccount();
   const { data: walletClient } = useWalletClient();
-  const signMessage = useSignMessage();
   const switchChain = useSwitchChain();
 
   const [snapshot, setSnapshot] = React.useState<ZoneSnapshot | null>(null);
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
+  const [isSigning, setIsSigning] = React.useState(false);
 
   const connectedAddress = account.address;
   const onZone = account.chainId === OMEGA_ZONE_CHAIN_ID;
-  const busy = signMessage.isPending;
+  const busy = isSigning;
 
   const authorize = React.useCallback(async () => {
     if (!connectedAddress) {
@@ -62,38 +59,35 @@ export function OmegaZoneStatus() {
     }
 
     setErrorMessage(null);
+    setIsSigning(true);
     try {
-      const authToken =
-        readPersistedZoneRpcAuthToken(connectedAddress) ??
-        (await buildZoneRpcAuthToken({
-          account: connectedAddress,
-          signMessage: ({ account: signerAccount, message }) =>
-            signMessage.signMessageAsync({
-              account: signerAccount,
-              message,
-            }),
-          nativeSigner: getTempoNativeAuthSigner(walletClient),
-        }));
-      persistZoneRpcAuthToken(authToken, connectedAddress);
+      const authToken = await getOrCreateZoneRpcAuthToken({
+        account: connectedAddress,
+        getProvider: () =>
+          resolveZoneTransactionSigner({
+            connector: account.connector,
+            fallback: walletClient,
+          }),
+      });
 
       const [
         authInfo,
         zoneInfo,
         pathUsdBalance,
-        oalphaBalance,
+        alphaUsdBalance,
         darkpoolPathUsdBalance,
-        darkpoolOalphaBalance,
+        darkpoolAlphaUsdBalance,
       ] =
         await Promise.all([
           getZoneAuthorizationTokenInfo(authToken),
           getZoneInfo(authToken),
           readPrivateZonePathUsdBalance(authToken, connectedAddress),
-          readPrivateZoneOalphaBalance(authToken, connectedAddress),
+          readPrivateZoneAlphaUsdBalance(authToken, connectedAddress),
           readPrivateDarkpoolBalance(authToken, connectedAddress),
           readPrivateDarkpoolBalance(
             authToken,
             connectedAddress,
-            OMEGA_ZONE_ADDRESSES.oalpha,
+            OMEGA_ZONE_ADDRESSES.alphaUsd,
           ),
         ]);
 
@@ -102,15 +96,17 @@ export function OmegaZoneStatus() {
         authInfo,
         zoneInfo,
         pathUsdBalance,
-        oalphaBalance,
+        alphaUsdBalance,
         darkpoolPathUsdBalance,
-        darkpoolOalphaBalance,
+        darkpoolAlphaUsdBalance,
       });
     } catch (error) {
       setErrorMessage(getErrorMessage(error));
       setSnapshot(null);
+    } finally {
+      setIsSigning(false);
     }
-  }, [connectedAddress, signMessage, walletClient]);
+  }, [account.connector, connectedAddress, walletClient]);
 
   const switchToZone = React.useCallback(() => {
     switchChain.switchChain({ chainId: OMEGA_ZONE_CHAIN_ID });
@@ -143,16 +139,16 @@ export function OmegaZoneStatus() {
           value={snapshot ? formatToken(snapshot.pathUsdBalance, "PATH.USD") : "Authorize"}
         />
         <BalanceField
-          label="OALPHA zone balance"
-          value={snapshot ? formatToken(snapshot.oalphaBalance, "OALPHA") : "Authorize"}
+          label="ALPHAUSD zone balance"
+          value={snapshot ? formatToken(snapshot.alphaUsdBalance, "ALPHAUSD") : "Authorize"}
         />
         <BalanceField
           label="PATH.USD darkpool"
           value={snapshot ? formatToken(snapshot.darkpoolPathUsdBalance, "PATH.USD") : "Authorize"}
         />
         <BalanceField
-          label="OALPHA darkpool"
-          value={snapshot ? formatToken(snapshot.darkpoolOalphaBalance, "OALPHA") : "Authorize"}
+          label="ALPHAUSD darkpool"
+          value={snapshot ? formatToken(snapshot.darkpoolAlphaUsdBalance, "ALPHAUSD") : "Authorize"}
         />
       </div>
 
@@ -160,7 +156,7 @@ export function OmegaZoneStatus() {
         <AddressLine label="Portal" value={OMEGA_ZONE_ADDRESSES.portal} />
         <AddressLine label="Darkpool" value={OMEGA_ZONE_ADDRESSES.darkpool} />
         <AddressLine label="PATH.USD" value={OMEGA_ZONE_ADDRESSES.pathUsd} />
-        <AddressLine label="OALPHA" value={OMEGA_ZONE_ADDRESSES.oalpha} />
+        <AddressLine label="ALPHAUSD" value={OMEGA_ZONE_ADDRESSES.alphaUsd} />
       </div>
 
       {snapshot ? (

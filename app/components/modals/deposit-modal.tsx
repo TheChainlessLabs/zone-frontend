@@ -12,14 +12,15 @@ import { tempoTxUrl } from "@/lib/zone";
 import { ModalShell } from "./modal-shell";
 
 /**
- * DepositModal — bridge PATH.USD from Tempo L1 into Omega Zone.
+ * DepositModal — bridge supported private-alpha tokens from Tempo L1 into Omega Zone.
  *
  * State machine:
  *   idle       — picker, amount entry, fee summary, two CTAs
  *   approving  — Sign permit pending in wallet
  *   depositing — Sign deposit pending in wallet
  *   pending    — zone sequencer waiting for L1 confirmation (~30s)
- *   success    — deposit credited; tx hash link
+ *   queued     — L1 confirmed; zone credit still pending
+ *   success    — deposit credited in zone; tx hash link
  *   failed     — wallet rejected or zone RPC error
  *
  * Voice: "Sign permit" / "Sign deposit" — never "approve" /
@@ -30,12 +31,13 @@ export type DepositState =
   | "approving"
   | "depositing"
   | "pending"
+  | "queued"
   | "success"
   | "failed";
 
-export type DepositToken = "PATH.USD";
+export type DepositToken = "PATH.USD" | "ALPHAUSD";
 
-const DEPOSIT_TOKENS: DepositToken[] = ["PATH.USD"];
+const DEPOSIT_TOKENS: DepositToken[] = ["PATH.USD", "ALPHAUSD"];
 const PERCENT_SHORTCUTS = [25, 50, 75] as const;
 
 export interface DepositModalProps {
@@ -46,7 +48,7 @@ export interface DepositModalProps {
   amount?: string;
   /** Wallet balance in the selected token, formatted. */
   walletBalance?: string;
-  /** Network fee in USD, formatted. */
+  /** Network fee, formatted in Tempo native USD units. */
   networkFeeUsd?: string;
   /** True once the permit signature has landed. Greys out the first CTA. */
   permitSigned?: boolean;
@@ -66,7 +68,7 @@ export function DepositModal({
   token = "PATH.USD",
   amount = "",
   walletBalance = "12,500.00",
-  networkFeeUsd = "$0.42",
+  networkFeeUsd = "—",
   permitSigned = false,
   txHash = "0x9f…3c4a",
   errorMessage = "Wallet rejected the signature. Try again or check your wallet.",
@@ -94,7 +96,7 @@ export function DepositModal({
         if (!next && !isBusy) onClose();
       }}
       title="Deposit"
-      description="Bridge PATH.USD from Tempo L1 into Omega Zone."
+      description={`Bridge ${token} from Tempo L1 into Omega Zone.`}
     >
       <div className="flex flex-col gap-5">
         {/* Chain selector — locked to Tempo L1 for v0 */}
@@ -199,7 +201,7 @@ export function DepositModal({
         <DepositStateSurface state={state} txHash={txHash} message={errorMessage} />
 
         {/* CTAs */}
-        {state !== "success" ? (
+        {state !== "success" && state !== "queued" ? (
           <div className="flex flex-col gap-2 sm:flex-row">
             <Button
               variant="outline"
@@ -266,7 +268,29 @@ function DepositStateSurface({
   if (state === "success") {
     return (
       <div className="flex items-center justify-between gap-3 rounded-[var(--radius-md)] border border-[var(--border)] p-3">
-        <Status state="settled" />
+        <Status state="credited" />
+        <a
+          href={tempoTxUrl(txHash)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 font-mono text-xs text-[var(--foreground)] underline-offset-4 hover:underline"
+        >
+          {txHash}
+          <Icon.External size={12} aria-hidden />
+        </a>
+      </div>
+    );
+  }
+
+  if (state === "queued") {
+    return (
+      <div className="flex flex-col gap-2 rounded-[var(--radius-md)] border border-[var(--border)] p-3">
+        <div className="flex items-start gap-3">
+          <Status state="pending" label="Awaiting zone credit" />
+          <span className="text-xs leading-relaxed text-[var(--muted-foreground)]">
+            Confirmed on Tempo. Waiting for Omega Zone to credit your balance.
+          </span>
+        </div>
         <a
           href={tempoTxUrl(txHash)}
           target="_blank"

@@ -28,9 +28,17 @@ import { ModalShell } from "./modal-shell";
  * State machine:
  *   idle    — recipient + amount entry
  *   signing — Sign withdrawal pending
- *   pending — zone outbox processing
- *   success — withdrawal queued; tx hash link
+ *   pending — zone outbox processing (L2 tx awaiting receipt)
+ *   queued  — L2 confirmed; withdrawal is in a batch awaiting L1 settlement
+ *   success — withdrawal processed on L1 (settlement tx link shown)
  *   failed  — wallet rejected or zone RPC error
+ *
+ * The terminal state for a fresh withdrawal is almost always `queued`: the
+ * L2 request lands instantly but L1 settlement only happens once the
+ * sequencer posts the containing batch to Tempo, which takes minutes to
+ * hours. `success`/Settled is reserved for when `processed` is already
+ * reported. The L2 zone tx hash is never linked to the L1 explorer — only
+ * `l1SettlementTxHash` is — because the L2 hash does not resolve there.
  *
  * Uses the M2.10 Form primitive + zod for the recipient address validator.
  * Microcopy follows omega-docs/03-brand/messaging.md "[What happened.]
@@ -40,6 +48,7 @@ export type WithdrawState =
   | "idle"
   | "signing"
   | "pending"
+  | "queued"
   | "success"
   | "failed";
 
@@ -68,15 +77,24 @@ export interface WithdrawModalProps {
   onClose: () => void;
   state: WithdrawState;
   token?: WithdrawToken;
+  /** Recipient prefilled whenever a new withdrawal begins. */
+  defaultRecipient?: string;
   /** Available balance in the selected token, formatted. */
   available?: string;
-  /** Network fee in USD, formatted. */
+  /** Network fee, formatted in zone native USD units. */
   networkFeeUsd?: string;
   /** Privacy fee in USD, formatted. Pass empty string to omit. */
   privacyFeeUsd?: string;
   txHash?: string;
+  /** Portal batch index the withdrawal was grouped into, once batched. */
+  withdrawalBatchIndex?: string;
+  /** L1 settlement tx (processWithdrawal, falling back to submitBatch).
+   *  Linked to the Tempo L1 explorer in the `success` state. Null/undefined
+   *  until the batch lands on L1. */
+  l1SettlementTxHash?: string;
   errorMessage?: string;
   onTokenChange?: (token: WithdrawToken) => void;
+  onValuesChange?: (form: WithdrawForm) => void;
   onSubmit?: (form: WithdrawForm) => void;
   onRetry?: () => void;
 }
@@ -86,18 +104,22 @@ export function WithdrawModal({
   onClose,
   state,
   token = "PATH.USD",
+  defaultRecipient = "",
   available = "9,820.00",
-  networkFeeUsd = "$0.42",
+  networkFeeUsd = "—",
   privacyFeeUsd = "$0.10",
   txHash = "0x9f…3c4a",
+  withdrawalBatchIndex,
+  l1SettlementTxHash,
   errorMessage = "Wallet rejected the signature. Try again or check your wallet.",
   onTokenChange,
+  onValuesChange,
   onSubmit,
   onRetry,
 }: WithdrawModalProps) {
   const form = useForm<WithdrawForm>({
     resolver: zodResolver(withdrawSchema),
-    defaultValues: { recipient: "", amount: "" },
+    defaultValues: { recipient: defaultRecipient, amount: "" },
   });
 
   const amountValue = form.watch("amount");
@@ -108,6 +130,22 @@ export function WithdrawModal({
   }, [amountValue]);
 
   const isBusy = state === "signing" || state === "pending";
+  const isTerminal = state === "queued" || state === "success";
+
+  React.useEffect(() => {
+    const subscription = form.watch((values) => {
+      onValuesChange?.({
+        recipient: values.recipient ?? "",
+        amount: values.amount ?? "",
+      });
+    });
+    return () => subscription.unsubscribe();
+  }, [form, onValuesChange]);
+
+  React.useEffect(() => {
+    if (!open) return;
+    form.reset({ recipient: defaultRecipient, amount: "" });
+  }, [defaultRecipient, form, open]);
 
   return (
     <ModalShell
@@ -162,7 +200,7 @@ export function WithdrawModal({
                     inputMode="decimal"
                     placeholder="0.00"
                     className="font-mono tabular-nums"
-                    disabled={isBusy || state === "success"}
+                    disabled={isBusy || isTerminal}
                   />
                 </FormControl>
                 <div className="flex justify-end">
@@ -175,7 +213,7 @@ export function WithdrawModal({
                         shouldValidate: true,
                       })
                     }
-                    disabled={isBusy || state === "success"}
+                    disabled={isBusy || isTerminal}
                   >
                     Max
                   </Button>
@@ -199,7 +237,7 @@ export function WithdrawModal({
                     {...field}
                     placeholder="0x…"
                     className="font-mono"
-                    disabled={isBusy || state === "success"}
+                    disabled={isBusy || isTerminal}
                   />
                 </FormControl>
                 <FormMessage />
@@ -228,10 +266,23 @@ export function WithdrawModal({
           </dl>
 
           {/* State surface */}
-          <WithdrawStateSurface state={state} txHash={txHash} message={errorMessage} />
+          <WithdrawStateSurface
+            state={state}
+            withdrawalBatchIndex={withdrawalBatchIndex}
+            l1SettlementTxHash={l1SettlementTxHash}
+            message={errorMessage}
+          />
 
           {/* CTA */}
-          {state !== "success" ? (
+          {isTerminal ? (
+            <Button
+              type="button"
+              onClick={onClose}
+              className="min-h-[44px] md:min-h-0"
+            >
+              Done
+            </Button>
+          ) : (
             <Button
               type={state === "failed" ? "button" : "submit"}
               onClick={state === "failed" ? onRetry : undefined}
@@ -239,14 +290,6 @@ export function WithdrawModal({
               className="min-h-[44px] md:min-h-0"
             >
               {state === "failed" ? "Retry" : "Sign withdrawal"}
-            </Button>
-          ) : (
-            <Button
-              type="button"
-              onClick={onClose}
-              className="min-h-[44px] md:min-h-0"
-            >
-              Done
             </Button>
           )}
         </form>
@@ -257,11 +300,13 @@ export function WithdrawModal({
 
 function WithdrawStateSurface({
   state,
-  txHash,
+  withdrawalBatchIndex,
+  l1SettlementTxHash,
   message,
 }: {
   state: WithdrawState;
-  txHash: string;
+  withdrawalBatchIndex?: string;
+  l1SettlementTxHash?: string;
   message: string;
 }) {
   if (state === "idle") return null;
@@ -289,19 +334,41 @@ function WithdrawStateSurface({
     );
   }
 
+  // L2 request confirmed; withdrawal is grouped into a portal batch and is
+  // awaiting L1 settlement. This is the normal terminal state — never say
+  // "Settled" here, and never link the L2 zone tx hash to the L1 explorer.
+  if (state === "queued") {
+    return (
+      <div className="flex flex-col gap-2 rounded-[var(--radius-md)] border border-[var(--border)] p-3">
+        <div className="flex items-start gap-3">
+          <Status state="pending" label="Awaiting L1 settlement" />
+          <span className="text-xs leading-relaxed text-[var(--muted-foreground)]">
+            {withdrawalBatchIndex
+              ? `Confirmed on Omega Zone. Settling in batch #${withdrawalBatchIndex} — funds release on Tempo L1 once the batch posts.`
+              : "Confirmed on Omega Zone. Funds release on Tempo L1 once the next batch posts."}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  // Withdrawal processed on L1. Link the L1 settlement tx (not the L2 zone
+  // hash) to the Tempo L1 explorer — the L2 hash does not resolve there.
   if (state === "success") {
     return (
       <div className="flex items-center justify-between gap-3 rounded-[var(--radius-md)] border border-[var(--border)] p-3">
         <Status state="settled" />
-        <a
-          href={tempoTxUrl(txHash)}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 font-mono text-xs text-[var(--foreground)] underline-offset-4 hover:underline"
-        >
-          {txHash}
-          <Icon.External size={12} aria-hidden />
-        </a>
+        {l1SettlementTxHash ? (
+          <a
+            href={tempoTxUrl(l1SettlementTxHash)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 font-mono text-xs text-[var(--foreground)] underline-offset-4 hover:underline"
+          >
+            {l1SettlementTxHash}
+            <Icon.External size={12} aria-hidden />
+          </a>
+        ) : null}
       </div>
     );
   }

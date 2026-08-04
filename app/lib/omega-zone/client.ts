@@ -1,6 +1,6 @@
 import type { Address, Hex } from "viem";
 
-import { OMEGA_ZONE_ADDRESSES } from "./config";
+import { OMEGA_ZONE, OMEGA_ZONE_ADDRESSES } from "./config";
 import {
   getZoneAuthorizationTokenInfo,
   getZoneDepositStatus,
@@ -8,7 +8,7 @@ import {
   readPrivateBestAsk,
   readPrivateBestBid,
   readPrivateDarkpoolBalance,
-  readPrivateZoneOalphaBalance,
+  readPrivateZoneAlphaUsdBalance,
   readPrivateZonePathUsdBalance,
   tempoL1Client,
   type PriceLevel,
@@ -24,9 +24,9 @@ export interface OmegaZoneClientOptions extends ZoneRpcFetchOptions {
 export interface OmegaZoneBalances {
   l1PathUsd: bigint;
   zonePathUsd: bigint;
-  zoneOalpha: bigint;
+  zoneAlphaUsd: bigint;
   darkpoolPathUsd: bigint;
-  darkpoolOalpha: bigint;
+  darkpoolAlphaUsd: bigint;
 }
 
 export interface OmegaZoneTopOfBook {
@@ -47,12 +47,35 @@ export async function getOmegaZoneMetadata({
   return { authorization, zone };
 }
 
+export async function verifyOmegaZoneAuthToken({
+  authToken,
+  account,
+}: {
+  authToken: Hex;
+  account: Address;
+}) {
+  const metadata = await getOmegaZoneMetadata({ authToken });
+  if (metadata.authorization.account.toLowerCase() !== account.toLowerCase()) {
+    throw new Error("The zone token was signed by a different wallet account.");
+  }
+
+  const zoneId = Number(BigInt(metadata.zone.zoneId));
+  const chainId = Number(BigInt(metadata.zone.chainId));
+  if (zoneId !== OMEGA_ZONE.zoneId || chainId !== OMEGA_ZONE.chainId) {
+    throw new Error(
+      `Omega Zone metadata mismatch. Configured zone ${OMEGA_ZONE.zoneId} / chain ${OMEGA_ZONE.chainId}, but the private RPC returned zone ${zoneId} / chain ${chainId}.`,
+    );
+  }
+
+  return metadata;
+}
+
 export async function getOmegaZoneBalances({
   authToken,
   account,
   ...options
 }: OmegaZoneClientOptions): Promise<OmegaZoneBalances> {
-  const [l1PathUsd, zonePathUsd, zoneOalpha, darkpoolPathUsd, darkpoolOalpha] =
+  const [l1PathUsd, zonePathUsd, zoneAlphaUsd, darkpoolPathUsd, darkpoolAlphaUsd] =
     await Promise.all([
     tempoL1Client.readContract({
       address: OMEGA_ZONE_ADDRESSES.pathUsd,
@@ -61,23 +84,23 @@ export async function getOmegaZoneBalances({
       args: [account],
     }) as Promise<bigint>,
     readPrivateZonePathUsdBalance(authToken, account, options),
-    readPrivateZoneOalphaBalance(authToken, account, options),
+    readPrivateZoneAlphaUsdBalance(authToken, account, options),
     readPrivateDarkpoolBalance(authToken, account, undefined, options),
     readPrivateDarkpoolBalance(
       authToken,
       account,
-      OMEGA_ZONE_ADDRESSES.oalpha,
+      OMEGA_ZONE_ADDRESSES.alphaUsd,
       options,
     ),
   ]);
 
-  return { l1PathUsd, zonePathUsd, zoneOalpha, darkpoolPathUsd, darkpoolOalpha };
+  return { l1PathUsd, zonePathUsd, zoneAlphaUsd, darkpoolPathUsd, darkpoolAlphaUsd };
 }
 
 export async function getOmegaZoneTopOfBook({
   authToken,
   account,
-  base = OMEGA_ZONE_ADDRESSES.oalpha,
+  base = OMEGA_ZONE_ADDRESSES.alphaUsd,
   ...options
 }: OmegaZoneClientOptions & {
   base?: Address;
@@ -125,7 +148,9 @@ export async function waitForOmegaZoneDeposit({
     await delay(pollIntervalMs);
   }
 
-  throw new Error("Deposit is still pending in Omega Zone. Refresh in a moment.");
+  throw new Error(
+    "Deposit is confirmed on Tempo and waiting for Omega Zone batch settlement.",
+  );
 }
 
 function delay(ms: number) {

@@ -8,6 +8,9 @@
  *   disconnected     → outline "Tempo wallet" button (opens TempoWalletModal)
  *   signing-up /
  *   connecting       → outline button with spinner + "Opening Tempo"
+ *   reviewing-login  → outline button with "Finish login"
+ *   authenticating-zone → outline button with spinner + "Signing auth"
+ *   authorizing-session → outline button with spinner + "Authorizing session"
  *   wrong-network    → destructive "Switch network" CTA + warning glyph
  *   no-nft-pass      → outline "Pass required" link to onboarding info
  *   connected        → DropdownMenu with truncated address + chain dot
@@ -60,10 +63,19 @@ export function WalletStatus() {
     openRequested ||
     state === "signing-up" ||
     state === "connecting" ||
+    state === "reviewing-login" ||
+    state === "authenticating-zone" ||
+    state === "authorizing-session" ||
     Boolean(errorMessage);
   const modalState =
     errorMessage
       ? ("failed" as const)
+      : state === "reviewing-login"
+      ? ("reviewing-login" as const)
+      : state === "authenticating-zone"
+      ? ("authenticating-zone" as const)
+      : state === "authorizing-session"
+      ? ("authorizing-session" as const)
       : state === "signing-up" || state === "connecting"
       ? ("connecting" as const)
       : state === "connected"
@@ -84,6 +96,10 @@ export function WalletStatus() {
   }, [wallet]);
 
   const handleSignIn = React.useCallback(() => {
+    wallet.connect("Tempo Wallet");
+  }, [wallet]);
+
+  const handleContinue = React.useCallback(() => {
     wallet.connect("Tempo Wallet");
   }, [wallet]);
 
@@ -144,6 +160,44 @@ export function WalletStatus() {
           >
             <ConnectingSpinner />
             <span>Opening Tempo...</span>
+          </Button>
+        ) : null}
+
+        {state === "reviewing-login" ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleTempoClick}
+            aria-label="Finish Omega login"
+          >
+            <Icon.Sign aria-hidden />
+            <span>Finish login</span>
+          </Button>
+        ) : null}
+
+        {state === "authenticating-zone" ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleTempoClick}
+            aria-label="Signing Omega auth token"
+            aria-busy="true"
+          >
+            <ConnectingSpinner />
+            <span>Signing auth...</span>
+          </Button>
+        ) : null}
+
+        {state === "authorizing-session" ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleTempoClick}
+            aria-label="Authorizing Omega session"
+            aria-busy="true"
+          >
+            <ConnectingSpinner />
+            <span>Authorizing session...</span>
           </Button>
         ) : null}
 
@@ -265,6 +319,7 @@ export function WalletStatus() {
         onClose={handleClose}
         onCreateAccount={handleCreateAccount}
         onSignIn={handleSignIn}
+        onContinue={handleContinue}
         onDevSignIn={wallet.isDevWalletAvailable ? handleDevSignIn : undefined}
         onMakerSignIn={
           wallet.isMakerWalletAvailable ? handleMakerSignIn : undefined

@@ -55,7 +55,7 @@ export function renderSettlementRecordReceipt() {
       <Receipt
         cta={{
           label: "View transaction",
-          href: "https://etherscan.io/tx/0xa26f2dc8ed22d65ad5e5b3acc40295d89c331fd1e79d34b13baa3f6f47b136dc",
+          href: "https://explore.moderato.tempo.xyz/tx/0xa26f2dc8ed22d65ad5e5b3acc40295d89c331fd1e79d34b13baa3f6f47b136dc",
         }}
       >
         <Receipt.Header label="SETTLEMENT RECORD" />
@@ -68,7 +68,7 @@ export function renderSettlementRecordReceipt() {
               display: "0xa26f…36dc",
               full: "0xa26f2dc8ed22d65ad5e5b3acc40295d89c331fd1e79d34b13baa3f6f47b136dc",
               etherscan:
-                "https://etherscan.io/tx/0xa26f2dc8ed22d65ad5e5b3acc40295d89c331fd1e79d34b13baa3f6f47b136dc",
+                "https://explore.moderato.tempo.xyz/tx/0xa26f2dc8ed22d65ad5e5b3acc40295d89c331fd1e79d34b13baa3f6f47b136dc",
             }}
           />
           <Receipt.Row label="Settled at" value="2026-04-30 09:16:12 UTC" />
@@ -96,7 +96,7 @@ export function renderFillDrilldownReceipt() {
       <Receipt
         cta={{
           label: "View transaction",
-          href: "https://etherscan.io/tx/0x9b88d4c2b65afcc178a0b2a2b5d1570d305607a82b06c85ca9d4b7dced921234",
+          href: "https://explore.moderato.tempo.xyz/tx/0x9b88d4c2b65afcc178a0b2a2b5d1570d305607a82b06c85ca9d4b7dced921234",
         }}
       >
         <Receipt.Header label="FILL DRILLDOWN" />
@@ -110,7 +110,7 @@ export function renderFillDrilldownReceipt() {
               display: "0x9b88…1234",
               full: "0x9b88d4c2b65afcc178a0b2a2b5d1570d305607a82b06c85ca9d4b7dced921234",
               etherscan:
-                "https://etherscan.io/tx/0x9b88d4c2b65afcc178a0b2a2b5d1570d305607a82b06c85ca9d4b7dced921234",
+                "https://explore.moderato.tempo.xyz/tx/0x9b88d4c2b65afcc178a0b2a2b5d1570d305607a82b06c85ca9d4b7dced921234",
             }}
           />
           <Receipt.Row label="Settled at" value="2026-04-30 09:28:03 UTC" />

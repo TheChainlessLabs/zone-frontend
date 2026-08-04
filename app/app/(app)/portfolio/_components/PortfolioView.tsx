@@ -12,7 +12,7 @@
  *
  * The app keeps its behaviour + data: this component is fed the live
  * `PortfolioFixture` the page builds from the connected wallet's real
- * OALPHA / PATH.USD balances and onchain activity (the kit's USDC/EURC is
+ * ALPHAUSD / PATH.USD balances and onchain activity (the kit's USDC/EURC is
  * demo data and is NOT used here). Deposit/Withdraw drive the real modals;
  * order cancellation is a local removal (backend deferred). The value trend
  * is a deterministic, fixture-derived curve — there is no price-history
@@ -33,6 +33,7 @@ import type {
   BalanceFixture,
   FillFixture,
   OrderFixture,
+  OrderType,
   PortfolioFixture,
 } from "@/lib/view-types";
 
@@ -47,7 +48,7 @@ type PortfolioTab = "overview" | "tokens" | "orders" | "activity";
 /** Display names for the tokens the venue lists. */
 const TOKEN_NAMES: Record<BalanceFixture["token"], string> = {
   "PATH.USD": "Path Dollar",
-  OALPHA: "Omega Alpha",
+  ALPHAUSD: "Alpha USD",
   USDC: "USD Coin",
   EURC: "Euro Coin",
   USDT: "Tether USD",
@@ -126,45 +127,111 @@ function deriveHoldings(fixture: PortfolioFixture): Holding[] {
 interface ActivityRow {
   id: string;
   side: "buy" | "sell" | "deposit" | "withdrawal";
+  type: OrderType | null;
   label: string;
   amount: string;
   status: string;
   ref: string;
   at: string;
+  order: number;
 }
 
 /** Merge fills + transfers into one reverse-chronological activity stream. */
 function deriveActivity(fixture: PortfolioFixture): ActivityRow[] {
+  let order = 0;
+  const orders: ActivityRow[] = (
+    fixture.activityOrders ?? fixture.openOrders
+  )
+    .filter(
+      (activityOrder) =>
+        !isFullyExecutedOrder(activityOrder, fixture.recentFills),
+    )
+    .map((activityOrder) => ({
+      id: `submission-${activityOrder.id}`,
+      side: activityOrder.side,
+      type: activityOrder.type,
+      label: activityOrder.pair,
+      amount: formatGroup(activityOrder.amount),
+      status: activityOrder.status,
+      ref: truncateHash(activityOrder.txHash),
+      at: activityOrder.submittedAt,
+      order: order++,
+    }));
   const fills: ActivityRow[] = fixture.recentFills.map((f) => ({
     id: f.id,
     side: f.side,
+    type: f.type,
     label: f.pair,
     amount: formatGroup(f.amount),
     status: f.status,
     ref: truncateHash(f.txHash),
     at: f.matchedAt,
+    order: order++,
   }));
   const deposits: ActivityRow[] = fixture.deposits.map((d) => ({
     id: d.id,
     side: "deposit",
+    type: null,
     label: d.token,
     amount: formatGroup(d.amount),
     status: d.status,
     ref: truncateHash(d.txHash),
     at: d.initiatedAt,
+    order: order++,
   }));
   const withdrawals: ActivityRow[] = fixture.withdrawals.map((w) => ({
     id: w.id,
     side: "withdrawal",
+    type: null,
     label: w.token,
     amount: formatGroup(w.amount),
     status: w.status,
     ref: truncateHash(w.txHash),
     at: w.initiatedAt,
+    order: order++,
   }));
-  return [...fills, ...deposits, ...withdrawals].sort((a, b) =>
-    a.at < b.at ? 1 : -1,
+  return [...orders, ...fills, ...deposits, ...withdrawals].sort(
+    compareActivityNewestFirst,
   );
+}
+
+function isFullyExecutedOrder(
+  order: OrderFixture,
+  fills: readonly FillFixture[],
+): boolean {
+  const orderAmount = activityAmountUnits(order.amount, order.amountRaw);
+  if (orderAmount === null) return false;
+  let filledAmount = BigInt(0);
+
+  for (const fill of fills) {
+    if (fill.orderId !== order.id) continue;
+    const amount = activityAmountUnits(fill.amount, fill.amountRaw);
+    if (amount === null) return false;
+    filledAmount += amount;
+  }
+
+  return filledAmount >= orderAmount;
+}
+
+function activityAmountUnits(value: string, rawValue?: string): bigint | null {
+  if (rawValue && /^\d+$/.test(rawValue)) return BigInt(rawValue);
+  const normalized = value.trim().replace(/,/g, "");
+  if (!/^\d+(\.\d{1,6})?$/.test(normalized)) return null;
+  const [whole, fraction = ""] = normalized.split(".");
+  return (
+    BigInt(whole) * BigInt(1_000_000) +
+    BigInt(fraction.padEnd(6, "0").slice(0, 6))
+  );
+}
+
+function compareActivityNewestFirst(a: ActivityRow, b: ActivityRow): number {
+  const delta = activityTimeMs(b.at) - activityTimeMs(a.at);
+  return delta || a.order - b.order;
+}
+
+function activityTimeMs(value: string): number {
+  const ms = Date.parse(value);
+  return Number.isFinite(ms) ? ms : 0;
 }
 
 /**
@@ -725,7 +792,7 @@ function ActivityTable({ rows }: { rows: ActivityRow[] }) {
           Activity
         </h2>
         <span className="text-[13px] text-[var(--muted-foreground)]">
-          {rows.length} settlements · last 24h
+          {rows.length} entries
         </span>
       </div>
       {rows.length === 0 ? (
@@ -738,10 +805,11 @@ function ActivityTable({ rows }: { rows: ActivityRow[] }) {
             <thead>
               <tr>
                 <th className={th}>Side</th>
+                <th className={th}>Type</th>
                 <th className={th}>Market</th>
                 <th className={cn(th, "text-right")}>Amount</th>
                 <th className={th}>Status</th>
-                <th className={th}>Settlement</th>
+                <th className={th}>Reference</th>
                 <th className={cn(th, "pr-0 text-right")}>Time</th>
               </tr>
             </thead>
@@ -750,6 +818,9 @@ function ActivityTable({ rows }: { rows: ActivityRow[] }) {
                 <tr key={`${r.side}-${r.id}`} className="border-t border-[var(--border)] transition-[background-color] duration-75 hover:bg-[var(--muted)]/30">
                   <td className={td}>
                     <SideTag side={r.side} />
+                  </td>
+                  <td className={td}>
+                    {r.type ? r.type[0].toUpperCase() + r.type.slice(1) : "—"}
                   </td>
                   <td className={td}>{r.label}</td>
                   <td className={cn(td, "text-right")}>{r.amount}</td>
@@ -797,7 +868,7 @@ function ActivityList({
           {title}
         </h2>
         <span className="text-[13px] text-[var(--muted-foreground)]">
-          {rows.length} settlements · last 24h
+          {rows.length} entries · last 24h
         </span>
       </div>
       {rows.length === 0 ? (
@@ -832,7 +903,8 @@ function ActivityList({
                         : `${r.side === "buy" ? "Buy" : "Sell"} ${r.label}`}
                   </span>
                   <span className="font-mono text-[11px] tracking-[0.04em] text-[var(--muted-foreground)]">
-                    {r.ref} · {r.status[0].toUpperCase() + r.status.slice(1)}
+                    {r.ref} · {r.type ? `${r.type[0].toUpperCase() + r.type.slice(1)} · ` : ""}
+                    {r.status[0].toUpperCase() + r.status.slice(1)}
                   </span>
                 </div>
                 <div className="ml-auto flex flex-col items-end gap-0.5">
@@ -868,9 +940,13 @@ function ActivityList({
 function OrdersTable({
   orders,
   onCancel,
+  cancellingOrderId,
+  canCancel,
 }: {
   orders: OrderFixture[];
-  onCancel: (id: string) => void;
+  onCancel: (order: OrderFixture) => void;
+  cancellingOrderId: string | null;
+  canCancel: boolean;
 }) {
   const { page, setPage, pageCount, start, end } = usePagination(
     orders.length,
@@ -922,10 +998,11 @@ function OrdersTable({
                   <td className={cn(td, "pr-0 text-right")}>
                     <button
                       type="button"
-                      onClick={() => onCancel(o.id)}
-                      className="press-down h-7 rounded-[var(--radius-sm)] border border-[var(--border)] px-3 font-mono text-[11px] uppercase tracking-[0.08em] text-[var(--muted-foreground)] transition-colors hover:text-[var(--foreground)]"
+                      onClick={() => onCancel(o)}
+                      disabled={!canCancel || cancellingOrderId !== null}
+                      className="press-down h-7 rounded-[var(--radius-sm)] border border-[var(--border)] px-3 font-mono text-[11px] uppercase tracking-[0.08em] text-[var(--muted-foreground)] transition-colors hover:text-[var(--foreground)] disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      Cancel
+                      {cancellingOrderId === o.id ? "Cancelling…" : "Cancel"}
                     </button>
                   </td>
                 </tr>
@@ -947,10 +1024,14 @@ function OrdersTable({
 function OpenOrders({
   orders,
   onCancel,
+  cancellingOrderId,
+  canCancel,
   onViewAll,
 }: {
   orders: OrderFixture[];
-  onCancel: (id: string) => void;
+  onCancel: (order: OrderFixture) => void;
+  cancellingOrderId: string | null;
+  canCancel: boolean;
   onViewAll?: () => void;
 }) {
   if (orders.length === 0) return null;
@@ -996,10 +1077,11 @@ function OpenOrders({
               </div>
               <button
                 type="button"
-                onClick={() => onCancel(o.id)}
-                className="press-down ml-auto h-7 shrink-0 rounded-[var(--radius-sm)] border border-[var(--border)] px-3 font-mono text-[11px] uppercase tracking-[0.08em] text-[var(--muted-foreground)] transition-colors hover:text-[var(--foreground)]"
+                onClick={() => onCancel(o)}
+                disabled={!canCancel || cancellingOrderId !== null}
+                className="press-down ml-auto h-7 shrink-0 rounded-[var(--radius-sm)] border border-[var(--border)] px-3 font-mono text-[11px] uppercase tracking-[0.08em] text-[var(--muted-foreground)] transition-colors hover:text-[var(--foreground)] disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Cancel
+                {cancellingOrderId === o.id ? "Cancelling…" : "Cancel"}
               </button>
             </div>
           );
@@ -1118,6 +1200,7 @@ export interface PortfolioViewProps {
   onDeposit?: () => void;
   onWithdraw?: () => void;
   onMore?: () => void;
+  onCancelOrder?: (order: OrderFixture) => Promise<void>;
 }
 
 export function PortfolioView({
@@ -1125,23 +1208,31 @@ export function PortfolioView({
   onDeposit,
   onWithdraw,
   onMore,
+  onCancelOrder,
 }: PortfolioViewProps) {
   const [tab, setTab] = React.useState<PortfolioTab>("overview");
-  const [cancelled, setCancelled] = React.useState<Set<string>>(
-    () => new Set(),
+  const [cancellingOrderId, setCancellingOrderId] = React.useState<string | null>(
+    null,
   );
-
-  const orders = React.useMemo(
-    () => fixture.openOrders.filter((o) => !cancelled.has(o.id)),
-    [fixture.openOrders, cancelled],
+  const [cancelError, setCancelError] = React.useState<string | null>(null);
+  const orders = fixture.openOrders;
+  const cancel = React.useCallback(
+    (order: OrderFixture) => {
+      if (!onCancelOrder || cancellingOrderId) return;
+      setCancelError(null);
+      setCancellingOrderId(order.id);
+      void onCancelOrder(order)
+        .catch((error: unknown) => {
+          setCancelError(
+            error instanceof Error && error.message
+              ? error.message
+              : "Order cancellation failed.",
+          );
+        })
+        .finally(() => setCancellingOrderId(null));
+    },
+    [cancellingOrderId, onCancelOrder],
   );
-  const cancel = React.useCallback((id: string) => {
-    setCancelled((prev) => {
-      const next = new Set(prev);
-      next.add(id);
-      return next;
-    });
-  }, []);
 
   const holdings = React.useMemo(() => deriveHoldings(fixture), [fixture]);
   const activity = React.useMemo(() => deriveActivity(fixture), [fixture]);
@@ -1155,6 +1246,14 @@ export function PortfolioView({
   return (
     <div className="flex w-full max-w-[1040px] flex-col gap-6">
       <PortfolioTabs tab={tab} onTab={setTab} orderCount={orders.length} />
+      {cancelError ? (
+        <p
+          role="alert"
+          className="m-0 rounded-[var(--radius-md)] border border-[var(--destructive)]/35 bg-[var(--destructive)]/10 px-4 py-3 text-sm text-[var(--destructive)]"
+        >
+          {cancelError}
+        </p>
+      ) : null}
       <Animate key={tab} variant="enter" className="flex flex-col gap-6">
         {tab === "overview" ? (
           <>
@@ -1181,6 +1280,8 @@ export function PortfolioView({
                 <OpenOrders
                   orders={orders}
                   onCancel={cancel}
+                  cancellingOrderId={cancellingOrderId}
+                  canCancel={Boolean(onCancelOrder)}
                   onViewAll={() => setTab("orders")}
                 />
                 <ActivityList
@@ -1195,7 +1296,12 @@ export function PortfolioView({
 
         {tab === "tokens" ? <HoldingsTable holdings={holdings} full /> : null}
         {tab === "orders" ? (
-          <OrdersTable orders={orders} onCancel={cancel} />
+          <OrdersTable
+            orders={orders}
+            onCancel={cancel}
+            cancellingOrderId={cancellingOrderId}
+            canCancel={Boolean(onCancelOrder)}
+          />
         ) : null}
         {tab === "activity" ? <ActivityTable rows={activity} /> : null}
       </Animate>

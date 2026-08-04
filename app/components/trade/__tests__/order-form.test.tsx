@@ -157,7 +157,7 @@ it("clicking submit opens the confirmation modal with the order summary", () => 
   fireEvent.change(screen.getByLabelText("Amount"), {
     target: { value: "100" },
   });
-  fireEvent.click(screen.getByRole("button", { name: /Buy OALPHA/i }));
+  fireEvent.click(screen.getByRole("button", { name: /Buy ALPHAUSD/i }));
 
   expect(screen.getByRole("dialog")).toBeDefined();
   // Receipt-format summary: ORDER PREVIEW header + privacy line
@@ -179,7 +179,7 @@ it("confirming in the modal calls onSubmit and closes the modal", () => {
   fireEvent.change(screen.getByLabelText("Amount"), {
     target: { value: "100" },
   });
-  fireEvent.click(screen.getByRole("button", { name: /Buy OALPHA/i }));
+  fireEvent.click(screen.getByRole("button", { name: /Buy ALPHAUSD/i }));
   // The kit's confirmation CTA is "Sign" (omega-docs/03-brand/messaging.md —
   // never "approve"/"confirm").
   fireEvent.click(screen.getByRole("button", { name: /^Sign$/i }));
@@ -209,7 +209,7 @@ it("cancelling the modal keeps the form state intact", () => {
   fireEvent.change(screen.getByLabelText("Limit price"), {
     target: { value: "0.9300" },
   });
-  fireEvent.click(screen.getByRole("button", { name: /Buy OALPHA/i }));
+  fireEvent.click(screen.getByRole("button", { name: /Buy ALPHAUSD/i }));
   fireEvent.click(screen.getByRole("button", { name: /Cancel/i }));
 
   expect(screen.queryByRole("dialog")).toBeNull();
@@ -231,7 +231,7 @@ it("renders error tile in place of the CTA when errorMessage is set", () => {
     screen.getByText("Market data unavailable. Retry in a moment."),
   ).toBeDefined();
   expect(screen.queryByRole("button", { name: /Submit/ })).toBeNull();
-  expect(screen.queryByRole("button", { name: /Buy OALPHA/ })).toBeNull();
+  expect(screen.queryByRole("button", { name: /Buy ALPHAUSD/ })).toBeNull();
 });
 
 it("disables submit when amount is zero/empty", () => {

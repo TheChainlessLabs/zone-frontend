@@ -35,18 +35,31 @@ import {
   useConnectors,
   useDisconnect,
   useSwitchChain,
+  useWalletClient,
 } from "wagmi";
+import type { Address } from "viem";
 import {
   OMEGA_TEMPO_L1_CHAIN_ID,
   OMEGA_TEMPO_L1_CHAIN_NAME,
   OMEGA_ZONE_CHAIN_ID,
   clearPersistedZoneRpcAuthToken,
+  ensureZoneSessionAccessKey,
+  getOrCreateZoneRpcAuthToken,
+  hasUsableZoneSessionAccessKey,
+  isZoneRpcAuthTokenExpired,
+  readPersistedZoneRpcAuthToken,
+  resolveZoneTransactionSigner,
+  verifyOmegaZoneAuthToken,
+  ZoneTransactionSignerUnavailableError,
 } from "@/lib/zone";
 
 export type WalletState =
   | "disconnected"
   | "signing-up"
   | "connecting"
+  | "reviewing-login"
+  | "authenticating-zone"
+  | "authorizing-session"
   | "connected"
   | "wrong-network"
   | "no-nft-pass";
@@ -55,6 +68,9 @@ const VALID_STATES: readonly WalletState[] = [
   "disconnected",
   "signing-up",
   "connecting",
+  "reviewing-login",
+  "authenticating-zone",
+  "authorizing-session",
   "connected",
   "wrong-network",
   "no-nft-pass",
@@ -82,6 +98,8 @@ export interface WalletStateContextValue {
   /** Begin account setup. In Tempo mode this starts Tempo Wallet registration.
    *  Mock mode simulates the same transition deterministically. */
   signUp: () => void;
+  /** Open the Omega login review before any wallet prompt starts. */
+  reviewLogin: () => void;
   /** Begin a mock connect flow with the given connector. Transitions through
    *  `connecting` → `connected`. Preserved for the Phase-4 self-custody flow
    *  shown in `/system`. */
@@ -164,14 +182,27 @@ function TempoBackedWalletStateProvider({ children }: { children: ReactNode }) {
   const connectors = useConnectors();
   const disconnectMutation = useDisconnect();
   const switchChainMutation = useSwitchChain();
+  const { data: walletClient } = useWalletClient({
+    chainId: OMEGA_ZONE_CHAIN_ID,
+  });
 
   const [reviewState, setReviewState] = useState<WalletState | null>(null);
   const [pendingConnector, setPendingConnector] = useState<string | undefined>();
   const [pendingIntent, setPendingIntent] = useState<
-    "connect" | "sign-up" | undefined
+    | "connect"
+    | "sign-up"
+    | "reviewing-login"
+    | "authenticating-zone"
+    | "authorize-session"
+    | undefined
   >();
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
   const hydratedRef = useRef(false);
+  const authorizedSessionAccountRef = useRef<string | undefined>(undefined);
+  const loginReviewAcceptedRef = useRef(false);
+  const sessionAccessKeyStatusRef = useRef<
+    { account: string; hasKey: boolean } | undefined
+  >(undefined);
 
   useEffect(() => {
     if (hydratedRef.current) return;
@@ -198,6 +229,222 @@ function TempoBackedWalletStateProvider({ children }: { children: ReactNode }) {
     [connectors],
   );
 
+  const completeConnectedZoneLogin = useCallback(
+    async ({ force = false }: { force?: boolean } = {}) => {
+      const address = connection.address;
+      const connector = connection.connector;
+      if (
+        !connection.isConnected ||
+        !address ||
+        !isSupportedTempoChain(connection.chainId)
+      ) {
+        return;
+      }
+      if (!shouldAuthorizeZoneSessionConnector(connector)) {
+        authorizedSessionAccountRef.current = address;
+        return;
+      }
+      if (
+        !force &&
+        authorizedSessionAccountRef.current?.toLowerCase() ===
+          address.toLowerCase() &&
+        hasUsableZoneRpcAuthToken(address as Address)
+      ) {
+        return;
+      }
+
+      setPendingConnector(connector?.name ?? "Tempo Wallet");
+      setErrorMessage(undefined);
+
+      try {
+        const account = address as Address;
+        if (!hasUsableZoneRpcAuthToken(account)) {
+          setPendingIntent("authenticating-zone");
+          await waitForAuthorizationCopyRender();
+        }
+
+        const authToken = await getOrCreateZoneRpcAuthToken({
+          account,
+          getProvider: () =>
+            resolveZoneTransactionSigner({
+              connector,
+              fallback: walletClient,
+            }),
+        });
+        try {
+          await verifyOmegaZoneAuthToken({ authToken, account });
+        } catch (error) {
+          clearPersistedZoneRpcAuthToken(account);
+          throw error;
+        }
+
+        setPendingIntent("authorize-session");
+        await waitForAuthorizationCopyRender();
+
+        const provider = await resolveZoneTransactionSigner({
+          connector,
+          fallback: walletClient,
+          chainId: OMEGA_ZONE_CHAIN_ID,
+        });
+
+        await ensureZoneSessionAccessKey({
+          signer: provider,
+          account,
+        });
+        authorizedSessionAccountRef.current = address;
+        sessionAccessKeyStatusRef.current = {
+          account: address.toLowerCase(),
+          hasKey: true,
+        };
+        loginReviewAcceptedRef.current = false;
+      } catch (error) {
+        authorizedSessionAccountRef.current = undefined;
+        sessionAccessKeyStatusRef.current = undefined;
+        loginReviewAcceptedRef.current = false;
+        if (!force && error instanceof ZoneTransactionSignerUnavailableError) {
+          return;
+        }
+        setErrorMessage(getWalletConnectionErrorMessage(error));
+        throw error;
+      } finally {
+        setPendingIntent(undefined);
+        setPendingConnector(undefined);
+      }
+    },
+    [
+      connection.address,
+      connection.chainId,
+      connection.connector,
+      connection.isConnected,
+      walletClient,
+    ],
+  );
+
+  useEffect(() => {
+    if (reviewState) return;
+    if (
+      !connection.isConnected ||
+      !connection.address ||
+      !isSupportedTempoChain(connection.chainId)
+    ) {
+      authorizedSessionAccountRef.current = undefined;
+      sessionAccessKeyStatusRef.current = undefined;
+      loginReviewAcceptedRef.current = false;
+      return;
+    }
+    if (!shouldAuthorizeZoneSessionConnector(connection.connector)) {
+      authorizedSessionAccountRef.current = connection.address;
+      sessionAccessKeyStatusRef.current = undefined;
+      loginReviewAcceptedRef.current = false;
+      return;
+    }
+    if (
+      authorizedSessionAccountRef.current?.toLowerCase() ===
+        connection.address.toLowerCase() &&
+      hasUsableZoneRpcAuthToken(connection.address as Address)
+    ) {
+      loginReviewAcceptedRef.current = false;
+      return;
+    }
+
+    const account = connection.address as Address;
+    const normalizedAccount = account.toLowerCase();
+    if (hasUsableZoneRpcAuthToken(account)) {
+      const checkedSession = sessionAccessKeyStatusRef.current;
+      if (checkedSession?.account === normalizedAccount) {
+        if (checkedSession.hasKey) {
+          authorizedSessionAccountRef.current = connection.address;
+          loginReviewAcceptedRef.current = false;
+          setPendingIntent(undefined);
+          setPendingConnector(undefined);
+          return;
+        }
+        if (loginReviewAcceptedRef.current) {
+          void completeConnectedZoneLogin().catch(() => {});
+          return;
+        }
+        setPendingIntent("reviewing-login");
+        setPendingConnector(connection.connector?.name ?? "Tempo Wallet");
+        setErrorMessage(undefined);
+        return;
+      }
+
+      let cancelled = false;
+      void (async () => {
+        const authToken = readPersistedZoneRpcAuthToken(account);
+        if (!authToken) return;
+        try {
+          await verifyOmegaZoneAuthToken({ authToken, account });
+        } catch {
+          if (cancelled) return;
+          clearPersistedZoneRpcAuthToken(account);
+          sessionAccessKeyStatusRef.current = {
+            account: normalizedAccount,
+            hasKey: false,
+          };
+          setPendingIntent("reviewing-login");
+          setPendingConnector(connection.connector?.name ?? "Tempo Wallet");
+          setErrorMessage(undefined);
+          return;
+        }
+
+        try {
+          const provider = await resolveZoneTransactionSigner({
+            connector: connection.connector,
+            fallback: walletClient,
+            chainId: OMEGA_ZONE_CHAIN_ID,
+          });
+          const hasKey = hasUsableZoneSessionAccessKey({
+            signer: provider,
+            account,
+          });
+          if (cancelled) return;
+          sessionAccessKeyStatusRef.current = {
+            account: normalizedAccount,
+            hasKey,
+          };
+          if (hasKey) {
+            authorizedSessionAccountRef.current = connection.address;
+            loginReviewAcceptedRef.current = false;
+            setPendingIntent(undefined);
+            setPendingConnector(undefined);
+            return;
+          }
+          setPendingIntent("reviewing-login");
+          setPendingConnector(connection.connector?.name ?? "Tempo Wallet");
+          setErrorMessage(undefined);
+        } catch (error) {
+          if (
+            !cancelled &&
+            !(error instanceof ZoneTransactionSignerUnavailableError)
+          ) {
+            setErrorMessage(getWalletConnectionErrorMessage(error));
+          }
+        }
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    if (loginReviewAcceptedRef.current) {
+      void completeConnectedZoneLogin().catch(() => {});
+      return;
+    }
+
+    setPendingIntent("reviewing-login");
+    setPendingConnector(connection.connector?.name ?? "Tempo Wallet");
+    setErrorMessage(undefined);
+  }, [
+    completeConnectedZoneLogin,
+    connection.address,
+    connection.chainId,
+    connection.connector,
+    connection.isConnected,
+    reviewState,
+    walletClient,
+  ]);
+
   const beginTempoConnect = useCallback(
     (intent: "connect" | "sign-up", connectorLabel?: string) => {
       setReviewState(null);
@@ -211,10 +458,13 @@ function TempoBackedWalletStateProvider({ children }: { children: ReactNode }) {
           ? connectors.find((c) => c.name === connectorLabel)
           : undefined) ?? tempoConnector;
       setPendingConnector(connectorLabel ?? tempoConnector?.name ?? "Tempo Wallet");
+      loginReviewAcceptedRef.current =
+        shouldAuthorizeZoneSessionConnector(chosen);
 
       if (!chosen) {
         setPendingIntent(undefined);
         setPendingConnector(undefined);
+        loginReviewAcceptedRef.current = false;
         setErrorMessage("Tempo Wallet connector is not available.");
         return;
       }
@@ -233,7 +483,8 @@ function TempoBackedWalletStateProvider({ children }: { children: ReactNode }) {
         } as Parameters<typeof connectMutation.connect>[0],
         {
           onError(error) {
-            setErrorMessage(getErrorMessage(error));
+            loginReviewAcceptedRef.current = false;
+            setErrorMessage(getWalletConnectionErrorMessage(error));
           },
           onSettled() {
             setPendingIntent(undefined);
@@ -249,21 +500,48 @@ function TempoBackedWalletStateProvider({ children }: { children: ReactNode }) {
     beginTempoConnect("sign-up");
   }, [beginTempoConnect]);
 
+  const reviewLogin = useCallback(() => {
+    setReviewState(null);
+    setErrorMessage(undefined);
+    setPendingConnector(tempoConnector?.name ?? "Tempo Wallet");
+    setPendingIntent("reviewing-login");
+    loginReviewAcceptedRef.current = false;
+  }, [tempoConnector?.name]);
+
   const connect = useCallback(
     (connectorLabel?: string) => {
+      if (
+        (!connectorLabel || connectorLabel === "Tempo Wallet") &&
+        connection.isConnected &&
+        connection.address &&
+        shouldAuthorizeZoneSessionConnector(connection.connector)
+      ) {
+        loginReviewAcceptedRef.current = true;
+        void completeConnectedZoneLogin({ force: true }).catch(() => {});
+        return;
+      }
       beginTempoConnect("connect", connectorLabel);
     },
-    [beginTempoConnect],
+    [
+      completeConnectedZoneLogin,
+      beginTempoConnect,
+      connection.address,
+      connection.connector,
+      connection.isConnected,
+    ],
   );
 
   const disconnect = useCallback(() => {
     setReviewState(null);
     setErrorMessage(undefined);
+    authorizedSessionAccountRef.current = undefined;
+    sessionAccessKeyStatusRef.current = undefined;
+    loginReviewAcceptedRef.current = false;
     clearPersistedZoneRpcAuthToken();
     if (!connection.isConnected && !connection.isReconnecting) return;
     disconnectMutation.disconnect(undefined, {
       onError(error) {
-        setErrorMessage(getErrorMessage(error));
+        setErrorMessage(getWalletConnectionErrorMessage(error));
       },
     });
   }, [connection.isConnected, connection.isReconnecting, disconnectMutation]);
@@ -277,7 +555,7 @@ function TempoBackedWalletStateProvider({ children }: { children: ReactNode }) {
       { chainId: OMEGA_TEMPO_L1_CHAIN_ID },
       {
         onError(error) {
-          setErrorMessage(getErrorMessage(error));
+          setErrorMessage(getWalletConnectionErrorMessage(error));
         },
       },
     );
@@ -304,16 +582,33 @@ function TempoBackedWalletStateProvider({ children }: { children: ReactNode }) {
     const liveState: WalletState = pending
       ? pendingIntent === "sign-up"
         ? "signing-up"
+        : pendingIntent === "reviewing-login"
+        ? "reviewing-login"
+        : pendingIntent === "authenticating-zone"
+        ? "authenticating-zone"
+        : pendingIntent === "authorize-session"
+        ? "authorizing-session"
         : "connecting"
       : connection.isConnected
       ? isSupportedTempoChain(connection.chainId)
-        ? "connected"
+        ? needsConnectedZoneLogin({
+            address: connection.address,
+            connector: connection.connector,
+            authorizedAccount: authorizedSessionAccountRef.current,
+          })
+          ? "reviewing-login"
+          : "connected"
         : "wrong-network"
       : "disconnected";
 
     const state = reviewState ?? liveState;
     const reviewAddress =
-      state === "connected" || state === "wrong-network" || state === "no-nft-pass"
+      state === "connected" ||
+      state === "reviewing-login" ||
+      state === "authenticating-zone" ||
+      state === "authorizing-session" ||
+      state === "wrong-network" ||
+      state === "no-nft-pass"
         ? MOCK_ADDRESS
         : undefined;
     const address = reviewState ? reviewAddress : connection.address;
@@ -334,6 +629,7 @@ function TempoBackedWalletStateProvider({ children }: { children: ReactNode }) {
         "Tempo Wallet",
       errorMessage,
       signUp,
+      reviewLogin,
       connect,
       disconnect,
       switchNetwork,
@@ -355,11 +651,13 @@ function TempoBackedWalletStateProvider({ children }: { children: ReactNode }) {
     connection.chainId,
     connection.address,
     connection.chain?.name,
+    connection.connector,
     connection.connector?.name,
     reviewState,
     pendingConnector,
     errorMessage,
     signUp,
+    reviewLogin,
     connect,
     disconnect,
     switchNetwork,
@@ -406,7 +704,15 @@ function MockWalletStateProvider({ children }: { children: ReactNode }) {
   // gracefully.
   useEffect(() => {
     if (!hydratedRef.current) return;
-    if (state === "connecting" || state === "signing-up") return;
+    if (
+      state === "connecting" ||
+      state === "signing-up" ||
+      state === "reviewing-login" ||
+      state === "authenticating-zone" ||
+      state === "authorizing-session"
+    ) {
+      return;
+    }
     writePersisted({ state, connector });
   }, [state, connector]);
 
@@ -446,6 +752,11 @@ function MockWalletStateProvider({ children }: { children: ReactNode }) {
       setStateRaw("connected");
       signUpTimerRef.current = null;
     }, SIGN_UP_DELAY_MS);
+  }, []);
+
+  const reviewLogin = useCallback(() => {
+    setConnector("Tempo Wallet");
+    setStateRaw("reviewing-login");
   }, []);
 
   const disconnect = useCallback(() => {
@@ -489,6 +800,12 @@ function MockWalletStateProvider({ children }: { children: ReactNode }) {
       case "connecting":
         chainName = RIGHT_CHAIN;
         break;
+      case "reviewing-login":
+      case "authenticating-zone":
+      case "authorizing-session":
+        address = MOCK_ADDRESS;
+        chainName = RIGHT_CHAIN;
+        break;
       case "connected":
         address = MOCK_ADDRESS;
         chainName = RIGHT_CHAIN;
@@ -510,6 +827,7 @@ function MockWalletStateProvider({ children }: { children: ReactNode }) {
       chainName,
       connector,
       signUp,
+      reviewLogin,
       connect,
       disconnect,
       switchNetwork,
@@ -522,6 +840,7 @@ function MockWalletStateProvider({ children }: { children: ReactNode }) {
     state,
     connector,
     signUp,
+    reviewLogin,
     connect,
     disconnect,
     switchNetwork,
@@ -548,6 +867,9 @@ function chainNameForReviewState(state: WalletState): string | undefined {
   switch (state) {
     case "signing-up":
     case "connecting":
+    case "reviewing-login":
+    case "authenticating-zone":
+    case "authorizing-session":
     case "connected":
     case "no-nft-pass":
       return RIGHT_CHAIN;
@@ -558,14 +880,74 @@ function chainNameForReviewState(state: WalletState): string | undefined {
   }
 }
 
-function getErrorMessage(error: unknown): string {
-  if (error instanceof Error && error.message) return error.message;
-  if (typeof error === "string") return error;
+function hasUsableZoneRpcAuthToken(account: Address): boolean {
+  const authToken = readPersistedZoneRpcAuthToken(account);
+  return Boolean(authToken && !isZoneRpcAuthTokenExpired(authToken));
+}
+
+function needsConnectedZoneLogin({
+  address,
+  connector,
+  authorizedAccount,
+}: {
+  address?: string;
+  connector?: { id?: string; name?: string };
+  authorizedAccount?: string;
+}): boolean {
+  if (!address || !shouldAuthorizeZoneSessionConnector(connector)) return false;
+  if (!hasUsableZoneRpcAuthToken(address as Address)) return true;
+  return Boolean(
+    authorizedAccount &&
+      authorizedAccount.toLowerCase() !== address.toLowerCase(),
+  );
+}
+
+export function getWalletConnectionErrorMessage(error: unknown): string {
+  const message =
+    error instanceof Error && error.message
+      ? error.message
+      : typeof error === "string"
+        ? error
+        : "";
+
+  if (isWebAuthnTlsError(message)) {
+    return [
+      "Tempo Wallet passkeys require a trusted browser origin.",
+      "Open Omega on http://localhost for local dev, or use HTTPS with a valid trusted certificate.",
+    ].join(" ");
+  }
+
+  if (message) return message;
   return "Tempo Wallet could not complete the request.";
+}
+
+function isWebAuthnTlsError(message: string): boolean {
+  const normalized = message.toLowerCase();
+  return (
+    normalized.includes("webauthn") &&
+    (normalized.includes("tls certificate") ||
+      normalized.includes("certificate error") ||
+      normalized.includes("not supported on sites with tls") ||
+      normalized.includes("secure context"))
+  );
 }
 
 function isSupportedTempoChain(chainId: number | undefined): boolean {
   return chainId === OMEGA_TEMPO_L1_CHAIN_ID || chainId === OMEGA_ZONE_CHAIN_ID;
+}
+
+function shouldAuthorizeZoneSessionConnector(
+  connector: { id?: string; name?: string } | undefined,
+): boolean {
+  if (!connector) return false;
+  const name = connector.name?.toLowerCase() ?? "";
+  return connector.id === "xyz.tempo" || name === "tempo wallet";
+}
+
+function waitForAuthorizationCopyRender(): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, 0);
+  });
 }
 
 /** Truncate an address to `0xa513…C853` form. */

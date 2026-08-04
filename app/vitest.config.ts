@@ -18,8 +18,6 @@ export default defineConfig({
       NEXT_PUBLIC_OMEGA_ZONE_CHAIN_ID: "421700035",
       NEXT_PUBLIC_OMEGA_ZONE_PORTAL:
         "0xA6b5f8aF076DaAFBfd373a2629e4E46c8e03e6b2",
-      NEXT_PUBLIC_OMEGA_ZONE_OALPHA:
-        "0x20c000000000000000000000518ddadd37ed1d28",
     },
     setupFiles: ["./vitest.setup.ts"],
     include: ["**/__tests__/**/*.test.{ts,tsx}", "**/*.test.{ts,tsx}"],

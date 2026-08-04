@@ -8,7 +8,7 @@
  * The dropdown lists each available pair with a monochrome BASE/QUOTE token
  * chip pair, the midpoint, a tinted 24h change pill, and an active check.
  *
- * The app keeps its real product content: the live pair is OALPHA/PATH.USD
+ * The app keeps its real product content: the live pair is ALPHAUSD/PATH.USD
  * (the kit's USDC/EURC roster is demo data) and the menu stays on Radix
  * DropdownMenu for keyboard + screen-reader semantics. Monochrome — no
  * invented per-token colour. Pair convention (omega-docs/03-brand/naming.md):

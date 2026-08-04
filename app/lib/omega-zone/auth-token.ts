@@ -1,15 +1,14 @@
 import {
   concatHex,
   isHex,
-  keccak256,
+  hashTypedData,
   numberToHex,
-  stringToHex,
+  serializeTypedData,
   type Address,
   type Hex,
 } from "viem";
 
 import { OMEGA_ZONE } from "./config";
-import { getDevAuthSigner } from "./dev-wallet";
 
 export interface ZoneAuthWindow {
   issuedAt?: number | bigint;
@@ -21,30 +20,51 @@ export interface ZoneAuthFieldsParams extends ZoneAuthWindow {
   chainId?: number | bigint;
 }
 
-export interface TempoNativeAuthSigner {
-  signTempoZoneRpcAuthToken?: (parameters: {
-    account: Address;
-    digest: Hex;
-    fields: Hex;
-  }) => Promise<Hex>;
-  signTempoZoneRpcAuthDigest?: (parameters: {
-    account: Address;
-    digest: Hex;
-    fields: Hex;
-  }) => Promise<Hex>;
-  request?: (parameters: {
-    method: string;
-    params?: readonly unknown[];
-  }) => Promise<unknown>;
+export interface TempoZoneAuthProvider {
+  request(parameters: {
+    method: "eth_signTypedData_v4";
+    params: [Address, string];
+  }): Promise<unknown>;
 }
+
+export const ZONE_RPC_AUTH_EIP712_TYPES = {
+  EIP712Domain: [
+    { name: "name", type: "string" },
+    { name: "version", type: "string" },
+    { name: "chainId", type: "uint256" },
+  ],
+  ZoneRPCAuth: [
+    { name: "zoneId", type: "uint32" },
+    { name: "issuedAt", type: "uint64" },
+    { name: "expiresAt", type: "uint64" },
+  ],
+} as const;
+
+export type ZoneRpcAuthTypedData = {
+  types: typeof ZONE_RPC_AUTH_EIP712_TYPES;
+  primaryType: "ZoneRPCAuth";
+  domain: {
+    name: "TempoZoneRPC";
+    version: "1";
+    chainId: bigint;
+  };
+  message: {
+    zoneId: number;
+    issuedAt: bigint;
+    expiresAt: bigint;
+  };
+};
 
 export interface BuildZoneRpcAuthTokenParams extends ZoneAuthWindow {
   account: Address;
-  signMessage: (parameters: {
-    account: Address;
-    message: { raw: Hex };
-  }) => Promise<Hex>;
-  nativeSigner?: TempoNativeAuthSigner;
+  provider: TempoZoneAuthProvider;
+}
+
+export interface GetOrCreateZoneRpcAuthTokenParams extends ZoneAuthWindow {
+  account: Address;
+  getProvider: () => Promise<TempoZoneAuthProvider>;
+  forceRefresh?: boolean;
+  onToken?: (authToken: Hex) => void;
 }
 
 export interface ZoneRpcAuthTokenFields {
@@ -61,15 +81,13 @@ interface PersistedZoneRpcAuthToken {
   expiresAt: number;
 }
 
-const TEMPO_NATIVE_RPC_SIGN_METHODS = [
-  "tempo_signZoneRpcAuthToken",
-  "tempo_signZoneRpcAuthDigest",
-  "tempo_signAuthorizationToken",
-] as const;
 const ZONE_AUTH_COOKIE = "omega-zone-auth-token";
-const ZONE_AUTH_STORAGE_KEY = "omega-zone:auth-token";
+const ZONE_AUTH_STORAGE_KEY_PREFIX = "omega-zone:auth-token";
+const LEGACY_ZONE_AUTH_STORAGE_KEY = ZONE_AUTH_STORAGE_KEY_PREFIX;
 const ZONE_AUTH_FIELDS_HEX_LENGTH = 58;
-const DEFAULT_AUTH_COOKIE_MAX_AGE_SECONDS = 15 * 60;
+const VERSION_EIP712 = 1;
+const AUTH_TOKEN_VALIDITY_SECONDS = 10 * 60;
+const inFlightZoneRpcAuthTokens = new Map<string, Promise<Hex>>();
 
 export function encodeZoneRpcAuthFields({
   zoneId = OMEGA_ZONE.zoneId,
@@ -79,10 +97,12 @@ export function encodeZoneRpcAuthFields({
 }: ZoneAuthFieldsParams = {}): Hex {
   const issued = issuedAt === undefined ? unixNow() : BigInt(issuedAt);
   const expires =
-    expiresAt === undefined ? issued + BigInt(15 * 60) : BigInt(expiresAt);
+    expiresAt === undefined
+      ? issued + BigInt(AUTH_TOKEN_VALIDITY_SECONDS)
+      : BigInt(expiresAt);
 
   return concatHex([
-    numberToHex(0, { size: 1 }),
+    numberToHex(VERSION_EIP712, { size: 1 }),
     numberToHex(zoneId, { size: 4 }),
     numberToHex(BigInt(chainId), { size: 8 }),
     numberToHex(issued, { size: 8 }),
@@ -90,70 +110,157 @@ export function encodeZoneRpcAuthFields({
   ]);
 }
 
+export function buildZoneRpcAuthTypedData({
+  zoneId = OMEGA_ZONE.zoneId,
+  chainId = OMEGA_ZONE.chainId,
+  issuedAt,
+  expiresAt,
+}: ZoneAuthFieldsParams = {}): ZoneRpcAuthTypedData {
+  const issued = issuedAt === undefined ? unixNow() : BigInt(issuedAt);
+  const expires =
+    expiresAt === undefined
+      ? issued + BigInt(AUTH_TOKEN_VALIDITY_SECONDS)
+      : BigInt(expiresAt);
+
+  return {
+    types: ZONE_RPC_AUTH_EIP712_TYPES,
+    primaryType: "ZoneRPCAuth",
+    domain: {
+      name: "TempoZoneRPC",
+      version: "1",
+      chainId: BigInt(chainId),
+    },
+    message: {
+      zoneId,
+      issuedAt: issued,
+      expiresAt: expires,
+    },
+  } as const;
+}
+
 export function zoneRpcAuthDigest(fields: Hex): Hex {
-  return keccak256(
-    concatHex([stringToHex("TempoZoneRPC", { size: 32 }), fields]),
-  );
+  const auth = decodeZoneRpcAuthFields(fields);
+  return hashTypedData({
+    types: ZONE_RPC_AUTH_EIP712_TYPES,
+    primaryType: "ZoneRPCAuth",
+    domain: {
+      name: "TempoZoneRPC",
+      version: "1",
+      chainId: auth.chainId,
+    },
+    message: {
+      zoneId: auth.zoneId,
+      issuedAt: auth.issuedAt,
+      expiresAt: auth.expiresAt,
+    },
+  });
+}
+
+function decodeZoneRpcAuthFields(fields: string): ZoneRpcAuthTokenFields {
+  const rawFields = fields.startsWith("0x") ? fields.slice(2) : fields;
+  if (rawFields.length !== ZONE_AUTH_FIELDS_HEX_LENGTH) {
+    throw new Error("Invalid Omega Zone auth token.");
+  }
+
+  return {
+    version: Number.parseInt(rawFields.slice(0, 2), 16),
+    zoneId: Number.parseInt(rawFields.slice(2, 10), 16),
+    chainId: BigInt(`0x${rawFields.slice(10, 26)}`),
+    issuedAt: BigInt(`0x${rawFields.slice(26, 42)}`),
+    expiresAt: BigInt(`0x${rawFields.slice(42, 58)}`),
+  };
 }
 
 export function decodeZoneRpcAuthTokenFields(
   authToken: Hex,
 ): ZoneRpcAuthTokenFields {
-  const fields = authToken.slice(-ZONE_AUTH_FIELDS_HEX_LENGTH);
-  if (fields.length !== ZONE_AUTH_FIELDS_HEX_LENGTH) {
-    throw new Error("Invalid Omega Zone auth token.");
-  }
-
-  return {
-    version: Number.parseInt(fields.slice(0, 2), 16),
-    zoneId: Number.parseInt(fields.slice(2, 10), 16),
-    chainId: BigInt(`0x${fields.slice(10, 26)}`),
-    issuedAt: BigInt(`0x${fields.slice(26, 42)}`),
-    expiresAt: BigInt(`0x${fields.slice(42, 58)}`),
-  };
+  return decodeZoneRpcAuthFields(authToken.slice(-ZONE_AUTH_FIELDS_HEX_LENGTH));
 }
 
 export async function buildZoneRpcAuthToken({
   account,
-  signMessage,
-  nativeSigner,
+  provider,
   issuedAt,
   expiresAt,
 }: BuildZoneRpcAuthTokenParams): Promise<Hex> {
+  const typedData = buildZoneRpcAuthTypedData({ issuedAt, expiresAt });
   const fields = encodeZoneRpcAuthFields({ issuedAt, expiresAt });
-  const digest = zoneRpcAuthDigest(fields);
-  const signature =
-    (await signWithNativeTempoWallet({
-      account,
-      digest,
-      fields,
-      nativeSigner,
-    })) ??
-    (await signMessage({
-      account,
-      message: { raw: digest },
-    }));
+  let signature: unknown;
+
+  try {
+    signature = await provider.request({
+      method: "eth_signTypedData_v4",
+      params: [account, serializeTypedData(typedData)],
+    });
+  } catch (error) {
+    if (error instanceof Error) throw error;
+    throw new Error("Tempo Wallet failed to sign the authorization token.");
+  }
+
+  if (!isHexSignature(signature)) {
+    throw new Error("Tempo Wallet returned an invalid authorization signature.");
+  }
 
   return concatHex([signature, fields]);
 }
 
-export function getTempoNativeAuthSigner(
-  walletClient: unknown,
-): TempoNativeAuthSigner | undefined {
-  const candidate = walletClient as Partial<TempoNativeAuthSigner> | undefined;
-  if (candidate?.signTempoZoneRpcAuthDigest || candidate?.signTempoZoneRpcAuthToken) {
-    return candidate as TempoNativeAuthSigner;
+export async function getOrCreateZoneRpcAuthToken({
+  account,
+  getProvider,
+  issuedAt,
+  expiresAt,
+  forceRefresh = false,
+  onToken,
+}: GetOrCreateZoneRpcAuthTokenParams): Promise<Hex> {
+  const key = account.toLowerCase();
+
+  if (forceRefresh) {
+    inFlightZoneRpcAuthTokens.delete(key);
+    clearPersistedZoneRpcAuthToken(account);
+  } else {
+    const cached = readPersistedZoneRpcAuthToken(account);
+    if (cached && !isZoneRpcAuthTokenExpired(cached)) {
+      onToken?.(cached);
+      return cached;
+    }
+
+    const inFlight = inFlightZoneRpcAuthTokens.get(key);
+    if (inFlight) {
+      const authToken = await inFlight;
+      onToken?.(authToken);
+      return authToken;
+    }
   }
-  // Dev-only: when the test wallet is enabled (NEXT_PUBLIC_DEV_WALLET_PK) and the
-  // connected client can't sign the zone auth digest natively, sign in-process
-  // with the test key. Inert in production (returns undefined).
-  return getDevAuthSigner();
+
+  const authTokenPromise = getProvider()
+    .then((provider) =>
+      buildZoneRpcAuthToken({
+        account,
+        provider,
+        issuedAt,
+        expiresAt,
+      }),
+    )
+    .then((authToken) => {
+      persistZoneRpcAuthToken(authToken, account);
+      onToken?.(authToken);
+      return authToken;
+    });
+
+  inFlightZoneRpcAuthTokens.set(key, authTokenPromise);
+  try {
+    return await authTokenPromise;
+  } finally {
+    if (inFlightZoneRpcAuthTokens.get(key) === authTokenPromise) {
+      inFlightZoneRpcAuthTokens.delete(key);
+    }
+  }
 }
 
 export function persistZoneRpcAuthToken(
   authToken: Hex,
   account?: Address,
-  maxAgeSeconds = DEFAULT_AUTH_COOKIE_MAX_AGE_SECONDS,
+  maxAgeSeconds?: number,
 ) {
   if (typeof document === "undefined") return;
   if (typeof window !== "undefined" && account) {
@@ -163,14 +270,22 @@ export function persistZoneRpcAuthToken(
       authToken,
       expiresAt: Number(fields.expiresAt),
     };
-    window.localStorage.setItem(ZONE_AUTH_STORAGE_KEY, JSON.stringify(payload));
+    window.sessionStorage.setItem(
+      zoneAuthStorageKey(account),
+      JSON.stringify(payload),
+    );
+    window.localStorage.removeItem(LEGACY_ZONE_AUTH_STORAGE_KEY);
   }
 
+  const fields = decodeZoneRpcAuthTokenFields(authToken);
+  const tokenMaxAge =
+    maxAgeSeconds ??
+    Math.max(0, Number(fields.expiresAt) - Math.floor(Date.now() / 1000));
   const secure = window.location.protocol === "https:" ? "; Secure" : "";
   document.cookie = [
     `${ZONE_AUTH_COOKIE}=${authToken}`,
     "Path=/api/omega-zone",
-    `Max-Age=${maxAgeSeconds}`,
+    `Max-Age=${tokenMaxAge}`,
     "SameSite=Lax",
     secure,
   ].join("; ");
@@ -181,7 +296,7 @@ export function readPersistedZoneRpcAuthToken(
 ): Hex | null {
   if (!account || typeof window === "undefined") return null;
   try {
-    const raw = window.localStorage.getItem(ZONE_AUTH_STORAGE_KEY);
+    const raw = window.sessionStorage.getItem(zoneAuthStorageKey(account));
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Partial<PersistedZoneRpcAuthToken>;
     if (
@@ -195,7 +310,7 @@ export function readPersistedZoneRpcAuthToken(
 
     const fields = decodeZoneRpcAuthTokenFields(parsed.authToken);
     if (
-      fields.version !== 0 ||
+      fields.version !== VERSION_EIP712 ||
       fields.zoneId !== OMEGA_ZONE.zoneId ||
       fields.chainId !== BigInt(OMEGA_ZONE.chainId)
     ) {
@@ -204,13 +319,13 @@ export function readPersistedZoneRpcAuthToken(
 
     const expiresAt = parsed.expiresAt ?? Number(fields.expiresAt);
     if (expiresAt <= Math.floor(Date.now() / 1000) + 5) {
-      clearPersistedZoneRpcAuthToken();
+      clearPersistedZoneRpcAuthToken(account);
       return null;
     }
 
     return parsed.authToken;
   } catch {
-    clearPersistedZoneRpcAuthToken();
+    clearPersistedZoneRpcAuthToken(account);
     return null;
   }
 }
@@ -232,10 +347,20 @@ export function isZoneRpcAuthTokenExpired(
   }
 }
 
-export function clearPersistedZoneRpcAuthToken() {
+export function clearPersistedZoneRpcAuthToken(account?: Address) {
   if (typeof document === "undefined") return;
   if (typeof window !== "undefined") {
-    window.localStorage.removeItem(ZONE_AUTH_STORAGE_KEY);
+    if (account) {
+      window.sessionStorage.removeItem(zoneAuthStorageKey(account));
+    } else {
+      for (let index = window.sessionStorage.length - 1; index >= 0; index--) {
+        const key = window.sessionStorage.key(index);
+        if (key?.startsWith(`${ZONE_AUTH_STORAGE_KEY_PREFIX}:`)) {
+          window.sessionStorage.removeItem(key);
+        }
+      }
+    }
+    window.localStorage.removeItem(LEGACY_ZONE_AUTH_STORAGE_KEY);
   }
   document.cookie = [
     `${ZONE_AUTH_COOKIE}=`,
@@ -245,48 +370,17 @@ export function clearPersistedZoneRpcAuthToken() {
   ].join("; ");
 }
 
-async function signWithNativeTempoWallet({
-  account,
-  digest,
-  fields,
-  nativeSigner,
-}: {
-  account: Address;
-  digest: Hex;
-  fields: Hex;
-  nativeSigner?: TempoNativeAuthSigner;
-}): Promise<Hex | null> {
-  if (!nativeSigner) return null;
+function zoneAuthStorageKey(account: Address): string {
+  return `${ZONE_AUTH_STORAGE_KEY_PREFIX}:${account.toLowerCase()}:${OMEGA_ZONE.chainId}`;
+}
 
-  if (nativeSigner.signTempoZoneRpcAuthToken) {
-    return nativeSigner.signTempoZoneRpcAuthToken({ account, digest, fields });
-  }
-  if (nativeSigner.signTempoZoneRpcAuthDigest) {
-    return nativeSigner.signTempoZoneRpcAuthDigest({ account, digest, fields });
-  }
-  if (!nativeSigner.request) return null;
-
-  for (const method of TEMPO_NATIVE_RPC_SIGN_METHODS) {
-    try {
-      const result = await nativeSigner.request({
-        method,
-        params: [
-          {
-            account,
-            digest,
-            fields,
-            zoneId: OMEGA_ZONE.zoneId,
-            chainId: OMEGA_ZONE.chainId,
-          },
-        ],
-      });
-      if (typeof result === "string" && isHex(result)) return result;
-    } catch {
-      // Not all Tempo Wallet builds expose a native auth-token signer yet.
-    }
-  }
-
-  return null;
+function isHexSignature(value: unknown): value is Hex {
+  return (
+    typeof value === "string" &&
+    /^0x[0-9a-f]+$/i.test(value) &&
+    value.length > 2 &&
+    value.length % 2 === 0
+  );
 }
 
 function unixNow(): bigint {

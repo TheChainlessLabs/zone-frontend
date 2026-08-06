@@ -221,7 +221,7 @@ function tokensSourceSha() {
 const sha = tokensSourceSha();
 const header = [
   "/* GENERATED FILE — do not edit by hand.",
-  " * Regenerate via `pnpm sync-tokens` (auto-runs before `pnpm dev` and `pnpm build`).",
+  " * Regenerate via `pnpm sync-tokens` (auto-runs before `pnpm dev`).",
   " * Source: omega-docs/03-brand/assets/tokens.json",
   ` * Source SHA: ${sha}`,
   " * Generator: scripts/sync-tokens.mjs",

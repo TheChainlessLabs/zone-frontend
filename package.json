@@ -11,10 +11,10 @@
   "scripts": {
     "sync-tokens": "node scripts/sync-tokens.mjs",
     "dev": "pnpm sync-tokens && pnpm --filter @omega/app dev",
-    "build": "pnpm sync-tokens && pnpm -r build",
+    "build": "pnpm --filter @omega/app build",
     "typecheck": "pnpm --filter @omega/app exec tsc --noEmit",
     "test": "pnpm --filter @omega/app test",
-    "prepare": "git config core.hooksPath .githooks"
+    "prepare": "node scripts/configure-git-hooks.mjs"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
@@ -28,7 +28,7 @@
     }
   },
   "engines": {
-    "node": ">=18",
+    "node": "22.x",
     "pnpm": ">=9"
   }
 }

@@ -46,7 +46,7 @@ The legacy `landing/` and `design-system/` packages were removed. The design-sys
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org/) ≥ 18
+- [Node.js](https://nodejs.org/) 22 LTS
 - [pnpm](https://pnpm.io/) ≥ 9
 
 ### Install
@@ -59,7 +59,7 @@ pnpm install
 
 ```bash
 pnpm dev         # Next.js dev server on the default port
-pnpm build       # Build the app
+pnpm build       # Build the app from versioned repository sources
 pnpm typecheck   # tsc --noEmit
 pnpm test        # Vitest run
 pnpm sync-tokens # Regenerate app/app/_generated/tokens.css from omega-docs
@@ -78,11 +78,35 @@ Re-run `:update` when a primitive's visual contract intentionally changes; commi
 
 ## Design tokens
 
-Canonical source: `omega-docs/03-brand/assets/tokens.json` (sibling repo). `omega-interface` consumes via `scripts/sync-tokens.mjs`, which writes `app/app/_generated/tokens.css`. Sync runs automatically before `pnpm dev` and `pnpm build`. Do not hand-edit `_generated/tokens.css` — it gets overwritten.
+Canonical source: `omega-docs/03-brand/assets/tokens.json` (sibling repo). `omega-interface` consumes via `scripts/sync-tokens.mjs`, which writes `app/app/_generated/tokens.css`. Sync runs automatically before `pnpm dev`; run `pnpm sync-tokens` explicitly after changing the canonical tokens. The generated CSS is committed so production builds do not depend on a separate `omega-docs` checkout. Do not hand-edit `_generated/tokens.css` — it gets overwritten.
 
 Adding or changing a token: edit `omega-docs/03-brand/assets/tokens.json`, ship via an `omega-docs` PR, then re-run `pnpm sync-tokens` here. The downstream PR cites the upstream omega-docs PR in its Summary. The generated header records the omega-docs source SHA for traceability.
 
 If `omega-docs` is checked out somewhere other than the default sibling location, point the script at it explicitly: `OMEGA_TOKENS_PATH=/abs/path/to/tokens.json pnpm sync-tokens`.
+
+## Deploying to Vercel
+
+Create the Vercel project from this repository with these settings:
+
+- **Framework Preset:** Next.js
+- **Root Directory:** `app`
+- **Node.js Version:** 22.x (also pinned in `package.json`)
+- **Build Command:** `next build` (the detected default)
+- **Output Directory:** `.next` (the detected default)
+- **Install Command:** `pnpm install` (the detected default)
+
+Configure these variables for every Vercel environment that should work
+(Production, Preview, or Development):
+
+- `NEXT_PUBLIC_OMEGA_ZONE_ID`
+- `NEXT_PUBLIC_OMEGA_ZONE_CHAIN_ID`
+- `NEXT_PUBLIC_OMEGA_ZONE_PORTAL`
+- `OMEGA_ZONE_RPC_URL`
+- `OMEGA_ZONE_PRIVATE_RPC_URL`
+
+Set `OMEGA_REQUEST_ACCESS_WEBHOOK_URL` as well if the landing-page access form
+must accept submissions. Do not deploy `NEXT_PUBLIC_DEV_WALLET_PK` or
+`NEXT_PUBLIC_MAKER_WALLET_PK`; those are local-development credentials.
 
 ## Workflow
 

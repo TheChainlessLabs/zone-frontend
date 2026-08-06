@@ -15,6 +15,12 @@ const PUBLIC_AGGREGATE_ZONE_METHODS = new Set([
   "zone_getBatch",
   "zone_searchBatch",
 ]);
+const BATCH_AGGREGATE_ZONE_METHODS = new Set([
+  "zone_listBatches",
+  "zone_getBatch",
+  "zone_searchBatch",
+]);
+const BATCH_AGGREGATE_TIMEOUT_MS = 120_000;
 const AUTH_TOKEN_TTL_SECONDS = 15 * 60;
 const AUTH_TOKEN_REFRESH_BUFFER_SECONDS = 60;
 
@@ -31,6 +37,15 @@ export function isPublicAggregateZoneRpcRequest(payload: unknown): boolean {
     return payload.length > 0 && payload.every(isAllowedJsonRpcRequest);
   }
   return isAllowedJsonRpcRequest(payload);
+}
+
+export function publicAggregateZoneRpcTimeoutMs(
+  payload: unknown,
+): number | undefined {
+  const requests = Array.isArray(payload) ? payload : [payload];
+  return requests.some(isBatchAggregateJsonRpcRequest)
+    ? BATCH_AGGREGATE_TIMEOUT_MS
+    : undefined;
 }
 
 export async function getPublicAggregateZoneAuthToken(): Promise<Hex> {
@@ -61,4 +76,10 @@ function isAllowedJsonRpcRequest(payload: unknown): boolean {
   return (
     typeof method === "string" && PUBLIC_AGGREGATE_ZONE_METHODS.has(method)
   );
+}
+
+function isBatchAggregateJsonRpcRequest(payload: unknown): boolean {
+  if (!payload || typeof payload !== "object") return false;
+  const method = (payload as { method?: unknown }).method;
+  return typeof method === "string" && BATCH_AGGREGATE_ZONE_METHODS.has(method);
 }

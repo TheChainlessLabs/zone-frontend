@@ -15,10 +15,12 @@ export async function proxyZoneRpcRequest({
   request,
   upstreams,
   authToken,
+  timeoutMs = upstreamTimeoutMs(),
 }: {
   request: NextRequest;
   upstreams: readonly string[];
   authToken?: string;
+  timeoutMs?: number;
 }) {
   const body = await request.text();
   const headers: HeadersInit = {
@@ -37,7 +39,7 @@ export async function proxyZoneRpcRequest({
           body,
           cache: "no-store",
         },
-        upstreamTimeoutMs(),
+        timeoutMs,
       );
 
       if (shouldTryNextUpstream(response.status)) {

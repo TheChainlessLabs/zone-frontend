@@ -2,12 +2,25 @@ import type { NextRequest } from "next/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { proxyZoneRpcRequest } from "@/app/api/omega-zone/_proxy";
+import { publicAggregateZoneRpcTimeoutMs } from "@/app/api/omega-zone/_public-auth";
 
 afterEach(() => {
   vi.unstubAllGlobals();
 });
 
 describe("omega zone RPC proxy", () => {
+  it("allows slow public batch aggregation without extending other RPC calls", () => {
+    expect(
+      publicAggregateZoneRpcTimeoutMs({ method: "zone_searchBatch" }),
+    ).toBe(120_000);
+    expect(
+      publicAggregateZoneRpcTimeoutMs({ method: "zone_listBatches" }),
+    ).toBe(120_000);
+    expect(
+      publicAggregateZoneRpcTimeoutMs({ method: "zone_getMarketConfig" }),
+    ).toBeUndefined();
+  });
+
   it("falls back when an upstream gateway is unavailable", async () => {
     const fetchMock = vi.fn()
       .mockResolvedValueOnce(

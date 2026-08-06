@@ -98,6 +98,14 @@ function json(result: unknown) {
   });
 }
 
+function deferred<T>() {
+  let resolve!: (value: T | PromiseLike<T>) => void;
+  const promise = new Promise<T>((resolvePromise) => {
+    resolve = resolvePromise;
+  });
+  return { promise, resolve };
+}
+
 function mockBatchRpc(cfg: RpcConfig = {}) {
   const fetchMock = vi.fn(async (_url: string, init?: RequestInit) => {
     const body = JSON.parse(String(init?.body ?? "{}")) as {
@@ -193,7 +201,10 @@ describe("BatchesListView (live)", () => {
       nextCursor: "0x12d",
     });
     await waitFor(() =>
-      expect(screen.getByRole<HTMLButtonElement>("button", { name: "Next" }).disabled).toBe(false),
+      expect(
+        screen.getByRole<HTMLButtonElement>("button", { name: "Next" })
+          .disabled,
+      ).toBe(false),
     );
     fireEvent.click(screen.getByRole("button", { name: "Next" }));
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
@@ -201,6 +212,86 @@ describe("BatchesListView (live)", () => {
       String((fetchMock.mock.calls[1]?.[1] as RequestInit | undefined)?.body),
     ) as { params: unknown[] };
     expect(secondRequest.params).toEqual([{ limit: 7, cursor: "0x12d" }]);
+  });
+
+  it("keeps the explorer mounted while the next cursor page loads", async () => {
+    const { fetchMock } = await renderList({
+      list: [mkZoneBatch(4821)],
+      nextCursor: "0x12d",
+    });
+    await waitFor(() =>
+      expect(
+        screen.getByRole<HTMLButtonElement>("button", { name: "Next" })
+          .disabled,
+      ).toBe(false),
+    );
+    const heading = screen.getByRole("heading", {
+      level: 1,
+      name: "Settlement explorer",
+    });
+    const row = screen.getByText("#4,821");
+    const pending = deferred<Response>();
+    fetchMock.mockImplementationOnce(() => pending.promise);
+
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    expect(heading.isConnected).toBe(true);
+    expect(row.isConnected).toBe(true);
+    expect(
+      screen.getByRole<HTMLButtonElement>("button", { name: "Next" })
+        .disabled,
+    ).toBe(true);
+    expect(
+      screen
+        .getByRole("heading", { level: 2, name: "Recent batches" })
+        .closest("section")
+        ?.getAttribute("aria-busy"),
+    ).toBe("true");
+
+    pending.resolve(json({ batches: [mkZoneBatch(4814)] }));
+    await waitFor(() => expect(screen.getByText("#4,814")).toBeDefined());
+  });
+
+  it("keeps search focused and uses the numeric batch endpoint for 3", async () => {
+    const { fetchMock } = await renderList({ list: [mkZoneBatch(4821)] });
+    const input = await screen.findByLabelText<HTMLInputElement>(
+      "Search batches",
+    );
+    const pending = deferred<Response>();
+    fetchMock.mockImplementationOnce(() => pending.promise);
+    input.focus();
+
+    fireEvent.change(input, { target: { value: "3" } });
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    expect(screen.getByLabelText("Search batches")).toBe(input);
+    expect(document.activeElement).toBe(input);
+    expect(
+      screen.getByRole("heading", { level: 1, name: "Settlement explorer" }),
+    ).toBeDefined();
+    const request = JSON.parse(
+      String((fetchMock.mock.calls[1]?.[1] as RequestInit | undefined)?.body),
+    ) as { method: string; params: unknown[] };
+    expect(request).toMatchObject({ method: "zone_getBatch", params: ["0x3"] });
+
+    pending.resolve(json(mkZoneBatch(3)));
+    await waitFor(() => expect(screen.getByText("#3")).toBeDefined());
+  });
+
+  it("validates an incomplete settlement hash without calling the RPC", async () => {
+    const { fetchMock } = await renderList({ list: [mkZoneBatch(4821)] });
+    const input = await screen.findByLabelText<HTMLInputElement>(
+      "Search batches",
+    );
+
+    fireEvent.change(input, { target: { value: "0x1234567890abcdef0" } });
+
+    await waitFor(() =>
+      expect(screen.getByText("Invalid batch search.")).toBeDefined(),
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(screen.getByLabelText("Search batches")).toBe(input);
   });
 
   it("never surfaces individual fill IDs or order IDs (no 'owner')", async () => {

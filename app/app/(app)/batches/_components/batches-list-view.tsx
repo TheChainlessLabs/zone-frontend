@@ -10,6 +10,7 @@ import { Status } from "@/components/ui/status";
 import { Icon } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 import {
+  getZoneBatch,
   listZoneBatches,
   searchZoneBatch,
   type ZoneBatchSummary,
@@ -41,6 +42,7 @@ import styles from "./batches.module.css";
  */
 
 const PAGE_SIZE = 7;
+const MAX_BATCH_NUMBER = (BigInt(1) << BigInt(64)) - BigInt(1);
 
 // Map RPC states onto the existing status glyph vocabulary without changing
 // their user-facing labels.
@@ -72,6 +74,8 @@ export function BatchesListView() {
     "loading" | "ready" | "error"
   >("loading");
   const [liveError, setLiveError] = React.useState<string | undefined>();
+  const [searchIssue, setSearchIssue] = React.useState<string | undefined>();
+  const [isFetching, setIsFetching] = React.useState(false);
 
   const searchParam = useSearchParam("search");
   const cursor = cursors[page - 1];
@@ -83,25 +87,41 @@ export function BatchesListView() {
   React.useEffect(() => {
     let cancelled = false;
     const timeout = window.setTimeout(async () => {
-      setLiveState("loading");
+      setIsFetching(true);
       setLiveError(undefined);
+      setSearchIssue(undefined);
       try {
-        const query = search.trim();
-        const response = query
+        const query = parseBatchSearch(search);
+        if (query.kind === "invalid") {
+          if (cancelled) return;
+          setLiveRows([]);
+          setNextCursor(undefined);
+          setSearchIssue(query.message);
+          setLiveState("ready");
+          return;
+        }
+        const response = query.kind === "batch"
           ? {
-              batches: compactBatch(await searchZoneBatch(query)),
+              batches: compactBatch(await getZoneBatch(query.batchNumber)),
               nextCursor: undefined,
             }
-          : await listZoneBatches({ limit: PAGE_SIZE, cursor });
+          : query.kind === "settlement"
+            ? {
+                batches: compactBatch(await searchZoneBatch(query.hash)),
+                nextCursor: undefined,
+              }
+            : await listZoneBatches({ limit: PAGE_SIZE, cursor });
         if (cancelled) return;
         setLiveRows(response.batches.map(zoneBatchToRecord));
-        setNextCursor(query ? undefined : response.nextCursor);
+        setNextCursor(query.kind === "empty" ? response.nextCursor : undefined);
         setLiveState("ready");
       } catch (error) {
         if (cancelled) return;
         setLiveRows([]);
         setLiveError(getErrorMessage(error));
         setLiveState("error");
+      } finally {
+        if (!cancelled) setIsFetching(false);
       }
     }, search.trim() ? 250 : 0);
 
@@ -116,7 +136,7 @@ export function BatchesListView() {
     setCursors([undefined]);
   }, [search]);
 
-  const isLoading = liveState === "loading";
+  const isInitialLoading = liveState === "loading";
   const error =
     liveState === "error"
       ? { message: liveError ?? "Failed to load batches.", code: "ZONE_RPC" }
@@ -145,7 +165,7 @@ export function BatchesListView() {
           styles.viewFwd,
         )}
       >
-        {isLoading ? (
+        {isInitialLoading ? (
           <BatchesListSkeleton />
         ) : (
           <div className={cn("flex flex-col gap-4", styles.fade)}>
@@ -168,7 +188,9 @@ export function BatchesListView() {
               rangeStart={rangeStart}
               rangeEnd={rangeEnd}
               error={error}
-              hasNextPage={Boolean(nextCursor)}
+              queryIssue={searchIssue}
+              isFetching={isFetching}
+              hasNextPage={!search.trim() && Boolean(nextCursor)}
               onPreviousPage={() => setPage((current) => Math.max(1, current - 1))}
               onNextPage={() => {
                 if (!nextCursor) return;
@@ -310,6 +332,8 @@ function BatchList({
   rangeStart,
   rangeEnd,
   error,
+  queryIssue,
+  isFetching,
   hasNextPage,
   onPreviousPage,
   onNextPage,
@@ -322,12 +346,17 @@ function BatchList({
   rangeStart: number;
   rangeEnd: number;
   error?: { message: string; code: string };
+  queryIssue?: string;
+  isFetching: boolean;
   hasNextPage: boolean;
   onPreviousPage: () => void;
   onNextPage: () => void;
 }) {
   return (
-    <section className="glass flex flex-col gap-4 rounded-[var(--radius-xl)] p-5">
+    <section
+      aria-busy={isFetching}
+      className="glass flex flex-col gap-4 rounded-[var(--radius-xl)] p-5"
+    >
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-col gap-0.5">
           <h2 className="t-h3 m-0">Recent batches</h2>
@@ -355,6 +384,11 @@ function BatchList({
                 Retry
               </Button>
             }
+          />
+        ) : queryIssue ? (
+          <ListMessage
+            title="Invalid batch search."
+            description={queryIssue}
           />
         ) : total === 0 && query.trim() ? (
           <ListMessage
@@ -396,7 +430,11 @@ function BatchList({
             {rangeStart}–{rangeEnd}
           </span>
           <div className="flex items-center gap-2.5">
-            <PageButton dir={-1} disabled={page <= 1} onClick={onPreviousPage}>
+            <PageButton
+              dir={-1}
+              disabled={page <= 1 || isFetching}
+              onClick={onPreviousPage}
+            >
               Prev
             </PageButton>
             <span className="whitespace-nowrap font-mono text-[11px] tracking-[0.08em] tabular-nums text-[var(--foreground)]">
@@ -404,7 +442,7 @@ function BatchList({
             </span>
             <PageButton
               dir={1}
-              disabled={!hasNextPage}
+              disabled={!hasNextPage || isFetching}
               onClick={onNextPage}
             >
               Next
@@ -689,4 +727,39 @@ function ageOf(iso: string | undefined): string {
 function useSearchParam(name: string): string | null {
   const params = useSearchParams();
   return params.get(name);
+}
+
+type ParsedBatchSearch =
+  | { kind: "empty" }
+  | { kind: "batch"; batchNumber: bigint }
+  | { kind: "settlement"; hash: string }
+  | { kind: "invalid"; message: string };
+
+function parseBatchSearch(value: string): ParsedBatchSearch {
+  const query = value.trim();
+  if (!query) return { kind: "empty" };
+
+  const displayNumber = query.replace(/^#/, "").replaceAll(",", "");
+  if (/^[0-9]+$/.test(displayNumber)) {
+    const batchNumber = BigInt(displayNumber);
+    return batchNumber <= MAX_BATCH_NUMBER
+      ? { kind: "batch", batchNumber }
+      : {
+          kind: "invalid",
+          message: "Batch number is outside the supported range.",
+        };
+  }
+
+  if (/^0x[0-9a-f]+$/i.test(query)) {
+    const digits = query.slice(2);
+    if (digits.length === 64) return { kind: "settlement", hash: query };
+    if (digits.length <= 16) {
+      return { kind: "batch", batchNumber: BigInt(query) };
+    }
+  }
+
+  return {
+    kind: "invalid",
+    message: "Enter a batch number or a complete settlement transaction hash.",
+  };
 }

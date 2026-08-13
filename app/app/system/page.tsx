@@ -736,8 +736,10 @@ export function cn(...inputs: ClassValue[]) {
             <>
               The shadcn primitive ships with the muted track and a raised active
               tile.{" "}
-              <span className="font-serif text-[var(--foreground)]">No animation</span>{" "}
-              by default — motion lands later in M2 / M5.
+              <span className="font-serif text-[var(--foreground)]">
+                State motion stays transform, color, and shadow only
+              </span>{" "}
+              — no panel choreography until the motion-system pass.
             </>
           }
         >
@@ -805,7 +807,9 @@ export function cn(...inputs: ClassValue[]) {
             <>
               Dropdown menu is for actions tied to a row or a header — copy, edit,
               disconnect.{" "}
-              <span className="font-serif text-[var(--foreground)]">Three to seven items;</span>{" "}
+              <span className="font-serif text-[var(--foreground)]">
+                Dense label, clear focus row, three to seven items;
+              </span>{" "}
               if it grows past that, it&rsquo;s navigation, not a menu.
             </>
           }

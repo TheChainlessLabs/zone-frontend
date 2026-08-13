@@ -10,7 +10,18 @@ export const landingHero = {
   supporting:
     "Omega matches stablecoin orders privately, accesses external liquidity when needed, and settles with verifiable proofs.",
   primaryCta: "Request Access",
+  secondaryCta: "Launch app",
   scrollHint: "Scroll to follow an intent",
+  proofLabel: "Execution path",
+  proofSteps: [
+    "Private orderbook",
+    "Shielded venue access",
+    "Verifiable settlement",
+  ],
+  proofStats: [
+    { label: "Pre-trade leakage", value: "Hidden" },
+    { label: "Settlement", value: "Onchain" },
+  ],
 } as const;
 
 // The mechanism scene — four scroll-driven states (scene.jsx SCROLL_STATES).

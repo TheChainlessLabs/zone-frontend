@@ -50,7 +50,7 @@ export function LandingPage() {
   }, []);
 
   return (
-    <main className="relative isolate min-h-screen text-[var(--foreground)]">
+    <main className="relative isolate min-h-[100dvh] text-[var(--foreground)]">
       {/* Ambient dot-grid — a dedicated fixed layer at z-0 (the shared global
           body::before is occluded by the opaque canvas and never shows). Sits
           behind the z-1 content wrapper, matching the kit's body::before. */}

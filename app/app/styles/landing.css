@@ -1,0 +1,344 @@
+/* ============================================================================
+   Landing page — atmosphere ported from the design-kit landing
+   (ui_kits/landing-page/index.html). Hero blackhole + deterministic starfield
+   + scroll-reveal fade (kit class names `lp-*` preserved), with the original
+   3D-perspective order meteors (`omega-order-meteor`) in place of the kit's
+   flatter meteor field.
+   ============================================================================ */
+
+/* Ambient dot-grid — fades in as the hero scrolls away (kit `body::before`:
+   30px grid, 0.40 dot alpha, opacity 0.5 × --landing-dots). A landing-local
+   fixed layer driven by LandingPage's scroll handler, because the shared
+   global body::before sits behind the opaque canvas and never shows. It sits
+   at z-0, under the landing's z-1 content wrapper. */
+.lp-dotgrid {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.4) 1.5px, transparent 1.5px);
+  background-size: 30px 30px;
+  -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 50%, #000 30%, transparent 80%);
+  mask-image: radial-gradient(ellipse 90% 70% at 50% 50%, #000 30%, transparent 80%);
+  opacity: calc(0.5 * var(--landing-dots, 0));
+  transition: opacity 120ms linear;
+}
+
+@media (prefers-contrast: more) {
+  .lp-dotgrid {
+    display: none;
+  }
+}
+
+/* The landing renders its own kit-exact dot-grid (.lp-dotgrid); suppress the
+   shared route dot-grid (body::before) on the landing route so the two don't
+   stack into a doubled pattern. */
+body[data-route="/"]::before {
+  display: none;
+}
+
+/* Landing glass — the marketing cards sit over a busy backdrop (dot-grid +
+   blackhole glow), so the canonical ~0.07 white fill bleeds through and washes
+   out card copy. Scope a denser, slightly darker fill (and a touch more blur)
+   for legibility. Landing only; product surfaces keep the canonical glass. */
+.lp-content .glass {
+  --glass-fill: color-mix(in oklab, var(--background) 66%, transparent);
+  --glass-blur: 30px;
+  /* Landing cards are meant to be translucent over the blackhole scene (the
+     liquid-glass look). Drop the product opaque base so the backdrop reads
+     through; the denser 66% fill above keeps copy legible. */
+  background-color: transparent;
+}
+
+/* Hero blackhole video — slow scale/opacity breathing (kit `lp-bh`). The
+   component sets width / mix-blend-mode / base opacity inline. */
+.omega-hero-blackhole-video {
+  transform-origin: center;
+  will-change: opacity, transform;
+  animation: lp-bh 7s ease-in-out infinite;
+}
+
+@keyframes lp-bh {
+  0%,
+  100% {
+    opacity: 0.82;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.03);
+  }
+}
+
+/* Hero copy reveal (kit `lp-fade` + staggered s1..s4). */
+@keyframes lp-fade {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.lp-fade {
+  animation: lp-fade 0.7s var(--ease-out) both;
+}
+.lp-fade.s1 {
+  animation-delay: 0.06s;
+}
+.lp-fade.s2 {
+  animation-delay: 0.14s;
+}
+.lp-fade.s3 {
+  animation-delay: 0.22s;
+}
+.lp-fade.s4 {
+  animation-delay: 0.3s;
+}
+
+/* Deterministic starfield (kit `lp-star`). */
+.lp-star {
+  position: absolute;
+  border-radius: 50%;
+  background: #fff;
+  animation: lp-twinkle var(--d, 4s) ease-in-out infinite;
+}
+@keyframes lp-twinkle {
+  0%,
+  100% {
+    opacity: var(--o, 0.5);
+  }
+  50% {
+    opacity: calc(var(--o, 0.5) * 0.25);
+  }
+}
+
+/* Order meteors — the original 3D-perspective ingress. Streaks fly in from
+   the screen edges toward the singularity along the Z axis (perspective +
+   preserve-3d), tilting and shrinking as they fall in. The component (hero-
+   abstract-field.tsx) sets per-meteor custom properties; a scroll driver fades
+   the whole field via --hero-meteor-opacity. `--wide` meteors only show at the
+   ≥768px breakpoint (see media query below). */
+.omega-meteor-field {
+  pointer-events: none;
+  mix-blend-mode: screen;
+  opacity: var(--hero-meteor-opacity, 0.96);
+  perspective: 900px;
+  transform-style: preserve-3d;
+  transition: opacity 120ms linear;
+}
+
+.omega-order-meteor {
+  --sx: -50vw;
+  --sy: -20vh;
+  --z-start: 80px;
+  --z-end: -340px;
+  --rot-start: 0deg;
+  --rot-end: 0deg;
+  --tilt-x: 0deg;
+  --tilt-y: 0deg;
+  --scale-start: 1;
+  --scale-end: 0.06;
+  --duration: 6s;
+  --delay: 0s;
+  --tail: 160px;
+  --opacity: 0.7;
+
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: clamp(25px, 2.25vw, 42px);
+  height: clamp(16px, 1.35vw, 26px);
+  opacity: 0;
+  transform-origin: center;
+  animation: omega-order-ingress var(--duration) linear infinite;
+  animation-delay: var(--delay);
+  transform-style: preserve-3d;
+  will-change: transform, opacity, filter;
+}
+
+.omega-order-meteor--wide {
+  display: none;
+}
+
+.omega-order-meteor__tail {
+  position: absolute;
+  right: 58%;
+  top: 50%;
+  width: min(var(--tail), 36vw);
+  height: clamp(9px, 0.82vw, 15px);
+  transform: translateY(-50%);
+  background:
+    linear-gradient(
+      90deg,
+      transparent 0%,
+      color-mix(in oklab, var(--foreground) 4%, transparent) 22%,
+      color-mix(in oklab, var(--foreground) 20%, transparent) 64%,
+      color-mix(in oklab, var(--foreground) 72%, transparent) 100%
+    );
+  clip-path: polygon(0 46%, 100% 0, 100% 100%, 0 54%);
+  filter: blur(0.45px);
+  opacity: 0.86;
+}
+
+.omega-order-meteor__tail::after {
+  content: "";
+  position: absolute;
+  inset: -11px -8px -11px 18%;
+  background:
+    linear-gradient(
+      90deg,
+      transparent 0%,
+      color-mix(in oklab, var(--foreground) 9%, transparent) 56%,
+      color-mix(in oklab, var(--foreground) 30%, transparent) 100%
+    );
+  clip-path: polygon(0 48%, 100% 9%, 100% 91%, 0 52%);
+  filter: blur(9px);
+  opacity: 0.68;
+}
+
+.omega-order-meteor__tail::before {
+  content: "";
+  position: absolute;
+  inset: 1px 8% 1px 42%;
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in oklab, var(--foreground) 48%, transparent)
+    );
+  clip-path: polygon(0 44%, 100% 18%, 100% 31%, 0 54%);
+  opacity: 0.7;
+}
+
+.omega-order-meteor__body {
+  position: absolute;
+  inset: 0;
+  display: block;
+  overflow: hidden;
+  border: 1px solid color-mix(in oklab, var(--foreground) 68%, transparent);
+  border-radius: 1px;
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in oklab, var(--foreground) 92%, transparent),
+      color-mix(in oklab, var(--foreground) 48%, transparent) 48%,
+      color-mix(in oklab, var(--background) 38%, transparent)
+    );
+  clip-path: polygon(0 50%, 27% 8%, 74% 0, 100% 48%, 76% 100%, 28% 88%);
+  box-shadow:
+    0 0 22px color-mix(in oklab, var(--foreground) 44%, transparent),
+    inset 0 1px 0 color-mix(in oklab, var(--background) 46%, transparent);
+  transform: skewX(-4deg);
+}
+
+.omega-order-meteor__body::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(
+      28deg,
+      transparent 0 38%,
+      color-mix(in oklab, var(--background) 62%, transparent) 39% 41%,
+      transparent 42%
+    ),
+    linear-gradient(
+      148deg,
+      transparent 0 47%,
+      color-mix(in oklab, var(--background) 42%, transparent) 48% 50%,
+      transparent 51%
+    );
+  opacity: 0.66;
+}
+
+.omega-order-meteor__body::after {
+  content: "";
+  position: absolute;
+  right: -2px;
+  top: -2px;
+  width: 48%;
+  height: 58%;
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in oklab, var(--background) 72%, transparent),
+      transparent 58%
+    );
+  clip-path: polygon(100% 0, 10% 0, 100% 100%);
+  opacity: 0.7;
+}
+
+.omega-order-meteor__body > span {
+  position: absolute;
+  inset: 3px 5px 4px 4px;
+  border: 1px solid color-mix(in oklab, var(--background) 30%, transparent);
+  clip-path: polygon(4% 52%, 28% 14%, 73% 5%, 96% 47%, 74% 94%, 29% 84%);
+  opacity: 0.48;
+}
+
+@keyframes omega-order-ingress {
+  0% {
+    opacity: 0;
+    filter: blur(0) brightness(0.95);
+    transform:
+      translate3d(var(--sx), var(--sy), var(--z-start))
+      rotate(var(--rot-start))
+      rotateX(var(--tilt-x))
+      rotateY(var(--tilt-y))
+      scale(var(--scale-start));
+  }
+  8% {
+    opacity: var(--opacity);
+  }
+  86% {
+    opacity: var(--opacity);
+    filter: blur(0.1px) brightness(1.16);
+  }
+  100% {
+    opacity: 0;
+    filter: blur(1.4px) brightness(1.7);
+    transform:
+      translate3d(0, 0, var(--z-end))
+      rotate(var(--rot-end))
+      rotateX(0deg)
+      rotateY(0deg)
+      scale(var(--scale-end));
+  }
+}
+
+@media (min-width: 768px) {
+  .omega-order-meteor--wide {
+    display: block;
+  }
+}
+
+@media (max-width: 767px) {
+  .omega-meteor-field {
+    opacity: var(--hero-meteor-opacity, 0.82);
+  }
+
+  .omega-order-meteor {
+    top: 44%;
+    width: 24px;
+    height: 15px;
+  }
+
+  .omega-order-meteor__tail {
+    width: min(var(--tail), 28vw);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lp-fade {
+    animation: none;
+  }
+  .omega-hero-blackhole-video,
+  .lp-star {
+    animation: none;
+  }
+  .omega-meteor-field {
+    display: none;
+  }
+}

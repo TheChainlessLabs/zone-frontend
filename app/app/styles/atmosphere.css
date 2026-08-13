@@ -1,0 +1,63 @@
+/* Per-route surface atmosphere.
+   --------------------------------------------------------------------
+   The ambient dot-grid is now the shared backdrop across product and
+   review surfaces, with lighter/wider calibration on dense product
+   routes so it reads as texture rather than a wallpaper.
+
+   Routing signal: `<RouteAtmosphere>` (rendered in `app/layout.tsx`)
+   sets `data-route` on `<body>` from `usePathname()`. The 404 page
+   renders its own `<RouteAtmosphere route="/404">` because
+   `usePathname()` returns the originally requested URL there, not a
+   stable sentinel. */
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  position: relative;
+  background-image: none;
+  --route-dot-grid-size: 24px;
+  --route-dot-grid-opacity: 0.7;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  /* Ambient dot-grid — matched to the design-kit backdrop (0.40 dot alpha,
+     focal mask at 50% 35%). Per-route size/opacity stay calibrated below. */
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.4) 1.5px, transparent 1.5px);
+  background-size: var(--route-dot-grid-size) var(--route-dot-grid-size);
+  background-position: 0 0;
+  -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 35%, #000 30%, transparent 80%);
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 35%, #000 30%, transparent 80%);
+  opacity: var(--route-dot-grid-opacity);
+}
+
+[data-theme="light"] body::before {
+  background-image: radial-gradient(circle, rgba(15, 23, 42, 0.22) 1.5px, transparent 1.5px);
+}
+
+body[data-route^="/trade"],
+body[data-route^="/portfolio"],
+body[data-route^="/batches"],
+body[data-route^="/account"] {
+  --route-dot-grid-size: 28px;
+  --route-dot-grid-opacity: 0.7;
+}
+
+body[data-route^="/brand"],
+body[data-route^="/system"],
+body[data-route="/404"] {
+  --route-dot-grid-size: 24px;
+  --route-dot-grid-opacity: 0.7;
+}
+
+@media (prefers-contrast: more) {
+  /* Solid background for high-contrast users; dot grid disappears. */
+  body::before {
+    display: none;
+  }
+}

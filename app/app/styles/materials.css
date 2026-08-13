@@ -1,0 +1,162 @@
+/* Liquid-glass surface utility (surface-sized moments — cards, modals).
+   Structure mirrors the design-kit `colors_and_type.css` .glass recipe:
+   a diagonal sheen + a faint bottom-depth wash over the fill, a specular
+   inset stack, and an outer edge bloom. The FILTER stays on the app's
+   canonical tokens (--glass-blur / --glass-saturate), not the kit's heavier
+   standalone blur/saturate — token wins per the convergence rule. Apply to
+   specific moments only; see omega-docs/03-brand/visual-identity.md. */
+.glass {
+  position: relative;
+  isolation: isolate;
+  /* Opaque base UNDER the translucent tint so the surface is never see-through.
+     `--glass-fill` carries a near-transparent token default
+     (`rgba(255,255,255,0.04)`) until the darker `:root` override resolves; in
+     dev that override lands a beat after first paint, so a fill-only background
+     flashed the dotted backdrop through every panel on load. Painting an opaque
+     `--background` base first (and layering the tint/sheen as background-images)
+     keeps panels solid from the first frame. Landing keeps its translucent
+     backdrop via `.lp-content .glass` below. */
+  background-color: var(--background);
+  background-image:
+    linear-gradient(135deg, var(--glass-sheen) 0%, transparent 34%),
+    linear-gradient(to top, rgba(0, 0, 0, 0.06), transparent 42%),
+    linear-gradient(0deg, var(--glass-fill), var(--glass-fill));
+  border: 1px solid var(--glass-edge);
+  border-radius: var(--radius-xl);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate))
+    brightness(var(--glass-brightness));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate))
+    brightness(var(--glass-brightness));
+  box-shadow:
+    inset 0 1px 0 0 var(--glass-highlight),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.03),
+    inset 0 -8px 24px -16px rgba(0, 0, 0, 0.3),
+    var(--glass-shadow),
+    var(--glass-bloom);
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .glass {
+    background: var(--muted);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .glass {
+    background: var(--muted);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+/* Interactive glass — hover/focus feedback for clickable `.glass` surfaces
+   (e.g. the portfolio action grid). The base material paints its fill, sheen,
+   and brightness through layered `background` + `backdrop-filter`, so plain
+   Tailwind `hover:bg-*` / `hover:border-*` utilities land BENEATH the glass and
+   read as no-ops. Drive the hover through the material's own tokens instead:
+   lift the backdrop brightness and sheen, brighten the edge to the focus ring,
+   and add an outer bloom. The backdrop-filter + colours transition smoothly;
+   the sheen gradient re-tints on the same beat. */
+.glass-interactive {
+  transition:
+    backdrop-filter 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+}
+.glass-interactive:hover {
+  --glass-brightness: 1.16;
+  --glass-sheen: rgba(255, 255, 255, 0.2);
+  border-color: var(--ring);
+  box-shadow:
+    inset 0 1px 0 0 var(--glass-highlight),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05),
+    inset 0 -8px 24px -16px rgba(0, 0, 0, 0.3),
+    var(--glass-shadow),
+    0 0 32px -12px rgba(255, 255, 255, 0.22);
+}
+@media (prefers-reduced-transparency: reduce) {
+  .glass-interactive:hover {
+    background: color-mix(in oklab, var(--muted) 88%, white);
+  }
+}
+
+/* Soft surface — for compact menus (DropdownMenu, Tooltip, Popover, etc).
+   Replaces the 1px hard hairline with a diffuse drop + faint inner ring.
+   See omega-docs/03-brand/visual-identity.md "Surface treatment". */
+.surface-soft {
+  background: var(--popover, var(--card));
+  box-shadow:
+    inset 0 0 0 1px var(--surface-edge),
+    var(--shadow-soft);
+  border: none;
+}
+
+@media (prefers-contrast: more) {
+  .surface-soft {
+    background: var(--popover, var(--card));
+    border: 1px solid var(--border);
+    box-shadow: none;
+  }
+}
+
+/* Panel — the ONE resting surface for product chrome (order form, chart,
+   fills, balances, market header). Slightly elevated above the page, a
+   hairline border, and a faint top highlight echoing the glass. Solid for
+   data legibility — glass stays reserved for overlay moments (modals,
+   toasts) so it reads as an event, not a wash. Mirrors the design-kit
+   `colors_and_type.css` .panel recipe. */
+.panel {
+  background: color-mix(in oklab, var(--muted) 45%, var(--card));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.05),
+    var(--shadow-soft);
+}
+[data-theme="light"] .panel {
+  background: var(--card);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.6),
+    var(--shadow-soft);
+}
+
+/* Liquid-glass pill (component-sized controls — buttons, nav, toggles).
+   Same material family as .glass, scaled: a single diagonal sheen over the
+   fill, an 18px blur (the kit's component-scale blur — the 24px canonical
+   --glass-blur is the surface scale), specular inset highlight, pill shadow,
+   and edge bloom. Saturation rides the app's canonical --glass-saturate. */
+.glass-pill {
+  position: relative;
+  isolation: isolate;
+  /* Opaque base under the tint — see `.glass` above for why (prevents the
+     load-time fill-flash that showed the backdrop through the pill). */
+  background-color: var(--background);
+  background-image:
+    linear-gradient(135deg, var(--glass-sheen) 0%, transparent 52%),
+    linear-gradient(0deg, var(--glass-fill), var(--glass-fill));
+  border: 1px solid var(--glass-edge);
+  backdrop-filter: blur(18px) saturate(var(--glass-saturate))
+    brightness(var(--glass-brightness));
+  -webkit-backdrop-filter: blur(18px) saturate(var(--glass-saturate))
+    brightness(var(--glass-brightness));
+  box-shadow:
+    inset 0 1px 0 0 var(--glass-highlight),
+    var(--glass-pill-shadow),
+    var(--glass-bloom);
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .glass-pill {
+    background: var(--muted);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .glass-pill {
+    background: var(--muted);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}

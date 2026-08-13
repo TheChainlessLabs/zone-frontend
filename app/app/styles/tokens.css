@@ -1,0 +1,77 @@
+/* Design tokens — generated from omega-docs/03-brand/assets/tokens.json by
+   scripts/sync-tokens.mjs. Auto-runs before `pnpm dev` and `pnpm build`.
+   Do not hand-edit tokens.css; edit tokens.json upstream and re-sync. */
+@import "../_generated/tokens.css";
+
+/* Legacy radius carve-out: `--radius-2xl` is referenced by /brand but is not
+   yet present in tokens.json. Tracked as an upstream omega-docs follow-up;
+   keep this stub until tokens.json adds the 2xl rung, then delete. */
+:root {
+  --radius-2xl: 24px;
+
+  /* Motion tokens (M5.1 — #224). The duration ladder mirrors Tailwind v4's
+     default scale; we name the rungs we actually use so non-Tailwind CSS
+     (raw `transition` rules, `@keyframes`, View Transitions) can reach them
+     without re-deriving values. `--ease-standard` is an explicit alias of
+     Tailwind v4's default `ease-in-out` cubic so future CSS doesn't depend
+     on Tailwind internals. The brand motion ladder in
+     `omega-docs/03-brand/assets/tokens.json` is the upstream source of
+     truth — keep these in lockstep with motion.{duration,ease}. */
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --duration-75: 75ms;
+  --duration-100: 100ms;
+  --duration-150: 150ms;
+  --duration-300: 300ms;
+  --duration-500: 500ms;
+
+  /* Soft surface treatment — diffuse drop + faint inner ring. See
+     omega-docs/03-brand/visual-identity.md "Surface treatment". The sync
+     script doesn't emit shadow tokens yet (TODO upstream omega-docs to
+     add shadow tokens); inlined here from tokens.json
+     shadow.{soft,surface-edge}.
+
+     Restraint pass: previous values used 30–40% black drops which read
+     as heavy on dark and ridiculous on light. Replaced with a much
+     subtler envelope; light mode tones down further so the drop on a
+     near-white background isn't the loudest thing on the page. */
+  --shadow-soft:
+    0 2px 10px -2px rgba(0, 0, 0, 0.22),
+    0 1px 2px -1px rgba(0, 0, 0, 0.12);
+  --surface-edge: rgba(255, 255, 255, 0.08);
+
+  --glass-shadow:
+    0 4px 16px 0 rgba(0, 0, 0, 0.16),
+    0 1px 3px 0 rgba(0, 0, 0, 0.10);
+  --glass-pill-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.12);
+  /* Darker, denser glass fill (the landing-card register, preferred over the
+     brighter white tint) so glass reads as a dark frosted panel over the
+     dot-grid instead of washing out. */
+  --glass-fill: color-mix(in oklab, var(--background) 66%, transparent);
+  --glass-saturate: 1.55;
+
+  /* Liquid-glass specular layers — the structural vars the kit's `.glass` /
+     `.glass-pill` recipe references (sheen sweep, edge bloom, brightness
+     lift). Kept on the app's restrained register, NOT the kit's heavier
+     standalone values: the canonical `--glass-blur` / `--glass-saturate`
+     above still win the filter, these only shape the specular highlight.
+     See omega-docs/03-brand/visual-identity.md "Liquid-glass material". */
+  --glass-sheen: rgba(255, 255, 255, 0.10);
+  --glass-bloom: 0 0 40px -18px rgba(255, 255, 255, 0.10);
+  --glass-brightness: 1.06;
+}
+
+[data-theme="light"] {
+  --surface-edge: rgba(0, 0, 0, 0.06);
+  --shadow-soft:
+    0 1px 4px -1px rgba(15, 23, 42, 0.05),
+    0 1px 2px -1px rgba(15, 23, 42, 0.04);
+  --glass-shadow:
+    0 2px 8px 0 rgba(15, 23, 42, 0.05),
+    0 1px 2px 0 rgba(15, 23, 42, 0.04);
+  --glass-pill-shadow: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
+  --glass-fill: rgba(255, 255, 255, 0.72);
+  --glass-saturate: 1.5;
+  --glass-sheen: rgba(255, 255, 255, 0.55);
+  --glass-bloom: 0 0 32px -20px rgba(15, 23, 42, 0.10);
+  --glass-brightness: 1.03;
+}

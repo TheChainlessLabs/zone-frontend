@@ -5,27 +5,28 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "press-down inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "press-down inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[var(--radius-md)] border border-transparent text-sm font-medium ring-offset-background transition-[background-color,border-color,color,box-shadow,transform] duration-200 ease-[var(--ease-standard)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:translate-y-0 disabled:opacity-45 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground shadow hover:bg-primary/90",
+          "bg-primary text-primary-foreground shadow-[0_10px_28px_-18px_var(--foreground)] hover:bg-primary/90 hover:shadow-[0_16px_36px_-22px_var(--foreground)]",
         destructive:
-          "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
+          "bg-destructive text-destructive-foreground shadow-[0_10px_24px_-18px_var(--destructive)] hover:bg-destructive/90",
         outline:
-          "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground",
+          "border-input bg-background/80 text-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] hover:border-[var(--foreground)]/30 hover:bg-accent hover:text-accent-foreground",
         secondary:
-          "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
-        link: "text-primary underline-offset-4 hover:underline",
+          "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/75",
+        ghost:
+          "text-muted-foreground hover:bg-accent/80 hover:text-accent-foreground",
+        link: "border-0 px-0 text-primary underline-offset-4 hover:underline",
         // Glass variant — backed by the .glass-pill utility in globals.css
         // (16px blur, scaled component-level glass). Reserved for the order
         // form, modals, sheets, and small controls per
         // omega-docs/03-brand/visual-identity.md. Tasteful fallback for
         // prefers-reduced-transparency / @supports not (backdrop-filter).
         glass:
-          "glass-pill rounded-[var(--radius-lg)] text-foreground hover:bg-[var(--glass-highlight)]/40",
+          "glass-pill rounded-[var(--radius-lg)] text-foreground shadow-[inset_0_1px_0_0_var(--glass-highlight)] hover:bg-[var(--glass-highlight)]/40",
       },
       size: {
         default: "h-9 px-4 py-2",

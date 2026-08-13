@@ -126,7 +126,7 @@ const FormItem = React.forwardRef<
 
   return (
     <FormItemContext.Provider value={{ id }}>
-      <div ref={ref} className={cn("flex flex-col gap-2", className)} {...props} />
+      <div ref={ref} className={cn("flex flex-col gap-2.5", className)} {...props} />
     </FormItemContext.Provider>
   );
 });
@@ -153,7 +153,7 @@ const FormLabel = React.forwardRef<
     <Label
       ref={ref}
       className={cn(
-        "inline-flex items-center gap-1.5",
+        "inline-flex items-center gap-1.5 text-sm font-medium leading-none text-foreground",
         error && "text-[var(--destructive)]",
         className
       )}
@@ -251,7 +251,7 @@ const FormMessage = React.forwardRef<
       {...({ id: formMessageId, role: "alert" } as Record<string, unknown>)}
       ref={ref as unknown as React.Ref<HTMLDivElement>}
       className={cn(
-        "inline-flex items-start gap-1.5 text-xs leading-relaxed text-[var(--destructive)]",
+        "inline-flex items-start gap-1.5 rounded-[var(--radius-sm)] bg-[color-mix(in_oklab,var(--destructive)_10%,transparent)] px-2 py-1.5 text-xs leading-relaxed text-[var(--destructive)]",
         className
       )}
       {...(props as Record<string, unknown>)}

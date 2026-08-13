@@ -45,7 +45,7 @@ it("renders the public landing hero with the kit headline", () => {
 it("exposes the nav launch-app and request-access actions", () => {
   render(<HomePage />);
 
-  expect(screen.getByRole("link", { name: "Launch app" })).toBeDefined();
+  expect(screen.getAllByRole("link", { name: "Launch app" }).length).toBeGreaterThan(0);
   expect(screen.getAllByRole("link", { name: "Request Access" }).length).toBeGreaterThan(0);
 });
 

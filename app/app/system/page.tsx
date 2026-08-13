@@ -112,6 +112,7 @@ import {
 
 // Section ordering follows a deliberate narrative:
 //   - Foundation sets the rules.
+//   - Language translates the Aside-inspired direction into Omega rules.
 //   - Buttons, Inputs, Form: form-y inputs together.
 //   - Cards, Glass: surfaces together.
 //   - Tabs, Dropdown, Tooltip: navigation/context.
@@ -122,25 +123,77 @@ import {
 //   - Conventions closes the loop with class/token reference.
 const SECTIONS = [
   { id: "foundation", number: "01", label: "Foundation" },
-  { id: "buttons", number: "02", label: "Buttons" },
-  { id: "inputs", number: "03", label: "Inputs" },
-  { id: "form", number: "04", label: "Form" },
-  { id: "cards", number: "05", label: "Cards" },
-  { id: "glass-variants", number: "06", label: "Glass" },
-  { id: "tabs", number: "07", label: "Tabs" },
-  { id: "dropdown", number: "08", label: "Dropdown" },
-  { id: "tooltip", number: "09", label: "Tooltip" },
-  { id: "dialog", number: "10", label: "Dialog" },
-  { id: "sheet", number: "11", label: "Sheet" },
-  { id: "toggle", number: "12", label: "Toggle" },
-  { id: "toast", number: "13", label: "Toast" },
-  { id: "status", number: "14", label: "Status" },
-  { id: "separator", number: "15", label: "Separator" },
-  { id: "icons", number: "16", label: "Icons" },
-  { id: "motion", number: "17", label: "Motion" },
-  { id: "empty-states", number: "18", label: "Empty + 404" },
-  { id: "modals", number: "19", label: "Modals" },
-  { id: "conventions", number: "20", label: "Conventions" },
+  { id: "language", number: "02", label: "Language" },
+  { id: "buttons", number: "03", label: "Buttons" },
+  { id: "inputs", number: "04", label: "Inputs" },
+  { id: "form", number: "05", label: "Form" },
+  { id: "cards", number: "06", label: "Cards" },
+  { id: "glass-variants", number: "07", label: "Glass" },
+  { id: "tabs", number: "08", label: "Tabs" },
+  { id: "dropdown", number: "09", label: "Dropdown" },
+  { id: "tooltip", number: "10", label: "Tooltip" },
+  { id: "dialog", number: "11", label: "Dialog" },
+  { id: "sheet", number: "12", label: "Sheet" },
+  { id: "toggle", number: "13", label: "Toggle" },
+  { id: "toast", number: "14", label: "Toast" },
+  { id: "status", number: "15", label: "Status" },
+  { id: "separator", number: "16", label: "Separator" },
+  { id: "icons", number: "17", label: "Icons" },
+  { id: "motion", number: "18", label: "Motion" },
+  { id: "empty-states", number: "19", label: "Empty + 404" },
+  { id: "modals", number: "20", label: "Modals" },
+  { id: "conventions", number: "21", label: "Conventions" },
+] as const;
+
+const LANGUAGE_PILLARS = [
+  {
+    label: "Editorial product proof",
+    body:
+      "Lead with mechanism and evidence. Omega sections should read like annotated product evidence, not generic SaaS persuasion.",
+  },
+  {
+    label: "Asymmetric confidence",
+    body:
+      "Use offset grids, proof rails, and dense mono labels to make the page feel composed by an operator, not centered by default.",
+  },
+  {
+    label: "Material restraint",
+    body:
+      "Solid panels carry product chrome. Glass is reserved for moments where background data gives the material something real to refract.",
+  },
+  {
+    label: "Quiet motion",
+    body:
+      "Motion is subtle: opacity and transform only, short distance, no layout thrash, and reduced-motion paths are always honored.",
+  },
+] as const;
+
+const SHOWCASE_PRINCIPLES = [
+  {
+    label: "Navigation / header rhythm",
+    note:
+      "Compact mono eyebrow, one direct route cluster, one primary action. Header should feel pinned and calm, not campaign-heavy.",
+  },
+  {
+    label: "Dropdown / menu behavior",
+    note:
+      "Menus are short action lists with label, separator, icons, and decisive hover/focus states. More than seven items becomes navigation.",
+  },
+  {
+    label: "Tabs / segmented controls",
+    note:
+      "Tabs sit inside product surfaces and reveal comparable states. Active state is material hierarchy, not color decoration.",
+  },
+  {
+    label: "Modal / sheet principles",
+    note:
+      "Dialogs confirm; sheets expose secondary context. Use solid hierarchy first, glass only for transient review moments.",
+  },
+  {
+    label: "Landing section anatomy",
+    note:
+      "Each landing section pairs a thesis with a proof rail: metric, mechanism, constraint, or product artifact. Avoid equal-card filler.",
+  },
 ] as const;
 
 // Semantic-name → Lucide source-name map, used in the /system Icons section
@@ -259,8 +312,108 @@ export function cn(...inputs: ClassValue[]) {
         </Section>
 
         <Section
-          id="buttons"
+          id="language"
           number="02"
+          label="Language"
+          title={
+            <>
+              Editorial product proof,{" "}
+              <span className="font-serif text-[var(--muted-foreground)]">
+                not generic SaaS gloss.
+              </span>
+            </>
+          }
+          description={
+            <>
+              The Aside reference points us toward a working surface: asymmetric,
+              text-led, proof-dense, and restrained. Omega adapts that into a
+              financial execution language where mechanism, attestation, and
+              pricing evidence carry the design.
+            </>
+          }
+        >
+          <div className="grid grid-cols-1 gap-10 lg:grid-cols-[0.85fr_1.15fr]">
+            <div className="flex flex-col gap-4">
+              <ColumnLabel>Design posture</ColumnLabel>
+              <div className="grid grid-cols-1 gap-3">
+                {LANGUAGE_PILLARS.map((pillar) => (
+                  <div
+                    key={pillar.label}
+                    className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--card)] p-5"
+                  >
+                    <h3 className="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--foreground)]">
+                      {pillar.label}
+                    </h3>
+                    <p className="mt-3 text-sm leading-relaxed text-[var(--muted-foreground)]">
+                      {pillar.body}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="relative isolate overflow-hidden rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--muted)]/30 p-5 md:p-6">
+              <MidpointTape />
+              <div className="relative grid grid-cols-1 gap-4 md:grid-cols-[1fr_0.78fr]">
+                <div className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--background)]/92 p-5 shadow-sm">
+                  <ColumnLabel>Landing section anatomy</ColumnLabel>
+                  <h3 className="mt-5 max-w-sm text-2xl font-medium tracking-tight">
+                    Make the mechanism visible before the claim gets big.
+                  </h3>
+                  <p className="mt-4 max-w-md text-sm leading-relaxed text-[var(--muted-foreground)]">
+                    Thesis on the left, proof rail on the right, product artifact
+                    below. The page should feel like a controlled room where the
+                    user can inspect how Omega prices, matches, and settles.
+                  </p>
+                  <div className="mt-6 flex flex-wrap gap-2">
+                    <Button size="sm">Request access</Button>
+                    <Button size="sm" variant="ghost">
+                      Read mechanism
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="flex flex-col justify-between gap-3 rounded-[var(--radius-lg)] border border-white/10 bg-[var(--background)]/60 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-xl">
+                  {[
+                    ["Proof rail", "Batch #48,201"],
+                    ["Mechanism", "Midpoint first"],
+                    ["Constraint", "No order-flow leak"],
+                  ].map(([label, value]) => (
+                    <div
+                      key={label}
+                      className="flex items-center justify-between gap-4 border-b border-[var(--border)] pb-3 last:border-b-0 last:pb-0"
+                    >
+                      <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
+                        {label}
+                      </span>
+                      <span className="font-mono text-xs text-[var(--foreground)]">
+                        {value}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-10 grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-5">
+            {SHOWCASE_PRINCIPLES.map((item) => (
+              <div
+                key={item.label}
+                className="flex min-h-48 flex-col justify-between rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--background)] p-4"
+              >
+                <SubsectionLabel>{item.label}</SubsectionLabel>
+                <p className="mt-6 text-sm leading-relaxed text-[var(--muted-foreground)]">
+                  {item.note}
+                </p>
+              </div>
+            ))}
+          </div>
+        </Section>
+
+        <Section
+          id="buttons"
+          number="03"
           label="Buttons"
           title={
             <>
@@ -291,7 +444,7 @@ export function cn(...inputs: ClassValue[]) {
 
         <Section
           id="inputs"
-          number="03"
+          number="04"
           label="Inputs"
           title={
             <>
@@ -344,7 +497,7 @@ export function cn(...inputs: ClassValue[]) {
 
         <Section
           id="form"
-          number="04"
+          number="05"
           label="Form"
           title={
             <>
@@ -379,7 +532,7 @@ export function cn(...inputs: ClassValue[]) {
 
         <Section
           id="cards"
-          number="05"
+          number="06"
           label="Cards"
           title={
             <>
@@ -445,7 +598,7 @@ export function cn(...inputs: ClassValue[]) {
 
         <Section
           id="glass-variants"
-          number="06"
+          number="07"
           label="Glass"
           title={
             <>
@@ -569,7 +722,7 @@ export function cn(...inputs: ClassValue[]) {
 
         <Section
           id="tabs"
-          number="07"
+          number="08"
           label="Tabs"
           title={
             <>
@@ -638,7 +791,7 @@ export function cn(...inputs: ClassValue[]) {
 
         <Section
           id="dropdown"
-          number="08"
+          number="09"
           label="Dropdown"
           title={
             <>
@@ -690,7 +843,7 @@ export function cn(...inputs: ClassValue[]) {
 
         <Section
           id="tooltip"
-          number="09"
+          number="10"
           label="Tooltip"
           title={
             <>
@@ -738,7 +891,7 @@ export function cn(...inputs: ClassValue[]) {
 
         <Section
           id="dialog"
-          number="10"
+          number="11"
           label="Dialog"
           title={
             <>
@@ -783,7 +936,7 @@ export function cn(...inputs: ClassValue[]) {
 
         <Section
           id="sheet"
-          number="11"
+          number="12"
           label="Sheet · Drawer"
           title={
             <>
@@ -876,7 +1029,7 @@ export function cn(...inputs: ClassValue[]) {
 
         <Section
           id="toggle"
-          number="12"
+          number="13"
           label="Toggle"
           title={
             <>
@@ -912,7 +1065,7 @@ export function cn(...inputs: ClassValue[]) {
 
         <Section
           id="toast"
-          number="13"
+          number="14"
           label="Toast"
           title={
             <>
@@ -967,7 +1120,7 @@ export function cn(...inputs: ClassValue[]) {
 
         <Section
           id="status"
-          number="14"
+          number="15"
           label="Status"
           title={
             <>
@@ -1001,7 +1154,7 @@ export function cn(...inputs: ClassValue[]) {
 
         <Section
           id="separator"
-          number="15"
+          number="16"
           label="Separator"
           title={
             <>
@@ -1048,7 +1201,7 @@ export function cn(...inputs: ClassValue[]) {
 
         <Section
           id="icons"
-          number="16"
+          number="17"
           label="Icons"
           title={
             <>
@@ -1138,7 +1291,7 @@ export function cn(...inputs: ClassValue[]) {
 
         <Section
           id="motion"
-          number="17"
+          number="18"
           label="Motion"
           title={
             <>
@@ -1172,7 +1325,7 @@ export function cn(...inputs: ClassValue[]) {
 
         <Section
           id="empty-states"
-          number="18"
+          number="19"
           label="Empty + 404"
           title={
             <>
@@ -1200,7 +1353,7 @@ export function cn(...inputs: ClassValue[]) {
 
         <Section
           id="modals"
-          number="19"
+          number="20"
           label="Modals · production"
           title={
             <>
@@ -2220,7 +2373,7 @@ function Conventions() {
   return (
     <Section
       id="conventions"
-      number="19"
+      number="21"
       label="Conventions"
       title={
         <>

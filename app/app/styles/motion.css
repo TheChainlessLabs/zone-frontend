@@ -1,0 +1,126 @@
+/* OrderPipeline (M4.12) — 200ms tinted pulse on stage transition. The
+   keyframes ride the same fill colour the lozenge already uses so the
+   transition reads as "tighter, brighter, then settle". Reduced-motion
+   suppresses the keyframes entirely (handled by the data attribute on
+   the lozenge — these classes are only attached when motion is allowed). */
+@keyframes omega-pipeline-pulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--foreground) 28%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 6px color-mix(in oklab, var(--foreground) 0%, transparent);
+  }
+}
+@keyframes omega-pipeline-pulse-fail {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--destructive) 32%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 6px color-mix(in oklab, var(--destructive) 0%, transparent);
+  }
+}
+.omega-pipeline-pulse {
+  animation: omega-pipeline-pulse 200ms ease-out;
+}
+.omega-pipeline-pulse-fail {
+  animation: omega-pipeline-pulse-fail 200ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .omega-pipeline-pulse,
+  .omega-pipeline-pulse-fail {
+    animation: none;
+  }
+}
+
+/* Trade — the design-kit "personality" layer (ported from the kit's
+   Motion.jsx + TradeAside.jsx). A fresh fill row briefly washes success
+   then settles; the settlement MatchToast slides up from the bottom.
+   The global reduced-motion catch-all below suppresses both, and the
+   JS surfaces additionally gate on `useReducedMotion` so the toast simply
+   appears in place. */
+@keyframes omega-fill-row-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+    background: color-mix(in oklab, var(--success) 14%, transparent);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    background: transparent;
+  }
+}
+.omega-fill-row-fresh > td {
+  animation: omega-fill-row-in 0.5s var(--ease-out);
+}
+
+@keyframes omega-match-toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 16px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+.omega-match-toast {
+  animation: omega-match-toast-in 0.36s var(--ease-out);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .omega-fill-row-fresh > td,
+  .omega-match-toast {
+    animation: none;
+  }
+}
+
+/* M5.1 (#224) — `.press-down` press-feedback utility. Applied to interactive
+   elements (buttons, pills, swatches) to nudge them 0.5px on `:active` for a
+   tactile click without invoking a motion library. Skips elements wired as
+   disabled via `aria-disabled="true"` so the affordance reads correctly when
+   the press is rejected by validation. */
+@layer utilities {
+  .press-down:active:not([aria-disabled="true"]) {
+    transform: translateY(0.5px);
+  }
+}
+
+/* M5.5 (#228) — hash deep-link ring choreography. The `useHashHighlight`
+   hook toggles these classes on the element targeted by `window.location
+   .hash` so a shared link like `/batches/4821#sealed` visibly lands on its
+   row. The active class paints a 1px accent ring with a 3px background
+   halo (so the ring reads cleanly against any surface tone); the fade
+   class transitions the same shadow to fully transparent before the hook
+   strips both. Reduced-motion is handled by the global override below —
+   the `box-shadow` transition collapses to instant, leaving a brief
+   outline flash. */
+.hash-highlight-active {
+  box-shadow: 0 0 0 1px var(--accent), 0 0 0 3px var(--background);
+  transition: box-shadow var(--duration-500) var(--ease-standard);
+}
+.hash-highlight-fade {
+  box-shadow: 0 0 0 1px transparent, 0 0 0 3px transparent;
+  transition: box-shadow var(--duration-500) var(--ease-standard);
+}
+
+/* Product navigation uses Next's native client routing. Document view
+   transitions were removed because the authenticated shell flashed between
+   primary tabs. */
+
+/* M5.1 (#224) — global reduced-motion override. Collapses any animation,
+   transition, or smooth-scroll on the page to effectively-instant when the
+   user has expressed `prefers-reduced-motion: reduce`. Component-level paths
+   (e.g. <Animate variant="…">, useReducedMotion in motion/react) still honour
+   the same signal independently — this rule is the catch-all for raw CSS
+   transitions and third-party styles we don't directly control. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -16,6 +16,10 @@ describe("production build inputs", () => {
       path.join(repoRoot, "app/app/globals.css"),
       "utf8",
     );
+    const tokenLayer = readFileSync(
+      path.join(repoRoot, "app/app/styles/tokens.css"),
+      "utf8",
+    );
     const generatedTokens = readFileSync(
       path.join(repoRoot, "app/app/_generated/tokens.css"),
       "utf8",
@@ -23,7 +27,8 @@ describe("production build inputs", () => {
 
     expect(rootPackage.scripts.build).toBe("pnpm --filter @omega/app build");
     expect(appPackage.scripts.build).toBe("next build");
-    expect(globals).toMatch(/@import\s+["']\.\/_generated\/tokens\.css["']/);
+    expect(globals).toMatch(/@import\s+["']\.\/styles\/tokens\.css["']/);
+    expect(tokenLayer).toMatch(/@import\s+["']\.\.\/_generated\/tokens\.css["']/);
     expect(generatedTokens).toContain("GENERATED FILE");
   });
 });

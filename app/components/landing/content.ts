@@ -60,6 +60,19 @@ export const scrollStates = [
   },
 ] as const;
 
+export const mechanismIntro = {
+  eyebrow: "Mechanism",
+  title: "The page is a proof path, not a pitch deck.",
+  supporting:
+    "Omega’s landing narrative should show the execution room: private intent, midpoint-first matching, shielded venue access, then verifiable settlement.",
+  rails: [
+    { label: "Input", value: "Private intent" },
+    { label: "Price", value: "Midpoint first" },
+    { label: "Route", value: "Shielded fallback" },
+    { label: "Output", value: "Proof artifact" },
+  ],
+} as const;
+
 // Why Omega — six glass feature cards (app.jsx FEATURES). Icons are Lucide
 // names; the app renders them with lucide-react instead of inline path data.
 export const whyOmega = {

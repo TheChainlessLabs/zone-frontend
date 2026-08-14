@@ -4,7 +4,11 @@ import * as React from "react";
 
 import { LandingHero } from "@/components/landing/landing-hero";
 import { LandingNav } from "@/components/landing/landing-nav";
-import { BuiltFor, WhyOmega } from "@/components/landing/landing-sections";
+import {
+  BuiltFor,
+  MechanismIntro,
+  WhyOmega,
+} from "@/components/landing/landing-sections";
 import {
   LandingFooter,
   LandingRequestAccess,
@@ -58,6 +62,7 @@ export function LandingPage() {
       <div className="lp-content relative z-[1]">
         <LandingNav solid={navSolid} />
         <LandingHero />
+        <MechanismIntro />
         <OrderScrollStory />
         <WhyOmega />
         <BuiltFor />

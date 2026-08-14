@@ -52,7 +52,7 @@ export function MechanismIntro() {
         <p className="max-w-[560px] text-pretty text-[15px] leading-[1.75] text-[var(--muted-foreground)] sm:text-[16px]">
           {mechanismIntro.supporting}
         </p>
-        <div className="mt-6 grid grid-cols-2 gap-px overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--border)] sm:grid-cols-4">
+        <div className="mt-6 grid grid-cols-1 gap-px overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--border)] min-[460px]:grid-cols-2 sm:grid-cols-4">
           {mechanismIntro.rails.map((rail) => (
             <div key={rail.label} className="bg-[var(--card)] p-3">
               <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--muted-foreground)]">

@@ -22,7 +22,7 @@ export function LandingRequestAccess() {
           Omega is in private access. Tell us where you trade, which chains you use,
           and what stablecoin routes matter most to your business.
         </p>
-        <div className="mt-8 grid max-w-[430px] grid-cols-2 gap-px overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--border)]">
+        <div className="mt-8 grid max-w-[430px] grid-cols-1 gap-px overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--border)] min-[460px]:grid-cols-2">
           {["Darkpool matching", "TEE attestations", "Stablecoin FX", "Onchain settlement"].map(
             (item) => (
               <span

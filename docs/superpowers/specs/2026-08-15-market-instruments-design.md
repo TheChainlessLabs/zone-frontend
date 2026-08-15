@@ -55,6 +55,44 @@ Use the approved “Editorial field notes” layout:
 
 On mobile, the rail collapses above the index. The cast becomes a compact horizontally arranged role strip, followed by full-width article rows. The page must not scroll horizontally.
 
+## Design Partners article
+
+The public call publishes the selection logic and pilot structure, but not the internal shortlist, partner priorities, distribution sequence, or integration targets.
+
+Use this approved copy:
+
+**Eyebrow:** Design partners / Field note 01
+
+**Title:** Bring us a corridor worth solving.
+
+**Deck:** Omega is building a dark pool for stablecoin FX on Tempo. We are looking for a small number of teams with recurring conversion flow to test it against the execution paths they use today.
+
+### Real flow, not a sandbox.
+
+The useful conversations begin with one pair, a known cadence, measurable execution costs, and a fallback that already works.
+
+Payment and treasury teams bring the flow. Makers bring committed inventory and the willingness to quote inside a private book.
+
+### What we measure
+
+We compare Omega with the existing path: all-in spread, slippage, rejection behavior, settlement time, and prefunding requirements.
+
+If Omega does not improve a measured outcome—or reject predictably enough to fit the workflow—we stop.
+
+### One pair. A defined test.
+
+Discovery first. Then a private demonstration. If the fit is real, we run a controlled one-pair pilot with explicit success criteria and a stop condition.
+
+Integration follows evidence.
+
+**Index title:** Bring us a corridor worth solving.
+
+**Index deck:** A private design-partner program for payment and treasury teams, makers, and desks with recurring stablecoin conversion flow.
+
+**CTA heading:** Bring us a corridor.
+
+Keep the existing request form fields, validation, submission path, status messages, and `Request Access` submit label unchanged.
+
 ## Interaction and motion
 
 - Entire article rows remain links with visible focus treatment.
@@ -84,6 +122,7 @@ On mobile, the rail collapses above the index. The cast becomes a compact horizo
 - Document the editorial layer alongside—but separate from—the existing Lucide icon section on `/system`.
 - Replace `/research`’s equal card grid with the approved `32 / 68` editorial index and responsive collapse.
 - Preserve the two existing article routes and their destinations; do not introduce a generalized article system.
+- Replace the Design Partners article copy with the approved public call while preserving the existing request-access form behavior.
 - Reuse existing tokens and primitives. Do not add dependencies or modify product routes, wallet behavior, forms, API calls, or article destinations.
 
 ## Verification

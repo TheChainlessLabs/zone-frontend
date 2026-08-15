@@ -1,7 +1,7 @@
 # Omega Market Instruments — Design Specification
 
-**Status:** proposed for implementation  
-**Decision:** direction A, “Market Instruments”  
+**Status:** proposed for implementation
+**Decision:** direction A, “Market Instruments”
 **Surfaces:** `omega-docs` brand guidance, `zone-frontend` design system, `/research`
 
 ## Objective

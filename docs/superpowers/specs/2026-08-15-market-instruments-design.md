@@ -44,6 +44,7 @@ The five forms should remain recognizable when printed in one color, viewed with
 
 Use the approved “Editorial field notes” layout:
 
+- The index links exactly two article pages for now: Design Partners and Private Price Discovery. Do not add actor profiles, categories, pagination, a CMS, or additional Research routes.
 - Desktop content width stays aligned to the existing `1120px` Research shell.
 - The page body uses a `32 / 68` asymmetric split.
 - The left context rail contains the Research title, short lede, and the Taker / Maker / Omega cast.
@@ -82,6 +83,7 @@ On mobile, the rail collapses above the index. The cast becomes a compact horizo
 - Add an internal typed `MarketInstrument` component that mirrors the canonical SVG geometry and supports `name`, `size`, `className`, and optional `title`.
 - Document the editorial layer alongside—but separate from—the existing Lucide icon section on `/system`.
 - Replace `/research`’s equal card grid with the approved `32 / 68` editorial index and responsive collapse.
+- Preserve the two existing article routes and their destinations; do not introduce a generalized article system.
 - Reuse existing tokens and primitives. Do not add dependencies or modify product routes, wallet behavior, forms, API calls, or article destinations.
 
 ## Verification

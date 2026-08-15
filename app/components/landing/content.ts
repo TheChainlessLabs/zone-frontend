@@ -1,26 +1,18 @@
-// Landing copy — ported verbatim from the design-kit landing page
-// (ui_kits/landing-page/{app.jsx,scene.jsx}). The kit owns voice and copy:
-// terse, no emoji, no exclamation; positioning is private stablecoin
-// execution across chains and venues — match internally first, then access
-// shielded external liquidity, with verifiable fills and compliance.
+// The home route carries identity; the Research section carries explanation.
 
 export const landingHero = {
   eyebrow: "Omega Markets",
-  headline: "Private stablecoin execution across chains and venues.",
+  headline: "The private price discovery zone for stablecoin FX.",
   supporting:
-    "Omega matches stablecoin orders privately, accesses external liquidity when needed, and settles with verifiable proofs.",
-  primaryCta: "Request Access",
-  secondaryCta: "Launch app",
-  scrollHint: "Scroll to follow an intent",
-  proofLabel: "Execution path",
-  proofSteps: [
-    "Private orderbook",
-    "Shielded venue access",
-    "Verifiable settlement",
-  ],
+    "Omega is a payments-focused dark book where makers and takers can discover price without exposing flow before execution.",
+  primaryCta: "Fund your account",
+  secondaryCta: "Design partner access",
+  researchCta: "Research",
+  proofLabel: "Dark book",
+  proofSteps: ["Private flow enters", "Orders net in the book", "Proof exits"],
   proofStats: [
-    { label: "Pre-trade leakage", value: "Hidden" },
-    { label: "Settlement", value: "Onchain" },
+    { label: "Pre-trade flow", value: "Hidden" },
+    { label: "Execution", value: "Verifiable" },
   ],
 } as const;
 

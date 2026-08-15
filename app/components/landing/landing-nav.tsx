@@ -9,7 +9,7 @@ export function LandingNav({ solid }: { solid: boolean }) {
   return (
     <nav
       data-testid="landing-nav"
-      className="fixed inset-x-0 top-0 z-50 flex justify-center px-3 transition-[background,border-color] duration-[var(--duration-medium)] sm:px-5"
+      className="fixed inset-x-0 top-0 z-50 flex justify-center px-4 transition-[background,border-color] duration-[var(--duration-medium)] sm:px-5"
       style={{
         borderBottom: solid ? "1px solid var(--border)" : "1px solid transparent",
         background: solid
@@ -20,8 +20,8 @@ export function LandingNav({ solid }: { solid: boolean }) {
       }}
     >
       <div
-        className="flex w-full max-w-[1240px] items-center justify-between px-1 transition-[padding] duration-[var(--duration-medium)] sm:px-3 lg:px-0"
-        style={{ paddingBlock: solid ? 14 : 24 }}
+        className="flex w-full max-w-[1240px] items-center justify-between transition-[padding] duration-[var(--duration-medium)] sm:px-3 lg:px-0"
+        style={{ paddingBlock: solid ? 12 : 18 }}
       >
         <a
           href="#top"
@@ -29,19 +29,22 @@ export function LandingNav({ solid }: { solid: boolean }) {
           aria-label="Omega Markets"
         >
           <OmegaMark size={22} />
-          <span className="font-wordmark text-[13px] font-semibold uppercase tracking-[0.12em] sm:text-[15px]">
+          <span className="hidden font-wordmark text-[13px] font-semibold uppercase tracking-[0.12em] min-[480px]:inline sm:text-[15px]">
             Omega Markets
           </span>
         </a>
-        <div className="flex items-center gap-3 sm:gap-7">
+        <div className="flex items-center gap-2.5 sm:gap-7">
           <a
-            href="/trade"
-            className="hidden text-[14px] text-[var(--muted-foreground)] no-underline transition-colors duration-[var(--duration-small)] hover:text-[var(--foreground)] sm:inline"
+            href="/research"
+            className="text-[12px] text-[var(--muted-foreground)] no-underline transition-colors duration-[var(--duration-small)] hover:text-[var(--foreground)] sm:text-[14px]"
           >
-            Launch app
+            Research
           </a>
-          <Button asChild className="h-10 px-4 text-[13px] sm:px-5 sm:text-[14px]">
-            <a href="#request">Request Access</a>
+          <Button asChild className="h-9 px-3 text-[12px] sm:h-10 sm:px-5 sm:text-[14px]">
+            <a href="/trade" aria-label="Fund your account">
+              <span aria-hidden className="sm:hidden">Fund</span>
+              <span aria-hidden className="hidden sm:inline">Fund your account</span>
+            </a>
           </Button>
         </div>
       </div>

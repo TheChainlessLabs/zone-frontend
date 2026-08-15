@@ -4,23 +4,9 @@ import * as React from "react";
 
 import { LandingHero } from "@/components/landing/landing-hero";
 import { LandingNav } from "@/components/landing/landing-nav";
-import {
-  BuiltFor,
-  MechanismIntro,
-  WhyOmega,
-} from "@/components/landing/landing-sections";
-import {
-  LandingFooter,
-  LandingRequestAccess,
-} from "@/components/landing/landing-request-access";
-import { OrderScrollStory } from "@/components/landing/order-scroll-story";
 
-// Landing page (app.jsx App). Section order: sticky nav → hero → mechanism
-// (pinned scroll story) → Why Omega → Built for → Request access → footer.
-// Owns the two scroll behaviours from the kit: the sticky nav backdrop turns
-// solid past the hero top, and the ambient dot-grid fades in (hidden in the
-// hero, full by the mechanism) by writing `--landing-dots` for the
-// `.lp-dotgrid` layer (globals.css).
+// The public home route is deliberately a single identity frame. Longer-form
+// explanation and access qualification live under Research.
 export function LandingPage() {
   const [navSolid, setNavSolid] = React.useState(false);
 
@@ -62,12 +48,6 @@ export function LandingPage() {
       <div className="lp-content relative z-[1]">
         <LandingNav solid={navSolid} />
         <LandingHero />
-        <MechanismIntro />
-        <OrderScrollStory />
-        <WhyOmega />
-        <BuiltFor />
-        <LandingRequestAccess />
-        <LandingFooter />
       </div>
     </main>
   );

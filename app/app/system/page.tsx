@@ -97,6 +97,11 @@ import { Badge } from "@/components/ui/badge";
 import { Status, type StatusState } from "@/components/ui/status";
 import { type LucideIcon } from "lucide-react";
 import { Icon } from "@/lib/icons";
+import {
+  MarketInstrument,
+  marketInstrumentNames,
+  type MarketInstrumentName,
+} from "@/components/brand/market-instrument";
 import { DisconnectedState } from "@/components/DisconnectedState";
 import { NotFoundContents } from "@/components/NotFoundContents";
 import {
@@ -240,6 +245,17 @@ const ICON_COLOR_CONTEXTS: Array<{ label: string; className: string }> = [
   { label: "destructive", className: "text-[var(--destructive)]" },
   { label: "muted", className: "text-[var(--muted-foreground)]" },
 ];
+
+const MARKET_INSTRUMENT_META: Record<
+  MarketInstrumentName,
+  { label: string; role: string }
+> = {
+  taker: { label: "Taker", role: "Flow enters" },
+  maker: { label: "Maker", role: "Two-sided depth" },
+  omega: { label: "Omega", role: "Private crossing" },
+  tempo: { label: "Tempo", role: "Settlement rail" },
+  proof: { label: "Proof", role: "Public artifact" },
+};
 
 export default function SystemShowcase() {
   return (
@@ -1288,6 +1304,37 @@ export function cn(...inputs: ClassValue[]) {
                     </span>
                   </div>
                 ))}
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-4">
+              <SubsectionLabel>Market instruments</SubsectionLabel>
+              <p className="max-w-2xl text-sm leading-relaxed text-[var(--muted-foreground)]">
+                Market Instruments are Omega-original editorial actors for Research and
+                mechanism diagrams. They describe market roles; they never replace
+                Lucide in product controls.
+              </p>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+                {marketInstrumentNames.map((name) => {
+                  const meta = MARKET_INSTRUMENT_META[name];
+
+                  return (
+                    <div
+                      key={name}
+                      className="flex min-h-36 flex-col justify-between rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--card)] p-4"
+                    >
+                      <MarketInstrument name={name} size={48} />
+                      <div className="flex flex-col gap-1">
+                        <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--foreground)]">
+                          {meta.label}
+                        </span>
+                        <span className="font-mono text-[10px] text-[var(--muted-foreground)]">
+                          {meta.role}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>

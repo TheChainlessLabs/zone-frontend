@@ -30,46 +30,39 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-it("renders the public landing hero with the kit headline", () => {
+it("renders the one-screen dark-book identity page", () => {
   render(<HomePage />);
 
   expect(
     screen.getByRole("heading", {
-      name: "Private stablecoin execution across chains and venues.",
+      name: "The private price discovery zone for stablecoin FX.",
     }),
   ).toBeDefined();
   expect(screen.getByTestId("hero-abstract-field")).toBeDefined();
-  expect(screen.getByTestId("order-scroll-story")).toBeDefined();
+  expect(screen.queryByTestId("order-scroll-story")).toBeNull();
 });
 
-it("exposes the nav launch-app and request-access actions", () => {
+it("exposes research and account-funding actions", () => {
   render(<HomePage />);
 
-  expect(screen.getAllByRole("link", { name: "Launch app" }).length).toBeGreaterThan(0);
-  expect(screen.getAllByRole("link", { name: "Request Access" }).length).toBeGreaterThan(0);
-});
-
-it("renders the Why Omega and Built for sections", () => {
-  render(<HomePage />);
-
-  expect(screen.getByText("Stable rates everywhere")).toBeDefined();
-  expect(screen.getByText("Compliance by default")).toBeDefined();
-  expect(screen.getByRole("heading", { name: "Funds" })).toBeDefined();
-  expect(screen.getByRole("heading", { name: "Exchanges" })).toBeDefined();
-});
-
-it("renders the request-access card and footer tagline", () => {
-  render(<HomePage />);
-
-  expect(screen.getByRole("heading", { name: "Request access" })).toBeDefined();
   expect(
-    screen.getByText("Private stablecoin execution · Onchain settlement"),
-  ).toBeDefined();
+    screen.getByRole("link", { name: "Research" }).getAttribute("href"),
+  ).toBe("/research");
+  expect(
+    screen.getAllByRole("link", { name: "Fund your account" }).map((link) =>
+      link.getAttribute("href"),
+    ),
+  ).toEqual(["/trade", "/trade"]);
+  expect(
+    screen.getByRole("link", { name: "Design partner access" }).getAttribute("href"),
+  ).toBe("/research/design-partners");
 });
 
 it("sets landing page metadata", () => {
-  expect(metadata.title).toBe("Omega Markets — Private stablecoin execution");
+  expect(metadata.title).toBe(
+    "Omega Markets — Private price discovery for stablecoin FX",
+  );
   expect(metadata.description).toBe(
-    "Omega matches stablecoin orders privately, accesses external liquidity when needed, and settles with verifiable proofs.",
+    "Omega is a payments-focused dark book for private stablecoin FX price discovery.",
   );
 });

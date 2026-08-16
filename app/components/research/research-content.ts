@@ -1,10 +1,13 @@
+import type { MarketInstrumentName } from "@/components/brand/market-instrument";
+
 export const researchPosts = [
   {
     eyebrow: "Design partners",
-    title: "Help shape private stablecoin FX execution.",
+    title: "Bring us a corridor worth solving.",
     deck:
-      "Omega is looking for payment corridors, treasuries, makers, and desks that can pressure-test private price discovery with real flow requirements.",
+      "A private design-partner program for payment and treasury teams, makers, and desks with recurring stablecoin conversion flow.",
     href: "/research/design-partners",
+    instrument: "taker",
   },
   {
     eyebrow: "Mechanism",
@@ -12,5 +15,12 @@ export const researchPosts = [
     deck:
       "Why a dark book can let makers and takers commingle, net, and settle without revealing the order flow that creates the price.",
     href: "/research/private-price-discovery",
+    instrument: "omega",
   },
-] as const;
+] as const satisfies ReadonlyArray<{
+  eyebrow: string;
+  title: string;
+  deck: string;
+  href: string;
+  instrument: MarketInstrumentName;
+}>;

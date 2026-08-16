@@ -42,7 +42,7 @@ export function ResearchArticle({
           </p>
         </header>
 
-        <div className="mt-16 grid gap-12 border-t border-[var(--border)] pt-12 lg:grid-cols-[minmax(0,1fr)_280px]">
+        <div className="mt-16 grid gap-12 border-t border-[var(--border)] pt-12 lg:grid-cols-[minmax(0,1fr)_456px]">
           <div className="max-w-[680px] space-y-8 text-[16px] leading-[1.8] text-[var(--muted-foreground)]">
             {children}
           </div>

@@ -30,7 +30,7 @@ export function ResearchIndex() {
             <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-[var(--muted-foreground)]">
               Omega Markets / Public notes
             </p>
-            <h1 className="mt-5 text-[clamp(48px,8vw,88px)] font-semibold leading-[0.9] tracking-[-0.06em]">
+            <h1 className="mt-5 text-[clamp(48px,6vw,72px)] font-semibold leading-[0.9] tracking-[-0.06em]">
               Research
             </h1>
             <p className="mt-6 max-w-[320px] text-pretty text-[15px] leading-[1.7] text-[var(--muted-foreground)]">

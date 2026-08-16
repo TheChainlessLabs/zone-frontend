@@ -6,7 +6,7 @@ export default function DesignPartnersPage() {
     <ResearchArticle
       eyebrow="Design partners / Field note 01"
       title="Bring us a corridor worth solving."
-      deck="Omega is building a dark pool for stablecoin FX on Tempo. We are looking for a small number of teams with recurring conversion flow to test it against the execution paths they use today."
+      deck="Omega is building a dark pool for stablecoin FX on Tempo. We’re looking for a handful of teams that move stablecoins regularly and know exactly where today’s execution falls short."
       rail={
         <div id="apply" className="panel rounded-[var(--radius-xl)] p-5 sm:p-6">
           <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--muted-foreground)]">
@@ -21,42 +21,61 @@ export default function DesignPartnersPage() {
     >
       <section>
         <h2 className="text-[28px] font-semibold leading-[1.1] tracking-[-0.035em] text-[var(--foreground)]">
-          Real flow, not a sandbox.
+          Start with something real.
         </h2>
         <p className="mt-4">
-          The useful conversations begin with one pair, a known cadence,
-          measurable execution costs, and a fallback that already works.
+          We don’t want test transactions or projected volume. Bring us a
+          corridor you already use: one pair, familiar trade sizes, a regular
+          cadence, and a route you can fall back to.
         </p>
         <p className="mt-4">
-          Payment and treasury teams bring the flow. Makers bring committed
-          inventory and the willingness to quote inside a private book.
+          We’re interested in both sides of the market—payment and treasury
+          teams with recurring conversions, and makers willing to commit
+          inventory and quote privately.
         </p>
       </section>
 
       <section>
         <h2 className="text-[28px] font-semibold leading-[1.1] tracking-[-0.035em] text-[var(--foreground)]">
-          What we measure
+          Why take part?
         </h2>
         <p className="mt-4">
-          We compare Omega with the existing path: all-in spread, slippage,
-          rejection behavior, settlement time, and prefunding requirements.
+          The point isn’t early access for its own sake. It’s to find out
+          whether private, batched execution can improve a real part of your
+          operation before either side commits serious engineering time.
         </p>
         <p className="mt-4">
-          If Omega does not improve a measured outcome—or reject predictably
-          enough to fit the workflow—we stop.
+          Partners will have a direct say in the details that matter: how long
+          quotes remain valid, when orders can be rejected, how settlement
+          should work, and what an integration actually needs.
         </p>
       </section>
 
       <section>
         <h2 className="text-[28px] font-semibold leading-[1.1] tracking-[-0.035em] text-[var(--foreground)]">
-          One pair. A defined test.
+          We’ll compare it with what already works.
         </h2>
         <p className="mt-4">
-          Discovery first. Then a private demonstration. If the fit is real, we
-          run a controlled one-pair pilot with explicit success criteria and a
-          stop condition.
+          We measure Omega against the route you use today: spread, slippage,
+          rejected orders, settlement time, and prefunding.
         </p>
-        <p className="mt-4">Integration follows evidence.</p>
+        <p className="mt-4">
+          Your existing route stays in place throughout the test. If Omega
+          isn’t better—or at least predictable enough to fit alongside it—we
+          stop there.
+        </p>
+      </section>
+
+      <section>
+        <h2 className="text-[28px] font-semibold leading-[1.1] tracking-[-0.035em] text-[var(--foreground)]">
+          One pair. One clear test.
+        </h2>
+        <p className="mt-4">
+          First, we map the current flow. Then we run a private demonstration.
+          If the numbers hold up, we test one pair for a fixed period with
+          success criteria agreed in advance.
+        </p>
+        <p className="mt-4">Only then do we talk about integration.</p>
       </section>
     </ResearchArticle>
   );

@@ -25,7 +25,7 @@ it("renders exactly two research articles", () => {
   ).toBe("/research/private-price-discovery");
 });
 
-it("renders the approved design partner call without changing the form", () => {
+it("renders the expanded design partner call without changing the form", () => {
   render(<DesignPartnersPage />);
 
   expect(
@@ -34,13 +34,26 @@ it("renders the approved design partner call without changing the form", () => {
     }),
   ).toBeDefined();
   expect(
-    screen.getByRole("heading", { name: "Real flow, not a sandbox." }),
+    screen.getByText(
+      /teams that move stablecoins regularly and know exactly where today’s execution falls short/i,
+    ),
   ).toBeDefined();
   expect(
-    screen.getByRole("heading", { name: "What we measure" }),
+    screen.getByRole("heading", { name: "Start with something real." }),
   ).toBeDefined();
   expect(
-    screen.getByRole("heading", { name: "One pair. A defined test." }),
+    screen.getByRole("heading", { name: "Why take part?" }),
+  ).toBeDefined();
+  expect(
+    screen.getByRole("heading", {
+      name: "We’ll compare it with what already works.",
+    }),
+  ).toBeDefined();
+  expect(
+    screen.getByRole("heading", { name: "One pair. One clear test." }),
+  ).toBeDefined();
+  expect(
+    screen.getByText("Only then do we talk about integration."),
   ).toBeDefined();
   expect(
     screen.getByRole("button", { name: "Request Access" }),

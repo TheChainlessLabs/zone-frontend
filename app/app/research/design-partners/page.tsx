@@ -5,21 +5,59 @@ export default function DesignPartnersPage() {
   return (
     <ResearchArticle
       eyebrow="Design partners / Field note 01"
-      title="Help shape private stablecoin FX execution."
-      deck="We are working with teams that move stablecoins for real payments, treasury, and market-making needs."
+      title="Bring us a corridor worth solving."
+      deck="Omega is building a dark pool for stablecoin FX on Tempo. We are looking for a small number of teams with recurring conversion flow to test it against the execution paths they use today."
       rail={
-        <div id="apply" className="glass rounded-[var(--radius-xl)] p-5 sm:p-6">
-          <p className="mb-5 font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--muted-foreground)]">
-            Private access
+        <div id="apply" className="panel rounded-[var(--radius-xl)] p-5 sm:p-6">
+          <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--muted-foreground)]">
+            Private alpha / Design partners
           </p>
+          <h2 className="mb-5 mt-3 text-balance text-[24px] font-semibold leading-[1.05] tracking-[-0.035em]">
+            Bring us a corridor.
+          </h2>
           <RequestAccessForm />
         </div>
       }
     >
-      <p>
-        Omega&apos;s design partners will pressure-test the market structure with
-        real corridor constraints, execution requirements, and liquidity needs.
-      </p>
+      <section>
+        <h2 className="text-[28px] font-semibold leading-[1.1] tracking-[-0.035em] text-[var(--foreground)]">
+          Real flow, not a sandbox.
+        </h2>
+        <p className="mt-4">
+          The useful conversations begin with one pair, a known cadence,
+          measurable execution costs, and a fallback that already works.
+        </p>
+        <p className="mt-4">
+          Payment and treasury teams bring the flow. Makers bring committed
+          inventory and the willingness to quote inside a private book.
+        </p>
+      </section>
+
+      <section>
+        <h2 className="text-[28px] font-semibold leading-[1.1] tracking-[-0.035em] text-[var(--foreground)]">
+          What we measure
+        </h2>
+        <p className="mt-4">
+          We compare Omega with the existing path: all-in spread, slippage,
+          rejection behavior, settlement time, and prefunding requirements.
+        </p>
+        <p className="mt-4">
+          If Omega does not improve a measured outcome—or reject predictably
+          enough to fit the workflow—we stop.
+        </p>
+      </section>
+
+      <section>
+        <h2 className="text-[28px] font-semibold leading-[1.1] tracking-[-0.035em] text-[var(--foreground)]">
+          One pair. A defined test.
+        </h2>
+        <p className="mt-4">
+          Discovery first. Then a private demonstration. If the fit is real, we
+          run a controlled one-pair pilot with explicit success criteria and a
+          stop condition.
+        </p>
+        <p className="mt-4">Integration follows evidence.</p>
+      </section>
     </ResearchArticle>
   );
 }

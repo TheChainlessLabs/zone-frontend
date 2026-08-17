@@ -54,18 +54,12 @@ it("presents private price discovery through the Omega market cast", () => {
       "Maker and taker converge inside Omega. Omega settles through Tempo and publishes a proof receipt.",
     ),
   ).toBeDefined();
-  expect(within(flow).getAllByRole("img")).toHaveLength(5);
+  expect(within(flow).queryAllByRole("img")).toHaveLength(0);
   expect(
-    within(flow).getByRole("img", { name: "Maker: Quote privately" }),
-  ).toBeDefined();
-  expect(
-    within(flow).getByRole("img", { name: "Taker: Trade within bounds" }),
-  ).toBeDefined();
-  expect(within(flow).getByRole("img", { name: "Omega dark book" })).toBeDefined();
-  expect(
-    within(flow).getByRole("img", { name: "Tempo: Settle atomically" }),
-  ).toBeDefined();
-  expect(within(flow).getByRole("img", { name: "Proof: Public receipt" })).toBeDefined();
+    flow.querySelectorAll(
+      '[role="presentation"][aria-hidden="true"]',
+    ),
+  ).toHaveLength(5);
 
   expect(
     screen

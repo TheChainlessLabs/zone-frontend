@@ -11,37 +11,31 @@ const priceDiscoveryFlow = [
     name: "maker",
     label: "Maker",
     action: "Quote privately",
-    title: "Maker: Quote privately",
   },
   {
     name: "taker",
     label: "Taker",
     action: "Trade within bounds",
-    title: "Taker: Trade within bounds",
   },
   {
     name: "omega",
     label: "Omega",
     action: "Dark book",
-    title: "Omega dark book",
   },
   {
     name: "tempo",
     label: "Tempo",
     action: "Settle atomically",
-    title: "Tempo: Settle atomically",
   },
   {
     name: "proof",
     label: "Proof",
     action: "Public receipt",
-    title: "Proof: Public receipt",
   },
 ] as const satisfies ReadonlyArray<{
   name: MarketInstrumentName;
   label: string;
   action: string;
-  title: string;
 }>;
 
 type PriceDiscoveryStep = (typeof priceDiscoveryFlow)[number];
@@ -65,11 +59,7 @@ function FlowStep({
         className,
       ].join(" ")}
     >
-      <MarketInstrument
-        name={step.name}
-        size={featured ? 52 : 42}
-        title={step.title}
-      />
+      <MarketInstrument name={step.name} size={featured ? 52 : 42} />
       <span>
         <span className="block font-mono text-[10px] uppercase tracking-[0.16em] opacity-65">
           {step.label}

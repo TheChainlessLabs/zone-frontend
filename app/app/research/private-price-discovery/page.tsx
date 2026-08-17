@@ -44,6 +44,44 @@ const priceDiscoveryFlow = [
   title: string;
 }>;
 
+type PriceDiscoveryStep = (typeof priceDiscoveryFlow)[number];
+
+function FlowStep({
+  step,
+  featured = false,
+  className = "",
+}: {
+  step: PriceDiscoveryStep;
+  featured?: boolean;
+  className?: string;
+}) {
+  return (
+    <div
+      className={[
+        "flex min-h-28 flex-col justify-between gap-5 p-5",
+        featured
+          ? "bg-[var(--foreground)] text-[var(--background)]"
+          : "",
+        className,
+      ].join(" ")}
+    >
+      <MarketInstrument
+        name={step.name}
+        size={featured ? 52 : 42}
+        title={step.title}
+      />
+      <span>
+        <span className="block font-mono text-[10px] uppercase tracking-[0.16em] opacity-65">
+          {step.label}
+        </span>
+        <span className="mt-1.5 block text-[14px] font-medium leading-tight">
+          {step.action}
+        </span>
+      </span>
+    </div>
+  );
+}
+
 function PriceDiscoveryFlow() {
   return (
     <figure className="overflow-hidden rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[var(--card)]">
@@ -56,39 +94,52 @@ function PriceDiscoveryFlow() {
         </span>
       </figcaption>
 
-      <ol
+      <p id="private-price-flow-description" className="sr-only">
+        Maker and taker converge inside Omega. Omega settles through Tempo and
+        publishes a proof receipt.
+      </p>
+      <div
+        role="group"
         aria-label="Private price discovery flow"
-        className="grid grid-cols-2"
+        aria-describedby="private-price-flow-description"
       >
-        {priceDiscoveryFlow.map((step, index) => (
-          <li
-            key={step.name}
-            className={[
-              "relative flex min-h-36 flex-col justify-between gap-6 p-5",
-              index === 0 ? "border-b border-r border-[var(--border)]" : "",
-              index === 1 ? "border-b border-[var(--border)]" : "",
-              index === 2
-                ? "col-span-2 border-b border-[var(--border)] bg-[var(--foreground)] text-[var(--background)]"
-                : "",
-              index === 3 ? "border-r border-[var(--border)]" : "",
-            ].join(" ")}
-          >
-            <MarketInstrument
-              name={step.name}
-              size={index === 2 ? 52 : 42}
-              title={step.title}
-            />
-            <span>
-              <span className="block font-mono text-[10px] uppercase tracking-[0.16em] opacity-65">
-                {step.label}
-              </span>
-              <span className="mt-1.5 block text-[14px] font-medium leading-tight">
-                {step.action}
-              </span>
-            </span>
-          </li>
-        ))}
-      </ol>
+        <div className="grid grid-cols-2">
+          <FlowStep
+            step={priceDiscoveryFlow[0]}
+            className="min-h-36 border-r border-[var(--border)]"
+          />
+          <FlowStep step={priceDiscoveryFlow[1]} className="min-h-36" />
+        </div>
+
+        <div aria-hidden="true" className="relative h-8">
+          <span className="absolute left-1/4 top-0 h-4 border-l border-[var(--border)]" />
+          <span className="absolute right-1/4 top-0 h-4 border-l border-[var(--border)]" />
+          <span className="absolute left-1/4 right-1/4 top-4 border-t border-[var(--border)]" />
+          <span className="absolute left-1/2 top-4 h-4 border-l border-[var(--border)]" />
+        </div>
+
+        <FlowStep
+          step={priceDiscoveryFlow[2]}
+          featured
+          className="border-y border-[var(--border)]"
+        />
+
+        <div aria-hidden="true" className="flex h-8 justify-center">
+          <span className="h-full border-l border-[var(--border)]" />
+        </div>
+        <FlowStep
+          step={priceDiscoveryFlow[3]}
+          className="border-y border-[var(--border)]"
+        />
+
+        <div aria-hidden="true" className="flex h-8 justify-center">
+          <span className="h-full border-l border-[var(--border)]" />
+        </div>
+        <FlowStep
+          step={priceDiscoveryFlow[4]}
+          className="border-t border-[var(--border)]"
+        />
+      </div>
     </figure>
   );
 }

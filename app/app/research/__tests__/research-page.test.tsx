@@ -43,9 +43,17 @@ it("presents private price discovery through the Omega market cast", () => {
     }),
   ).toBeDefined();
 
-  const flow = screen.getByRole("list", {
+  const flow = screen.getByRole("group", {
     name: "Private price discovery flow",
   });
+  expect(flow.getAttribute("aria-describedby")).toBe(
+    "private-price-flow-description",
+  );
+  expect(
+    screen.getByText(
+      "Maker and taker converge inside Omega. Omega settles through Tempo and publishes a proof receipt.",
+    ),
+  ).toBeDefined();
   expect(within(flow).getAllByRole("img")).toHaveLength(5);
   expect(
     within(flow).getByRole("img", { name: "Maker: Quote privately" }),
@@ -75,9 +83,7 @@ it("keeps the visual rail out of nested complementary landmarks", async () => {
   const { container } = render(<PriceDiscoveryPage />);
   const results = await axeForPage(container);
 
-  expect(results.violations.map((violation) => violation.id)).not.toContain(
-    "landmark-complementary-is-top-level",
-  );
+  expect(results.violations).toEqual([]);
 });
 
 it("renders the expanded design partner call without changing the form", () => {

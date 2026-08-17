@@ -46,7 +46,7 @@ export function ResearchArticle({
           <div className="max-w-[680px] space-y-8 text-[16px] leading-[1.8] text-[var(--muted-foreground)]">
             {children}
           </div>
-          {rail ? <aside className="lg:pt-1">{rail}</aside> : null}
+          {rail ? <div className="lg:pt-1">{rail}</div> : null}
         </div>
       </article>
     </main>

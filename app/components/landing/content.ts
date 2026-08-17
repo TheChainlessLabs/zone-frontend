@@ -9,7 +9,7 @@ export const landingHero = {
   secondaryCta: "Design partner access",
   researchCta: "Research",
   proofLabel: "Dark book",
-  proofSteps: ["Private flow enters", "Orders net in the book", "Proof exits"],
+  proofSteps: ["Private flow enters", "Price forms in the book", "Proof exits"],
   proofStats: [
     { label: "Pre-trade flow", value: "Hidden" },
     { label: "Execution", value: "Verifiable" },

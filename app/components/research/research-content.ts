@@ -11,9 +11,9 @@ export const researchPosts = [
   },
   {
     eyebrow: "Mechanism",
-    title: "Private price discovery for payments flow.",
+    title: "Private transfers are only half the market.",
     deck:
-      "Why a dark book can let makers and takers commingle, net, and settle without revealing the order flow that creates the price.",
+      "Why price formation belongs inside the dark book—not on the public market surrounding it.",
     href: "/research/private-price-discovery",
     instrument: "omega",
   },

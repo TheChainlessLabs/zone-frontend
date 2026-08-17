@@ -39,6 +39,8 @@ it("renders the one-screen dark-book identity page", () => {
     }),
   ).toBeDefined();
   expect(screen.getByTestId("hero-abstract-field")).toBeDefined();
+  expect(screen.getByText("Price forms in the book")).toBeDefined();
+  expect(screen.queryByText("Orders net in the book")).toBeNull();
   expect(screen.queryByTestId("order-scroll-story")).toBeNull();
 });
 

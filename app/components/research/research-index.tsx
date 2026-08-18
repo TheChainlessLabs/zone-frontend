@@ -34,7 +34,8 @@ export function ResearchIndex() {
               Research
             </h1>
             <p className="mt-6 max-w-[320px] text-pretty text-[15px] leading-[1.7] text-[var(--muted-foreground)]">
-              Field notes on private stablecoin market structure.
+              Perspectives on digital assets and the benefits of privacy and
+              verifiable technologies on modern market structure.
             </p>
 
             <ul
@@ -57,12 +58,11 @@ export function ResearchIndex() {
 
           <div className="min-w-0">
             <header className="grid gap-6 border-b border-[var(--border)] p-6 sm:grid-cols-[minmax(0,1fr)_auto] sm:p-8">
-              <p className="max-w-[560px] text-pretty text-[17px] leading-[1.65] text-[var(--muted-foreground)] sm:text-[19px]">
-                Notes on private price discovery, stablecoin payment corridors,
-                and the market structure Omega is building with design partners.
+              <p className="max-w-[560px] text-pretty font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
+                Notes on stablecoins and FX: the first Omega Markets
               </p>
               <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
-                Index / 02
+                Total / 02
               </p>
             </header>
 

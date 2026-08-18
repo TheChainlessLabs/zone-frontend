@@ -76,7 +76,7 @@ export function RequestAccessForm() {
               <FormItem>
                 <FormLabel required>Name</FormLabel>
                 <FormControl>
-                  <Input autoComplete="name" placeholder="Brian Seong" {...field} />
+                  <Input autoComplete="name" placeholder="Your name" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -93,7 +93,7 @@ export function RequestAccessForm() {
                   <Input
                     autoComplete="email"
                     inputMode="email"
-                    placeholder="brian@omegamarkets.com"
+                    placeholder="Your contact"
                     type="email"
                     {...field}
                   />
@@ -112,7 +112,7 @@ export function RequestAccessForm() {
               <FormItem>
                 <FormLabel required>Organization</FormLabel>
                 <FormControl>
-                  <Input autoComplete="organization" placeholder="Fund, treasury, desk" {...field} />
+                  <Input autoComplete="organization" placeholder="Treasury, trade desk, PSP" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

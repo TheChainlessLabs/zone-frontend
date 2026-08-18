@@ -2,16 +2,28 @@
 
 export const landingHero = {
   eyebrow: "Omega Markets",
-  headline: "The private price discovery zone for stablecoin FX.",
+  headline: "Private stablecoin swaps",
   supporting:
-    "Omega is a payments-focused dark book where makers and takers can discover price without exposing flow before execution.",
+    "Omega Markets is a private price discovery venue where buyers and sellers are matched without revealing identities or trade intents.",
   primaryCta: "Fund your account",
   secondaryCta: "Design partner access",
+  // Third CTA, in the hero row and the nav. Same primary skin as the fund
+  // CTA in the design — the pair is deliberate, not a variant slip.
+  launchCta: "Launch app",
   researchCta: "Research",
-  proofLabel: "Dark book",
-  proofSteps: ["Private flow enters", "Orders net in the book", "Proof exits"],
+  // The nav CTA no longer collapses on mobile — both breakpoints read the same.
+  navCta: "Fund account",
+  proofLabel: "Omega Markets Status",
+  proofBadge: "Live alpha testnet",
+  // Live network figures. `###` is the placeholder the design ships with until
+  // the testnet feed is wired up; it is deliberate, not a missing value.
+  liveStats: [
+    { label: "Batch number - testnet", value: "###" },
+    { label: "Volume (30d) - testnet", value: "###" },
+  ],
+  proofSteps: ["Private flow enters", "Orders match", "Proof exits"],
   proofStats: [
-    { label: "Pre-trade flow", value: "Hidden" },
+    { label: "Flow", value: "Hidden" },
     { label: "Execution", value: "Verifiable" },
   ],
 } as const;

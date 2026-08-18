@@ -1,5 +1,6 @@
 "use client";
 
+import { landingHero } from "@/components/landing/content";
 import { OmegaMark } from "@/components/OmegaMark";
 import { Button } from "@/components/ui/button";
 
@@ -33,18 +34,18 @@ export function LandingNav({ solid }: { solid: boolean }) {
             Omega Markets
           </span>
         </a>
-        <div className="flex items-center gap-2.5 sm:gap-7">
+        <div className="flex items-center gap-2 sm:gap-5">
           <a
             href="/research"
             className="text-[12px] text-[var(--muted-foreground)] no-underline transition-colors duration-[var(--duration-small)] hover:text-[var(--foreground)] sm:text-[14px]"
           >
-            Research
+            {landingHero.researchCta}
           </a>
           <Button asChild className="h-9 px-3 text-[12px] sm:h-10 sm:px-5 sm:text-[14px]">
-            <a href="/trade" aria-label="Fund your account">
-              <span aria-hidden className="sm:hidden">Fund</span>
-              <span aria-hidden className="hidden sm:inline">Fund your account</span>
-            </a>
+            <a href="/trade">{landingHero.navCta}</a>
+          </Button>
+          <Button asChild className="h-9 px-3 text-[12px] sm:h-10 sm:px-5 sm:text-[14px]">
+            <a href="/trade">{landingHero.launchCta}</a>
           </Button>
         </div>
       </div>

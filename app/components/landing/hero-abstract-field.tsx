@@ -292,7 +292,7 @@ export function HeroAbstractField() {
         <video
           key={reducedMotion ? "still" : "motion"}
           className="omega-hero-blackhole-video max-w-none object-cover"
-          style={{ width: "min(1700px, 185%)", mixBlendMode: "screen", opacity: 0.9 }}
+          style={{ width: "min(1700px, 185%)", mixBlendMode: "screen", opacity: 0.5 }}
           autoPlay={!reducedMotion}
           loop={!reducedMotion}
           muted

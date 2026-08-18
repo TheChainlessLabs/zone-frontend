@@ -1,0 +1,194 @@
+{
+  "_comment": "Hand-rolled Code Connect. Figma's real Code Connect needs an Organization or Enterprise plan; this repo's Figma account is on Professional. This file does the same job — resolving a Figma node to the source file that implements it — and it lives in git where it can be reviewed in a diff. app/__tests__/figma-contract.test.ts asserts every `source` below still exists, so the map cannot quietly rot.",
+  "_source": {
+    "figmaFileKey": "YI4akSQx9T8iL8hvOk6f3H",
+    "url": "https://www.figma.com/design/YI4akSQx9T8iL8hvOk6f3H",
+    "generatedFrom": "app/components/landing at kyles-frontend-edits",
+    "generatedOn": "2026-08-18"
+  },
+  "_pages": {
+    "Foundations": "0:1. Token swatches and the round-trip contract, restated inside the file so it travels with the design.",
+    "Components": "2:20. Main components. Each carries a description naming its source file.",
+    "Screens — Landing": "2:21. The assembled public landing route at two breakpoints.",
+    "Screens — Research": "26:2. The /research index and both field notes, desktop only."
+  },
+  "_scope": {
+    "covered": "Two public surfaces. (1) The landing route — app/app/page.tsx → LandingPage → LandingNav + LandingHero, at both breakpoints. (2) The research route — app/app/research/page.tsx and both field notes under it, desktop only.",
+    "notCovered": "app/components/landing/landing-sections.tsx, order-scroll-story.tsx and landing-request-access.tsx are NOT rendered by any route right now, and are left out of Figma deliberately — pushing dead components would invite design work on surfaces that do not ship. The research pages are desktop-only in Figma; their sub-lg layout (cast rail goes grid-cols-3, article rows collapse to a 3-column grid, the request-access rail drops below the body) is not drawn.",
+    "codeOnly": "Scroll behaviour, the seeded 60-star field, the CSS order-meteors, the nav scroll-to-solid transition, and the looping hero .webm. Figma holds the poster still. Describe changes to these in an annotation; do not try to redraw them."
+  },
+  "components": [
+    {
+      "figmaName": "Button",
+      "nodeId": "3:10",
+      "source": "app/components/ui/button.tsx",
+      "note": "Component set, 8 variants. Variant=Primary → cva variant \"default\"; Variant=Glass → variant \"glass\". The Size axis maps to the responsive classes at each call site, NOT to the cva `size` prop: Default = nav CTA at sm+, Large = hero CTA at sm+, Mobile Nav / Mobile Hero = the below-sm forms."
+    },
+    {
+      "figmaName": "Proof Step",
+      "nodeId": "8:6",
+      "source": "app/components/landing/landing-hero.tsx",
+      "note": "Component set. Layout=Row is the lg: rail (34px chip, 14px label); Layout=Stack is the mobile grid-cols-3 form (28px chip, 11px label). Step copy comes from landingHero.proofSteps in content.ts."
+    },
+    {
+      "figmaName": "Stat Card",
+      "nodeId": "3:15",
+      "source": "app/components/landing/landing-hero.tsx",
+      "note": "landingHero.proofStats tile. Label Geist Mono 10 uppercase; value Geist SemiBold 18."
+    },
+    {
+      "figmaName": "Omega Mark",
+      "nodeId": "5:3",
+      "source": "app/components/OmegaMark.tsx",
+      "note": "Vector built from the two paths inlined in the component (viewBox 345 345 320 320). Upstream truth is omega-docs/03-brand/assets/logo/omega-mark-glyph.svg — change it there first."
+    },
+    {
+      "figmaName": "Market Instrument",
+      "nodeId": "23:31",
+      "source": "app/components/brand/market-instrument.tsx",
+      "note": "Component set, 5 variants (Taker, Maker, Omega, Tempo, Proof). Line icons on a 64 unit grid, 1.5 stroke. Adding a sixth means adding it to marketInstrumentNames in code first — the set is closed brand geometry, not an icon library."
+    },
+    {
+      "figmaName": "Input",
+      "nodeId": "24:6",
+      "source": "app/components/ui/input.tsx",
+      "note": "Field=Input maps to the cva default variant. Field=Textarea is NOT this component in code — it is the inline <textarea> in request-access-form.tsx, drawn here with the same skin. The glass input variant exists in code but no research surface uses it, so it is not drawn."
+    },
+    {
+      "figmaName": "Research Row",
+      "nodeId": "25:2",
+      "source": "app/components/research/research-index.tsx",
+      "note": "One <li> of the article list. Content is data, not layers — it comes from researchPosts in research-content.ts."
+    }
+  ],
+  "frames": [
+    {
+      "figmaName": "Landing — Desktop",
+      "nodeId": "4:2",
+      "source": "app/components/landing/landing-page.tsx",
+      "note": "1440×900, the lg breakpoint. Route entry is app/app/page.tsx. See _roundTrips['2026-08-18'] for what landed from the design pass and what was rejected."
+    },
+    {
+      "figmaName": "Landing — Mobile",
+      "nodeId": "10:18",
+      "source": "app/components/landing/landing-page.tsx",
+      "note": "390×844. Not a separate implementation — the differences are Tailwind responsive prefixes inside landing-nav.tsx and landing-hero.tsx. See _roundTrips['2026-08-18'] for what landed from the design pass and what was rejected."
+    },
+    {
+      "figmaName": "Landing Nav",
+      "nodeId": "4:4",
+      "source": "app/components/landing/landing-nav.tsx",
+      "note": "Drawn in its transparent state. Past 24px of scroll it takes a 1px --border bottom, an 80% --background wash, a 12px backdrop blur, and padding-block goes 18 → 12."
+    },
+    {
+      "figmaName": "Hero Copy",
+      "nodeId": "6:4",
+      "source": "app/components/landing/landing-hero.tsx",
+      "note": "Headline/eyebrow/supporting strings are NOT authored in Figma — they come from landingHero in app/components/landing/content.ts. Edit copy there, or say so in an annotation."
+    },
+    {
+      "figmaName": "Proof Rail",
+      "nodeId": "7:5",
+      "source": "app/components/landing/landing-hero.tsx",
+      "note": "The <aside>. Material is the .glass utility in app/app/styles/materials.css, not a per-layer effect."
+    },
+    {
+      "figmaName": "Hero Field — blackhole video",
+      "nodeId": "4:3",
+      "source": "app/components/landing/hero-abstract-field.tsx",
+      "note": "Poster still of public/landing/blackhole/omega-blackhole-hero-desktop.webm. The starfield and order meteors are CSS and are not represented."
+    },
+    {
+      "figmaName": "Research Index — Desktop",
+      "nodeId": "26:3",
+      "source": "app/components/research/research-index.tsx",
+      "note": "Route entry is app/app/research/page.tsx. Known code issue recorded on the Identity column annotation: the 72px headline overflows its 32fr track by ~21px at viewports >=1200px."
+    },
+    {
+      "figmaName": "Research — Private price discovery",
+      "nodeId": "29:39",
+      "source": "app/app/research/private-price-discovery/page.tsx",
+      "note": "Copy lives in this page file directly; the shell is research-article.tsx. No rail, so the body is a single column."
+    },
+    {
+      "figmaName": "Research — Design partners",
+      "nodeId": "30:39",
+      "source": "app/app/research/design-partners/page.tsx",
+      "note": "Copy and the rail prop live in this page file; the shell is research-article.tsx."
+    },
+    {
+      "figmaName": "Research Article shell",
+      "nodeId": "29:47",
+      "source": "app/components/research/research-article.tsx",
+      "note": "The nav + header + [body, optional rail] grid both field notes share. Editing the shell in one frame means editing it in both."
+    },
+    {
+      "figmaName": "Request access rail",
+      "nodeId": "31:39",
+      "source": "app/components/landing/request-access-form.tsx",
+      "note": "Drawn resting. Focus, error, submitting and success states are code. Validation copy lives in app/lib/landing/request-access.ts; the panel material is .panel in app/app/styles/materials.css."
+    }
+  ],
+  "copy": {
+    "source": "app/components/landing/content.ts",
+    "note": "Landing strings live in app/components/landing/content.ts. Research index strings live in app/components/research/research-content.ts. Both field notes carry their own copy inline in their page.tsx. Text edited in Figma is a request, not a source.",
+    "research": "app/components/research/research-content.ts"
+  },
+  "_roundTrips": {
+    "2026-08-18": {
+      "frames": [
+        "Landing — Desktop (4:2)",
+        "Landing — Mobile (10:18)"
+      ],
+      "landed": [
+        "Headline → 'Private orderbook for stablecoins.'; new two-sentence supporting paragraph.",
+        "Nav CTA → 'Fund account' at every breakpoint; the below-sm collapse to 'Fund' is gone.",
+        "Panel header → 'Omega Markets Status' (Geist Mono Medium 13/14, normal case), replacing the uppercase mono-11 'DARK BOOK' label. Badge → 'Live alpha testnet'.",
+        "NEW live-metrics row above the mechanism steps: 'Batch number - testnet' and 'Volume (30d) - testnet', both '###'. The placeholder is deliberate until the testnet feed is wired.",
+        "Step 02 → 'Orders match'; first proof stat label → 'Flow'.",
+        "Hero copy is top-aligned instead of bottom-pinned; copy measure capped at 553px and the panel column fixed at 519px at lg.",
+        "Hero backdrop video dropped from 0.9 to 0.5 opacity."
+      ],
+      "rejected": {
+        "what": "The desktop panel arrived wrapped in a container named 'Light' (node 16:2226): 519x470 fixed, 10px radius on the top corners only, a 1px black border on left/right/top, no backdrop blur.",
+        "why": "It referenced --pro/radius/radius and --border-width/w-100, which are not Omega tokens, and a black border on a near-black surface renders invisible. Kyle's call: use the Omega branding kit for everything, no other libraries. The panel therefore keeps the .glass material (--radius-2xl, --glass-edge, blur) at both breakpoints."
+      },
+      "reconciled": {
+        "copy": "The two frames disagreed on three strings. Desktop was the later edit and won: 'Orders match' over 'Orders net in the book', 'Flow' over 'Pre-trade flow', 'Live alpha testnet' over 'Live alpha'. One string per item, no responsive branching.",
+        "typo": "The drawn paragraph read 'Omega Markets is private price discovery venue' with a double space between sentences. Shipped as 'is a private price discovery venue' with single spacing.",
+        "drags": "Mobile had the CTA row at x=41 while its copy sat at x=20, and the desktop panel overhung the 1240 container by 62px. Treated as drag artifacts and normalised onto the container grid."
+      }
+    },
+    "2026-08-18 — pass 2": {
+      "frames": [
+        "Landing — Desktop (4:2)",
+        "Landing — Mobile (10:18)",
+        "Research Index — Desktop (26:3)",
+        "Research — Private price discovery (29:39)",
+        "Research — Design partners (30:39)"
+      ],
+      "landed": [
+        "Headline → 'Private stablecoin swaps' (no terminal period), reverting the pass-1 'Private orderbook for stablecoins.'",
+        "Supporting paragraph back to one sentence; the 'neutral dark book that gives verifiable proofs' sentence added in pass 1 is dropped at both breakpoints.",
+        "NEW third CTA 'Launch app' (36:44 hero, 36:46 nav), primary skin, same as the fund CTA. Both point at /trade.",
+        "Research index: identity blurb → 'Perspectives on digital assets…'; header intro restyled from 17/19px prose to the mono-11 uppercase kicker and rewritten to 'Notes on stablecoins and FX: the first Omega Markets'; count → 'Total / 02'.",
+        "Research index row 01 → 'Connect your corridor - design partner signup.' with a new deck; row 02 deck → 'cross flow and settle atomically'.",
+        "Both field notes: eyebrow 'Field note NN' → 'Note NN'.",
+        "Private price discovery: new deck (takers fund business rails / makers charge rent); body gains 'fair, verifiable price'.",
+        "Design partners: title matches the index row; three of four section headings rewritten ('Start with the business case.', 'We’ll test our shared thesis.', 'Summary - One pair. One clear test.'); four body paragraphs replaced.",
+        "Request access rail placeholders → 'Your name', 'Your contact', 'Treasury, trade desk, PSP'."
+      ],
+      "reconciled": {
+        "copy": "Mobile (10:18) was not updated with desktop and still reads 'Orders net in the book', 'Live alpha', 'Pre-trade flow' and 'Launch App'. Desktop won again, as in pass 1 — one string per item, no responsive branching. The mobile frame needs a redraw.",
+        "typo": "The drawn PPD deck reads 'without leaking cost professional traders' — a dropped preposition. Shipped as 'without leaking cost to professional traders'. 'on the takers immediacy needs' is left verbatim; it may be intentional.",
+        "placeholders": "Figma shows the same placeholder ('Treasury, trade desk, PSP') on both Organization and Primary use case. Read as a paste slip: it is applied to Organization only.",
+        "strays": "A loose 'Headline' text node (32:46) sits on the Screens — Landing canvas at 168,469, outside both frames. Not implemented — it belongs to no frame.",
+        "staleLayerNames": "Design partner section frames still carry pass-1 names ('Start with something real.' 30:54, 'We’ll compare it with what already works.' 30:62) while their heading text reads the new copy. Code follows the text."
+      },
+      "rejected": {
+        "what": "Primary use case is drawn as a text input (31:66) with a free-text placeholder.",
+        "why": "It is a <select> in code, backed by requestAccessUseCases in app/lib/landing/request-access.ts; the submit schema validates against that enum. Turning it into free text would drop the validation and change the API payload. Left as a select pending a call from Kyle."
+      }
+    }
+  }
+}

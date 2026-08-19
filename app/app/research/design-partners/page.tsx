@@ -13,7 +13,7 @@ export default function DesignPartnersPage() {
             Private alpha / Design partners
           </p>
           <h2 className="mb-5 mt-3 text-balance text-[24px] font-semibold leading-[1.05] tracking-[-0.035em]">
-            Bring us a corridor.
+            Connect with the Omega team.
           </h2>
           <RequestAccessForm />
         </div>

@@ -72,7 +72,7 @@
       "figmaName": "Landing — Mobile",
       "nodeId": "10:18",
       "source": "app/components/landing/landing-page.tsx",
-      "note": "390×844. Not a separate implementation — the differences are Tailwind responsive prefixes inside landing-nav.tsx and landing-hero.tsx. See _roundTrips['2026-08-18'] for what landed from the design pass and what was rejected."
+      "note": "390x844. Not a separate implementation — the differences are Tailwind responsive prefixes inside landing-nav.tsx and landing-hero.tsx. Redrawn from desktop on 2026-08-19 after drifting three passes behind; see _roundTrips['2026-08-19 — mobile redraw (code -> Figma)']. The one deliberate difference left is the hero CTA row, which desktop has and mobile does not — below lg those three actions live in the fixed nav."
     },
     {
       "figmaName": "Landing Nav",
@@ -245,6 +245,24 @@
         "what": "Stat tiles are drawn with a solid --background fill; code keeps color-mix(in oklab, var(--background) 72%, transparent).",
         "why": "Pre-existing since pass 1, not an edit in this pass — the mix keeps the tiles legible over the hero video. Left alone deliberately; it belongs in the fidelity-gap register, not the diff."
       }
+    },
+    "2026-08-19 — mobile redraw (code -> Figma)": {
+      "direction": "code -> Figma. The only entry here that writes rather than reads: every other pass took Figma as the source. This one pushed the shipped desktop/code state back onto the mobile frame.",
+      "frames": [
+        "Landing — Mobile (10:18)"
+      ],
+      "why": "Mobile had gone three passes without an update and every pass since has had to spend a 'desktop won' note reconciling it. Redrawn to match rather than letting that list keep growing. Supersedes the 'the mobile frame needs a redraw' note on _roundTrips['2026-08-19 — pass 2'].",
+      "changed": [
+        "Nav (10:24) reordered to Research / Fund account / Launch app, matching desktop and landing-nav.tsx. 'Launch App' -> 'Launch app'.",
+        "The Research CTA (43:181) was drawn on 'Variant=Glass, Size=Large' — the hero-size instance, the same slip flagged on desktop in pass 3. Swapped onto 'Variant=Glass, Size=Mobile Nav' so all three nav buttons sit at 36px, and all three set to hug their labels.",
+        "Proof Rail (10:38) reordered to header -> steps -> figures, matching desktop and the DOM order in landing-hero.tsx. It was header -> figures -> steps.",
+        "Step 02 label -> 'Orders net in the book'. It had been reading 'Orders net in book' since pass 2.",
+        "Stats row (21:2366): the two stale tiles ('Batch number - testnet', 'Volume (30d) - testnet' — the superseded pass-1 live row, under even older 'Stat — Hidden' / 'Stat — Verifiable' layer names) replaced by the three desktop live figures. A third Stat Card instance was cloned in (58:83). Tiles renamed for their content.",
+        "Hero Body (10:28) set to hug and re-seated at y=552: three-up tiles wrap their labels to three lines, so the rail grew 233 -> 246 and the body 233 -> 260. The 32px floor margin is preserved."
+      ],
+      "notDrawn": "Mobile still has no hero CTA row. That is deliberate and unchanged — below lg landing-hero.tsx renders the CTA block lg:grid only, because the fixed nav already carries all three actions. It is the one string set desktop has that mobile does not.",
+      "technique": "Desktop's stat labels carry a hand-authored newline ('TXNS PROCESSED - \\nTESTNET'); mobile's wrap naturally, because three tiles across 321px leaves only ~78px of content box. Same strings, and the code uppercases a single-line string at both breakpoints either way.",
+      "verified": "Every TEXT string on 4:2 and 10:18 was diffed after the redraw. Nothing is mobile-only; the only desktop-only strings are the hero CTA labels 'Fund your account' and 'Design partner access'."
     }
   }
 }

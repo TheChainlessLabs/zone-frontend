@@ -38,7 +38,7 @@ export function LandingHero() {
           container drops its inner padding so the copy lines up with the
           nav's own 1240 edge. */}
       <div className="relative z-[2] mx-auto flex w-full max-w-[1240px] flex-1 flex-col px-4 pb-10 pt-[72px] sm:px-8 sm:pb-12 sm:pt-[88px] lg:px-0 lg:pb-16 lg:pt-[98px]">
-        <div className="text-left">
+        <div className="text-left lg:pl-8">
           <span className="lp-fade s1 font-mono text-[11px] uppercase tracking-[0.24em] text-[color-mix(in_oklab,var(--foreground)_82%,transparent)] [text-shadow:0_1px_12px_rgba(0,0,0,0.6)]">
             {landingHero.eyebrow}
           </span>

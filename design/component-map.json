@@ -78,7 +78,7 @@
       "figmaName": "Landing Nav",
       "nodeId": "4:4",
       "source": "app/components/landing/landing-nav.tsx",
-      "note": "Drawn in its transparent state. Past 24px of scroll it takes a 1px --border bottom, an 80% --background wash, a 12px backdrop blur, and padding-block goes 18 → 12."
+      "note": "Drawn in its transparent state, 76 tall (18 padding + a 40px button row + 18). Past 24px of scroll it takes a 1px --border bottom, an 80% --background wash, a 12px backdrop blur, and padding-block goes 18 -> 12. All three CTAs are Size=Default at 40px; the glass Research CTA was corrected off the hero-size variant on 2026-08-19."
     },
     {
       "figmaName": "Hero Copy",
@@ -278,7 +278,7 @@
         "Their wrappers 46:290 / 46:303 / 46:308 were three identical siblings named 'Metrics' -> 'Metric — <figure>'."
       ],
       "notRenamed": "The 'Index' frames inside the Proof Step instances share a name across all three steps, but that name is inherited from the main component and is accurate. Renaming them would create instance overrides for nothing.",
-      "stillOpen": "Desktop's nav Research CTA (43:177) is still drawn on 'Variant=Glass, Size=Large' — the hero-size variant — against Size=Default for its two primaries. Same slip that was fixed on mobile in the redraw. Left alone here because this pass was renames only; code already normalises nav height, so it is cosmetic in the file."
+      "variantSwap": "Desktop's nav Research CTA (43:177) was drawn on 'Variant=Glass, Size=Large' — the hero-size instance — against Size=Default for its two primaries. Swapped onto 'Variant=Glass, Size=Default' and set to hug: 117x48 -> 102x40, so all three nav buttons now sit at 40. The nav frame 4:4 hugs to 76 instead of 84, which is what landing-nav.tsx has always rendered (18 padding + h-10 + 18). Same slip fixed on mobile during the redraw; both frames are now internally consistent. Nothing in code changed — the nav height was already normalised there, per _roundTrips['2026-08-19'].reconciled.heights."
     }
   }
 }

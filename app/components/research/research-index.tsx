@@ -1,5 +1,6 @@
 import { ArrowUpRight } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
 import { OmegaMark } from "@/components/OmegaMark";
 import {
   MarketInstrument,
@@ -19,9 +20,18 @@ export function ResearchIndex() {
             Omega Markets
           </span>
         </a>
-        <a href="/trade" className="text-[13px] font-medium no-underline">
-          Fund your account
-        </a>
+        <div className="flex items-center gap-2.5 sm:gap-7">
+          <Button
+            asChild
+            variant="secondary"
+            className="h-9 px-3 text-[12px] sm:h-10 sm:px-5 sm:text-[14px]"
+          >
+            <a href="/research">Research</a>
+          </Button>
+          <Button asChild className="h-9 px-3 text-[12px] sm:h-10 sm:px-5 sm:text-[14px]">
+            <a href="/trade">Fund account</a>
+          </Button>
+        </div>
       </nav>
 
       <section className="mx-auto w-full max-w-[1120px] px-4 pb-24 pt-20 sm:px-8 sm:pt-28">

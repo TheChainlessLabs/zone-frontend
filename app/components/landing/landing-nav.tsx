@@ -40,7 +40,7 @@ export function LandingNav({ solid }: { solid: boolean }) {
         <div className="flex items-center gap-2.5 sm:gap-7">
           <Button
             asChild
-            variant="glass"
+            variant="secondary"
             className="h-9 px-3 text-[12px] sm:h-10 sm:px-5 sm:text-[14px]"
           >
             <a href="/research">{landingHero.researchCta}</a>

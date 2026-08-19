@@ -112,7 +112,7 @@ export function RequestAccessForm() {
               <FormItem>
                 <FormLabel required>Organization</FormLabel>
                 <FormControl>
-                  <Input autoComplete="organization" placeholder="Treasury, trade desk, PSP" {...field} />
+                  <Input autoComplete="organization" placeholder="Your organization" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

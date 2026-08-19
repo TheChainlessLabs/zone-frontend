@@ -13,7 +13,7 @@ it("renders exactly two research articles", () => {
   expect(within(index).getAllByRole("link")).toHaveLength(2);
   expect(
     within(index)
-      .getByRole("link", { name: /Connect your corridor - design partner signup/i })
+      .getByRole("link", { name: /Connect your corridor/i })
       .getAttribute("href"),
   ).toBe("/research/design-partners");
   expect(
@@ -30,7 +30,7 @@ it("renders the expanded design partner call without changing the form", () => {
 
   expect(
     screen.getByRole("heading", {
-      name: "Connect your corridor - design partner signup.",
+      name: "Connect your corridor.",
     }),
   ).toBeDefined();
   expect(

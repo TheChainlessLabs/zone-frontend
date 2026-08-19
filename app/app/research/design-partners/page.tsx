@@ -5,7 +5,7 @@ export default function DesignPartnersPage() {
   return (
     <ResearchArticle
       eyebrow="Design partners / Note 01"
-      title="Connect your corridor - design partner signup."
+      title="Connect your corridor."
       deck="Omega is building a dark pool for stablecoin FX on Tempo. We’re looking for a handful of teams that move stablecoins regularly and know exactly where today’s execution falls short."
       rail={
         <div id="apply" className="panel rounded-[var(--radius-xl)] p-5 sm:p-6">

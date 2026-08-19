@@ -3,7 +3,7 @@ import type { MarketInstrumentName } from "@/components/brand/market-instrument"
 export const researchPosts = [
   {
     eyebrow: "Design partners",
-    title: "Connect your corridor - design partner signup.",
+    title: "Connect your corridor.",
     deck:
       "A 1:1 design partnership to improve corridor capital efficiency and the business case for a verifiable dark book.",
     href: "/research/design-partners",

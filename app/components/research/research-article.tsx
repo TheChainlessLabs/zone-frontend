@@ -36,6 +36,9 @@ export function ResearchArticle({
           <Button asChild className="h-9 px-3 text-[12px] sm:h-10 sm:px-5 sm:text-[14px]">
             <a href="/trade">Fund account</a>
           </Button>
+          <Button asChild className="h-9 px-3 text-[12px] sm:h-10 sm:px-5 sm:text-[14px]">
+            <a href="/trade">Launch app</a>
+          </Button>
         </div>
       </nav>
 

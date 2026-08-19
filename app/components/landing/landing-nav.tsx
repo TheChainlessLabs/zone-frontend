@@ -34,13 +34,17 @@ export function LandingNav({ solid }: { solid: boolean }) {
             Omega Markets
           </span>
         </a>
-        <div className="flex items-center gap-2 sm:gap-5">
-          <a
-            href="/research"
-            className="text-[12px] text-[var(--muted-foreground)] no-underline transition-colors duration-[var(--duration-small)] hover:text-[var(--foreground)] sm:text-[14px]"
+        {/* Research leads the row and is a glass button, not a text link —
+            the nav carries the full action set at every breakpoint, which is
+            why the mobile hero has no CTA row of its own. */}
+        <div className="flex items-center gap-2.5 sm:gap-7">
+          <Button
+            asChild
+            variant="glass"
+            className="h-9 px-3 text-[12px] sm:h-10 sm:px-5 sm:text-[14px]"
           >
-            {landingHero.researchCta}
-          </a>
+            <a href="/research">{landingHero.researchCta}</a>
+          </Button>
           <Button asChild className="h-9 px-3 text-[12px] sm:h-10 sm:px-5 sm:text-[14px]">
             <a href="/trade">{landingHero.navCta}</a>
           </Button>

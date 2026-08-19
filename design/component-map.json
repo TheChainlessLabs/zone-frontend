@@ -82,15 +82,15 @@
     },
     {
       "figmaName": "Hero Copy",
-      "nodeId": "6:4",
+      "nodeId": "10:29",
       "source": "app/components/landing/landing-hero.tsx",
-      "note": "Headline/eyebrow/supporting strings are NOT authored in Figma — they come from landingHero in app/components/landing/content.ts. Edit copy there, or say so in an annotation."
+      "note": "The mobile copy frame; on desktop the same three strings are loose text nodes (6:5 eyebrow / 6:6 headline / 6:7 supporting) and the CTA block is its own frame (46:262). Headline/eyebrow/supporting strings are NOT authored in Figma — they come from landingHero in app/components/landing/content.ts. Edit copy there, or say so in an annotation."
     },
     {
-      "figmaName": "Proof Rail",
-      "nodeId": "7:5",
+      "figmaName": "Status Bar",
+      "nodeId": "47:29",
       "source": "app/components/landing/landing-hero.tsx",
-      "note": "The <aside>. Material is the .glass utility in app/app/styles/materials.css, not a per-layer effect."
+      "note": "The <aside>. At lg it is a 962-wide strip on the floor of the hero laid out 2x2 (identity + proof stats left, mechanism steps + live figures right); below lg the same four blocks stack, which is the mobile Proof Rail 10:38. Material is the .glass utility in app/app/styles/materials.css, not a per-layer effect."
     },
     {
       "figmaName": "Hero Field — blackhole video",
@@ -127,6 +127,12 @@
       "nodeId": "31:39",
       "source": "app/components/landing/request-access-form.tsx",
       "note": "Drawn resting. Focus, error, submitting and success states are code. Validation copy lives in app/lib/landing/request-access.ts; the panel material is .panel in app/app/styles/materials.css."
+    },
+    {
+      "figmaName": "CTA Row",
+      "nodeId": "46:262",
+      "source": "app/components/landing/landing-hero.tsx",
+      "note": "Desktop-only 2x2 CTA grid (200/150 columns, 44 x 32 gaps). Drawn on the desktop frame only; the mobile frame carries the same three actions in the nav instead, so the hero CTA block is hidden below lg."
     }
   ],
   "copy": {
@@ -188,6 +194,34 @@
       "rejected": {
         "what": "Primary use case is drawn as a text input (31:66) with a free-text placeholder.",
         "why": "It is a <select> in code, backed by requestAccessUseCases in app/lib/landing/request-access.ts; the submit schema validates against that enum. Turning it into free text would drop the validation and change the API payload. Left as a select pending a call from Kyle."
+      }
+    },
+    "2026-08-19": {
+      "frames": [
+        "Landing — Desktop (4:2)",
+        "Landing — Mobile (10:18)"
+      ],
+      "landed": [
+        "Nav: Research is now a glass Button (43:177 desktop / 43:181 mobile) leading the action row, not a muted text link. Row order at both breakpoints is Research, Fund account, Launch app; gap 10 below sm, 28 at sm+.",
+        "Desktop hero copy is no longer a 553px column beside the panel — the headline runs the full 1240 container at 95px (clamp max 84 -> 95) and only the supporting paragraph is capped, at 488px.",
+        "Supporting paragraph type up: 15 -> 18px below lg, 18 -> 22px at lg.",
+        "Desktop CTA block is a 2x2 grid (46:262): Fund your account 200px and Launch app 150px on row 1, Design partner access 200px on row 2, 44 x 32 gaps, all 48px tall. The ArrowRight on the fund CTA is gone — the design draws label-only buttons.",
+        "The proof rail became the Status Bar (47:29): at lg a 962-wide centred strip pinned to the floor of the hero, 2x2 internally — header and proof stats in a 280px left column, mechanism steps and live figures in the right column.",
+        "Live figures went from two to three: 'Txns processed - testnet', 'Fills count - testnet', 'Current batch - testnet', all still '###'.",
+        "Step 02 -> 'Orders net in the book', reverting the pass-1 'Orders match'. Proof stat label -> 'Pre-trade flow', reverting pass-1's 'Flow'.",
+        "Proof stat tiles now carry tone: 'Hidden' takes a --foreground edge, 'Execution / Verifiable' a coloured edge and coloured type.",
+        "Step index chips are filled (--muted-foreground) with dark numerals instead of transparent chips with light numerals.",
+        "Badge -> 'Live alpha' (drawn LIVE ALPHA, uppercased in CSS), on an orange pill."
+      ],
+      "reconciled": {
+        "copy": "The two frames disagreed again and desktop won again, as in passes 1 and 2. Mobile still reads 'Orders net in book', 'Launch App', and carries the old two-stat live row ('Batch number', 'Volume (30d)'). One string per item, no responsive branching.",
+        "order": "Desktop nav draws Research, Fund account, Launch app; mobile draws Fund account, Launch App, Research. Desktop order applied at both breakpoints.",
+        "heights": "The desktop nav draws the Research glass CTA at 48px tall against 40px for the two primaries — the hero-size glass instance appears to have been swapped into the nav. Normalised to a single nav height (36 below sm, 40 at sm+), consistent with the Button component description.",
+        "mobileCtas": "The mobile frame has no hero CTA row at all; the three actions live in its nav. Implemented as drawn — the hero CTA block is hidden below lg. Flagged for Kyle: this is the one change here that alters what a phone user can tap in the hero, and it is a one-line revert if unintended."
+      },
+      "rejected": {
+        "what": "The status bar's accent colours come from a non-Omega variable collection: accents/orange (#ff8d28) on the LIVE ALPHA pill, accents/green (#34c759) on the Execution tile, grays/gray (#8e8e93) on the step chips, backgrounds/primary (white) on the Pre-trade flow tile.",
+        "why": "Same call as the pass-1 'Light' container: Omega branding kit only, no other libraries. Mapped onto Omega tokens instead — green -> --success (#10b981), gray -> --muted-foreground, white -> --foreground. Orange had no Omega rung at all, so it landed as a documented --warning carve-out in app/app/styles/tokens.css alongside --radius-2xl, to be deleted once omega-docs' tokens.json grows a warning colour. Components reference the token, never the hex."
       }
     }
   }

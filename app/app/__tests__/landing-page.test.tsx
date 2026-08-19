@@ -81,10 +81,13 @@ it("renders the status panel with live testnet figures", () => {
   render(<HomePage />);
 
   expect(screen.getByText("Omega Markets Status")).toBeDefined();
-  expect(screen.getByText("Live alpha testnet")).toBeDefined();
-  // `###` is the shipped placeholder until the testnet feed lands.
-  expect(screen.getAllByText("###")).toHaveLength(2);
-  expect(screen.getByText("Batch number - testnet")).toBeDefined();
-  expect(screen.getByText("Volume (30d) - testnet")).toBeDefined();
-  expect(screen.getByText("Orders match")).toBeDefined();
+  expect(screen.getByText("Live alpha")).toBeDefined();
+  // `###` is the shipped placeholder until the testnet feed lands. Three
+  // figures now, per the 2026-08-19 design pass.
+  expect(screen.getAllByText("###")).toHaveLength(3);
+  expect(screen.getByText("Txns processed - testnet")).toBeDefined();
+  expect(screen.getByText("Fills count - testnet")).toBeDefined();
+  expect(screen.getByText("Current batch - testnet")).toBeDefined();
+  expect(screen.getByText("Orders net in the book")).toBeDefined();
+  expect(screen.getByText("Pre-trade flow")).toBeDefined();
 });

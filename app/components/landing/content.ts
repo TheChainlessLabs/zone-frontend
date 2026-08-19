@@ -14,17 +14,20 @@ export const landingHero = {
   // The nav CTA no longer collapses on mobile — both breakpoints read the same.
   navCta: "Fund account",
   proofLabel: "Omega Markets Status",
-  proofBadge: "Live alpha testnet",
+  proofBadge: "Live alpha",
   // Live network figures. `###` is the placeholder the design ships with until
   // the testnet feed is wired up; it is deliberate, not a missing value.
   liveStats: [
-    { label: "Batch number - testnet", value: "###" },
-    { label: "Volume (30d) - testnet", value: "###" },
+    { label: "Txns processed - testnet", value: "###" },
+    { label: "Fills count - testnet", value: "###" },
+    { label: "Current batch - testnet", value: "###" },
   ],
-  proofSteps: ["Private flow enters", "Orders match", "Proof exits"],
+  proofSteps: ["Private flow enters", "Orders net in the book", "Proof exits"],
+  // `tone` picks the tile's edge: "success" is the one affirmative statement
+  // the panel makes, so it is the only coloured border on the surface.
   proofStats: [
-    { label: "Flow", value: "Hidden" },
-    { label: "Execution", value: "Verifiable" },
+    { label: "Pre-trade flow", value: "Hidden", tone: "plain" },
+    { label: "Execution", value: "Verifiable", tone: "success" },
   ],
 } as const;
 

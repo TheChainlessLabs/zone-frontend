@@ -9,6 +9,13 @@
 :root {
   --radius-2xl: 24px;
 
+  /* Status accent — the hero panel's LIVE ALPHA pill. Figma draws it from a
+     non-Omega variable (accents/orange #ff8d28) and Omega has no warning rung
+     yet, so it lands here as a carve-out on the same terms as --radius-2xl
+     above: keep it until omega-docs' tokens.json adds a warning colour, then
+     delete. Components reference the token, never the hex. */
+  --warning: #ff8d28;
+
   /* Motion tokens (M5.1 — #224). The duration ladder mirrors Tailwind v4's
      default scale; we name the rungs we actually use so non-Tailwind CSS
      (raw `transition` rules, `@keyframes`, View Transitions) can reach them
@@ -61,6 +68,9 @@
 }
 
 [data-theme="light"] {
+  /* #ff8d28 on a near-white surface fails contrast at the pill's 10px; the
+     light rung is the same hue darkened. Provisional, same carve-out caveat. */
+  --warning: #b45309;
   --surface-edge: rgba(0, 0, 0, 0.06);
   --shadow-soft:
     0 1px 4px -1px rgba(15, 23, 42, 0.05),

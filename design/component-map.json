@@ -263,6 +263,22 @@
       "notDrawn": "Mobile still has no hero CTA row. That is deliberate and unchanged — below lg landing-hero.tsx renders the CTA block lg:grid only, because the fixed nav already carries all three actions. It is the one string set desktop has that mobile does not.",
       "technique": "Desktop's stat labels carry a hand-authored newline ('TXNS PROCESSED - \\nTESTNET'); mobile's wrap naturally, because three tiles across 321px leaves only ~78px of content box. Same strings, and the code uppercases a single-line string at both breakpoints either way.",
       "verified": "Every TEXT string on 4:2 and 10:18 was diffed after the redraw. Nothing is mobile-only; the only desktop-only strings are the hero CTA labels 'Fund your account' and 'Design partner access'."
+    },
+    "2026-08-19 — layer naming sweep": {
+      "direction": "Figma only. No design values and no code changed — this is file hygiene, recorded so a name change in the file is traceable to a reason.",
+      "frames": [
+        "Landing — Desktop (4:2)"
+      ],
+      "why": "Layer names had drifted off the text they render, which is what made the mobile frame hard to read against desktop in the first place. The map's standing rule is that code follows the text, so a stale name is never load-bearing — but it is misleading, and it cost a reconciliation note in two separate passes.",
+      "renamed": [
+        "43:177 'CTA — Design partner access' -> 'CTA — Research' (renders Research; the name was the pass-4 red herring).",
+        "43:174 'CTA — Fund your account' -> 'CTA — Fund account' (the nav label is the short form; the hero CTA 46:263 keeps the long one and was already correct).",
+        "36:46 and 46:265 'CTA — Launch App' -> 'CTA — Launch app', matching the drawn casing.",
+        "46:291 / 46:304 / 46:309 all read 'Stat - Batch Number' -> 'Stat — Txns processed' / 'Stat — Fills count' / 'Stat — Current batch'.",
+        "Their wrappers 46:290 / 46:303 / 46:308 were three identical siblings named 'Metrics' -> 'Metric — <figure>'."
+      ],
+      "notRenamed": "The 'Index' frames inside the Proof Step instances share a name across all three steps, but that name is inherited from the main component and is accurate. Renaming them would create instance overrides for nothing.",
+      "stillOpen": "Desktop's nav Research CTA (43:177) is still drawn on 'Variant=Glass, Size=Large' — the hero-size variant — against Size=Default for its two primaries. Same slip that was fixed on mobile in the redraw. Left alone here because this pass was renames only; code already normalises nav height, so it is cosmetic in the file."
     }
   }
 }

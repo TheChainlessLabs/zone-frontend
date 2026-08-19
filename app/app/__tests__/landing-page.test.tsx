@@ -89,5 +89,8 @@ it("renders the status panel with live testnet figures", () => {
   expect(screen.getByText("Fills count - testnet")).toBeDefined();
   expect(screen.getByText("Current batch - testnet")).toBeDefined();
   expect(screen.getByText("Orders net in the book")).toBeDefined();
-  expect(screen.getByText("Pre-trade flow")).toBeDefined();
+  // The 2026-08-19 pass-2 design removed the two proof-stat tiles from the
+  // status bar at both breakpoints; nothing should render them again.
+  expect(screen.queryByText("Pre-trade flow")).toBeNull();
+  expect(screen.queryByText("Hidden")).toBeNull();
 });

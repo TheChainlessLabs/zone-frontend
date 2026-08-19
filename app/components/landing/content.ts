@@ -23,12 +23,6 @@ export const landingHero = {
     { label: "Current batch - testnet", value: "###" },
   ],
   proofSteps: ["Private flow enters", "Orders net in the book", "Proof exits"],
-  // `tone` picks the tile's edge: "success" is the one affirmative statement
-  // the panel makes, so it is the only coloured border on the surface.
-  proofStats: [
-    { label: "Pre-trade flow", value: "Hidden", tone: "plain" },
-    { label: "Execution", value: "Verifiable", tone: "success" },
-  ],
 } as const;
 
 // The mechanism scene — four scroll-driven states (scene.jsx SCROLL_STATES).

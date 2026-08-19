@@ -39,7 +39,7 @@ it("renders the one-screen dark-book identity page", () => {
     }),
   ).toBeDefined();
   expect(screen.getByTestId("hero-abstract-field")).toBeDefined();
-  expect(screen.queryByTestId("order-scroll-story")).toBeNull();
+  expect(screen.getByTestId("order-scroll-story")).toBeDefined();
 });
 
 it("exposes research and account-funding actions", () => {
@@ -81,7 +81,7 @@ it("renders the status panel with live testnet figures", () => {
   render(<HomePage />);
 
   expect(screen.getByText("Omega Markets Status")).toBeDefined();
-  expect(screen.getByText("Live alpha")).toBeDefined();
+  expect(screen.getByText("LIVE ALPHA")).toBeDefined();
   // `###` is the shipped placeholder until the testnet feed lands. Three
   // figures now, per the 2026-08-19 design pass.
   expect(screen.getAllByText("###")).toHaveLength(3);

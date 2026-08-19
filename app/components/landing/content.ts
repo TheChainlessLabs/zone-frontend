@@ -14,7 +14,7 @@ export const landingHero = {
   // The nav CTA no longer collapses on mobile — both breakpoints read the same.
   navCta: "Fund account",
   proofLabel: "Omega Markets Status",
-  proofBadge: "Live alpha",
+  proofBadge: "LIVE ALPHA",
   // Live network figures. `###` is the placeholder the design ships with until
   // the testnet feed is wired up; it is deliberate, not a missing value.
   liveStats: [

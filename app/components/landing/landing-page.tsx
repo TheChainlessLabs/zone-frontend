@@ -4,6 +4,7 @@ import * as React from "react";
 
 import { LandingHero } from "@/components/landing/landing-hero";
 import { LandingNav } from "@/components/landing/landing-nav";
+import { OrderScrollStory } from "@/components/landing/order-scroll-story";
 
 // The public home route is deliberately a single identity frame. Longer-form
 // explanation and access qualification live under Research.
@@ -48,6 +49,7 @@ export function LandingPage() {
       <div className="lp-content relative z-[1]">
         <LandingNav solid={navSolid} />
         <LandingHero />
+        <OrderScrollStory />
       </div>
     </main>
   );

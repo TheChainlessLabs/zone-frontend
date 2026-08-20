@@ -54,7 +54,10 @@ export function SignupModal({ onClose }: SignupModalProps) {
 
       form.reset(defaultValues);
       setStatus("success");
-      setTimeout(() => onClose(), 2000);
+      setTimeout(() => {
+        onClose();
+        window.location.href = "/trade";
+      }, 2000);
     } catch {
       setStatus("error");
     }

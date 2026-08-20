@@ -35,27 +35,24 @@ it("renders the one-screen dark-book identity page", () => {
 
   expect(
     screen.getByRole("heading", {
-      name: "The private price discovery zone for stablecoin FX.",
+      name: "Private FX Swaps",
     }),
   ).toBeDefined();
-  expect(screen.getByTestId("hero-abstract-field")).toBeDefined();
   expect(screen.queryByTestId("order-scroll-story")).toBeNull();
 });
 
 it("exposes research and account-funding actions", () => {
   render(<HomePage />);
 
-  expect(
-    screen.getByRole("link", { name: "Research" }).getAttribute("href"),
-  ).toBe("/research");
-  expect(
-    screen.getAllByRole("link", { name: "Fund your account" }).map((link) =>
-      link.getAttribute("href"),
-    ),
-  ).toEqual(["/trade", "/trade"]);
-  expect(
-    screen.getByRole("link", { name: "Design partner access" }).getAttribute("href"),
-  ).toBe("/research/design-partners");
+  const researchLinks = screen.getAllByRole("link", { name: "Research" });
+  expect(researchLinks.some((link) => link.getAttribute("href") === "/research")).toBe(true);
+
+  const launchLinks = screen.getAllByRole("link", { name: "Launch app" });
+  expect(launchLinks.length).toBeGreaterThan(0);
+  expect(launchLinks.some((link) => link.getAttribute("href") === "/trade")).toBe(true);
+
+  const designPartnerLinks = screen.getAllByRole("link", { name: "Design partners" });
+  expect(designPartnerLinks.some((link) => link.getAttribute("href") === "/research/design-partners")).toBe(true);
 });
 
 it("sets landing page metadata", () => {

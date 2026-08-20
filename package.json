@@ -30,5 +30,8 @@
   "engines": {
     "node": "22.x",
     "pnpm": ">=9"
+  },
+  "dependencies": {
+    "gsap": "^3.15.0"
   }
 }

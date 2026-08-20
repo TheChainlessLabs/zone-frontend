@@ -69,34 +69,28 @@ export function MechanismIntro() {
   );
 }
 
-// "Why Omega" — six numbered glass feature cards (app.jsx Features).
+// "Why Omega" — benefits list (FX Spot landing).
 export function WhyOmega() {
   return (
     <section
       id="why"
-      className="relative z-[1] mx-auto grid max-w-[1240px] grid-cols-1 items-start gap-10 px-4 py-24 sm:px-8 lg:grid-cols-[0.74fr_1.26fr] lg:py-36"
+      className="relative z-[1] mx-auto grid max-w-[1240px] grid-cols-1 gap-10 px-4 py-24 sm:px-8 lg:py-36"
     >
-      <div className="lg:sticky lg:top-28 lg:self-start lg:pt-8">
-        <span className="font-mono text-[12px] uppercase tracking-[0.2em] text-[var(--muted-foreground)]">
-          {whyOmega.eyebrow}
-        </span>
-        <h2 className="mt-4 max-w-[460px] text-balance text-[clamp(34px,5vw,58px)] font-semibold leading-[0.98] tracking-[-0.045em]">
+      <div>
+        <h2 className="text-[clamp(34px,5vw,58px)] font-semibold leading-[0.98] tracking-[-0.045em]">
           {whyOmega.title}
         </h2>
-        <p className="mt-5 max-w-[410px] text-pretty text-[16px] leading-[1.7] text-[var(--muted-foreground)]">
-          {whyOmega.supporting}
-        </p>
-        <div className="mt-8 hidden max-w-[360px] flex-col gap-2 border-l border-[var(--border)] pl-4 lg:flex">
-          {["Internal match first", "External exposure minimized", "Fill proof retained"].map(
-            (item) => (
-              <span
-                key={item}
-                className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--muted-foreground)]"
-              >
-                {item}
-              </span>
-            ),
-          )}
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {whyOmega.benefits.map((benefit) => (
+            <div
+              key={benefit}
+              className="rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--card)] p-6"
+            >
+              <p className="text-[15px] font-medium leading-[1.4]">
+                {benefit}
+              </p>
+            </div>
+          ))}
         </div>
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:gap-5">

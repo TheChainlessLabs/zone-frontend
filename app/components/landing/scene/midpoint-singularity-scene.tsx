@@ -94,7 +94,7 @@ export function MidpointScene({ state, sceneRef }: MidpointSceneProps) {
       viewBox="0 0 500 500"
       width="100%"
       height="100%"
-      style={{ display: "block", maxHeight: "70vh" }}
+      style={{ display: "block", maxHeight: "400px", maxWidth: "100%" }}
       aria-label="Omega private order lifecycle animation"
     >
       <defs>

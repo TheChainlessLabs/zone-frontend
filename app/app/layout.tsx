@@ -76,7 +76,10 @@ export default function RootLayout({
           </TempoWalletProvider>
         </Suspense>
         <Toaster />
-      </body>
+      {/* impeccable-live-start */}
+<script src="http://localhost:8400/live.js?token=59e1018d-579d-497e-9ee3-8f3856bef012"></script>
+{/* impeccable-live-end */}
+</body>
     </html>
   );
 }

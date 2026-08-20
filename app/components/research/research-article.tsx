@@ -1,4 +1,8 @@
-import { OmegaMark } from "@/components/OmegaMark";
+"use client";
+
+import * as React from "react";
+import { ArrowUpRight } from "lucide-react";
+import { LandingNav } from "@/components/landing/landing-nav";
 
 type ResearchArticleProps = {
   eyebrow: string;
@@ -15,25 +19,38 @@ export function ResearchArticle({
   children,
   rail,
 }: ResearchArticleProps) {
+  const [navSolid, setNavSolid] = React.useState(false);
+
+  React.useEffect(() => {
+    const onScroll = () => {
+      setNavSolid(window.scrollY > 24);
+    };
+
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+    };
+  }, []);
+
   return (
     <main className="min-h-[100dvh] bg-[var(--background)] text-[var(--foreground)]">
-      <nav className="mx-auto flex w-full max-w-[1120px] items-center justify-between px-4 py-6 sm:px-8">
-        <a href="/" className="inline-flex items-center gap-2.5 no-underline">
-          <OmegaMark size={22} />
-          <span className="font-wordmark text-[13px] font-semibold uppercase tracking-[0.12em]">
-            Omega Markets
-          </span>
-        </a>
-        <a href="/research" className="text-[13px] text-[var(--muted-foreground)] no-underline">
-          Research
-        </a>
-      </nav>
+      <LandingNav solid={navSolid} hideButtons={true} />
 
       <article className="mx-auto w-full max-w-[1120px] px-4 pb-28 pt-16 sm:px-8 sm:pt-24">
         <header className="max-w-[860px]">
-          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--muted-foreground)]">
-            {eyebrow}
-          </p>
+          <div className="flex items-center justify-between">
+            <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--muted-foreground)]">
+              {eyebrow}
+            </p>
+            <a
+              href="/research"
+              className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors no-underline"
+            >
+              Back
+              <ArrowUpRight size={14} className="rotate-180" />
+            </a>
+          </div>
           <h1 className="mt-5 text-balance text-[clamp(42px,7vw,80px)] font-semibold leading-[0.94] tracking-[-0.055em]">
             {title}
           </h1>

@@ -1,0 +1,50 @@
+[
+  {
+    "figmaName": "Landing Page - Redesign",
+    "nodeId": "15:2",
+    "source": "app/components/landing/landing-page-redesign.tsx",
+    "note": "Main wrapper frame (1440×5550) containing all 7 sections. Dark book aesthetic with Omega branding. Synced from code to Figma via hand-rolled integration."
+  },
+  {
+    "figmaName": "Navbar",
+    "nodeId": "15:3",
+    "source": "app/components/landing/landing-page-redesign.tsx",
+    "note": "Navbar section (1440×80). Text: 'Omega Markets     Fund  •  Design Partner  •  Research'. Persistent with border."
+  },
+  {
+    "figmaName": "Hero + Differentiators",
+    "nodeId": "15:5",
+    "source": "app/components/landing/landing-page-redesign.tsx",
+    "note": "Hero section (1440×900). Headline: 'The private price discovery zone for stablecoin FX.' Supporting text and differentiators placeholder."
+  },
+  {
+    "figmaName": "Scroll Teaser",
+    "nodeId": "15:9",
+    "source": "app/components/landing/landing-page-redesign.tsx",
+    "note": "Scroll teaser section (1440×150). Centered text prompt: '↓ Scroll to see how orders flow through Omega ↓'"
+  },
+  {
+    "figmaName": "Who / Why Panels",
+    "nodeId": "15:11",
+    "source": "app/components/landing/landing-page-redesign.tsx",
+    "note": "Who/Why panels section (1440×400). Two side-by-side glass panels with semi-transparent backgrounds and borders."
+  },
+  {
+    "figmaName": "Mechanism (Void Animation)",
+    "nodeId": "15:18",
+    "source": "app/components/landing/landing-page-redesign.tsx",
+    "note": "Mechanism section (1440×500). Title: 'How Orders Flow Through Omega'. 4-step flow: Intent Enters → Private Matching → Liquidity Access → Verifiable Execution."
+  },
+  {
+    "figmaName": "Carousel Signup",
+    "nodeId": "15:21",
+    "source": "app/components/landing/landing-page-redesign.tsx",
+    "note": "Carousel signup section (1440×400). Title: 'Get Started'. Three paths: Fund Account, Design Partner, Developer Access."
+  },
+  {
+    "figmaName": "Footer",
+    "nodeId": "15:24",
+    "source": "app/components/landing/landing-page-redesign.tsx",
+    "note": "Footer section (1440×120). Text: '© 2025 Omega Markets  •  Private FX Execution'. Centered with top border."
+  }
+]

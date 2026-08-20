@@ -71,3 +71,33 @@ if (
     configurable: true,
   });
 }
+
+// jsdom does not implement `IntersectionObserver`. Scroll-reveal hooks and
+// components use it for fade-in animations on scroll. Install a minimal
+// no-op stub that immediately calls the callback as if all elements are
+// intersecting. Harness plumbing only — does not affect product behaviour.
+if (typeof window !== "undefined" && typeof IntersectionObserver === "undefined") {
+  (globalThis as any).IntersectionObserver = class IntersectionObserver {
+    constructor(private callback: IntersectionObserverCallback) {}
+    observe() {
+      // No-op: immediately signal that element is intersecting
+      const target = document.createElement("div");
+      const rect = new DOMRect();
+      const entry = {
+        isIntersecting: true,
+        target,
+        boundingClientRect: rect,
+        intersectionRatio: 1,
+        intersectionRect: rect,
+        rootBounds: rect,
+        time: Date.now(),
+      } as unknown as IntersectionObserverEntry;
+      this.callback([entry], this as any);
+    }
+    unobserve() {}
+    disconnect() {}
+    takeRecords() {
+      return [];
+    }
+  };
+}

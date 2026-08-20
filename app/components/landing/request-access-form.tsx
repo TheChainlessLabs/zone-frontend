@@ -164,7 +164,7 @@ export function RequestAccessForm() {
 
         <div className="grid gap-3 md:grid-cols-[auto_1fr] md:items-center">
           <Button type="submit" size="lg" disabled={isSubmitting}>
-            {isSubmitting ? "Sending request" : "Request Access"}
+            {isSubmitting ? "Contacting Omega" : "Contact Omega"}
           </Button>
           <p className="text-xs leading-5 text-[var(--muted-foreground)]">
             All addresses and counterparties remain subject to screening.

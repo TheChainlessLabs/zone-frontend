@@ -22,7 +22,7 @@ describe("RequestAccessForm", () => {
     render(<RequestAccessForm />);
 
     fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Brian Seong" } });
-    fireEvent.change(screen.getByLabelText("Work email"), {
+    fireEvent.change(screen.getByLabelText(/Email/), {
       target: { value: "brian@omegamarkets.com" },
     });
     fireEvent.change(screen.getByLabelText("Organization"), {
@@ -55,7 +55,7 @@ describe("RequestAccessForm", () => {
     render(<RequestAccessForm />);
 
     fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Brian Seong" } });
-    fireEvent.change(screen.getByLabelText("Work email"), { target: { value: "not-email" } });
+    fireEvent.change(screen.getByLabelText(/Email/), { target: { value: "not-email" } });
     fireEvent.change(screen.getByLabelText("Organization"), {
       target: { value: "Omega Markets" },
     });

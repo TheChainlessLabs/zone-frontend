@@ -6,36 +6,6 @@
    flatter meteor field.
    ============================================================================ */
 
-/* Ambient dot-grid — fades in as the hero scrolls away (kit `body::before`:
-   30px grid, 0.40 dot alpha, opacity 0.5 × --landing-dots). A landing-local
-   fixed layer driven by LandingPage's scroll handler, because the shared
-   global body::before sits behind the opaque canvas and never shows. It sits
-   at z-0, under the landing's z-1 content wrapper. */
-.lp-dotgrid {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.4) 1.5px, transparent 1.5px);
-  background-size: 30px 30px;
-  -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 50%, #000 30%, transparent 80%);
-  mask-image: radial-gradient(ellipse 90% 70% at 50% 50%, #000 30%, transparent 80%);
-  opacity: calc(0.5 * var(--landing-dots, 0));
-  transition: opacity 120ms linear;
-}
-
-@media (prefers-contrast: more) {
-  .lp-dotgrid {
-    display: none;
-  }
-}
-
-/* The landing renders its own kit-exact dot-grid (.lp-dotgrid); suppress the
-   shared route dot-grid (body::before) on the landing route so the two don't
-   stack into a doubled pattern. */
-body[data-route="/"]::before {
-  display: none;
-}
 
 /* Landing glass — the marketing cards sit over a busy backdrop (dot-grid +
    blackhole glow), so the canonical ~0.07 white fill bleeds through and washes

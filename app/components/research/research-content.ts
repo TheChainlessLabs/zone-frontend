@@ -3,9 +3,9 @@ import type { MarketInstrumentName } from "@/components/brand/market-instrument"
 export const researchPosts = [
   {
     eyebrow: "Design partners",
-    title: "Bring us a corridor worth solving.",
+    title: "Connect your corridor.",
     deck:
-      "A private design-partner program for payment and treasury teams, makers, and desks with recurring stablecoin conversion flow.",
+      "A 1:1 design partnership to improve corridor capital efficiency and the business case for a verifiable dark book.",
     href: "/research/design-partners",
     instrument: "taker",
   },
@@ -13,7 +13,7 @@ export const researchPosts = [
     eyebrow: "Mechanism",
     title: "Private price discovery for payments flow.",
     deck:
-      "Why a dark book can let makers and takers commingle, net, and settle without revealing the order flow that creates the price.",
+      "Why and how a dark book can let makers and takers cross flow and settle atomically without revealing the order flow that creates the price.",
     href: "/research/private-price-discovery",
     instrument: "omega",
   },

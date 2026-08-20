@@ -1,19 +1,72 @@
-// The home route carries identity; the Research section carries explanation.
+// Landing copy — ported verbatim from the design-kit landing page
+// (ui_kits/landing-page/{app.jsx,scene.jsx}). The kit owns voice and copy:
+// terse, no emoji, no exclamation; positioning is private stablecoin
+// execution across chains and venues — match internally first, then access
+// shielded external liquidity, with verifiable fills and compliance.
 
 export const landingHero = {
   eyebrow: "Omega Markets",
-  headline: "The private price discovery zone for stablecoin FX.",
+  headline: "Private FX Swaps",
   supporting:
-    "Omega is a payments-focused dark book where makers and takers can discover price without exposing flow before execution.",
-  primaryCta: "Fund your account",
-  secondaryCta: "Design partner access",
-  researchCta: "Research",
-  proofLabel: "Dark book",
-  proofSteps: ["Private flow enters", "Orders net in the book", "Proof exits"],
-  proofStats: [
-    { label: "Pre-trade flow", value: "Hidden" },
-    { label: "Execution", value: "Verifiable" },
+    "Omega Markets is a dark book for FX stablecoin swaps and payments",
+  supportingBullets: [
+    "Conversions fill privately, in anonymity",
+    "Settlement is atomic (no credit, instant processing)",
+    "Fill receipts show spread from the external market mid",
   ],
+  primaryCta: "Fund your account",
+  secondaryCta: "Design partners",
+  launchCta: "Launch app",
+  researchCta: "Research",
+  navCta: "Fund account",
+  proofLabel: "Omega Markets Status",
+  proofBadge: "LIVE ALPHA",
+  proofSteps: [
+    { description: "Private orders received", stat: "Txns Processed", value: "###" },
+    { description: "Orders matched privately", stat: "Volume Matched", value: "###" },
+    { description: "Current execution batch", stat: "Current Batch Number", value: "###" },
+  ],
+  scrollHint: "Scroll to follow a trade intent",
+} as const;
+
+export const whoIsOmega = {
+  title: "Who is Omega for",
+  subtitle: "All stablecoin users",
+  users: [
+    {
+      name: "Businesses",
+      description: "Move stablecoins and FX at scale without broadcasting your portfolio and business.",
+    },
+    {
+      name: "Individuals",
+      description: "Open infrastructure for anyone to swap at institutional rates and make transfers privately.",
+    },
+  ],
+} as const;
+
+export const whyOmega = {
+  title: "Why swap on Omega",
+  benefits: [
+    "No opaque dealer pricing",
+    "Private portfolio",
+    "Predictable fills",
+    "Verifiable against market midpoint",
+  ],
+} as const;
+
+export const signupOptions = {
+  user: {
+    type: "User",
+    label: "Fund Account",
+    description: "Set up your account and start trading on Omega.",
+    cta: "Fund your account",
+  },
+  integrator: {
+    type: "Integrator",
+    label: "Design Partner",
+    description: "Integrate Omega's execution layer into your platform or app.",
+    cta: "Become a design partner",
+  },
 } as const;
 
 // The mechanism scene — four scroll-driven states (scene.jsx SCROLL_STATES).
@@ -56,7 +109,7 @@ export const mechanismIntro = {
   eyebrow: "Mechanism",
   title: "The page is a proof path, not a pitch deck.",
   supporting:
-    "Omega’s landing narrative should show the execution room: private intent, midpoint-first matching, shielded venue access, then verifiable settlement.",
+    "Omega's landing narrative should show the execution room: private intent, midpoint-first matching, shielded venue access, then verifiable settlement.",
   rails: [
     { label: "Input", value: "Private intent" },
     { label: "Price", value: "Midpoint first" },
@@ -65,27 +118,20 @@ export const mechanismIntro = {
   ],
 } as const;
 
-// Why Omega — six glass feature cards (app.jsx FEATURES). Icons are Lucide
-// names; the app renders them with lucide-react instead of inline path data.
-export const whyOmega = {
-  eyebrow: "Why Omega",
-  title: "Private execution for stablecoin FX.",
-  supporting:
-    "Omega combines a private offchain orderbook with shielded access to cross-chain and cross-venue liquidity.",
-} as const;
+// Why Omega — benefits list for FX Spot landing
 
 export const featureBlocks = [
   {
-    title: "Stable rates everywhere",
-    icon: "Maximize",
+    title: "On-chain Reference Rate",
+    icon: "TrendingUp",
     body:
-      "Access stablecoin liquidity across chains, venues, market makers, and private flow.",
+      "Price discovery in a dark book protects trader interests and sets the floor on capital efficiency of a cross-currency business.",
   },
   {
-    title: "Private orderbook first",
-    icon: "Share2",
+    title: "Private, Dark Book",
+    icon: "Lock",
     body:
-      "Orders match inside Omega’s darkpool before interacting with external liquidity.",
+      "Makers can’t be picked off and taker strategies are protected in our private orderbook.",
   },
   {
     title: "Shielded external liquidity",
@@ -100,10 +146,10 @@ export const featureBlocks = [
       "Your intent stays hidden before execution, reducing leakage to bots and counterparties.",
   },
   {
-    title: "Verifiable fills",
+    title: "Verifiable",
     icon: "BadgeCheck",
     body:
-      "Each fill creates proof artifacts without exposing the full private execution path.",
+      "Don’t trust Omega implicitly — trust the cryptography. Verifiable fills without compromising privacy.",
   },
   {
     title: "Compliance by default",
@@ -123,43 +169,60 @@ export const builtFor = {
 
 export const audiences = [
   {
-    name: "Funds",
-    icon: "LineChart",
+    name: "Merchants",
+    icon: "ShoppingCart",
     desc:
-      "Move stablecoin size privately across chains and venues without signalling positions to the market.",
+      "Make vendor payments in private at institutional rates.",
   },
   {
-    name: "Treasuries",
-    icon: "Landmark",
+    name: "Trading Desks",
+    icon: "TrendingUp",
     desc:
-      "Rebalance stablecoin balances across ecosystems at predictable rates, with verifiable settlement.",
+      "Manage USD and cross-currency stablecoin portfolio (i.e., hedges, leverage positions).",
   },
   {
-    name: "Onchain traders",
-    icon: "TrendingDown",
+    name: "Retail",
+    icon: "User",
     desc:
-      "Execute large swaps without exposing intent to bots, counterparties, or public mempools.",
+      "Swap money abroad in private.",
   },
   {
-    name: "Payment processors",
+    name: "Payment Processors",
     icon: "CreditCard",
     desc:
-      "Route customer and merchant stablecoin flows with private execution and compliance-aware settlement.",
+      "Rebalance on-chain portfolios in private with high-performance matching engine and limit orderbook.",
   },
   {
-    name: "OTC desks",
-    icon: "Maximize",
+    name: "Web3 Protocols",
+    icon: "Code",
     desc:
-      "Source and match block liquidity through private routes instead of fragmented chat-based workflows.",
-  },
-  {
-    name: "Exchanges",
-    icon: "Wallet",
-    desc:
-      "Access private cross-venue stablecoin liquidity through one execution backend.",
+      "Extend private price discovery to your applications (end-to-end encrypted).",
   },
 ] as const;
 
+export const userSignup = {
+  title: "Request Access",
+  emailPlaceholder: "your@email.com",
+  buttonText: "Submit",
+  privacyText: "Privacy Policy",
+  privacyLink: "#privacy",
+} as const;
+
+export const developerSignup = {
+  title: "Developer Interest",
+  emailPlaceholder: "your@email.com",
+  telegramPlaceholder: "@yourtelegram",
+  telegramLabel: "Telegram",
+  checkboxLabel: "Add me to public Telegram group",
+  buttonText: "Submit",
+  privacyText: "Privacy Policy",
+  privacyLink: "#privacy",
+} as const;
+
 export const footer = {
   tagline: "Private stablecoin execution · Onchain settlement",
+  links: [
+    { label: "Privacy Policy", href: "#privacy" },
+    { label: "Documentation", href: "https://docs.omega.markets" },
+  ],
 } as const;

@@ -12,10 +12,20 @@ import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
 // Faithful port of scene.jsx OrderScrollStory: a tall section with an inner
 // sticky stage — black-hole SVG on the left, a 4-segment progress rail plus
 // eyebrow/title/body on the right that advance through the four states.
-export function OrderScrollStory() {
+
+interface OrderScrollStoryProps {
+  scrollY?: number;
+  windowHeight?: number;
+  mechanismFadeThreshold?: number;
+}
+
+export function OrderScrollStory({ scrollY = 0, windowHeight = 0, mechanismFadeThreshold = 0 }: OrderScrollStoryProps) {
   const reducedMotion = useReducedMotion();
   const wrapRef = React.useRef<HTMLElement>(null);
   const [progress, setProgress] = React.useState(0);
+
+  // Keep mechanism fully visible - let step 4 show for entire scroll duration
+  // No slide transform needed - mechanism stays in place
 
   React.useEffect(() => {
     if (reducedMotion) return;
@@ -63,13 +73,20 @@ export function OrderScrollStory() {
   const state = getSceneState(progress);
   const active = scrollStates[state.index];
 
+  const threshold = mechanismFadeThreshold > 0 ? mechanismFadeThreshold : (windowHeight > 0 ? Math.round((windowHeight + 432 * windowHeight) * 0.95) : 3725);
+  const mechanismOpacity = scrollY < threshold ? 1 : 0;
+
   return (
     <section
       ref={wrapRef}
       id="mechanism"
       data-scroll-story
       aria-label="How an order settles"
-      className="relative z-[1] h-[416vh]"
+      className="relative z-[1] h-[600vh] bg-black transition-opacity duration-700"
+      style={{
+        opacity: mechanismOpacity,
+        pointerEvents: mechanismOpacity < 0.1 ? "none" : "auto",
+      }}
     >
       <div className="sticky top-0 flex h-screen items-center overflow-hidden">
         <div className="mx-auto grid w-full max-w-[1200px] items-center gap-12 px-8 lg:grid-cols-2">
@@ -79,7 +96,7 @@ export function OrderScrollStory() {
           </div>
 
           {/* copy — fixed positions; only the text fades/changes */}
-          <div>
+          <div className="transition-opacity duration-700" style={{ opacity: mechanismOpacity }}>
             <div className="mb-7 flex gap-2">
               {scrollStates.map((s, i) => (
                 <div

@@ -36,7 +36,7 @@ describe("OrderScrollStory", () => {
     const section = document.querySelector("[data-scroll-story]");
     expect(section).not.toBeNull();
     expect(section?.getAttribute("id")).toBe("mechanism");
-    expect(section?.className).toContain("h-[416vh]");
+    expect(section?.className).toContain("h-[600vh]");
 
     const first = scrollStates[0];
     const eyebrow = document.querySelector(`[data-scroll-panel="${first.id}"]`);

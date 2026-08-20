@@ -1,0 +1,84 @@
+{
+  "title": "Omega Landing Structure",
+  "question": "The roll assigned the Particle Detector. Keep it, explore an alternate, or re-roll.",
+  "options": [
+    {
+      "id": "assigned",
+      "label": "Particle Detector Event Display",
+      "kicker": "THE ROLL",
+      "lineage": "Scientific notation: CERN particle physics event visualization",
+      "thesis": "Orders as collision events: tracks curve through detector rings, calorimeter bars show fills, concentric topology proves technical credibility.",
+      "palette": [
+        "#09090b",
+        "#fafafa",
+        "#ffd700",
+        "#00d4ff",
+        "#ef4444"
+      ],
+      "materials": [
+        "dark institutional glass",
+        "signal-colored tracks on black",
+        "technical monospace labels"
+      ],
+      "viewport": "Center collision at viewport center. Concentric detector rings. Yellow/cyan tracks radiating outward. Red calorimeter energy bars on right edge. Hero headline sits above collision. Who/Why/Signup orbit around the detector.",
+      "risk": "Radical departure from linear scroll. Requires 3D or complex SVG animation to feel authentic.",
+      "comp": ".impeccable/mocks/decision/assigned-detector.webp",
+      "board": "https://impeccable.style/worlds/cards/scientific-notation-particle-detector-event-display.webp",
+      "hero": "https://impeccable.style/worlds/cards/scientific-notation-particle-detector-event-display-hero.webp"
+    },
+    {
+      "id": "challenger-streaming-wall",
+      "label": "Streaming Catalog Wall",
+      "verdict": "competitive",
+      "lineage": "Netflix/streaming tile carousel: horizontally scrolling rows that expand on focus",
+      "thesis": "Who/Why/Signup as expandable tiles. Center mechanism as the hero row. Browse then deep-dive into each option.",
+      "palette": [
+        "#09090b",
+        "#fafafa",
+        "#27272a",
+        "#fafafa"
+      ],
+      "materials": [
+        "glass-pill buttons on dark",
+        "row dimming on focus",
+        "horizontal scroll with snap"
+      ],
+      "viewport": "Three horizontal rows: Mechanism (hero), Who/Why (two tiles), Signup (carousel). Focused tile lifts and reveals metadata. Rest of wall dims behind it.",
+      "case": "Clean topology for exploration. Loses on wow-factor vs. detector collision.",
+      "risk": "Familiar pattern; reads less technical/infrastructure than the roll.",
+      "comp": ".impeccable/mocks/decision/challenger-streaming-wall.webp",
+      "hero": "https://impeccable.style/worlds/cards/pop-culture-shelf-streaming-title-card-wall-hero.webp"
+    },
+    {
+      "id": "challenger-sneaker-box",
+      "label": "Sneaker Box Archive",
+      "verdict": "declined",
+      "lineage": "Product archive: stacked boxes with silhouettes, pull and reveal",
+      "thesis": "Order types stacked as boxes. Pull a box, lid opens to reveal flow path and stats. Tactile metaphor for exploring order routes.",
+      "palette": [
+        "#09090b",
+        "#2a1810",
+        "#fafafa",
+        "#ffd700"
+      ],
+      "materials": [
+        "burnt orange accents",
+        "black silhouette line art",
+        "monospaced size labels"
+      ],
+      "viewport": "Wall of stacked boxes (order types). Pull a box to slide it out. Lid hinges open showing the 4-step flow inside. Tissue paper aesthetic.",
+      "case": "Tangible, delightful metaphor. Kept: the stacked exploration pattern. Lost: does not read as technical/infrastructure.",
+      "risk": "Feels more product/retail than institutional execution venue.",
+      "comp": ".impeccable/mocks/decision/challenger-sneaker-box.webp",
+      "hero": "https://impeccable.style/worlds/cards/textiles-weave-drape-fashion-sneaker-box-stacks-hero.webp"
+    }
+  ],
+  "buildPath": {
+    "value": "code",
+    "toggle": true
+  },
+  "reroll": {
+    "safer": "Show me composition variants that feel more familiar.",
+    "bolder": "Show me structures from completely foreign domains."
+  }
+}

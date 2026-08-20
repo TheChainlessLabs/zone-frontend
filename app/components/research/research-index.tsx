@@ -1,6 +1,10 @@
-import { ArrowUpRight } from "lucide-react";
+"use client";
 
-import { OmegaMark } from "@/components/OmegaMark";
+import * as React from "react";
+import { ArrowUpRight } from "lucide-react";
+import { useState } from "react";
+
+import { LandingNav } from "@/components/landing/landing-nav";
 import {
   MarketInstrument,
   type MarketInstrumentName,
@@ -10,19 +14,24 @@ import { researchPosts } from "@/components/research/research-content";
 const researchCast = ["taker", "maker", "omega"] as const satisfies ReadonlyArray<MarketInstrumentName>;
 
 export function ResearchIndex() {
+  const [hoveredInstrument, setHoveredInstrument] = useState<MarketInstrumentName | null>(null);
+  const [navSolid, setNavSolid] = useState(false);
+
+  React.useEffect(() => {
+    const onScroll = () => {
+      setNavSolid(window.scrollY > 24);
+    };
+
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+    };
+  }, []);
+
   return (
     <main className="min-h-[100dvh] bg-[var(--background)] text-[var(--foreground)]">
-      <nav className="mx-auto flex w-full max-w-[1120px] items-center justify-between px-4 py-6 sm:px-8">
-        <a href="/" className="inline-flex items-center gap-2.5 no-underline">
-          <OmegaMark size={22} />
-          <span className="font-wordmark text-[13px] font-semibold uppercase tracking-[0.12em]">
-            Omega Markets
-          </span>
-        </a>
-        <a href="/trade" className="text-[13px] font-medium no-underline">
-          Fund your account
-        </a>
-      </nav>
+      <LandingNav solid={navSolid} />
 
       <section className="mx-auto w-full max-w-[1120px] px-4 pb-24 pt-20 sm:px-8 sm:pt-28">
         <div className="grid overflow-hidden rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[var(--card)] lg:grid-cols-[minmax(0,32fr)_minmax(0,68fr)]">
@@ -44,7 +53,9 @@ export function ResearchIndex() {
               {researchCast.map((actor) => (
                 <li
                   key={actor}
-                  className="flex min-w-0 flex-col gap-3 py-4 not-last:border-r not-last:border-[var(--border)] not-last:pr-4 not-first:pl-4 lg:flex-row lg:items-center lg:gap-4 lg:not-last:border-b lg:not-last:border-r-0 lg:not-last:px-0 lg:not-first:pl-0"
+                  className={`flex min-w-0 flex-col gap-3 py-4 not-last:border-r not-last:border-[var(--border)] not-last:pr-4 not-first:pl-4 transition-opacity duration-200 lg:flex-row lg:items-center lg:gap-4 lg:not-last:border-b lg:not-last:border-r-0 lg:not-last:px-0 lg:not-first:pl-0 ${
+                    hoveredInstrument && hoveredInstrument !== actor ? "opacity-30" : "opacity-100"
+                  }`}
                 >
                   <MarketInstrument name={actor} size={28} />
                   <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--muted-foreground)]">
@@ -57,12 +68,8 @@ export function ResearchIndex() {
 
           <div className="min-w-0">
             <header className="grid gap-6 border-b border-[var(--border)] p-6 sm:grid-cols-[minmax(0,1fr)_auto] sm:p-8">
-              <p className="max-w-[560px] text-pretty text-[17px] leading-[1.65] text-[var(--muted-foreground)] sm:text-[19px]">
-                Notes on private price discovery, stablecoin payment corridors,
-                and the market structure Omega is building with design partners.
-              </p>
               <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
-                Index / 02
+                Notes Index / 02
               </p>
             </header>
 
@@ -75,6 +82,8 @@ export function ResearchIndex() {
                   <a
                     href={post.href}
                     className="group relative grid min-h-64 grid-cols-[2rem_42px_minmax(0,1fr)] gap-x-4 p-6 no-underline transition-colors duration-[var(--duration-small)] ease-[var(--ease-out)] hover:bg-[var(--muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] focus-visible:ring-inset sm:p-8 lg:grid-cols-[2.5rem_42px_minmax(0,1fr)_auto]"
+                    onMouseEnter={() => setHoveredInstrument(post.instrument)}
+                    onMouseLeave={() => setHoveredInstrument(null)}
                   >
                     <span className="font-mono text-[10px] leading-[42px] text-[var(--muted-foreground)]">
                       {String(index + 1).padStart(2, "0")}

@@ -57,33 +57,28 @@ export function LandingHero() {
               Live alpha
             </span>
           </div>
-          <ol className="mt-4 grid grid-cols-3 gap-2 lg:mt-5 lg:block lg:space-y-3">
+          <ol className="mt-4 space-y-2 lg:mt-5 lg:space-y-3">
             {landingHero.proofSteps.map((step, index) => (
-              <li key={step} className="flex flex-col items-start gap-2 lg:grid lg:grid-cols-[34px_1fr] lg:items-center lg:gap-3">
-                <span className="flex size-7 items-center justify-center rounded-[var(--radius-lg)] border border-[var(--glass-edge)] bg-[var(--glass-fill)] font-mono text-[10px] text-[var(--foreground)] shadow-[inset_0_1px_0_0_var(--glass-highlight)] lg:size-[34px] lg:text-[11px]">
-                  {String(index + 1).padStart(2, "0")}
-                </span>
-                <span className="text-[11px] font-medium leading-tight text-[var(--foreground)] sm:text-[13px] lg:text-[14px]">
-                  {step}
-                </span>
+              <li key={step.stat} className="space-y-1">
+                <div className="flex items-baseline gap-2">
+                  <span className="font-mono text-[10px] font-semibold text-[var(--foreground)]">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <span className="text-[11px] font-medium leading-tight text-[var(--foreground)]">
+                    {step.description}
+                  </span>
+                </div>
+                <div className="flex items-baseline gap-2 pl-5">
+                  <span className="font-mono text-[9px] uppercase tracking-[0.08em] font-medium text-[var(--muted-foreground)]">
+                    {step.stat}
+                  </span>
+                  <span className="font-mono text-[10px] font-semibold text-[var(--foreground)]">
+                    {step.value}
+                  </span>
+                </div>
               </li>
             ))}
           </ol>
-          <div className="mt-4 grid grid-cols-2 gap-2 sm:mt-5 sm:gap-3">
-            {landingHero.proofStats.map((stat) => (
-              <div
-                key={stat.label}
-                className="rounded-[var(--radius-lg)] border border-[var(--glass-edge)] bg-[color-mix(in_oklab,var(--background)_72%,transparent)] p-2.5 sm:p-3"
-              >
-                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
-                  {stat.label}
-                </p>
-                <p className="mt-1.5 text-[16px] font-semibold tracking-[-0.02em] sm:mt-2 sm:text-[18px]">
-                  {stat.value}
-                </p>
-              </div>
-            ))}
-          </div>
         </aside>
       </div>
 

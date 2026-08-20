@@ -1,11 +1,12 @@
 "use client";
 
+import { landingHero } from "@/components/landing/content";
 import { OmegaMark } from "@/components/OmegaMark";
 import { Button } from "@/components/ui/button";
 
 // Sticky landing nav (app.jsx Nav). Transparent over the hero, then blurred
 // and bordered once scrolled past the hero top. `solid` is driven by the page.
-export function LandingNav({ solid }: { solid: boolean }) {
+export function LandingNav({ solid, hideButtons = false }: { solid: boolean; hideButtons?: boolean }) {
   return (
     <nav
       data-testid="landing-nav"
@@ -24,7 +25,7 @@ export function LandingNav({ solid }: { solid: boolean }) {
         style={{ paddingBlock: solid ? 12 : 18 }}
       >
         <a
-          href="#top"
+          href="/"
           className="inline-flex items-center gap-2.5 text-[var(--foreground)] no-underline"
           aria-label="Omega Markets"
         >
@@ -33,20 +34,27 @@ export function LandingNav({ solid }: { solid: boolean }) {
             Omega Markets
           </span>
         </a>
-        <div className="flex items-center gap-2.5 sm:gap-7">
-          <a
-            href="/research"
-            className="text-[12px] text-[var(--muted-foreground)] no-underline transition-colors duration-[var(--duration-small)] hover:text-[var(--foreground)] sm:text-[14px]"
-          >
-            Research
-          </a>
-          <Button asChild className="h-9 px-3 text-[12px] sm:h-10 sm:px-5 sm:text-[14px]">
-            <a href="/trade" aria-label="Fund your account">
-              <span aria-hidden className="sm:hidden">Fund</span>
-              <span aria-hidden className="hidden sm:inline">Fund your account</span>
-            </a>
-          </Button>
-        </div>
+        {!hideButtons && (
+          <div className="flex items-center gap-2.5 sm:gap-7">
+            <Button
+              asChild
+              variant="secondary"
+              className="h-9 px-3 text-[12px] sm:h-10 sm:px-5 sm:text-[14px]"
+            >
+              <a href="/research">{landingHero.researchCta}</a>
+            </Button>
+            <Button
+              asChild
+              variant="secondary"
+              className="h-9 px-3 text-[12px] sm:h-10 sm:px-5 sm:text-[14px]"
+            >
+              <a href="/research/design-partners">{landingHero.secondaryCta}</a>
+            </Button>
+            <Button asChild className="h-9 px-3 text-[12px] sm:h-10 sm:px-5 sm:text-[14px]">
+              <a href="/trade">{landingHero.launchCta}</a>
+            </Button>
+          </div>
+        )}
       </div>
     </nav>
   );

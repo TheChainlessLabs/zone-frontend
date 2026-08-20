@@ -1,0 +1,231 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-19T21:00:00Z",
+  "title": "Design System: Omega Landing",
+  "extensions": {
+    "colorMeta": {
+      "background-dark": {
+        "role": "background",
+        "displayName": "Void Black",
+        "canonical": "#09090b",
+        "tonalRamp": ["#020202", "#050505", "#090909", "#0d0d0f", "#131315", "#18181c", "#1d1d22", "#222229"]
+      },
+      "foreground-dark": {
+        "role": "foreground",
+        "displayName": "Paper White",
+        "canonical": "#fafafa",
+        "tonalRamp": ["#1a1a1a", "#333333", "#4d4d4d", "#666666", "#808080", "#999999", "#b3b3b3", "#cccccc"]
+      },
+      "muted-foreground-dark": {
+        "role": "secondary",
+        "displayName": "Muted Ash",
+        "canonical": "#a1a1aa",
+        "tonalRamp": ["#525253", "#6b6b74", "#7d7d87", "#8f8f9a", "#a1a1aa", "#aeaeb5", "#bbbbc1", "#c8c8ce"]
+      },
+      "success-dark": {
+        "role": "success",
+        "displayName": "Emerald",
+        "canonical": "#10b981",
+        "tonalRamp": ["#064e3b", "#065f46", "#047857", "#059669", "#10b981", "#34d399", "#6ee7b7", "#a7f3d0"]
+      },
+      "destructive-dark": {
+        "role": "destructive",
+        "displayName": "Error Red",
+        "canonical": "#ef4444",
+        "tonalRamp": ["#7f1d1d", "#991b1b", "#b91c1c", "#dc2626", "#ef4444", "#f87171", "#fca5a5", "#fecaca"]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display / Hero",
+        "purpose": "Single emotional headline at the top of the page. Sets the frame for the entire landing experience."
+      },
+      "headline": {
+        "displayName": "Headline / Section",
+        "purpose": "Leads each major section. Carries the narrative forward."
+      },
+      "title": {
+        "displayName": "Title / Subsection",
+        "purpose": "Subsection headings and card titles. Maintains visual hierarchy without additional noise."
+      },
+      "body": {
+        "displayName": "Body / Copy",
+        "purpose": "Paragraph text, form labels, and supporting copy. Max 65–75ch line length for legibility."
+      },
+      "label": {
+        "displayName": "Label / Caption",
+        "purpose": "Status labels, field labels, microcopy. Recessive but scannable."
+      },
+      "mono": {
+        "displayName": "Mono / Data",
+        "purpose": "Technical identifiers (hashes, addresses, block numbers). Tabular numerals enabled."
+      }
+    },
+    "shadows": [
+      {
+        "name": "glass-surface",
+        "value": "inset 0 1px 0 0 rgba(255, 255, 255, 0.14), inset 0 0 0 1px rgba(255, 255, 255, 0.03), inset 0 -8px 24px -16px rgba(0, 0, 0, 0.3), 0 10px 28px -18px rgba(250, 250, 250, 0.1)",
+        "purpose": "Translucent glass overlay surfaces. Specular highlight + soft diffuse shadow."
+      },
+      {
+        "name": "button-primary",
+        "value": "0 10px 28px -18px rgba(250, 250, 250, 0.15)",
+        "purpose": "Subtle lift on primary buttons. Grows on hover."
+      },
+      {
+        "name": "glass-bloom-hover",
+        "value": "0 0 32px -12px rgba(255, 255, 255, 0.22)",
+        "purpose": "Bloom halo on glass hover. Signals interactivity."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-out",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Entrance and initial movement. Quick settle."
+      },
+      {
+        "name": "ease-inout",
+        "value": "cubic-bezier(0.4, 0, 0.2, 1)",
+        "purpose": "Transitions and state changes. Smooth both directions."
+      },
+      {
+        "name": "ease-in",
+        "value": "cubic-bezier(0.7, 0, 1, 0.5)",
+        "purpose": "Exit and wrap-up. Decelerating."
+      },
+      {
+        "name": "duration-press",
+        "value": "100ms",
+        "purpose": "Button press feedback. Instant tactile response."
+      },
+      {
+        "name": "duration-small",
+        "value": "150ms",
+        "purpose": "Micro-interactions (hover states, small transitions)."
+      },
+      {
+        "name": "duration-medium",
+        "value": "300ms",
+        "purpose": "Standard state transitions (focus, modal open)."
+      },
+      {
+        "name": "duration-large",
+        "value": "500ms",
+        "purpose": "Scroll-driven narratives and hero animations."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "mobile",
+        "value": "0px"
+      },
+      {
+        "name": "tablet",
+        "value": "768px"
+      },
+      {
+        "name": "desktop",
+        "value": "1024px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Button Primary",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Solid white text on dark background. Primary CTA. Includes tactile press feedback.",
+      "html": "<button class=\"ds-btn-primary\">Fund Your Account</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 8px 16px; border-radius: 10px; background: #fafafa; color: #18181b; font-size: 14px; font-weight: 500; border: none; box-shadow: 0 10px 28px -18px rgba(250, 250, 250, 0.15); transition: box-shadow 200ms cubic-bezier(0.16, 1, 0.3, 1), transform 100ms ease-out; cursor: pointer; } .ds-btn-primary:hover { box-shadow: 0 16px 36px -22px rgba(250, 250, 250, 0.2); } .ds-btn-primary:active { transform: translateY(0.5px); } .ds-btn-primary:focus-visible { outline: 2px solid #fafafa; outline-offset: 2px; }"
+    },
+    {
+      "name": "Button Glass",
+      "kind": "button",
+      "refersTo": "button-glass",
+      "description": "Translucent glass pill. Secondary CTA. Used for design partner and developer access.",
+      "html": "<button class=\"ds-btn-glass\">Read the Docs</button>",
+      "css": ".ds-btn-glass { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 8px 16px; border-radius: 14px; background-color: #09090b; background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 52%), linear-gradient(0deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.04)); border: 1px solid rgba(255, 255, 255, 0.1); color: #fafafa; font-size: 14px; font-weight: 500; backdrop-filter: blur(18px) saturate(1.4); box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.14); transition: backdrop-filter 150ms ease, border-color 150ms ease, box-shadow 150ms ease; cursor: pointer; } .ds-btn-glass:hover { --glass-brightness: 1.16; backdrop-filter: blur(18px) saturate(1.4) brightness(1.16); border-color: #fafafa; box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.14), 0 0 32px -12px rgba(255, 255, 255, 0.22); } .ds-btn-glass:active { transform: translateY(0.5px); } .ds-btn-glass:focus-visible { outline: 2px solid #fafafa; outline-offset: 2px; }"
+    },
+    {
+      "name": "Card Glass",
+      "kind": "card",
+      "refersTo": "card-glass",
+      "description": "Translucent glass container. Used for hero sections and mechanism callouts over the dot-grid backdrop.",
+      "html": "<div class=\"ds-card-glass\"><h3>Intent Enters Privately</h3><p>A fund, treasury, or payment company submits a stablecoin FX intent. The order enters Omega privately without exposing who placed it.</p></div>",
+      "css": ".ds-card-glass { position: relative; isolation: isolate; padding: 24px; border-radius: 20px; background-color: #09090b; background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, transparent 34%), linear-gradient(to top, rgba(0, 0, 0, 0.06), transparent 42%), linear-gradient(0deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.04)); border: 1px solid rgba(255, 255, 255, 0.1); color: #fafafa; backdrop-filter: blur(24px) saturate(1.4); box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.14), inset 0 0 0 1px rgba(255, 255, 255, 0.03), inset 0 -8px 24px -16px rgba(0, 0, 0, 0.3); transition: backdrop-filter 150ms ease, border-color 150ms ease, box-shadow 150ms ease; } .ds-card-glass h3 { font-size: 22px; font-weight: 600; margin: 0 0 12px 0; } .ds-card-glass p { font-size: 14px; line-height: 1.5; margin: 0; color: #a1a1aa; } .ds-card-glass:hover { --glass-brightness: 1.16; backdrop-filter: blur(24px) saturate(1.4) brightness(1.16); border-color: #fafafa; box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.14), inset 0 0 0 1px rgba(255, 255, 255, 0.05), inset 0 -8px 24px -16px rgba(0, 0, 0, 0.3), 0 0 32px -12px rgba(255, 255, 255, 0.22); }"
+    },
+    {
+      "name": "Input Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Text input for form submission (email, design partner interest). Dark background, light text, focus ring.",
+      "html": "<input type=\"text\" class=\"ds-input\" placeholder=\"your@email.com\" />",
+      "css": ".ds-input { width: 100%; padding: 8px 12px; border-radius: 10px; background: #27272a; border: 1px solid #27272a; color: #fafafa; font-size: 14px; font-weight: 400; transition: border-color 150ms ease, box-shadow 150ms ease; } .ds-input::placeholder { color: #a1a1aa; } .ds-input:focus { outline: none; border-color: #fafafa; box-shadow: 0 0 0 2px #09090b, 0 0 0 4px #fafafa; }"
+    },
+    {
+      "name": "Navigation Link",
+      "kind": "custom",
+      "refersTo": "nav",
+      "description": "Top navigation link. Text-only, underline on hover, active state underlined.",
+      "html": "<a href=\"/trade\" class=\"ds-nav-link active\">Setup Account</a>",
+      "css": ".ds-nav-link { color: #fafafa; text-decoration: none; font-size: 14px; font-weight: 500; padding: 8px 0; border-bottom: 1px solid transparent; transition: border-color 150ms ease; } .ds-nav-link:hover { border-bottom-color: #fafafa; } .ds-nav-link.active { border-bottom-color: #fafafa; } .ds-nav-link:focus-visible { outline: 2px solid #fafafa; outline-offset: 4px; }"
+    },
+    {
+      "name": "Dot Grid Background",
+      "kind": "custom",
+      "refersTo": "landing-ambient",
+      "description": "Fixed ambient dot-grid. Fades in as hero scrolls away via --landing-dots CSS variable. Pure decoration; aria-hidden.",
+      "html": "<div class=\"ds-dotgrid\" aria-hidden=\"true\"></div>",
+      "css": ".ds-dotgrid { position: fixed; inset: 0; z-index: 0; pointer-events: none; background-image: radial-gradient(circle, rgba(255, 255, 255, 0.4) 1.5px, transparent 1.5px); background-size: 30px 30px; mask-image: radial-gradient(ellipse 90% 70% at 50% 50%, #000 30%, transparent 80%); opacity: calc(0.5 * var(--landing-dots, 0)); transition: opacity 120ms linear; } @media (prefers-contrast: more) { .ds-dotgrid { display: none; } }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Singularity",
+    "overview": "The Omega landing page visualizes private execution as orders entering a private realm—a singularity where intent collapses inward, shielded from external observation. The design is deliberately minimal and institutional, favoring precision over decoration. Dark backgrounds anchor the interface; frosted-glass overlays suggest hidden depths beneath translucent surfaces. Scroll-driven animations guide the narrative without overwhelming: meteors streak toward the center, the mechanism reveals its four steps, and the dot-grid fades in as the hero recedes. Every visual choice serves the core positioning: private execution is the job, and the interface reflects that through architectural clarity and motion restraint.",
+    "keyCharacteristics": [
+      "Dark-first minimalism. No wasted visual real estate. Every element earns its presence.",
+      "Glass and depth through tones. Overlays are intentionally translucent; permanent surfaces layer by background tone.",
+      "Institutional voice. Technical precision over brand personality. Copy is direct and credible.",
+      "Scroll as narrative. The mechanism reveals through scroll position, not clicks. Motion is purposeful, not decorative.",
+      "Accessibility first. Reduced-motion, high contrast, keyboard navigation non-negotiable."
+    ],
+    "rules": [
+      {
+        "name": "The Institutional Constraint Rule",
+        "body": "Color is functional, not expressive. Accents (success, destructive) appear only when the interface must communicate state. Brand warmth lives in motion and typography, not palette.",
+        "section": "colors"
+      },
+      {
+        "name": "The Terse Copy Rule",
+        "body": "Institutional tone forbids emoji, exclamation, and casual voice. Copy is direct and credible. No hype; no storytelling flourishes. The mechanism is the story.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat-By-Default Rule",
+        "body": "Surfaces are flat at rest. No drop shadows, no offsets. Depth comes from tone, opacity, and the glass material's intrinsic specular quality. Shadows appear only on glass insets and in hover states.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do keep backgrounds dark and content light. The hierarchy is tonal, not chromatic.",
+      "Do use the glass material intentionally. Every glass surface must be an overlay or hover moment.",
+      "Do maintain 4.5:1 contrast minimum text:background even over animated or translucent backgrounds.",
+      "Do respect prefers-reduced-motion. All animations must have non-motion fallbacks.",
+      "Do reserve color (success, destructive) for status only. Never use color for hierarchy.",
+      "Do use the 4/8/16/24/32px spacing scale. No arbitrary dimensions.",
+      "Do pair sans-serif body with serif italic only for display moments.",
+      "Do ensure buttons and interactive elements have clear focus rings (2px ring-offset-2)."
+    ],
+    "donts": [
+      "Don't add drop shadows to flat surfaces. Use tonal layering (background-color shifts) instead.",
+      "Don't use rounded corners >20px. No fluffy, overly-curved feel.",
+      "Don't add decorative icons or flourishes. Every visual element must serve the layout or narrative.",
+      "Don't increase the default blur on glass (24px surface, 18px pill).",
+      "Don't mix light and dark mode in a single viewport. Theme selection is page-wide.",
+      "Don't animate scroll-driven elements on mobile where jank is likely.",
+      "Don't set font weights outside the established scale (400, 500, 600).",
+      "Don't use any color besides the palette without explicit approval."
+    ]
+  }
+}

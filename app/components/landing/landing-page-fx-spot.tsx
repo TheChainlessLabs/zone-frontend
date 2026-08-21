@@ -201,13 +201,13 @@ export function LandingPageFXSpot() {
       <div className="relative z-10 flex flex-col pt-[96px] min-[1775px]:flex-row">
         {/* Hero — fixed on desktop while the cards scroll past on the right */}
         <div className="w-full lg:max-[1774px]:sticky lg:max-[1774px]:top-[96px] lg:max-[1774px]:z-20 lp-pinned-hero min-[1775px]:fixed min-[1775px]:left-0 min-[1775px]:top-[96px] min-[1775px]:h-[calc(100vh-96px)] min-[1775px]:w-[62%] min-[1775px]:overflow-y-auto min-[1775px]:overflow-x-hidden">
-          <div className="flex w-full flex-col justify-center px-6 py-12 sm:max-[1774px]:px-10 min-[1775px]:min-h-full min-[1775px]:items-end min-[1775px]:pb-[30vh] min-[1775px]:pl-4 min-[1775px]:pr-[min(24vw,calc(62vw-703px))] min-[1775px]:pt-8">
+          <div className="flex w-full flex-col items-center justify-center px-6 py-12 sm:max-[1774px]:px-10 min-[1775px]:min-h-full min-[1775px]:items-end min-[1775px]:pb-[30vh] min-[1775px]:pl-4 min-[1775px]:pr-[min(24vw,calc(62vw-703px))] min-[1775px]:pt-8">
             {/* Right-anchored block: above 1440px its right edge rides at
                 38vw; below, the block freezes at its 1440 size (see the type
                 floors) and the anchor holds at 547px from the left so the
                 middle gap absorbs the loss instead of the content shrinking.
                 Text inside stays left-aligned. */}
-            <div className="w-full max-w-4xl space-y-8 min-[1775px]:w-fit min-[1775px]:max-w-none">
+            <div className="w-fit max-w-4xl space-y-8 min-[1775px]:max-w-none">
               <div className="space-y-6">
                 <h1 className="whitespace-nowrap text-[clamp(2rem,10vw,5rem)] font-semibold leading-[1.05] tracking-[-0.02em] min-[1775px]:text-[clamp(5.75rem,5vw,7rem)]">
                   {landingHero.headline}

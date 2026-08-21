@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { LandingPage } from "@/components/landing/landing-page";
 
 export const metadata: Metadata = {
-  title: "Omega Markets — Private price discovery for stablecoin FX",
+  title: "Omega Markets",
   description:
     "Omega is a payments-focused dark book for private stablecoin FX price discovery.",
 };

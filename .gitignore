@@ -18,3 +18,5 @@ storybook-static/
 .claude/
 tasks/
 .secrets/
+.DS_Store
+**/.DS_Store

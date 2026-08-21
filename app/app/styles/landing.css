@@ -318,11 +318,6 @@
    fading out at its lower edge to keep the scene visible. */
 @media (min-width: 1024px) and (max-width: 1774.98px) {
   .lp-content .lp-pinned-hero {
-    background: linear-gradient(
-      180deg,
-      rgba(0, 0, 0, 0.95) 0%,
-      rgba(0, 0, 0, 0.93) 92%,
-      rgba(0, 0, 0, 0) 100%
-    );
+    background: rgba(0, 0, 0, 0.98);
   }
 }

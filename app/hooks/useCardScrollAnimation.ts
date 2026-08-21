@@ -27,10 +27,26 @@ export function useCardScrollAnimation(cardIndex: number, totalCards: number) {
 
     let raf = 0;
     let scheduled = false;
+    let lastMode = "";
 
     const update = () => {
       scheduled = false;
-      if (reduced.matches) return;
+
+      // Clear every inline prop when the layout mode changes (e.g. resizing
+      // from the fixed-stage band into the two-column desktop), so a mode
+      // never inherits another mode's positioning or visibility.
+      const mode = reduced.matches
+        ? "off"
+        : pinned.matches
+          ? "pinned"
+          : desktop.matches
+            ? "desktop"
+            : "off";
+      if (mode !== lastMode) {
+        reset();
+        lastMode = mode;
+      }
+      if (mode === "off") return;
 
       // Measure the untransformed slot; only the inner content animates.
       const rect = card.getBoundingClientRect();

@@ -4,12 +4,55 @@ import { useEffect, useRef } from "react";
 import gsap from "gsap";
 
 /**
- * Cards live in the same physics as the asteroids: scrolling down, a card
- * rises in from the bottom edge, rests mid-viewport, then is pulled into the
- * singularity at the page center — translating toward it while shrinking and
- * fading until absorbed. Scroll-linked (position-driven), so reversing the
- * scroll plays the absorption backwards. Each card owns only its own element;
- * desktop-only; static on mobile and under prefers-reduced-motion.
+ * Landing rail layout tunables — the single place to adjust the responsive
+ * behavior of the card rail.
+ *
+ * Bands (widths are viewport px):
+ *   >= desktopMin ......... two-column layout. No pinned hero, no stage; the
+ *                           hero is fixed left and cards scroll the right
+ *                           rail with the singularity-absorption animation.
+ *   phoneMax..desktopMin .. pinned stage. The hero sticks to the top and one
+ *                           card at a time crossfades on a fixed stage
+ *                           anchored at `stage.anchor` of the viewport, so
+ *                           the black hole stays visible in the gap.
+ *   < phoneMax ............ pinned stage, hugging. Same mechanic, but the
+ *                           card sits `stage.hugGap` under the hero because
+ *                           a phone viewport has no height to spare.
+ *
+ * KEEP IN SYNC with the utility classes in landing-page-fx-spot.tsx
+ * (min-[1400px]: / max-[1399px]: variants, pt/top-[96px], the 70vh stage
+ * slots and 85vh desktop slots) and the media queries in landing.css.
+ */
+export const LANDING_LAYOUT = {
+  desktopMin: 1400,
+  phoneMax: 640,
+  navHeight: 96,
+  stage: {
+    hugGap: 8, // hero-to-card seam below phoneMax
+    anchor: 0.66, // card top as a fraction of viewport height, phoneMax and up
+    bottomInset: 16, // breathing room under the card before the fold
+    minHeight: 120,
+    cardMaxWidth: 900,
+    fitFloor: 0.72, // hardest shrink allowed to fit a card into the stage
+    slotCenterTarget: 0.55, // where a slot's center reads as "on stage"
+    plateauFull: 1.6, // opacity ramp: o = clamp(plateauFull - |dn| * plateauSlope)
+    plateauSlope: 3.2,
+  },
+  desktop: {
+    collapseStart: 0.45, // slot center above this vh fraction: absorption
+    enterStart: 0.52, // slot center below this: arriving from the bottom
+    collapseEnd: 0.04,
+    arrivalRise: 90, // px of lift while a card arrives
+  },
+} as const;
+
+const L = LANDING_LAYOUT;
+
+/**
+ * Drives one card of the landing rail. Desktop: absorption into the
+ * singularity, scroll-linked and reversible. Below desktopMin: fixed-stage
+ * crossfade under the pinned hero (see LANDING_LAYOUT). Static under
+ * prefers-reduced-motion.
  */
 export function useCardScrollAnimation(cardIndex: number, totalCards: number) {
   const cardRef = useRef<HTMLDivElement>(null);
@@ -21,8 +64,10 @@ export function useCardScrollAnimation(cardIndex: number, totalCards: number) {
     const content = card.querySelector<HTMLElement>("[data-card-slide]");
     if (!content) return;
 
-    const desktop = window.matchMedia("(min-width: 1400px)");
-    const pinned = window.matchMedia("(max-width: 1399.98px)");
+    // One boundary shared with the CSS: min-[1400px] utilities are width
+    // >= 1400 and max-[1400px] utilities are width < 1400 (Tailwind v4 range
+    // semantics), so "pinned" is simply "not desktop".
+    const desktop = window.matchMedia(`(min-width: ${L.desktopMin}px)`);
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
 
     let raf = 0;
@@ -37,11 +82,9 @@ export function useCardScrollAnimation(cardIndex: number, totalCards: number) {
       // never inherits another mode's positioning or visibility.
       const mode = reduced.matches
         ? "off"
-        : pinned.matches
-          ? "pinned"
-          : desktop.matches
-            ? "desktop"
-            : "off";
+        : desktop.matches
+          ? "desktop"
+          : "pinned";
       if (mode !== lastMode) {
         reset();
         lastMode = mode;
@@ -51,32 +94,35 @@ export function useCardScrollAnimation(cardIndex: number, totalCards: number) {
       // Measure the untransformed slot; only the inner content animates.
       const rect = card.getBoundingClientRect();
 
-
-      // Pinned-hero band: the hero is sticky at the top, so cards simply
-      // fade and settle out as they slide up underneath it — scroll changes
-      // which card holds the top of the card area.
-      if (pinned.matches) {
+      if (mode === "pinned") {
         // Fixed-stage crossfade: the card never travels. It renders pinned in
-        // the stage below the sticky hero; its flow slot (70vh) only drives
-        // the dissolve. Adjacent slots are a full slot apart, so at most one
-        // card can ever be visible.
+        // the stage below the sticky hero; its flow slot only drives the
+        // dissolve. Adjacent slots are a full slot apart, so at most one card
+        // can ever be visible.
         const vh = window.innerHeight;
         const hero = document.querySelector(".lp-pinned-hero");
         const heroBottom = hero ? hero.getBoundingClientRect().bottom : vh * 0.5;
-        // Phones hug the hero (no room to spare); wider stage views hold
-        // the card lower so the singularity stays visible in the gap.
+        const hugTop = heroBottom + L.stage.hugGap;
         const stageTop =
-          window.innerWidth >= 640
-            ? Math.max(heroBottom + 8, vh * 0.66)
-            : heroBottom + 8;
-        const stageH = Math.max(120, vh - stageTop - 16);
+          window.innerWidth >= L.phoneMax
+            ? Math.max(hugTop, vh * L.stage.anchor)
+            : hugTop;
+        const stageH = Math.max(
+          L.stage.minHeight,
+          vh - stageTop - L.stage.bottomInset
+        );
 
-        const dn = (rect.top + rect.height / 2 - vh * 0.55) / rect.height;
-        const o = Math.min(1, Math.max(0, 1.6 - Math.abs(dn) * 3.2));
+        const dn =
+          (rect.top + rect.height / 2 - vh * L.stage.slotCenterTarget) /
+          rect.height;
+        const o = Math.min(
+          1,
+          Math.max(0, L.stage.plateauFull - Math.abs(dn) * L.stage.plateauSlope)
+        );
 
-        const cardW = Math.min(900, rect.width);
+        const cardW = Math.min(L.stage.cardMaxWidth, rect.width);
         const contentH = content.offsetHeight || 1;
-        const fit = Math.max(0.72, Math.min(1, stageH / contentH));
+        const fit = Math.max(L.stage.fitFloor, Math.min(1, stageH / contentH));
 
         gsap.set(content, {
           position: "fixed",
@@ -94,8 +140,6 @@ export function useCardScrollAnimation(cardIndex: number, totalCards: number) {
         return;
       }
 
-      if (!desktop.matches) return;
-
       const vh = window.innerHeight;
       const vw = window.innerWidth;
       const cx = rect.left + rect.width / 2;
@@ -103,10 +147,10 @@ export function useCardScrollAnimation(cardIndex: number, totalCards: number) {
 
       // The singularity sits at the center of the fixed scene (below the nav).
       const holeX = vw / 2;
-      const holeY = 96 + (vh - 96) / 2;
+      const holeY = L.navHeight + (vh - L.navHeight) / 2;
 
-      const collapseStart = vh * 0.45; // above this, the pull takes over
-      const enterStart = vh * 0.52; // below this, the card is still arriving
+      const collapseStart = vh * L.desktop.collapseStart;
+      const enterStart = vh * L.desktop.enterStart;
 
       let x = 0;
       let y = 0;
@@ -117,7 +161,10 @@ export function useCardScrollAnimation(cardIndex: number, totalCards: number) {
         // Absorption: shrink early so the card is small before its path
         // nears the hero copy, keep it mostly opaque while it visibly darts
         // toward the singularity, then extinguish right at the horizon.
-        const c = Math.min(1, (collapseStart - cy) / (collapseStart - vh * 0.04));
+        const c = Math.min(
+          1,
+          (collapseStart - cy) / (collapseStart - vh * L.desktop.collapseEnd)
+        );
         const s = c * c * (3 - 2 * c);
         const pull = Math.pow(s, 0.9);
         x = (holeX - cx) * pull;
@@ -129,7 +176,7 @@ export function useCardScrollAnimation(cardIndex: number, totalCards: number) {
       } else if (cy > enterStart) {
         // Arrival from the bottom edge.
         const t = Math.min(1, (cy - enterStart) / (vh * 0.5));
-        y = t * 90;
+        y = t * L.desktop.arrivalRise;
         scale = 1 - 0.04 * t;
         opacity = 1 - t;
       }
@@ -151,7 +198,7 @@ export function useCardScrollAnimation(cardIndex: number, totalCards: number) {
     };
 
     const onModeChange = () => {
-      if (reduced.matches || (!desktop.matches && !pinned.matches)) {
+      if (reduced.matches) {
         reset();
       } else {
         requestUpdate();
@@ -161,7 +208,6 @@ export function useCardScrollAnimation(cardIndex: number, totalCards: number) {
     window.addEventListener("scroll", requestUpdate, { passive: true });
     window.addEventListener("resize", requestUpdate);
     desktop.addEventListener("change", onModeChange);
-    pinned.addEventListener("change", onModeChange);
     reduced.addEventListener("change", onModeChange);
     onModeChange();
 
@@ -169,7 +215,6 @@ export function useCardScrollAnimation(cardIndex: number, totalCards: number) {
       window.removeEventListener("scroll", requestUpdate);
       window.removeEventListener("resize", requestUpdate);
       desktop.removeEventListener("change", onModeChange);
-      pinned.removeEventListener("change", onModeChange);
       reduced.removeEventListener("change", onModeChange);
       cancelAnimationFrame(raf);
       reset();

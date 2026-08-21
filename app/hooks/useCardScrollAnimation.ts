@@ -63,8 +63,12 @@ export function useCardScrollAnimation(cardIndex: number, totalCards: number) {
         const vh = window.innerHeight;
         const hero = document.querySelector(".lp-pinned-hero");
         const heroBottom = hero ? hero.getBoundingClientRect().bottom : vh * 0.5;
-        // Stage hugs the hero: cards start right below the title section.
-        const stageTop = heroBottom + 8;
+        // Phones hug the hero (no room to spare); wider stage views hold
+        // the card lower so the singularity stays visible in the gap.
+        const stageTop =
+          window.innerWidth >= 640
+            ? Math.max(heroBottom + 8, vh * 0.66)
+            : heroBottom + 8;
         const stageH = Math.max(120, vh - stageTop - 16);
 
         const dn = (rect.top + rect.height / 2 - vh * 0.55) / rect.height;

@@ -22,7 +22,7 @@ export function useCardScrollAnimation(cardIndex: number, totalCards: number) {
     if (!content) return;
 
     const desktop = window.matchMedia("(min-width: 1400px)");
-    const pinned = window.matchMedia("(min-width: 1024px) and (max-width: 1399.98px)");
+    const pinned = window.matchMedia("(min-width: 640px) and (max-width: 1399.98px)");
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
 
     let raf = 0;

@@ -46,11 +46,13 @@ export function useCardScrollAnimation(cardIndex: number, totalCards: number) {
         const vh = window.innerHeight;
         const hero = document.querySelector(".lp-pinned-hero");
         const heroBottom = hero ? hero.getBoundingClientRect().bottom : vh * 0.5;
-        const stageTop = heroBottom + 16;
+        // Stage sits just below the viewport middle so the singularity's
+        // center stays visible above the card.
+        const stageTop = Math.max(heroBottom + 12, vh * 0.54);
         const stageH = Math.max(120, vh - stageTop - 16);
 
         const dn = (rect.top + rect.height / 2 - vh * 0.55) / rect.height;
-        const o = Math.max(0, 1 - Math.abs(dn) * 2.2);
+        const o = Math.min(1, Math.max(0, 1.6 - Math.abs(dn) * 3.2));
 
         const cardW = Math.min(900, rect.width);
         const contentH = content.offsetHeight || 1;

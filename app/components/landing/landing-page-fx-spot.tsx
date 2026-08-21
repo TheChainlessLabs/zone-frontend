@@ -200,7 +200,7 @@ export function LandingPageFXSpot() {
 
       <div className="relative z-10 flex flex-col pt-[96px] min-[1775px]:flex-row">
         {/* Hero — fixed on desktop while the cards scroll past on the right */}
-        <div className="w-full lg:max-[1774px]:sticky lg:max-[1774px]:top-[96px] lg:max-[1774px]:z-20 lp-pinned-hero min-[1775px]:fixed min-[1775px]:left-0 min-[1775px]:top-[96px] min-[1775px]:h-[calc(100vh-96px)] min-[1775px]:w-[62%] min-[1775px]:overflow-y-auto min-[1775px]:overflow-x-hidden">
+        <div className="w-full lg:max-[1774px]:sticky lg:max-[1774px]:top-[96px] lg:max-[1774px]:z-30 lp-pinned-hero min-[1775px]:fixed min-[1775px]:left-0 min-[1775px]:top-[96px] min-[1775px]:h-[calc(100vh-96px)] min-[1775px]:w-[62%] min-[1775px]:overflow-y-auto min-[1775px]:overflow-x-hidden">
           <div className="flex w-full flex-col items-center justify-center px-6 py-12 sm:max-[1774px]:px-10 min-[1775px]:min-h-full min-[1775px]:items-end min-[1775px]:pb-[30vh] min-[1775px]:pl-4 min-[1775px]:pr-[min(24vw,calc(62vw-703px))] min-[1775px]:pt-8">
             {/* Right-anchored block: above 1440px its right edge rides at
                 38vw; below, the block freezes at its 1440 size (see the type
@@ -255,7 +255,7 @@ export function LandingPageFXSpot() {
         {/* Feature cards — scroll rail on the right */}
         <div
           ref={railRef}
-          className="w-full space-y-24 px-6 pb-[60vh] pt-[50vh] sm:max-[1774px]:px-10 min-[1775px]:ml-auto min-[1775px]:w-[calc(100%-719px)] min-[1775px]:space-y-0 min-[1775px]:pl-6 min-[1775px]:pr-16 min-[1775px]:pb-[20vh] min-[1775px]:pt-0 min-[1775px]:-mt-[6vh]"
+          className="w-full space-y-24 px-6 pb-[60vh] pt-[50vh] sm:max-[1774px]:px-10 lg:max-[1774px]:pt-0 lg:max-[1774px]:-mt-[37vh] min-[1775px]:ml-auto min-[1775px]:w-[calc(100%-719px)] min-[1775px]:space-y-0 min-[1775px]:pl-6 min-[1775px]:pr-16 min-[1775px]:pb-[20vh] min-[1775px]:pt-0 min-[1775px]:-mt-[6vh]"
         >
           {CARDS.map((card, index) => (
             <CardItem key={card.title} card={card} index={index} totalCards={CARDS.length} />

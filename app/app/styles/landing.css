@@ -313,14 +313,6 @@
   }
 }
 
-/* Pinned-hero band (1024-1774): the hero sits sticky over the scrolling
-   cards, so it needs a backdrop that masks cards traveling beneath it while
-   fading out at its lower edge to keep the scene visible. */
-@media (min-width: 1024px) and (max-width: 1774.98px) {
-  .lp-content .lp-pinned-hero {
-    background: rgba(0, 0, 0, 0.98);
-  }
-}
 
 /* Pinned-hero band: compact hero and card typography so a whole card fits
    the stage between the sticky hero and the viewport bottom. */

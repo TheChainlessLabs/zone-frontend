@@ -13,11 +13,7 @@ export function LandingNav({ solid, hideButtons = false }: { solid: boolean; hid
       className="fixed inset-x-0 top-0 z-50 flex justify-start px-4 transition-[background,border-color] duration-[var(--duration-medium)] sm:px-5 lg:pl-16"
       style={{
         borderBottom: solid ? "1px solid var(--border)" : "1px solid transparent",
-        background: solid
-          ? "color-mix(in oklab, var(--background) 80%, transparent)"
-          : "transparent",
-        backdropFilter: solid ? "blur(12px)" : "none",
-        WebkitBackdropFilter: solid ? "blur(12px)" : "none",
+        background: "#000",
       }}
     >
       <div

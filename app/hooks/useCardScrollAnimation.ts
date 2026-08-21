@@ -21,7 +21,8 @@ export function useCardScrollAnimation(cardIndex: number, totalCards: number) {
     const content = card.querySelector<HTMLElement>("[data-card-slide]");
     if (!content) return;
 
-    const desktop = window.matchMedia("(min-width: 1024px)");
+    const desktop = window.matchMedia("(min-width: 1775px)");
+    const pinned = window.matchMedia("(min-width: 1024px) and (max-width: 1774.98px)");
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
 
     let raf = 0;
@@ -29,10 +30,35 @@ export function useCardScrollAnimation(cardIndex: number, totalCards: number) {
 
     const update = () => {
       scheduled = false;
-      if (!desktop.matches || reduced.matches) return;
+      if (reduced.matches) return;
 
       // Measure the untransformed slot; only the inner content animates.
       const rect = card.getBoundingClientRect();
+
+      // Pinned-hero band: the hero is sticky at the top, so cards simply
+      // fade and settle out as they slide up underneath it — scroll changes
+      // which card holds the top of the card area.
+      if (pinned.matches) {
+        // One card owns the stage at a time. Leaving is keyed to the card's
+        // BOTTOM so tall cards can be read to the end before dissolving
+        // (they travel under the hero's gradient backdrop meanwhile).
+        // Arriving cards stay hidden below the stage until the previous one
+        // is almost out of view.
+        const oOut = Math.max(0, Math.min(1, (rect.bottom - 640) / 120));
+        const oIn = Math.max(0, Math.min(1, (900 - rect.top) / 120));
+        const o = Math.min(oOut, oIn);
+        gsap.set(content, {
+          x: 0,
+          y: 0,
+          scale: 0.94 + 0.06 * o,
+          opacity: o,
+          overwrite: "auto",
+        });
+        return;
+      }
+
+      if (!desktop.matches) return;
+
       const vh = window.innerHeight;
       const vw = window.innerWidth;
       const cx = rect.left + rect.width / 2;
@@ -42,8 +68,8 @@ export function useCardScrollAnimation(cardIndex: number, totalCards: number) {
       const holeX = vw / 2;
       const holeY = 96 + (vh - 96) / 2;
 
-      const collapseStart = vh * 0.52; // above this, the pull takes over
-      const enterStart = vh * 0.6; // below this, the card is still arriving
+      const collapseStart = vh * 0.45; // above this, the pull takes over
+      const enterStart = vh * 0.52; // below this, the card is still arriving
 
       let x = 0;
       let y = 0;
@@ -54,13 +80,15 @@ export function useCardScrollAnimation(cardIndex: number, totalCards: number) {
         // Absorption: shrink early so the card is small before its path
         // nears the hero copy, keep it mostly opaque while it visibly darts
         // toward the singularity, then extinguish right at the horizon.
-        const c = Math.min(1, (collapseStart - cy) / (collapseStart - vh * 0.06));
+        const c = Math.min(1, (collapseStart - cy) / (collapseStart - vh * 0.04));
         const s = c * c * (3 - 2 * c);
-        const pull = Math.pow(s, 1.2);
+        const pull = Math.pow(s, 0.9);
         x = (holeX - cx) * pull;
         y = (holeY - cy) * pull;
         scale = 1 - 0.9 * Math.pow(c, 0.7);
-        opacity = Math.pow(1 - c, 0.5);
+        // Quadratic hold: opacity stays high through most of the collapse and
+        // only drains away near the horizon.
+        opacity = 1 - c * c;
       } else if (cy > enterStart) {
         // Arrival from the bottom edge.
         const t = Math.min(1, (cy - enterStart) / (vh * 0.5));
@@ -83,7 +111,7 @@ export function useCardScrollAnimation(cardIndex: number, totalCards: number) {
     };
 
     const onModeChange = () => {
-      if (!desktop.matches || reduced.matches) {
+      if (reduced.matches || (!desktop.matches && !pinned.matches)) {
         reset();
       } else {
         requestUpdate();
@@ -93,6 +121,7 @@ export function useCardScrollAnimation(cardIndex: number, totalCards: number) {
     window.addEventListener("scroll", requestUpdate, { passive: true });
     window.addEventListener("resize", requestUpdate);
     desktop.addEventListener("change", onModeChange);
+    pinned.addEventListener("change", onModeChange);
     reduced.addEventListener("change", onModeChange);
     onModeChange();
 
@@ -100,6 +129,7 @@ export function useCardScrollAnimation(cardIndex: number, totalCards: number) {
       window.removeEventListener("scroll", requestUpdate);
       window.removeEventListener("resize", requestUpdate);
       desktop.removeEventListener("change", onModeChange);
+      pinned.removeEventListener("change", onModeChange);
       reduced.removeEventListener("change", onModeChange);
       cancelAnimationFrame(raf);
       reset();

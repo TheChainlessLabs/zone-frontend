@@ -312,3 +312,17 @@
     display: none;
   }
 }
+
+/* Pinned-hero band (1024-1774): the hero sits sticky over the scrolling
+   cards, so it needs a backdrop that masks cards traveling beneath it while
+   fading out at its lower edge to keep the scene visible. */
+@media (min-width: 1024px) and (max-width: 1774.98px) {
+  .lp-content .lp-pinned-hero {
+    background: linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.95) 0%,
+      rgba(0, 0, 0, 0.93) 92%,
+      rgba(0, 0, 0, 0) 100%
+    );
+  }
+}

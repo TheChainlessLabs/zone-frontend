@@ -9,29 +9,67 @@ import { BlackholeScene3D } from "@/components/landing/blackhole-scene-3d";
 
 const CARDS = [
   {
-    title: "Private Execution",
-    description: "Intent stays hidden from external market makers and bots",
+    title: "Why swap on Omega",
+    subtitle: "Execution without exposure.",
     badge: "01",
+    items: [
+      {
+        name: "No opaque pricing",
+        body: "The price forms inside the book, with no middleman cost.",
+      },
+      {
+        name: "Positions stay private, spreads tighten",
+        body: "No visible book, no mempool; trade details never shared publicly. Makers/takers quotes align with actual trade intent.",
+      },
+      {
+        name: "Fill or Kill quotes",
+        body: "The rate signed by the user can only be improved on. Both legs clear together, instantly — no credit required to operate the market.",
+      },
+      {
+        name: "Verifiable fills",
+        body: "Every fill comes with proof of fair execution. The Omega code is the arbiter of price, nothing else.",
+      },
+    ],
   },
   {
-    title: "Institutional Rates",
-    description: "Midpoint pricing without information leakage or slippage",
+    title: "Who is Omega for",
+    subtitle: "All stablecoin users",
     badge: "02",
+    items: [
+      {
+        name: "Businesses",
+        body: "Move stablecoin FX at scale without broadcasting size, timing, or position.",
+      },
+      {
+        name: "Individuals",
+        body: "Swap privately at the same rate as institutions — same book, no tiers.",
+      },
+    ],
   },
   {
-    title: "Verifiable Settlement",
-    description: "Cryptographic proof of correct settlement without compromising privacy",
+    title: "How Omega works",
+    subtitle: null,
     badge: "03",
-  },
-  {
-    title: "Zero-Knowledge Infrastructure",
-    description: "TEE-attested on-chain settlement with no pre-trade visibility",
-    badge: "04",
+    items: [
+      {
+        name: "Trade intent enters Omega Markets privately",
+        body: "A fund, treasury, payment platform, or onchain trader submits a stablecoin FX intent. The market never sees who placed it, how large it is, or where it may route.",
+      },
+      {
+        name: "The dark book matches",
+        body: "Resting liquidity, counterflow, and block-size interest execute inside Omega's private order book — never exposed to public venues, mempools, or bots.",
+      },
+      {
+        name: "Proof, then settlement",
+        body: "Every fill produces proof of correct execution — verifiable without revealing the matching path. Settlement is atomic: both legs or neither, no credit in the middle. Critically, the receipt prints the fill against reference mid — effectively setting the on-chain market price for FX.",
+      },
+    ],
   },
   {
     title: "Ready to Trade?",
-    description: "Join design partners and developers building on Omega",
+    subtitle: "Join design partners and developers building on Omega",
     badge: null,
+    items: [],
   },
 ] as const;
 
@@ -39,12 +77,10 @@ function CardItem({
   card,
   index,
   totalCards,
-  duplicate = false,
 }: {
   card: (typeof CARDS)[number];
   index: number;
   totalCards: number;
-  duplicate?: boolean;
 }) {
   const cardRef = useCardScrollAnimation(index, totalCards);
 
@@ -52,25 +88,42 @@ function CardItem({
     <div
       ref={cardRef}
       data-card-wrap
-      className={`${duplicate ? "hidden lg:flex" : "flex"} w-full items-center justify-center lg:h-[60vh]`}
+      className="flex w-full items-center justify-center min-[1775px]:h-[85vh] min-[1775px]:justify-end"
     >
       <div
         data-card-slide
-        className="glass w-full space-y-6 rounded-[20px] p-8 lg:p-10"
+        className="glass w-full max-w-[900px] min-[1775px]:min-w-[550px] space-y-6 rounded-[20px] p-8 min-[1775px]:p-10"
       >
         <div className="space-y-3">
-          <h2 className="text-3xl font-semibold tracking-[-0.01em] text-[var(--foreground)] lg:text-4xl">
+          <h2 className="text-3xl font-semibold tracking-[-0.01em] text-[var(--foreground)] min-[1775px]:text-4xl">
             {card.title}
           </h2>
-          <p className="text-base leading-relaxed text-[var(--muted-foreground)] lg:text-lg">
-            {card.description}
-          </p>
+          {card.subtitle ? (
+            <p className="text-base leading-relaxed text-[var(--muted-foreground)] min-[1775px]:text-lg">
+              {card.subtitle}
+            </p>
+          ) : null}
         </div>
-        {card.badge ? (
-          <div className="flex size-11 items-center justify-center rounded-[10px] border border-[var(--glass-edge)] font-mono text-sm text-[var(--muted-foreground)]">
-            {card.badge}
-          </div>
-        ) : (
+        {card.items.length > 0 ? (
+          <ul className="space-y-5">
+            {card.items.map((item, itemIndex) => (
+              <li key={item.name} className="flex gap-4">
+                <span className="mt-[3px] shrink-0 font-mono text-xs text-[var(--muted-foreground)]">
+                  {String(itemIndex + 1).padStart(2, "0")}
+                </span>
+                <div className="space-y-1">
+                  <p className="text-[15px] font-medium leading-snug text-[var(--foreground)] min-[1775px]:text-base">
+                    {item.name}
+                  </p>
+                  <p className="text-sm leading-relaxed text-[var(--muted-foreground)] min-[1775px]:text-[15px]">
+                    {item.body}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+        {card.badge ? null : (
           <div className="flex flex-wrap gap-3 pt-1">
             <Button asChild className="h-11 px-6">
               <a href="/trade">{landingHero.launchCta}</a>
@@ -106,21 +159,21 @@ export function LandingPageFXSpot() {
   // set's start is passed, snap back by one period. The hero pane and scene
   // are fixed, so the swap is invisible and the rail cycles endlessly.
   React.useEffect(() => {
-    const desktop = window.matchMedia("(min-width: 1024px)");
-
     const onScroll = () => {
-      if (!desktop.matches) return;
       const rail = railRef.current;
       if (!rail) return;
 
       const wraps = rail.querySelectorAll<HTMLElement>("[data-card-wrap]");
       if (wraps.length < CARDS.length * 2) return;
 
-      const period = wraps[CARDS.length].offsetTop - wraps[0].offsetTop;
+      // Absolute document positions (offsetTop would resolve against a
+      // positioned ancestor and double-count the sticky hero's height).
+      const first = wraps[0].getBoundingClientRect();
+      const second = wraps[CARDS.length].getBoundingClientRect();
+      const period = second.top - first.top;
       if (period <= 0) return;
 
-      const railTop = rail.getBoundingClientRect().top + window.scrollY;
-      const jumpAt = railTop + wraps[0].offsetTop + period;
+      const jumpAt = first.top + window.scrollY + period;
       if (window.scrollY >= jumpAt) {
         window.scrollTo(0, window.scrollY - period);
       }
@@ -140,21 +193,26 @@ export function LandingPageFXSpot() {
           (copy sits on top). */}
       <div
         aria-hidden="true"
-        className="pointer-events-none fixed inset-0 z-[1] bg-[linear-gradient(180deg,rgba(0,0,0,0.85)_0%,rgba(0,0,0,0.62)_48%,rgba(0,0,0,0.28)_72%,transparent_100%)] lg:bg-[linear-gradient(90deg,rgba(0,0,0,0.72)_0%,rgba(0,0,0,0.38)_38%,transparent_62%)]"
+        className="pointer-events-none fixed inset-0 z-[1] bg-[linear-gradient(180deg,rgba(0,0,0,0.85)_0%,rgba(0,0,0,0.62)_48%,rgba(0,0,0,0.28)_72%,transparent_100%)] min-[1775px]:bg-[linear-gradient(90deg,rgba(0,0,0,0.72)_0%,rgba(0,0,0,0.38)_38%,transparent_62%)]"
       />
 
       <LandingNav solid={navSolid} />
 
-      <div className="relative z-10 flex flex-col pt-[96px] lg:flex-row">
+      <div className="relative z-10 flex flex-col pt-[96px] min-[1775px]:flex-row">
         {/* Hero — fixed on desktop while the cards scroll past on the right */}
-        <div className="w-full lg:fixed lg:left-0 lg:top-[96px] lg:h-[calc(100vh-96px)] lg:w-[62%] lg:overflow-y-auto lg:overflow-x-hidden">
-          <div className="flex w-full flex-col justify-center px-6 py-12 sm:px-10 lg:min-h-full lg:pb-[22vh] lg:pl-20 lg:pr-10 lg:pt-8 xl:pl-28">
-            <div className="w-full max-w-4xl space-y-8">
+        <div className="w-full lg:max-[1774px]:sticky lg:max-[1774px]:top-[96px] lg:max-[1774px]:z-20 lp-pinned-hero min-[1775px]:fixed min-[1775px]:left-0 min-[1775px]:top-[96px] min-[1775px]:h-[calc(100vh-96px)] min-[1775px]:w-[62%] min-[1775px]:overflow-y-auto min-[1775px]:overflow-x-hidden">
+          <div className="flex w-full flex-col justify-center px-6 py-12 sm:max-[1774px]:px-10 min-[1775px]:min-h-full min-[1775px]:items-end min-[1775px]:pb-[30vh] min-[1775px]:pl-4 min-[1775px]:pr-[min(24vw,calc(62vw-703px))] min-[1775px]:pt-8">
+            {/* Right-anchored block: above 1440px its right edge rides at
+                38vw; below, the block freezes at its 1440 size (see the type
+                floors) and the anchor holds at 547px from the left so the
+                middle gap absorbs the loss instead of the content shrinking.
+                Text inside stays left-aligned. */}
+            <div className="w-full max-w-4xl space-y-8 min-[1775px]:w-fit min-[1775px]:max-w-none">
               <div className="space-y-6">
-                <h1 className="whitespace-nowrap text-[clamp(2rem,10vw,5rem)] font-semibold leading-[1.05] tracking-[-0.02em] lg:text-[clamp(3.5rem,6vw,6.5rem)]">
+                <h1 className="whitespace-nowrap text-[clamp(2rem,10vw,5rem)] font-semibold leading-[1.05] tracking-[-0.02em] min-[1775px]:text-[clamp(5.75rem,5vw,7rem)]">
                   {landingHero.headline}
                 </h1>
-                <p className="whitespace-nowrap text-[clamp(0.65rem,3.4vw,2.25rem)] leading-snug text-[var(--muted-foreground)] lg:text-[clamp(1.25rem,1.85vw,2.5rem)]">
+                <p className="whitespace-nowrap text-[clamp(0.65rem,3.4vw,2.25rem)] leading-snug text-[var(--muted-foreground)] min-[1775px]:text-[clamp(1.8rem,1.6vw,2.5rem)]">
                   {landingHero.supporting}
                 </p>
               </div>
@@ -163,7 +221,7 @@ export function LandingPageFXSpot() {
                 {landingHero.supportingBullets.map((bullet) => (
                   <li
                     key={bullet}
-                    className="flex items-center gap-3 whitespace-nowrap text-[clamp(0.6rem,2.7vw,1.4rem)] leading-relaxed text-[var(--muted-foreground)] lg:text-[clamp(0.95rem,1.6vw,1.75rem)]"
+                    className="flex items-center gap-3 whitespace-nowrap text-[clamp(0.6rem,2.7vw,1.4rem)] leading-relaxed text-[var(--muted-foreground)] min-[1775px]:text-[clamp(1.45rem,1.3vw,1.75rem)]"
                   >
                     <span className="inline-block size-1.5 shrink-0 rounded-full bg-[var(--foreground)]" />
                     {bullet}
@@ -171,21 +229,21 @@ export function LandingPageFXSpot() {
                 ))}
               </ul>
 
-              <div className="flex flex-col gap-4 pt-2 sm:flex-row">
-                <Button asChild className="h-12 w-full px-6 text-base sm:w-auto">
+              <div className="flex flex-col gap-4 pt-2 sm:flex-row sm:flex-wrap">
+                <Button asChild className="h-13 w-full px-7 text-[18px] sm:w-auto">
                   <a href="/trade">{landingHero.launchCta}</a>
                 </Button>
                 <Button
                   asChild
                   variant="secondary"
-                  className="h-12 w-full px-6 text-base max-lg:bg-black/45 sm:w-auto"
+                  className="h-13 w-full px-7 text-[18px] max-[1774px]:bg-black/45 sm:w-auto"
                 >
                   <a href="/research/design-partners">{landingHero.secondaryCta}</a>
                 </Button>
                 <Button
                   asChild
                   variant="secondary"
-                  className="h-12 w-full px-6 text-base max-lg:bg-black/45 sm:w-auto"
+                  className="h-13 w-full px-7 text-[18px] max-[1774px]:bg-black/45 sm:w-auto"
                 >
                   <a href="/research">{landingHero.researchCta}</a>
                 </Button>
@@ -197,7 +255,7 @@ export function LandingPageFXSpot() {
         {/* Feature cards — scroll rail on the right */}
         <div
           ref={railRef}
-          className="w-full space-y-8 px-6 pb-24 pt-20 sm:px-10 lg:ml-auto lg:w-[38%] lg:space-y-0 lg:px-12 lg:pb-[20vh] lg:pt-[14vh]"
+          className="w-full space-y-8 px-6 pb-[60vh] pt-36 sm:max-[1774px]:px-10 min-[1775px]:ml-auto min-[1775px]:w-[calc(100%-719px)] min-[1775px]:space-y-0 min-[1775px]:pl-6 min-[1775px]:pr-16 min-[1775px]:pb-[20vh] min-[1775px]:pt-0 min-[1775px]:-mt-[6vh]"
         >
           {CARDS.map((card, index) => (
             <CardItem key={card.title} card={card} index={index} totalCards={CARDS.length} />
@@ -209,7 +267,6 @@ export function LandingPageFXSpot() {
               card={card}
               index={index}
               totalCards={CARDS.length}
-              duplicate
             />
           ))}
         </div>

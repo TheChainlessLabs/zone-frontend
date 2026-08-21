@@ -22,8 +22,7 @@ export function useCardScrollAnimation(cardIndex: number, totalCards: number) {
     if (!content) return;
 
     const desktop = window.matchMedia("(min-width: 1400px)");
-    const pinned = window.matchMedia("(min-width: 640px) and (max-width: 1399.98px)");
-    const phone = window.matchMedia("(max-width: 639.98px)");
+    const pinned = window.matchMedia("(max-width: 1399.98px)");
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
 
     let raf = 0;
@@ -42,9 +41,7 @@ export function useCardScrollAnimation(cardIndex: number, totalCards: number) {
           ? "pinned"
           : desktop.matches
             ? "desktop"
-            : phone.matches
-              ? "phone"
-              : "off";
+            : "off";
       if (mode !== lastMode) {
         reset();
         lastMode = mode;
@@ -54,21 +51,6 @@ export function useCardScrollAnimation(cardIndex: number, totalCards: number) {
       // Measure the untransformed slot; only the inner content animates.
       const rect = card.getBoundingClientRect();
 
-      // Phone deck: cards flow naturally in tall slots; a center-distance
-      // dissolve keeps exactly one card visible at a time while scrolling.
-      if (mode === "phone") {
-        const vh = window.innerHeight;
-        const dn = (rect.top + rect.height / 2 - vh * 0.5) / Math.max(1, rect.height);
-        const o = Math.min(1, Math.max(0, 1.6 - Math.abs(dn) * 3.2));
-        gsap.set(content, {
-          x: 0,
-          y: 0,
-          scale: 0.96 + 0.04 * o,
-          autoAlpha: o,
-          overwrite: "auto",
-        });
-        return;
-      }
 
       // Pinned-hero band: the hero is sticky at the top, so cards simply
       // fade and settle out as they slide up underneath it — scroll changes
@@ -90,7 +72,7 @@ export function useCardScrollAnimation(cardIndex: number, totalCards: number) {
 
         const cardW = Math.min(900, rect.width);
         const contentH = content.offsetHeight || 1;
-        const fit = Math.max(0.85, Math.min(1, stageH / contentH));
+        const fit = Math.max(0.72, Math.min(1, stageH / contentH));
 
         gsap.set(content, {
           position: "fixed",
@@ -165,7 +147,7 @@ export function useCardScrollAnimation(cardIndex: number, totalCards: number) {
     };
 
     const onModeChange = () => {
-      if (reduced.matches || (!desktop.matches && !pinned.matches && !phone.matches)) {
+      if (reduced.matches || (!desktop.matches && !pinned.matches)) {
         reset();
       } else {
         requestUpdate();
@@ -176,7 +158,6 @@ export function useCardScrollAnimation(cardIndex: number, totalCards: number) {
     window.addEventListener("resize", requestUpdate);
     desktop.addEventListener("change", onModeChange);
     pinned.addEventListener("change", onModeChange);
-    phone.addEventListener("change", onModeChange);
     reduced.addEventListener("change", onModeChange);
     onModeChange();
 
@@ -185,7 +166,6 @@ export function useCardScrollAnimation(cardIndex: number, totalCards: number) {
       window.removeEventListener("resize", requestUpdate);
       desktop.removeEventListener("change", onModeChange);
       pinned.removeEventListener("change", onModeChange);
-      phone.removeEventListener("change", onModeChange);
       reduced.removeEventListener("change", onModeChange);
       cancelAnimationFrame(raf);
       reset();

@@ -316,7 +316,7 @@
 
 /* Pinned-hero band: compact hero and card typography so a whole card fits
    the stage between the sticky hero and the viewport bottom. */
-@media (min-width: 640px) and (max-width: 1399.98px) {
+@media (max-width: 1399.98px) {
   .lp-content .lp-pinned-hero > div {
     padding-top: 32px;
     padding-bottom: 36px;

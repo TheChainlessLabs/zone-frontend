@@ -88,7 +88,7 @@ function CardItem({
     <div
       ref={cardRef}
       data-card-wrap
-      className="flex w-full items-center justify-center max-[639px]:min-h-[90vh] sm:max-[1399px]:h-[70vh] min-[1400px]:h-[85vh] min-[1400px]:justify-end"
+      className="flex w-full items-center justify-center max-[1399px]:h-[70vh] min-[1400px]:h-[85vh] min-[1400px]:justify-end"
     >
       <div
         data-card-slide
@@ -200,7 +200,7 @@ export function LandingPageFXSpot() {
 
       <div className="relative z-10 flex flex-col pt-[96px] min-[1400px]:flex-row">
         {/* Hero — fixed on desktop while the cards scroll past on the right */}
-        <div className="w-full sm:max-[1399px]:sticky sm:max-[1399px]:top-[96px] sm:max-[1399px]:z-30 lp-pinned-hero min-[1400px]:fixed min-[1400px]:left-0 min-[1400px]:top-[96px] min-[1400px]:h-[calc(100vh-96px)] min-[1400px]:w-[62%] min-[1400px]:overflow-y-auto min-[1400px]:overflow-x-hidden">
+        <div className="w-full max-[1399px]:sticky max-[1399px]:top-[96px] max-[1399px]:z-30 lp-pinned-hero min-[1400px]:fixed min-[1400px]:left-0 min-[1400px]:top-[96px] min-[1400px]:h-[calc(100vh-96px)] min-[1400px]:w-[62%] min-[1400px]:overflow-y-auto min-[1400px]:overflow-x-hidden">
           <div className="flex w-full flex-col items-center justify-center px-6 py-12 sm:max-[1399px]:px-10 min-[1400px]:min-h-full min-[1400px]:items-end min-[1400px]:pb-[30vh] min-[1400px]:pl-4 min-[1400px]:pr-[min(24vw,calc(62vw-703px))] min-[1400px]:pt-8">
             {/* Right-anchored block: above 1440px its right edge rides at
                 38vw; below, the block freezes at its 1440 size (see the type
@@ -229,21 +229,21 @@ export function LandingPageFXSpot() {
                 ))}
               </ul>
 
-              <div className="flex flex-col gap-4 pt-2 sm:flex-row sm:flex-wrap">
-                <Button asChild className="h-13 w-full px-7 text-[18px] sm:w-auto">
+              <div className="flex flex-row flex-wrap gap-3 pt-2">
+                <Button asChild className="h-13 px-7 text-[18px]">
                   <a href="/trade">{landingHero.launchCta}</a>
                 </Button>
                 <Button
                   asChild
                   variant="secondary"
-                  className="h-13 w-full px-7 text-[18px] max-[1399px]:bg-black/45 sm:w-auto"
+                  className="h-13 px-7 text-[18px] max-[1399px]:bg-black/45"
                 >
                   <a href="/research/design-partners">{landingHero.secondaryCta}</a>
                 </Button>
                 <Button
                   asChild
                   variant="secondary"
-                  className="h-13 w-full px-7 text-[18px] max-[1399px]:bg-black/45 sm:w-auto"
+                  className="h-13 px-7 text-[18px] max-[1399px]:bg-black/45"
                 >
                   <a href="/research">{landingHero.researchCta}</a>
                 </Button>
@@ -255,7 +255,7 @@ export function LandingPageFXSpot() {
         {/* Feature cards — scroll rail on the right */}
         <div
           ref={railRef}
-          className="w-full space-y-24 px-6 pb-[60vh] pt-10 sm:max-[1399px]:px-10 sm:max-[1399px]:pt-0 sm:max-[1399px]:-mt-[37vh] min-[1400px]:ml-auto min-[1400px]:w-[calc(100%-719px)] min-[1400px]:space-y-0 min-[1400px]:pl-6 min-[1400px]:pr-16 min-[1400px]:pb-[20vh] min-[1400px]:pt-0 min-[1400px]:-mt-[6vh]"
+          className="w-full space-y-24 px-6 pb-[60vh] pt-10 sm:max-[1399px]:px-10 max-[1399px]:pt-0 max-[1399px]:-mt-[37vh] min-[1400px]:ml-auto min-[1400px]:w-[calc(100%-719px)] min-[1400px]:space-y-0 min-[1400px]:pl-6 min-[1400px]:pr-16 min-[1400px]:pb-[20vh] min-[1400px]:pt-0 min-[1400px]:-mt-[6vh]"
         >
           {CARDS.map((card, index) => (
             <CardItem key={card.title} card={card} index={index} totalCards={CARDS.length} />

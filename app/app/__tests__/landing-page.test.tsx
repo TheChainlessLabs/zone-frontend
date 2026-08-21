@@ -56,7 +56,7 @@ it("exposes research and account-funding actions", () => {
 });
 
 it("sets landing page metadata", () => {
-  expect(metadata.title).toBe("Omega Markets");
+  expect(metadata.title).toEqual({ absolute: "Omega Markets" });
   expect(metadata.description).toBe(
     "Omega is a payments-focused dark book for private stablecoin FX price discovery.",
   );

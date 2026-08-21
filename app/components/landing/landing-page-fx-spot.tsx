@@ -255,7 +255,7 @@ export function LandingPageFXSpot() {
         {/* Feature cards — scroll rail on the right */}
         <div
           ref={railRef}
-          className="w-full space-y-24 px-6 pb-[60vh] pt-64 sm:max-[1774px]:px-10 min-[1775px]:ml-auto min-[1775px]:w-[calc(100%-719px)] min-[1775px]:space-y-0 min-[1775px]:pl-6 min-[1775px]:pr-16 min-[1775px]:pb-[20vh] min-[1775px]:pt-0 min-[1775px]:-mt-[6vh]"
+          className="w-full space-y-24 px-6 pb-[60vh] pt-[50vh] sm:max-[1774px]:px-10 min-[1775px]:ml-auto min-[1775px]:w-[calc(100%-719px)] min-[1775px]:space-y-0 min-[1775px]:pl-6 min-[1775px]:pr-16 min-[1775px]:pb-[20vh] min-[1775px]:pt-0 min-[1775px]:-mt-[6vh]"
         >
           {CARDS.map((card, index) => (
             <CardItem key={card.title} card={card} index={index} totalCards={CARDS.length} />

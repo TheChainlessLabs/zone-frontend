@@ -11,8 +11,8 @@ export const landingHero = {
     "Omega Markets is the dark book for stablecoins",
   supportingBullets: [
     "Conversions fill privately, in anonymity",
-    "Settlement is atomic (no credit, instant processing)",
-    "Fill receipts show spread from the external market mid",
+    "Settlement is atomic - no credit for access, instant processing",
+    "Fill receipts against external market midpoint",
   ],
   primaryCta: "Fund your account",
   secondaryCta: "Design partners",

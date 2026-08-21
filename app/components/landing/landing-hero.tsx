@@ -19,8 +19,8 @@ export function LandingHero() {
       <HeroAbstractField />
 
       {/* hero body — asymmetrically pinned over the full-bleed graphic */}
-      <div className="relative z-[2] mx-auto grid w-full max-w-[1240px] flex-1 grid-cols-1 items-end gap-5 px-4 pb-5 pt-24 sm:gap-8 sm:px-8 sm:pb-10 sm:pt-32 lg:grid-cols-[minmax(0,0.92fr)_minmax(340px,0.58fr)] lg:gap-10 lg:pb-16 lg:pt-40">
-        <div className="max-w-[720px] text-left lg:pb-12">
+      <div className="relative z-[2] mx-auto grid w-full max-w-[1280px] flex-1 grid-cols-1 items-end gap-5 px-4 pb-5 pt-24 sm:gap-8 sm:px-8 sm:pb-10 sm:pt-32 lg:grid-cols-[1.2fr_minmax(340px,0.55fr)] lg:gap-10 lg:pb-16 lg:pt-40 overflow-hidden">
+        <div className="max-w-[900px] text-left lg:pb-12 overflow-visible">
           <span className="lp-fade s1 font-mono text-[11px] uppercase tracking-[0.24em] text-[color-mix(in_oklab,var(--foreground)_82%,transparent)] [text-shadow:0_1px_12px_rgba(0,0,0,0.6)]">
             {landingHero.eyebrow}
           </span>

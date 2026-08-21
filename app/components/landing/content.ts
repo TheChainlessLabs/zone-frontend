@@ -8,7 +8,7 @@ export const landingHero = {
   eyebrow: "Omega Markets",
   headline: "Private FX Swaps",
   supporting:
-    "Omega Markets is a dark book for FX stablecoin swaps and payments",
+    "Omega Markets is the dark book for stablecoins",
   supportingBullets: [
     "Conversions fill privately, in anonymity",
     "Settlement is atomic (no credit, instant processing)",

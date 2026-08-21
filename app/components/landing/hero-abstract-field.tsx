@@ -3,10 +3,7 @@
 import * as React from "react";
 
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
-
-// Real blackhole video (the app ships the .webm; the kit only had a poster).
-const HERO_VIDEO_SRC = "/landing/blackhole/omega-blackhole-hero-desktop.webm";
-const HERO_VIDEO_POSTER = "/landing/blackhole/omega-blackhole-hero-poster.png";
+import { RotatingBlackhole } from "@/components/landing/rotating-blackhole-scene";
 
 type CSSVars = React.CSSProperties & Record<`--${string}`, string | number>;
 
@@ -286,22 +283,11 @@ export function HeroAbstractField() {
       data-testid="hero-abstract-field"
       className="absolute inset-0 overflow-hidden"
     >
-      {/* blackhole graphic — the singularity. Black background drops out via
-          mix-blend-mode: screen so the glowing ring sits on the dark page. */}
+      {/* blackhole graphic — the singularity. Mix-blend-mode: screen so the glowing ring sits on the dark page. */}
       <div className="lp-blackhole pointer-events-none absolute inset-0 z-0 flex items-center justify-center overflow-hidden">
-        <video
-          key={reducedMotion ? "still" : "motion"}
-          className="omega-hero-blackhole-video max-w-none object-cover"
-          style={{ width: "min(1700px, 185%)", mixBlendMode: "screen", opacity: 0.9 }}
-          autoPlay={!reducedMotion}
-          loop={!reducedMotion}
-          muted
-          playsInline
-          preload="auto"
-          poster={HERO_VIDEO_POSTER}
-        >
-          <source src={HERO_VIDEO_SRC} type="video/webm" />
-        </video>
+        <div style={{ width: "min(1700px, 185%)", mixBlendMode: "screen", opacity: 0.9 }}>
+          <RotatingBlackhole />
+        </div>
       </div>
 
       {/* legibility gradient — fade the graphic toward the edges into pure

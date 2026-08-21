@@ -3,57 +3,106 @@
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
 
+/**
+ * Cards live in the same physics as the asteroids: scrolling down, a card
+ * rises in from the bottom edge, rests mid-viewport, then is pulled into the
+ * singularity at the page center — translating toward it while shrinking and
+ * fading until absorbed. Scroll-linked (position-driven), so reversing the
+ * scroll plays the absorption backwards. Each card owns only its own element;
+ * desktop-only; static on mobile and under prefers-reduced-motion.
+ */
 export function useCardScrollAnimation(cardIndex: number, totalCards: number) {
   const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!cardRef.current) return;
-
     const card = cardRef.current;
-    const cardContent = card.querySelector(".bg-black") as HTMLElement;
-    if (!cardContent) return;
+    if (!card) return;
 
-    const cardHeight = window.innerHeight * 0.6; // 60vh
-    const updateAnimation = () => {
-      // Get card position in viewport
+    const content = card.querySelector<HTMLElement>("[data-card-slide]");
+    if (!content) return;
+
+    const desktop = window.matchMedia("(min-width: 1024px)");
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+    let raf = 0;
+    let scheduled = false;
+
+    const update = () => {
+      scheduled = false;
+      if (!desktop.matches || reduced.matches) return;
+
+      // Measure the untransformed slot; only the inner content animates.
       const rect = card.getBoundingClientRect();
-      const cardViewportTop = rect.top;
-      const cardViewportBottom = rect.bottom;
-      const viewportHeight = window.innerHeight;
+      const vh = window.innerHeight;
+      const vw = window.innerWidth;
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
 
-      // Calculate how far through this card's view we are (0 to 1)
-      // 0 when card is below viewport, 1 when completely above
-      const progress = Math.max(0, Math.min(1, (viewportHeight - cardViewportTop) / (viewportHeight + cardHeight)));
+      // The singularity sits at the center of the fixed scene (below the nav).
+      const holeX = vw / 2;
+      const holeY = 96 + (vh - 96) / 2;
 
-      // Current card: move from top-right to center and fade out
-      gsap.to(cardContent, {
-        x: -cardContent.offsetWidth * 0.15 * progress,
-        y: -cardHeight * 0.3 * progress,
-        opacity: 1 - progress,
-        overwrite: false,
-        duration: 0.5,
-      });
+      const collapseStart = vh * 0.52; // above this, the pull takes over
+      const enterStart = vh * 0.6; // below this, the card is still arriving
 
-      // Next card: fade in from bottom
-      const nextCard = card.nextElementSibling as HTMLElement | null;
-      if (nextCard) {
-        const nextCardContent = nextCard.querySelector(".bg-black") as HTMLElement | null;
-        if (nextCardContent) {
-          gsap.to(nextCardContent, {
-            y: Math.max(0, cardHeight * (1 - progress)),
-            opacity: progress,
-            overwrite: false,
-            duration: 0.5,
-          });
-        }
+      let x = 0;
+      let y = 0;
+      let scale = 1;
+      let opacity = 1;
+
+      if (cy < collapseStart) {
+        // Absorption: shrink early so the card is small before its path
+        // nears the hero copy, keep it mostly opaque while it visibly darts
+        // toward the singularity, then extinguish right at the horizon.
+        const c = Math.min(1, (collapseStart - cy) / (collapseStart - vh * 0.06));
+        const s = c * c * (3 - 2 * c);
+        const pull = Math.pow(s, 1.2);
+        x = (holeX - cx) * pull;
+        y = (holeY - cy) * pull;
+        scale = 1 - 0.9 * Math.pow(c, 0.7);
+        opacity = Math.pow(1 - c, 0.5);
+      } else if (cy > enterStart) {
+        // Arrival from the bottom edge.
+        const t = Math.min(1, (cy - enterStart) / (vh * 0.5));
+        y = t * 90;
+        scale = 1 - 0.04 * t;
+        opacity = 1 - t;
+      }
+
+      gsap.set(content, { x, y, scale, opacity, overwrite: "auto" });
+    };
+
+    const requestUpdate = () => {
+      if (scheduled) return;
+      scheduled = true;
+      raf = requestAnimationFrame(update);
+    };
+
+    const reset = () => {
+      gsap.set(content, { clearProps: "opacity,transform" });
+    };
+
+    const onModeChange = () => {
+      if (!desktop.matches || reduced.matches) {
+        reset();
+      } else {
+        requestUpdate();
       }
     };
 
-    window.addEventListener("scroll", updateAnimation, { passive: true });
-    updateAnimation(); // Initial call
+    window.addEventListener("scroll", requestUpdate, { passive: true });
+    window.addEventListener("resize", requestUpdate);
+    desktop.addEventListener("change", onModeChange);
+    reduced.addEventListener("change", onModeChange);
+    onModeChange();
 
     return () => {
-      window.removeEventListener("scroll", updateAnimation);
+      window.removeEventListener("scroll", requestUpdate);
+      window.removeEventListener("resize", requestUpdate);
+      desktop.removeEventListener("change", onModeChange);
+      reduced.removeEventListener("change", onModeChange);
+      cancelAnimationFrame(raf);
+      reset();
     };
   }, [cardIndex, totalCards]);
 

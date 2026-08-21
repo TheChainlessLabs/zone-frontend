@@ -31,25 +31,55 @@ const CARDS = [
   {
     title: "Ready to Trade?",
     description: "Join design partners and developers building on Omega",
-    badge: "✓",
+    badge: null,
   },
-];
+] as const;
 
-function CardItem({ card, index, totalCards }: { card: typeof CARDS[0]; index?: number; totalCards?: number }) {
-  const cardRef = useCardScrollAnimation(index ?? 0, totalCards ?? CARDS.length);
+function CardItem({
+  card,
+  index,
+  totalCards,
+  duplicate = false,
+}: {
+  card: (typeof CARDS)[number];
+  index: number;
+  totalCards: number;
+  duplicate?: boolean;
+}) {
+  const cardRef = useCardScrollAnimation(index, totalCards);
 
   return (
-    <div ref={cardRef} className="flex-shrink-0 w-full lg:h-[60vh] h-auto flex items-center justify-center min-h-fit">
-      <div className="w-full rounded-xl border-4 border-red-600 p-8 space-y-6 flex flex-col justify-center bg-black">
+    <div
+      ref={cardRef}
+      data-card-wrap
+      className={`${duplicate ? "hidden lg:flex" : "flex"} w-full items-center justify-center lg:h-[60vh]`}
+    >
+      <div
+        data-card-slide
+        className="glass w-full space-y-6 rounded-[20px] p-8 lg:p-10"
+      >
         <div className="space-y-3">
-          <h2 className="text-4xl font-semibold text-[var(--foreground)]">{card.title}</h2>
-          <p className="text-lg text-[var(--muted-foreground)]">{card.description}</p>
+          <h2 className="text-3xl font-semibold tracking-[-0.01em] text-[var(--foreground)] lg:text-4xl">
+            {card.title}
+          </h2>
+          <p className="text-base leading-relaxed text-[var(--muted-foreground)] lg:text-lg">
+            {card.description}
+          </p>
         </div>
-        <div className="flex gap-3">
-          <div className="w-16 h-16 rounded-lg bg-transparent border-2 border-red-600 flex items-center justify-center text-[var(--foreground)] text-lg font-semibold">
+        {card.badge ? (
+          <div className="flex size-11 items-center justify-center rounded-[10px] border border-[var(--glass-edge)] font-mono text-sm text-[var(--muted-foreground)]">
             {card.badge}
           </div>
-        </div>
+        ) : (
+          <div className="flex flex-wrap gap-3 pt-1">
+            <Button asChild className="h-11 px-6">
+              <a href="/trade">{landingHero.launchCta}</a>
+            </Button>
+            <Button asChild variant="secondary" className="h-11 px-6">
+              <a href="/research/design-partners">{landingHero.secondaryCta}</a>
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -57,7 +87,7 @@ function CardItem({ card, index, totalCards }: { card: typeof CARDS[0]; index?: 
 
 export function LandingPageFXSpot() {
   const [navSolid, setNavSolid] = React.useState(false);
-  const cardsContainerRef = React.useRef<HTMLDivElement>(null);
+  const railRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     const onScroll = () => {
@@ -71,69 +101,92 @@ export function LandingPageFXSpot() {
     };
   }, []);
 
+  // Continuous carousel (desktop): the card list renders twice; once the
+  // scroll position where the second set lines up exactly with the first
+  // set's start is passed, snap back by one period. The hero pane and scene
+  // are fixed, so the swap is invisible and the rail cycles endlessly.
   React.useEffect(() => {
-    const container = cardsContainerRef.current;
-    if (!container) return;
+    const desktop = window.matchMedia("(min-width: 1024px)");
 
-    const handleCarouselScroll = () => {
-      // Get card height (viewport minus navbar)
-      const cardHeight = 60 * window.innerHeight / 100; // 60vh in pixels
-      const containerTop = container.getBoundingClientRect().top;
-      const containerHeight = container.scrollHeight;
+    const onScroll = () => {
+      if (!desktop.matches) return;
+      const rail = railRef.current;
+      if (!rail) return;
 
-      // Calculate when user has scrolled through all cards
-      // Reset carousel when scrolled near the end
-      const pageScrollTop = window.scrollY;
-      const containerPageTop = container.offsetTop;
-      const scrollProgress = pageScrollTop - containerPageTop + window.innerHeight;
+      const wraps = rail.querySelectorAll<HTMLElement>("[data-card-wrap]");
+      if (wraps.length < CARDS.length * 2) return;
 
-      if (scrollProgress > containerHeight - cardHeight) {
-        container.scrollTop = 0;
+      const period = wraps[CARDS.length].offsetTop - wraps[0].offsetTop;
+      if (period <= 0) return;
+
+      const railTop = rail.getBoundingClientRect().top + window.scrollY;
+      const jumpAt = railTop + wraps[0].offsetTop + period;
+      if (window.scrollY >= jumpAt) {
+        window.scrollTo(0, window.scrollY - period);
       }
     };
 
-    window.addEventListener("scroll", handleCarouselScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleCarouselScroll);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   return (
-    <div className="bg-black text-white relative select-none">
-      {/* 3D Black hole scene background */}
+    <div className="lp-content relative select-none bg-black text-white">
+      {/* 3D black hole scene background */}
       <BlackholeScene3D />
+
+      {/* Legibility scrim — anchors the hero copy over the bright accretion
+          disk: horizontal on desktop (copy sits left), vertical on mobile
+          (copy sits on top). */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none fixed inset-0 z-[1] bg-[linear-gradient(180deg,rgba(0,0,0,0.85)_0%,rgba(0,0,0,0.62)_48%,rgba(0,0,0,0.28)_72%,transparent_100%)] lg:bg-[linear-gradient(90deg,rgba(0,0,0,0.72)_0%,rgba(0,0,0,0.38)_38%,transparent_62%)]"
+      />
 
       <LandingNav solid={navSolid} />
 
-      <div className="flex flex-col lg:flex-row pt-[72px] relative z-10">
-        {/* Left side - responsive */}
-        <div className="w-full lg:w-[50%] lg:h-[calc(100vh-72px)] lg:fixed lg:left-0 lg:top-[72px] lg:overflow-y-auto lg:pr-8" style={{ marginLeft: 'clamp(2rem, 4vw, 10rem)', marginTop: 'clamp(0rem, 2vw, 1rem)' }}>
-          <div className="w-full pl-4 sm:pl-8 lg:pl-12 lg:pl-16 pr-4 sm:pr-8 lg:pr-6 lg:pr-8 py-8 flex flex-col justify-center">
-            <div className="space-y-6 w-full max-w-full">
+      <div className="relative z-10 flex flex-col pt-[96px] lg:flex-row">
+        {/* Hero — fixed on desktop while the cards scroll past on the right */}
+        <div className="w-full lg:fixed lg:left-0 lg:top-[96px] lg:h-[calc(100vh-96px)] lg:w-[62%] lg:overflow-y-auto lg:overflow-x-hidden">
+          <div className="flex w-full flex-col justify-center px-6 py-12 sm:px-10 lg:min-h-full lg:pb-[22vh] lg:pl-20 lg:pr-10 lg:pt-8 xl:pl-28">
+            <div className="w-full max-w-4xl space-y-8">
               <div className="space-y-6">
-                <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-semibold leading-tight tracking-[-0.02em] break-words hyphens-auto max-w-full">
+                <h1 className="whitespace-nowrap text-[clamp(2rem,10vw,5rem)] font-semibold leading-[1.05] tracking-[-0.02em] lg:text-[clamp(3.5rem,6vw,6.5rem)]">
                   {landingHero.headline}
                 </h1>
-                <p className="text-2xl sm:text-3xl md:text-3xl lg:text-4xl xl:text-5xl leading-relaxed text-[var(--muted-foreground)]">
+                <p className="whitespace-nowrap text-[clamp(0.65rem,3.4vw,2.25rem)] leading-snug text-[var(--muted-foreground)] lg:text-[clamp(1.25rem,1.85vw,2.5rem)]">
                   {landingHero.supporting}
                 </p>
               </div>
 
               <ul className="space-y-4">
                 {landingHero.supportingBullets.map((bullet) => (
-                  <li key={bullet} className="flex items-start gap-3 text-lg sm:text-xl md:text-2xl lg:text-2xl xl:text-3xl leading-relaxed text-[var(--muted-foreground)]">
-                    <span className="mt-1.5 inline-block size-1.5 rounded-full bg-[var(--foreground)] flex-shrink-0" />
+                  <li
+                    key={bullet}
+                    className="flex items-center gap-3 whitespace-nowrap text-[clamp(0.6rem,2.7vw,1.4rem)] leading-relaxed text-[var(--muted-foreground)] lg:text-[clamp(0.95rem,1.6vw,1.75rem)]"
+                  >
+                    <span className="inline-block size-1.5 shrink-0 rounded-full bg-[var(--foreground)]" />
                     {bullet}
                   </li>
                 ))}
               </ul>
 
-              <div className="flex flex-col sm:flex-row gap-4 sm:gap-8 pt-4">
-                <Button asChild className="w-full sm:w-auto h-12 px-6 text-base sm:text-lg">
+              <div className="flex flex-col gap-4 pt-2 sm:flex-row">
+                <Button asChild className="h-12 w-full px-6 text-base sm:w-auto">
                   <a href="/trade">{landingHero.launchCta}</a>
                 </Button>
-                <Button asChild variant="secondary" className="w-full sm:w-auto h-12 px-6 text-base sm:text-lg">
+                <Button
+                  asChild
+                  variant="secondary"
+                  className="h-12 w-full px-6 text-base max-lg:bg-black/45 sm:w-auto"
+                >
                   <a href="/research/design-partners">{landingHero.secondaryCta}</a>
                 </Button>
-                <Button asChild variant="secondary" className="w-full sm:w-auto h-12 px-6 text-base sm:text-lg">
+                <Button
+                  asChild
+                  variant="secondary"
+                  className="h-12 w-full px-6 text-base max-lg:bg-black/45 sm:w-auto"
+                >
                   <a href="/research">{landingHero.researchCta}</a>
                 </Button>
               </div>
@@ -141,14 +194,23 @@ export function LandingPageFXSpot() {
           </div>
         </div>
 
-        {/* Right side - infinite carousel cards extending down */}
+        {/* Feature cards — scroll rail on the right */}
         <div
-          ref={cardsContainerRef}
-          className="w-full lg:w-[40%] lg:ml-auto pt-40 sm:pt-56 lg:px-12"
-          style={{ marginTop: 'calc(-35vh)' }}
+          ref={railRef}
+          className="w-full space-y-8 px-6 pb-24 pt-20 sm:px-10 lg:ml-auto lg:w-[38%] lg:space-y-0 lg:px-12 lg:pb-[20vh] lg:pt-[14vh]"
         >
           {CARDS.map((card, index) => (
-            <CardItem key={index} card={card} index={index} totalCards={CARDS.length} />
+            <CardItem key={card.title} card={card} index={index} totalCards={CARDS.length} />
+          ))}
+          {/* second set feeds the desktop loop */}
+          {CARDS.map((card, index) => (
+            <CardItem
+              key={`loop-${card.title}`}
+              card={card}
+              index={index}
+              totalCards={CARDS.length}
+              duplicate
+            />
           ))}
         </div>
       </div>

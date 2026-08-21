@@ -10,7 +10,7 @@ export function LandingNav({ solid, hideButtons = false }: { solid: boolean; hid
   return (
     <nav
       data-testid="landing-nav"
-      className="fixed inset-x-0 top-0 z-50 flex justify-center px-4 transition-[background,border-color] duration-[var(--duration-medium)] sm:px-5"
+      className="fixed inset-x-0 top-0 z-50 flex justify-start px-4 transition-[background,border-color] duration-[var(--duration-medium)] sm:px-5 lg:pl-16"
       style={{
         borderBottom: solid ? "1px solid var(--border)" : "1px solid transparent",
         background: solid
@@ -21,16 +21,16 @@ export function LandingNav({ solid, hideButtons = false }: { solid: boolean; hid
       }}
     >
       <div
-        className="flex w-full max-w-[1240px] items-center justify-between transition-[padding] duration-[var(--duration-medium)] sm:px-3 lg:px-0"
-        style={{ paddingBlock: solid ? 12 : 18 }}
+        className="flex w-full max-w-none items-center justify-between transition-[padding] duration-[var(--duration-medium)] sm:px-3"
+        style={{ paddingBlock: solid ? 16 : 26, paddingRight: "1.25rem" }}
       >
         <a
           href="/"
-          className="inline-flex items-center gap-2.5 text-[var(--foreground)] no-underline"
+          className="inline-flex items-center gap-3 text-[var(--foreground)] no-underline"
           aria-label="Omega Markets"
         >
-          <OmegaMark size={22} />
-          <span className="hidden font-wordmark text-[13px] font-semibold uppercase tracking-[0.12em] min-[480px]:inline sm:text-[15px]">
+          <OmegaMark size={28} />
+          <span className="hidden font-wordmark text-[15px] font-semibold uppercase tracking-[0.12em] min-[480px]:inline sm:text-[18px]">
             Omega Markets
           </span>
         </a>
@@ -39,18 +39,18 @@ export function LandingNav({ solid, hideButtons = false }: { solid: boolean; hid
             <Button
               asChild
               variant="secondary"
-              className="h-9 px-3 text-[12px] sm:h-10 sm:px-5 sm:text-[14px]"
+              className="h-10 px-3.5 text-[13px] sm:h-11 sm:px-6 sm:text-[16px]"
             >
               <a href="/research">{landingHero.researchCta}</a>
             </Button>
             <Button
               asChild
               variant="secondary"
-              className="h-9 px-3 text-[12px] sm:h-10 sm:px-5 sm:text-[14px]"
+              className="h-10 px-3.5 text-[13px] sm:h-11 sm:px-6 sm:text-[16px]"
             >
               <a href="/research/design-partners">{landingHero.secondaryCta}</a>
             </Button>
-            <Button asChild className="h-9 px-3 text-[12px] sm:h-10 sm:px-5 sm:text-[14px]">
+            <Button asChild className="h-10 px-3.5 text-[13px] sm:h-11 sm:px-6 sm:text-[16px]">
               <a href="/trade">{landingHero.launchCta}</a>
             </Button>
           </div>

@@ -7,6 +7,35 @@
         "rule": "design-system-font-size",
         "value": "12px",
         "createdAt": "2026-08-20T14:30:09.223Z"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "24px 18px 13px",
+        "createdAt": "2026-08-21T14:55:28.924Z"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "13px",
+        "createdAt": "2026-08-21T20:54:01.131Z",
+        "reason": "user requested larger nav logo/button type; nav uses literal px sizes by incumbent convention"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "15px",
+        "createdAt": "2026-08-21T20:54:01.215Z",
+        "reason": "user requested larger nav logo/button type; nav uses literal px sizes by incumbent convention"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "16px",
+        "createdAt": "2026-08-21T20:54:01.300Z",
+        "reason": "user requested larger nav logo/button type; nav uses literal px sizes by incumbent convention"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "18px",
+        "createdAt": "2026-08-21T20:54:01.381Z",
+        "reason": "user requested larger nav logo/button type; nav uses literal px sizes by incumbent convention"
       }
     ]
   }

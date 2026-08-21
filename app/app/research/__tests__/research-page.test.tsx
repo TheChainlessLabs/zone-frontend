@@ -13,7 +13,7 @@ it("renders exactly two research articles", () => {
   expect(within(index).getAllByRole("link")).toHaveLength(2);
   expect(
     within(index)
-      .getByRole("link", { name: /Bring us a corridor worth solving/i })
+      .getByRole("link", { name: /Connect your corridor/i })
       .getAttribute("href"),
   ).toBe("/research/design-partners");
   expect(
@@ -30,7 +30,7 @@ it("renders the expanded design partner call without changing the form", () => {
 
   expect(
     screen.getByRole("heading", {
-      name: "Bring us a corridor worth solving.",
+      name: "Connect your corridor.",
     }),
   ).toBeDefined();
   expect(
@@ -39,23 +39,23 @@ it("renders the expanded design partner call without changing the form", () => {
     ),
   ).toBeDefined();
   expect(
-    screen.getByRole("heading", { name: "Start with something real." }),
+    screen.getByRole("heading", { name: "Start with the business case." }),
   ).toBeDefined();
   expect(
     screen.getByRole("heading", { name: "Why take part?" }),
   ).toBeDefined();
   expect(
     screen.getByRole("heading", {
-      name: "We’ll compare it with what already works.",
+      name: "We’ll test our shared thesis.",
     }),
   ).toBeDefined();
   expect(
-    screen.getByRole("heading", { name: "One pair. One clear test." }),
+    screen.getByRole("heading", { name: "Summary - One pair. One clear test." }),
   ).toBeDefined();
   expect(
-    screen.getByText("Only then do we talk about integration."),
+    screen.getByText(/Integrations and corridor go-live follow/i),
   ).toBeDefined();
   expect(
-    screen.getByRole("button", { name: "Request Access" }),
+    screen.getByRole("button", { name: "Contact Omega" }),
   ).toBeDefined();
 });

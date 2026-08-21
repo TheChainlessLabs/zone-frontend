@@ -6,22 +6,22 @@ import * as THREE from "three";
 const STEPS_DESKTOP = 240;
 const STEPS_MOBILE = 150;
 
-const SCENE_SCALE = 15.5; // Master scale factor - tuned for raymarching
-
 const CONFIG = {
-  theme: "mono",
-  autoRotate: 0.04, // Matched to reference
-  exposure: 1.3, // Matched to reference
-  camera: { distance: 15.5, elevation: 0.4, azimuth: 0.8 }, // Exact reference values
-  zoomRange: [11.0, 28.0], // Matched to reference
+  autoRotate: 0.04,
+  exposure: 1.3,
+  camera: { distance: 15.5, elevation: 0.4, azimuth: 0.8 },
   maxPixelRatio: 1.5,
-  enableWheelZoom: false,
-  enableDrag: false,
-  // Asteroid parameters scaled for new scene scale
-  asteroidScale: { min: 0.4, max: 0.6 },
-  asteroidSpawnRadius: { min: 8.0, max: 11.0 },
-  asteroidSpeed: { min: 0.004, max: 0.008 },
-  asteroidZBias: -2.0,
+  // Asteroids spiral from the spawn shell down into the horizon.
+  asteroid: {
+    maxCount: 14,
+    spawnEveryMs: 800,
+    scale: { min: 0.09, max: 0.22 },
+    spawnRadius: { min: 12.0, max: 18.0 },
+    speed: { min: 1.8, max: 3.0 },
+    aimSpread: 0.9,
+    captureRadius: 1.7,
+    shrinkRadius: 4.0,
+  },
 };
 
 const PALETTES = {
@@ -34,54 +34,46 @@ const PALETTES = {
 };
 
 interface AsteroidData {
-  position: THREE.Vector3;
   velocity: THREE.Vector3;
-  scale: number;
+  baseScale: number;
+  tumble: THREE.Vector3;
   mesh: THREE.Mesh;
-  trail: THREE.Vector3[];
-  trailLine?: THREE.Line;
+  tail: THREE.Mesh;
+  tailDir: THREE.Vector3;
+  tailLen: number;
+  tailRadius: number;
 }
 
 export function BlackholeScene3D() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const sceneRef = useRef<THREE.Scene | null>(null);
-  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const cameraRef = useRef({
     az: CONFIG.camera.azimuth,
     el: CONFIG.camera.elevation,
     dist: CONFIG.camera.distance,
     tAz: CONFIG.camera.azimuth,
     tEl: CONFIG.camera.elevation,
-    tDist: CONFIG.camera.distance
+    tDist: CONFIG.camera.distance,
   });
   const uniformsRef = useRef<Record<string, THREE.Uniform> | null>(null);
   const timeRef = useRef(0);
   const asteroidsRef = useRef<AsteroidData[]>([]);
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    const container = containerRef.current;
+    if (!container) return;
 
     const isCoarse = window.matchMedia("(pointer: coarse)").matches;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const STEPS = isCoarse ? STEPS_MOBILE : STEPS_DESKTOP;
     const pal = PALETTES.mono;
 
     const vertexShader = `void main() { gl_Position = vec4(position, 1.0); }`;
 
-    const fragmentShaderTest = `
-precision highp float;
-uniform vec2 uRes;
-uniform float uTime;
-
-void main() {
-  vec2 uv = gl_FragCoord.xy / uRes;
-  gl_FragColor = vec4(uv.x, uv.y, sin(uTime) * 0.5 + 0.5, 1.0);
-}
-`;
-
     const fragmentShader = `
 precision highp float;
 
 uniform vec2  uRes;
+uniform vec2  uCenterPx;
 uniform float uTime;
 uniform vec3  uCamPos;
 uniform float uExposure;
@@ -94,18 +86,11 @@ const int   STEPS    = ${STEPS};
 const float DISK_IN  = 2.4;
 const float DISK_OUT = 9.5;
 const float ESCAPE_R = 42.0;
-const float FL       = 1.6;
 
 float hash12(vec2 p) {
   p = fract(p * vec2(123.34, 456.21));
   p += dot(p, p + 45.32);
   return fract(p.x * p.y);
-}
-
-float hash13(vec3 p3) {
-  p3 = fract(p3 * 0.1031);
-  p3 += dot(p3, p3.zyx + 31.32);
-  return fract((p3.x + p3.y) * p3.z);
 }
 
 float vnoise(vec2 p) {
@@ -165,12 +150,7 @@ vec4 diskShade(vec3 hit, vec3 rd) {
 }
 
 void main() {
-  // Center the blackhole in the middle of the screen
-  vec2 uv = (gl_FragCoord.xy - 0.5 * uRes) / uRes.y;
-
-  // Debug disabled - UV coordinates are correct
-
-  // Scale the blackhole - adjust for proper visibility
+  vec2 uv = (gl_FragCoord.xy - uCenterPx) / uRes.y;
   uv *= 3.0;
 
   vec3 ro = uCamPos;
@@ -178,7 +158,6 @@ void main() {
   vec3 rt = normalize(cross(fw, vec3(0.0, 1.0, 0.0)));
   vec3 up = cross(rt, fw);
 
-  // Focal length matched to reference implementation
   float FL = 1.6;
   vec3 rd = normalize(fw * FL + uv.x * rt + uv.y * up);
 
@@ -189,15 +168,12 @@ void main() {
   vec3 dir = rd;
   vec3 colAcc = vec3(0.0);
   float aAcc = 0.0;
-  float minR = 1000.0;
-  bool captured = false;
 
   for (int i = 0; i < STEPS; i++) {
     float r2 = dot(pos, pos);
     float r = sqrt(r2);
-    minR = min(minR, r);
 
-    if (r < 1.0) { captured = true; break; }
+    if (r < 1.0) { break; }
     if (r > ESCAPE_R && dot(pos, dir) > 0.0) { break; }
 
     float dt = clamp(r * 0.12, 0.045, 0.5);
@@ -218,9 +194,7 @@ void main() {
     pos = npos;
   }
 
-  vec3 bg = vec3(0.0);
-
-  vec3 col = colAcc + (1.0 - aAcc) * bg;
+  vec3 col = colAcc;
   col = pow(1.0 - exp(-col * uExposure), vec3(0.9));
   col *= 1.0 - 0.15 * smoothstep(0.55, 1.25, length(uv));
 
@@ -228,22 +202,24 @@ void main() {
 }
 `;
 
-    // Scene setup
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x000000);
 
-    const renderer = new THREE.WebGLRenderer({
-      antialias: false,
-      alpha: false,
-      powerPreference: "high-performance",
-    });
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    // Degrade to the plain dark background when WebGL is unavailable
+    // (old hardware, disabled contexts, jsdom).
+    let renderer: THREE.WebGLRenderer;
+    try {
+      renderer = new THREE.WebGLRenderer({
+        antialias: false,
+        alpha: false,
+        powerPreference: "high-performance",
+      });
+    } catch {
+      return;
+    }
     renderer.setClearColor(0x000000, 1);
     renderer.autoClear = true;
-    containerRef.current.appendChild(renderer.domElement);
-
-    sceneRef.current = scene;
-    rendererRef.current = renderer;
+    container.appendChild(renderer.domElement);
 
     // ===== STARFIELD =====
     const starsGeometry = new THREE.BufferGeometry();
@@ -258,14 +234,8 @@ void main() {
       starsBrightness[i] = Math.random();
     }
 
-    starsGeometry.setAttribute(
-      "position",
-      new THREE.BufferAttribute(starsPositions, 3)
-    );
-    starsGeometry.setAttribute(
-      "brightness",
-      new THREE.BufferAttribute(starsBrightness, 1)
-    );
+    starsGeometry.setAttribute("position", new THREE.BufferAttribute(starsPositions, 3));
+    starsGeometry.setAttribute("brightness", new THREE.BufferAttribute(starsBrightness, 1));
 
     const starsMaterial = new THREE.ShaderMaterial({
       uniforms: {
@@ -296,66 +266,110 @@ void main() {
     const stars = new THREE.Points(starsGeometry, starsMaterial);
     scene.add(stars);
 
-    // ===== ASTEROID GEOMETRIES =====
-    const asteroidGeometries = [
-      new THREE.IcosahedronGeometry(1, 2),
-      new THREE.TetrahedronGeometry(1),
-      new THREE.OctahedronGeometry(1),
-      new THREE.DodecahedronGeometry(0.8, 0),
-      new THREE.BoxGeometry(1.2, 0.8, 0.6),
-    ];
+    // ===== ASTEROIDS =====
+    // Lumpy rock: a squashed icosahedron with position-hashed radial
+    // displacement (shared verts hash identically, so no cracks) and flat
+    // shading for hard facets.
+    const rockGeometry = () => {
+      const g = new THREE.IcosahedronGeometry(1, 1).toNonIndexed();
+      g.scale(1, 0.7 + Math.random() * 0.5, 0.78 + Math.random() * 0.42);
+      const pos = g.attributes.position;
+      const v = new THREE.Vector3();
+      for (let i = 0; i < pos.count; i++) {
+        v.fromBufferAttribute(pos, i);
+        const seed =
+          Math.sin(v.x * 12.9898 + v.y * 78.233 + v.z * 37.719) * 43758.5453;
+        const f = 0.76 + (seed - Math.floor(seed)) * 0.52;
+        pos.setXYZ(i, v.x * f, v.y * f, v.z * f);
+      }
+      g.computeVertexNormals();
+      return g;
+    };
+    const asteroidGeometries = Array.from({ length: 6 }, rockGeometry);
 
+    // Mono rock — lit primarily by the point light at the singularity so the
+    // debris reads as catching the disk's glow.
     const asteroidMaterial = new THREE.MeshPhongMaterial({
-      color: 0xeeeeee,
-      emissive: 0xaaaaaa,
-      shininess: 120,
-      wireframe: false,
+      color: 0xb2b2b8,
+      emissive: 0x121214,
+      shininess: 24,
+      flatShading: true,
     });
 
-    // Lighting - increased for visibility
-    const light = new THREE.DirectionalLight(0xffffff, 3.0);
-    light.position.set(20, 20, 20);
-    scene.add(light);
-    scene.add(new THREE.AmbientLight(0xffffff, 2.5));
+    // Meteor streak — one shared unit cone (apex trailing) with an additive
+    // white gradient that is brightest at the rock and dies out along the
+    // tail. Scaled per-asteroid; orientation is fixed at spawn since each
+    // rock's velocity is constant.
+    const tailGeometry = new THREE.ConeGeometry(1, 1, 8, 1, true);
+    const tailMaterial = new THREE.ShaderMaterial({
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      vertexShader: `
+        varying float vAlong;
+        void main() {
+          vAlong = position.y + 0.5;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: `
+        varying float vAlong;
+        void main() {
+          float a = pow(1.0 - vAlong, 1.8) * 0.5;
+          gl_FragColor = vec4(vec3(0.92, 0.94, 1.0) * a, 1.0);
+        }
+      `,
+    });
 
-    const fillLight = new THREE.DirectionalLight(0xccddff, 2.0);
-    fillLight.position.set(-20, -15, 15);
-    scene.add(fillLight);
+    const ambient = new THREE.AmbientLight(0xffffff, 0.4);
+    scene.add(ambient);
+    const coreLight = new THREE.PointLight(0xffffff, 3.0, 0, 1.2);
+    coreLight.position.set(0, 0, 0);
+    scene.add(coreLight);
+    const keyLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    keyLight.position.set(14, 18, 12);
+    scene.add(keyLight);
 
-    const pointLight = new THREE.PointLight(0xffffff, 2.0);
-    pointLight.position.set(0, 0, 30);
-    scene.add(pointLight);
+    const A = CONFIG.asteroid;
 
-    const spawnAsteroid = () => {
-      const geometry = asteroidGeometries[Math.floor(Math.random() * asteroidGeometries.length)];
+    // `progress` (0..1) starts an asteroid partway along its flight so the
+    // scene is populated on first paint instead of building up over minutes.
+    const spawnAsteroid = (progress = 0) => {
+      if (asteroidsRef.current.length >= A.maxCount) return;
+
+      const geometry =
+        asteroidGeometries[Math.floor(Math.random() * asteroidGeometries.length)];
       const asteroid = new THREE.Mesh(geometry, asteroidMaterial);
 
-      const scale = CONFIG.asteroidScale.min + Math.random() * (CONFIG.asteroidScale.max - CONFIG.asteroidScale.min);
-      asteroid.scale.set(scale, scale, scale);
+      const baseScale = A.scale.min + Math.random() * (A.scale.max - A.scale.min);
+      asteroid.scale.setScalar(baseScale);
 
-      // Scale spawn radius based on viewport width for responsive mobile layout
-      const vw = Math.max(320, window.innerWidth);
-      const aspect = vw / (window.innerHeight - 72);
-      const spawnRadius = aspect < 0.6 ? CONFIG.asteroidSpawnRadius.min : CONFIG.asteroidSpawnRadius.max;
-
-      // Spawn asteroids in a sphere around the origin, in front of camera
+      // Spawn uniformly on a distant sphere shell so rocks fly in from the
+      // full 360° of 3D directions.
+      const r =
+        A.spawnRadius.min + Math.random() * (A.spawnRadius.max - A.spawnRadius.min);
       const theta = Math.random() * Math.PI * 2;
-      const phi = Math.random() * Math.PI;
-      const r = spawnRadius;
-
-      const x = r * Math.sin(phi) * Math.cos(theta);
-      const y = r * Math.sin(phi) * Math.sin(theta);
-      const z = r * Math.cos(phi) + CONFIG.asteroidZBias;
-
-      asteroid.position.set(x, y, z);
-
-      const speed = CONFIG.asteroidSpeed.min + Math.random() * (CONFIG.asteroidSpeed.max - CONFIG.asteroidSpeed.min);
-      const distanceToCenter = Math.sqrt(x * x + y * y + z * z);
-      const velocity = new THREE.Vector3(
-        (-x / distanceToCenter) * speed,
-        (-y / distanceToCenter) * speed,
-        (-z / distanceToCenter) * speed
+      const phi = Math.acos(2 * Math.random() - 1);
+      asteroid.position.set(
+        r * Math.sin(phi) * Math.cos(theta),
+        r * Math.cos(phi),
+        r * Math.sin(phi) * Math.sin(theta)
       );
+
+      // Aim at (or just past) the singularity so the flight line crosses the
+      // capture sphere and the rock is absorbed on intersection.
+      const target = new THREE.Vector3(
+        Math.random() - 0.5,
+        Math.random() - 0.5,
+        Math.random() - 0.5
+      ).multiplyScalar(2 * A.aimSpread);
+      const speed = A.speed.min + Math.random() * (A.speed.max - A.speed.min);
+      const velocity = target.sub(asteroid.position).normalize().multiplyScalar(speed);
+
+      if (progress > 0) {
+        const flightTime = asteroid.position.length() / speed;
+        asteroid.position.addScaledVector(velocity, flightTime * progress);
+      }
 
       asteroid.rotation.set(
         Math.random() * Math.PI,
@@ -363,57 +377,36 @@ void main() {
         Math.random() * Math.PI
       );
 
-      const trailGeometry = new THREE.BufferGeometry();
-      const trailMaterial = new THREE.ShaderMaterial({
-        transparent: true,
-        linewidth: 6,
-        vertexShader: `
-          attribute float opacity;
-          varying float vOpacity;
+      const tailDir = velocity.clone().normalize().negate();
+      const tailLen = baseScale * 4 + speed * 1.1;
+      const tailRadius = baseScale * 0.55;
 
-          void main() {
-            vOpacity = opacity;
-            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-            gl_PointSize = 2.0;
-          }
-        `,
-        fragmentShader: `
-          varying float vOpacity;
-
-          void main() {
-            gl_FragColor = vec4(0.53, 0.8, 1.0, vOpacity);
-          }
-        `,
-      });
-      const trailLine = new THREE.Line(trailGeometry, trailMaterial);
-      scene.add(trailLine);
+      const tail = new THREE.Mesh(tailGeometry, tailMaterial);
+      tail.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), tailDir);
+      tail.scale.set(tailRadius, tailLen, tailRadius);
+      tail.position.copy(asteroid.position).addScaledVector(tailDir, tailLen / 2);
 
       scene.add(asteroid);
+      scene.add(tail);
       asteroidsRef.current.push({
-        position: asteroid.position.clone(),
         velocity,
-        scale,
+        baseScale,
+        tumble: new THREE.Vector3(
+          (Math.random() - 0.5) * 1.7,
+          (Math.random() - 0.5) * 1.7,
+          (Math.random() - 0.5) * 1.7
+        ),
         mesh: asteroid,
-        trail: [asteroid.position.clone()],
-        trailLine,
+        tail,
+        tailDir,
+        tailLen,
+        tailRadius,
       });
     };
 
-    // Asteroids temporarily disabled to focus on blackhole
-    // let spawnCount = 0;
-    // const testSpawner = setInterval(() => {
-    //   try {
-    //     spawnAsteroid();
-    //     spawnCount++;
-    //     console.log(`[Asteroid ${spawnCount}] Total in scene: ${asteroidsRef.current.length}, Scene children: ${scene.children.length}`);
-    //   } catch (e) {
-    //     console.error("Spawn error:", e);
-    //   }
-    // }, 200);
-    const testSpawner = null;
-
     const uniforms = {
       uRes: new THREE.Uniform(new THREE.Vector2(1, 1)),
+      uCenterPx: new THREE.Uniform(new THREE.Vector2(0.5, 0.5)),
       uTime: new THREE.Uniform(0),
       uCamPos: new THREE.Uniform(new THREE.Vector3()),
       uExposure: new THREE.Uniform(CONFIG.exposure),
@@ -424,242 +417,213 @@ void main() {
     };
     uniformsRef.current = uniforms;
 
+    // Full-screen raymarched background. renderOrder -1 + disabled depth keeps
+    // it painting first so the asteroid meshes and stars composite on top.
     const quad = new THREE.Mesh(
-      new THREE.PlaneGeometry(20, 20),
+      new THREE.PlaneGeometry(2, 2),
       new THREE.ShaderMaterial({
         vertexShader,
         fragmentShader,
         uniforms,
         depthWrite: false,
         depthTest: false,
-        transparent: false,
       })
     );
-    quad.position.set(0, 0, 0);
+    quad.renderOrder = -1;
+    quad.frustumCulled = false;
     scene.add(quad);
 
-    // Create a perspective camera for scene objects to match raymarching view
-    const perspCamera = new THREE.PerspectiveCamera(
-      90,
-      window.innerWidth / window.innerHeight,
-      0.1,
-      1000
-    );
+    const perspCamera = new THREE.PerspectiveCamera(90, 1, 0.1, 1000);
 
-    // Handle resize
     function resize() {
       const dpr = Math.min(window.devicePixelRatio || 1, CONFIG.maxPixelRatio);
-      const w = window.innerWidth;
-      const h = window.innerHeight;
+      const w = container!.clientWidth || window.innerWidth;
+      const h = container!.clientHeight || window.innerHeight;
       renderer.setPixelRatio(dpr);
       renderer.setSize(w, h, false);
+
       if (uniformsRef.current) {
         uniformsRef.current.uRes.value.set(w * dpr, h * dpr);
+        uniformsRef.current.uCenterPx.value.set(0.5 * w * dpr, 0.5 * h * dpr);
       }
-      // Update perspective camera aspect ratio on resize (use visible height minus navbar)
-      const visibleH = h - 72 / window.devicePixelRatio;
-      perspCamera.aspect = w / visibleH;
+      perspCamera.aspect = w / h;
       perspCamera.updateProjectionMatrix();
     }
 
     window.addEventListener("resize", resize);
     resize();
 
-    // Debug camera setup
-    console.log("=== CAMERA DEBUG ===");
-    console.log("Perspective Camera FOV:", perspCamera.fov);
-    console.log("Perspective Camera Near/Far:", perspCamera.near, perspCamera.far);
-    console.log("Perspective Camera Aspect:", perspCamera.aspect);
-    console.log("SCENE_SCALE:", SCENE_SCALE);
-    console.log("Initial camera distance:", cameraRef.current.dist);
-
-    // Interactive controls
-    let dragging = false;
-    let px = 0,
-      py = 0;
-    let lastInteraction = -10;
-    let isLocked = false;
-    let rotationSpeedMultiplier = 1.0;
-    let asteroidSpeedMultiplier = 1.0;
-
-    function onDown(x: number, y: number) {
-      dragging = true;
-      px = x;
-      py = y;
-      lastInteraction = timeRef.current;
-    }
-
-    function onMove(x: number, y: number) {
-      if (!dragging) return;
-      const dx = x - px;
-      const dy = y - py;
-      px = x;
-      py = y;
-
-      const cam = cameraRef.current;
-      cam.tAz += dx * 0.005;
-      cam.tEl = Math.max(-1.25, Math.min(1.25, cam.tEl + dy * 0.004));
-      lastInteraction = timeRef.current;
-    }
-
-    function onUp() {
-      dragging = false;
-    }
-
     const canvas = renderer.domElement;
     canvas.style.display = "block";
     canvas.style.width = "100%";
     canvas.style.height = "100%";
 
-    // Use window-level listeners without DOM checks
-    const handlePointerDown = (e: PointerEvent) => {
-      onDown(e.clientX, e.clientY);
-    };
-    const handlePointerMove = (e: PointerEvent) => {
-      onMove(e.clientX, e.clientY);
-    };
-    const handlePointerUp = (e: PointerEvent) => {
-      onUp();
-    };
-
-    window.addEventListener("pointerdown", handlePointerDown);
-    window.addEventListener("pointermove", handlePointerMove);
-    window.addEventListener("pointerup", handlePointerUp);
-    window.addEventListener("pointercancel", handlePointerUp);
-
-    // Wheel zoom disabled for landing page
-    // canvas.addEventListener("wheel", (e) => { ... });
-
-    // Keyboard controls
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.code === "Space") {
-        e.preventDefault();
-        isLocked = !isLocked;
+    let spawner: ReturnType<typeof setInterval> | null = null;
+    if (!reducedMotion) {
+      // Seed the field so debris is present from the first frame.
+      for (let i = 0; i < 8; i++) {
+        spawnAsteroid(Math.random() * 0.7);
       }
-      // Left/Right arrows to adjust rotation speed
-      if (e.code === "ArrowLeft") {
-        e.preventDefault();
-        rotationSpeedMultiplier = Math.max(0.1, rotationSpeedMultiplier - 0.1);
-      }
-      if (e.code === "ArrowRight") {
-        e.preventDefault();
-        rotationSpeedMultiplier = Math.min(3.0, rotationSpeedMultiplier + 0.1);
-      }
-      // Up/Down arrows to adjust asteroid speed
-      if (e.code === "ArrowUp") {
-        e.preventDefault();
-        asteroidSpeedMultiplier = Math.min(5.0, asteroidSpeedMultiplier + 0.1);
-      }
-      if (e.code === "ArrowDown") {
-        e.preventDefault();
-        asteroidSpeedMultiplier = Math.max(0.1, asteroidSpeedMultiplier - 0.1);
-      }
+      spawner = setInterval(() => spawnAsteroid(), A.spawnEveryMs);
+    }
+
+    // Drag anywhere to orbit the black hole (rotation only — no zoom, no
+    // pan). Window-level so it works despite the canvas being pointer-inert;
+    // plain clicks on links and buttons are unaffected.
+    let dragging = false;
+    let dragAz = 0;
+    let dragEl = 0;
+    let px = 0;
+    let py = 0;
+
+    const onPointerDown = (e: PointerEvent) => {
+      if (e.button !== 0) return;
+      dragging = true;
+      px = e.clientX;
+      py = e.clientY;
     };
-    window.addEventListener("keydown", handleKeyDown);
-
-    // Scroll effect - rotate camera based on scroll
-    const handleScroll = () => {
-      const scrollProgress = window.scrollY / Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
-      const cam = cameraRef.current;
-      cam.tAz = 0.6 + scrollProgress * 2.0; // Direct scroll-based azimuth
+    const onPointerMove = (e: PointerEvent) => {
+      if (!dragging) return;
+      dragAz += (e.clientX - px) * 0.005;
+      // Clamp so target elevation stays within the render loop's ±1.25 limit
+      // and reversing the drag responds immediately.
+      dragEl = Math.max(
+        -1.25 - CONFIG.camera.elevation,
+        Math.min(
+          1.25 - CONFIG.camera.elevation,
+          dragEl + (e.clientY - py) * 0.004
+        )
+      );
+      px = e.clientX;
+      py = e.clientY;
     };
-    window.addEventListener("scroll", handleScroll, { passive: true });
+    const onPointerUp = () => {
+      dragging = false;
+    };
 
-    // Animation loop
-    let animationId: number;
-    const clock = new THREE.Clock();
+    if (!reducedMotion) {
+      window.addEventListener("pointerdown", onPointerDown);
+      window.addEventListener("pointermove", onPointerMove);
+      window.addEventListener("pointerup", onPointerUp);
+      window.addEventListener("pointercancel", onPointerUp);
+    }
 
-    const animate = () => {
-      animationId = requestAnimationFrame(animate);
+    let animationId = 0;
+    let lastTime = performance.now();
+    let azBase = CONFIG.camera.azimuth;
 
-      const dt = Math.min(clock.getDelta(), 0.05);
+    const renderFrame = (dt: number) => {
       timeRef.current += dt;
+      const u = uniformsRef.current;
+      if (!u) return;
 
-      if (uniformsRef.current) {
-        uniformsRef.current.uTime.value = timeRef.current;
+      u.uTime.value = timeRef.current;
 
-        // Debug: log camera position every 120 frames
-        if (Math.floor(timeRef.current * 60) % 120 === 0) {
-          console.log("Shader uCamPos being updated:", uniformsRef.current.uCamPos.value);
-        }
+      const cam = cameraRef.current;
+      const EL_LIMIT = 1.25;
 
-        const cam = cameraRef.current;
-        const EL_LIMIT = 1.25;
+      azBase += CONFIG.autoRotate * dt;
+      cam.tAz = azBase + dragAz;
+      cam.tEl = CONFIG.camera.elevation + dragEl;
 
-        // Auto-rotate (unless locked with spacebar)
-        if (!isLocked) {
-          cam.tAz += CONFIG.autoRotate * dt * rotationSpeedMultiplier;
-        }
+      const k = 1.0 - Math.pow(0.0001, dt);
+      cam.az += (cam.tAz - cam.az) * k;
+      cam.el += (cam.tEl - cam.el) * k;
+      cam.dist += (cam.tDist - cam.dist) * k;
+      cam.el = Math.max(-EL_LIMIT, Math.min(EL_LIMIT, cam.el));
 
-        // Smooth camera pursuit
-        const k = 1.0 - Math.pow(0.0001, dt);
-        cam.az += (cam.tAz - cam.az) * k;
-        cam.el += (cam.tEl - cam.el) * k;
-        cam.dist += (cam.tDist - cam.dist) * k;
+      const camPos = new THREE.Vector3(
+        cam.dist * Math.cos(cam.el) * Math.cos(cam.az),
+        cam.dist * Math.sin(cam.el),
+        cam.dist * Math.cos(cam.el) * Math.sin(cam.az)
+      );
 
-        // Clamp elevation
-        cam.el = Math.max(-EL_LIMIT, Math.min(EL_LIMIT, cam.el));
+      u.uCamPos.value.copy(camPos);
+      perspCamera.position.copy(camPos);
+      perspCamera.lookAt(0, 0, 0);
+      perspCamera.updateMatrixWorld();
 
-        const camPos = new THREE.Vector3(
-          cam.dist * Math.cos(cam.el) * Math.cos(cam.az),
-          cam.dist * Math.sin(cam.el),
-          cam.dist * Math.cos(cam.el) * Math.sin(cam.az)
+      starsMaterial.uniforms.time.value = timeRef.current;
+
+      asteroidsRef.current = asteroidsRef.current.filter((asteroid) => {
+        const mesh = asteroid.mesh;
+        mesh.position.addScaledVector(asteroid.velocity, dt);
+
+        mesh.rotation.x += asteroid.tumble.x * dt;
+        mesh.rotation.y += asteroid.tumble.y * dt;
+        mesh.rotation.z += asteroid.tumble.z * dt;
+
+        const dist = mesh.position.length();
+
+        // Shrink toward the horizon, then capture.
+        const shrink = Math.max(
+          0.05,
+          THREE.MathUtils.smoothstep(dist, A.captureRadius, A.shrinkRadius)
         );
+        mesh.scale.setScalar(asteroid.baseScale * shrink);
 
-        uniformsRef.current.uCamPos.value.copy(camPos);
+        const tailLen = asteroid.tailLen * shrink;
+        asteroid.tail.scale.set(
+          asteroid.tailRadius * shrink,
+          tailLen,
+          asteroid.tailRadius * shrink
+        );
+        asteroid.tail.position
+          .copy(mesh.position)
+          .addScaledVector(asteroid.tailDir, tailLen / 2);
 
-        // Update perspective camera to match raymarching view
-        perspCamera.position.copy(camPos);
-        perspCamera.lookAt(0, 0, 0);
-        perspCamera.updateMatrixWorld();
-
-        // Debug every 60 frames
-        if (timeRef.current % 1 === 0 && Math.floor(timeRef.current) % 60 === 0) {
-          console.log("Camera pos:", camPos.length().toFixed(2), "units | Az:", cam.az.toFixed(2), "El:", cam.el.toFixed(2));
-          console.log("Active asteroids:", asteroidsRef.current.length, "| Scene children:", scene.children.length);
+        if (dist < A.captureRadius || dist > 60) {
+          scene.remove(mesh);
+          scene.remove(asteroid.tail);
+          return false;
         }
+        return true;
+      });
 
-        // Update stars
-        if (starsMaterial.uniforms.time) {
-          starsMaterial.uniforms.time.value += dt;
-        }
-
-        // Update asteroids - disabled for now to focus on blackhole
-        // asteroidsRef.current = asteroidsRef.current.filter((asteroid) => { ... });
-      }
-
-      // Single unified render with perspective camera
       renderer.render(scene, perspCamera);
     };
 
-    animate();
+    if (reducedMotion) {
+      // Static fallback: settle the shader at t=0 and paint one frame.
+      renderFrame(0);
+    } else {
+      const animate = () => {
+        animationId = requestAnimationFrame(animate);
+        const now = performance.now();
+        const dt = Math.min((now - lastTime) / 1000, 0.05);
+        lastTime = now;
+        renderFrame(dt);
+      };
+      animate();
+    }
 
     return () => {
       window.removeEventListener("resize", resize);
-      window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("pointerdown", handlePointerDown);
-      window.removeEventListener("pointermove", handlePointerMove);
-      window.removeEventListener("pointerup", handlePointerUp);
-      window.removeEventListener("pointercancel", handlePointerUp);
-      window.removeEventListener("scroll", handleScroll);
-      if (testSpawner) clearInterval(testSpawner);
+      window.removeEventListener("pointerdown", onPointerDown);
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerUp);
+      window.removeEventListener("pointercancel", onPointerUp);
+      if (spawner) clearInterval(spawner);
       cancelAnimationFrame(animationId);
 
-      // Clean up asteroids
       asteroidsRef.current.forEach((asteroid) => {
         scene.remove(asteroid.mesh);
-        if (asteroid.trailLine) scene.remove(asteroid.trailLine);
-        asteroid.mesh.geometry.dispose();
-        if (asteroid.trailLine) asteroid.trailLine.geometry.dispose();
+        scene.remove(asteroid.tail);
       });
+      asteroidsRef.current = [];
+      asteroidGeometries.forEach((g) => g.dispose());
+      asteroidMaterial.dispose();
+      tailGeometry.dispose();
+      tailMaterial.dispose();
 
-      // Clean up stars
       scene.remove(stars);
       starsGeometry.dispose();
       starsMaterial.dispose();
+      quad.geometry.dispose();
+      (quad.material as THREE.Material).dispose();
 
-      if (containerRef.current && renderer.domElement.parentNode === containerRef.current) {
-        containerRef.current.removeChild(renderer.domElement);
+      if (renderer.domElement.parentNode === container) {
+        container.removeChild(renderer.domElement);
       }
       renderer.dispose();
     };
@@ -668,17 +632,8 @@ void main() {
   return (
     <div
       ref={containerRef}
-      className="fixed z-0 overflow-hidden select-none"
-      style={{
-        top: "72px",
-        bottom: 0,
-        left: 0,
-        right: 0,
-        pointerEvents: "none",
-        paddingTop: "clamp(0px, 12vw, 100px)",
-        userSelect: "none",
-        WebkitUserSelect: "none",
-      }}
+      aria-hidden="true"
+      className="pointer-events-none fixed inset-x-0 bottom-0 top-[96px] z-0 overflow-hidden"
     />
   );
 }

@@ -88,7 +88,7 @@ function CardItem({
     <div
       ref={cardRef}
       data-card-wrap
-      className="flex w-full items-center justify-center min-[1775px]:h-[85vh] min-[1775px]:justify-end"
+      className="flex w-full items-center justify-center lg:max-[1774px]:h-[70vh] min-[1775px]:h-[85vh] min-[1775px]:justify-end"
     >
       <div
         data-card-slide

@@ -39,19 +39,34 @@ export function useCardScrollAnimation(cardIndex: number, totalCards: number) {
       // fade and settle out as they slide up underneath it — scroll changes
       // which card holds the top of the card area.
       if (pinned.matches) {
-        // One card owns the stage at a time. Leaving is keyed to the card's
-        // BOTTOM so tall cards can be read to the end before dissolving
-        // (they travel under the hero's gradient backdrop meanwhile).
-        // Arriving cards stay hidden below the stage until the previous one
-        // is almost out of view.
-        const oOut = Math.max(0, Math.min(1, (rect.bottom - 640) / 120));
-        const oIn = Math.max(0, Math.min(1, (900 - rect.top) / 120));
-        const o = Math.min(oOut, oIn);
+        // Fixed-stage crossfade: the card never travels. It renders pinned in
+        // the stage below the sticky hero; its flow slot (70vh) only drives
+        // the dissolve. Adjacent slots are a full slot apart, so at most one
+        // card can ever be visible.
+        const vh = window.innerHeight;
+        const hero = document.querySelector(".lp-pinned-hero");
+        const heroBottom = hero ? hero.getBoundingClientRect().bottom : vh * 0.5;
+        const stageTop = heroBottom + 16;
+        const stageH = Math.max(120, vh - stageTop - 16);
+
+        const dn = (rect.top + rect.height / 2 - vh * 0.55) / rect.height;
+        const o = Math.max(0, 1 - Math.abs(dn) * 2.2);
+
+        const cardW = Math.min(900, rect.width);
+        const contentH = content.offsetHeight || 1;
+        const fit = Math.max(0.85, Math.min(1, stageH / contentH));
+
         gsap.set(content, {
+          position: "fixed",
+          top: stageTop + Math.max(0, (stageH - contentH * fit) / 2),
+          left: rect.left + (rect.width - cardW) / 2,
+          width: cardW,
           x: 0,
           y: 0,
-          scale: 0.94 + 0.06 * o,
-          opacity: o,
+          scale: fit * (0.97 + 0.03 * o),
+          transformOrigin: "top center",
+          autoAlpha: o,
+          pointerEvents: o > 0.5 ? "auto" : "none",
           overwrite: "auto",
         });
         return;
@@ -107,7 +122,10 @@ export function useCardScrollAnimation(cardIndex: number, totalCards: number) {
     };
 
     const reset = () => {
-      gsap.set(content, { clearProps: "opacity,transform" });
+      gsap.set(content, {
+        clearProps:
+          "opacity,visibility,transform,position,top,left,width,pointerEvents",
+      });
     };
 
     const onModeChange = () => {

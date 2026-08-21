@@ -321,3 +321,34 @@
     background: rgba(0, 0, 0, 0.98);
   }
 }
+
+/* Pinned-hero band: compact hero and card typography so a whole card fits
+   the stage between the sticky hero and the viewport bottom. */
+@media (min-width: 1024px) and (max-width: 1774.98px) {
+  .lp-content .lp-pinned-hero > div {
+    padding-top: 32px;
+    padding-bottom: 36px;
+  }
+  .lp-content [data-card-slide] {
+    padding: 24px 28px;
+  }
+  .lp-content [data-card-slide] h2 {
+    font-size: 24px;
+  }
+  .lp-content [data-card-slide] > div > p {
+    font-size: 14px;
+  }
+  .lp-content [data-card-slide] li p:first-child {
+    font-size: 14px;
+  }
+  .lp-content [data-card-slide] li p + p {
+    font-size: 13px;
+  }
+  .lp-content [data-card-slide] ul {
+    --tw-space-y-reverse: 0;
+    margin-top: 16px;
+  }
+  .lp-content [data-card-slide] ul li + li {
+    margin-top: 14px;
+  }
+}

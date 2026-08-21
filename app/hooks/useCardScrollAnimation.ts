@@ -21,8 +21,8 @@ export function useCardScrollAnimation(cardIndex: number, totalCards: number) {
     const content = card.querySelector<HTMLElement>("[data-card-slide]");
     if (!content) return;
 
-    const desktop = window.matchMedia("(min-width: 1775px)");
-    const pinned = window.matchMedia("(min-width: 1024px) and (max-width: 1774.98px)");
+    const desktop = window.matchMedia("(min-width: 1400px)");
+    const pinned = window.matchMedia("(min-width: 1024px) and (max-width: 1399.98px)");
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
 
     let raf = 0;

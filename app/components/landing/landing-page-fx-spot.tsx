@@ -88,18 +88,18 @@ function CardItem({
     <div
       ref={cardRef}
       data-card-wrap
-      className="flex w-full items-center justify-center lg:max-[1774px]:h-[70vh] min-[1775px]:h-[85vh] min-[1775px]:justify-end"
+      className="flex w-full items-center justify-center lg:max-[1399px]:h-[70vh] min-[1400px]:h-[85vh] min-[1400px]:justify-end"
     >
       <div
         data-card-slide
-        className="glass w-full max-w-[900px] min-[1775px]:min-w-[550px] space-y-6 rounded-[20px] p-8 min-[1775px]:p-10"
+        className="glass w-full max-w-[900px] min-[1400px]:min-w-[550px] space-y-6 rounded-[20px] p-8 min-[1400px]:p-10"
       >
         <div className="space-y-3">
-          <h2 className="text-3xl font-semibold tracking-[-0.01em] text-[var(--foreground)] min-[1775px]:text-4xl">
+          <h2 className="text-3xl font-semibold tracking-[-0.01em] text-[var(--foreground)] min-[1400px]:text-4xl">
             {card.title}
           </h2>
           {card.subtitle ? (
-            <p className="text-base leading-relaxed text-[var(--muted-foreground)] min-[1775px]:text-lg">
+            <p className="text-base leading-relaxed text-[var(--muted-foreground)] min-[1400px]:text-lg">
               {card.subtitle}
             </p>
           ) : null}
@@ -112,10 +112,10 @@ function CardItem({
                   {String(itemIndex + 1).padStart(2, "0")}
                 </span>
                 <div className="space-y-1">
-                  <p className="text-[15px] font-medium leading-snug text-[var(--foreground)] min-[1775px]:text-base">
+                  <p className="text-[15px] font-medium leading-snug text-[var(--foreground)] min-[1400px]:text-base">
                     {item.name}
                   </p>
-                  <p className="text-sm leading-relaxed text-[var(--muted-foreground)] min-[1775px]:text-[15px]">
+                  <p className="text-sm leading-relaxed text-[var(--muted-foreground)] min-[1400px]:text-[15px]">
                     {item.body}
                   </p>
                 </div>
@@ -193,26 +193,26 @@ export function LandingPageFXSpot() {
           (copy sits on top). */}
       <div
         aria-hidden="true"
-        className="pointer-events-none fixed inset-0 z-[1] bg-[linear-gradient(180deg,rgba(0,0,0,0.85)_0%,rgba(0,0,0,0.62)_48%,rgba(0,0,0,0.28)_72%,transparent_100%)] min-[1775px]:bg-[linear-gradient(90deg,rgba(0,0,0,0.72)_0%,rgba(0,0,0,0.38)_38%,transparent_62%)]"
+        className="pointer-events-none fixed inset-0 z-[1] bg-[linear-gradient(180deg,rgba(0,0,0,0.85)_0%,rgba(0,0,0,0.62)_48%,rgba(0,0,0,0.28)_72%,transparent_100%)] min-[1400px]:bg-[linear-gradient(90deg,rgba(0,0,0,0.72)_0%,rgba(0,0,0,0.38)_38%,transparent_62%)]"
       />
 
       <LandingNav solid={navSolid} />
 
-      <div className="relative z-10 flex flex-col pt-[96px] min-[1775px]:flex-row">
+      <div className="relative z-10 flex flex-col pt-[96px] min-[1400px]:flex-row">
         {/* Hero — fixed on desktop while the cards scroll past on the right */}
-        <div className="w-full lg:max-[1774px]:sticky lg:max-[1774px]:top-[96px] lg:max-[1774px]:z-30 lp-pinned-hero min-[1775px]:fixed min-[1775px]:left-0 min-[1775px]:top-[96px] min-[1775px]:h-[calc(100vh-96px)] min-[1775px]:w-[62%] min-[1775px]:overflow-y-auto min-[1775px]:overflow-x-hidden">
-          <div className="flex w-full flex-col items-center justify-center px-6 py-12 sm:max-[1774px]:px-10 min-[1775px]:min-h-full min-[1775px]:items-end min-[1775px]:pb-[30vh] min-[1775px]:pl-4 min-[1775px]:pr-[min(24vw,calc(62vw-703px))] min-[1775px]:pt-8">
+        <div className="w-full lg:max-[1399px]:sticky lg:max-[1399px]:top-[96px] lg:max-[1399px]:z-30 lp-pinned-hero min-[1400px]:fixed min-[1400px]:left-0 min-[1400px]:top-[96px] min-[1400px]:h-[calc(100vh-96px)] min-[1400px]:w-[62%] min-[1400px]:overflow-y-auto min-[1400px]:overflow-x-hidden">
+          <div className="flex w-full flex-col items-center justify-center px-6 py-12 sm:max-[1399px]:px-10 min-[1400px]:min-h-full min-[1400px]:items-end min-[1400px]:pb-[30vh] min-[1400px]:pl-4 min-[1400px]:pr-[min(24vw,calc(62vw-703px))] min-[1400px]:pt-8">
             {/* Right-anchored block: above 1440px its right edge rides at
                 38vw; below, the block freezes at its 1440 size (see the type
                 floors) and the anchor holds at 547px from the left so the
                 middle gap absorbs the loss instead of the content shrinking.
                 Text inside stays left-aligned. */}
-            <div className="w-fit max-w-4xl space-y-8 min-[1775px]:max-w-none">
+            <div className="w-fit max-w-4xl space-y-8 min-[1400px]:max-w-none">
               <div className="space-y-6">
-                <h1 className="whitespace-nowrap text-[clamp(2rem,10vw,5rem)] font-semibold leading-[1.05] tracking-[-0.02em] min-[1775px]:text-[clamp(5.75rem,5vw,7rem)]">
+                <h1 className="whitespace-nowrap text-[clamp(2rem,10vw,5rem)] font-semibold leading-[1.05] tracking-[-0.02em] min-[1400px]:text-[clamp(5.75rem,5vw,7rem)]">
                   {landingHero.headline}
                 </h1>
-                <p className="whitespace-nowrap text-[clamp(0.65rem,3.4vw,2.25rem)] leading-snug text-[var(--muted-foreground)] min-[1775px]:text-[clamp(1.8rem,1.6vw,2.5rem)]">
+                <p className="whitespace-nowrap text-[clamp(0.65rem,3.4vw,2.25rem)] leading-snug text-[var(--muted-foreground)] min-[1400px]:text-[clamp(1.8rem,1.6vw,2.5rem)]">
                   {landingHero.supporting}
                 </p>
               </div>
@@ -221,7 +221,7 @@ export function LandingPageFXSpot() {
                 {landingHero.supportingBullets.map((bullet) => (
                   <li
                     key={bullet}
-                    className="flex items-center gap-3 whitespace-nowrap text-[clamp(0.6rem,2.7vw,1.4rem)] leading-relaxed text-[var(--muted-foreground)] min-[1775px]:text-[clamp(1.45rem,1.3vw,1.75rem)]"
+                    className="flex items-center gap-3 whitespace-nowrap text-[clamp(0.6rem,2.7vw,1.4rem)] leading-relaxed text-[var(--muted-foreground)] min-[1400px]:text-[clamp(1.45rem,1.3vw,1.75rem)]"
                   >
                     <span className="inline-block size-1.5 shrink-0 rounded-full bg-[var(--foreground)]" />
                     {bullet}
@@ -236,14 +236,14 @@ export function LandingPageFXSpot() {
                 <Button
                   asChild
                   variant="secondary"
-                  className="h-13 w-full px-7 text-[18px] max-[1774px]:bg-black/45 sm:w-auto"
+                  className="h-13 w-full px-7 text-[18px] max-[1399px]:bg-black/45 sm:w-auto"
                 >
                   <a href="/research/design-partners">{landingHero.secondaryCta}</a>
                 </Button>
                 <Button
                   asChild
                   variant="secondary"
-                  className="h-13 w-full px-7 text-[18px] max-[1774px]:bg-black/45 sm:w-auto"
+                  className="h-13 w-full px-7 text-[18px] max-[1399px]:bg-black/45 sm:w-auto"
                 >
                   <a href="/research">{landingHero.researchCta}</a>
                 </Button>
@@ -255,7 +255,7 @@ export function LandingPageFXSpot() {
         {/* Feature cards — scroll rail on the right */}
         <div
           ref={railRef}
-          className="w-full space-y-24 px-6 pb-[60vh] pt-[50vh] sm:max-[1774px]:px-10 lg:max-[1774px]:pt-0 lg:max-[1774px]:-mt-[37vh] min-[1775px]:ml-auto min-[1775px]:w-[calc(100%-719px)] min-[1775px]:space-y-0 min-[1775px]:pl-6 min-[1775px]:pr-16 min-[1775px]:pb-[20vh] min-[1775px]:pt-0 min-[1775px]:-mt-[6vh]"
+          className="w-full space-y-24 px-6 pb-[60vh] pt-[50vh] sm:max-[1399px]:px-10 lg:max-[1399px]:pt-0 lg:max-[1399px]:-mt-[37vh] min-[1400px]:ml-auto min-[1400px]:w-[calc(100%-719px)] min-[1400px]:space-y-0 min-[1400px]:pl-6 min-[1400px]:pr-16 min-[1400px]:pb-[20vh] min-[1400px]:pt-0 min-[1400px]:-mt-[6vh]"
         >
           {CARDS.map((card, index) => (
             <CardItem key={card.title} card={card} index={index} totalCards={CARDS.length} />

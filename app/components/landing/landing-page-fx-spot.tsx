@@ -53,17 +53,22 @@ const CARDS = [
     answer: "Intent, match, proof",
     subtitle: null,
     badge: "03",
+    // Copy from frontends/new-mechanism/content.ts: labels are the row
+    // tags; each reveal leads with the step title, then the body.
     items: [
       {
-        name: "Trade intent enters Omega Markets privately",
+        name: "Hidden Intent",
+        lead: "Trade intent enters Omega Markets privately.",
         body: "A fund, treasury, payment platform, or onchain trader submits a stablecoin FX intent. The market never sees who placed it, how large it is, or where it may route.",
       },
       {
-        name: "The dark book matches",
+        name: "Internal Execution",
+        lead: "The dark book matches.",
         body: "Resting liquidity, counterflow, and block-size interest execute inside Omega's private order book — never exposed to public venues, mempools, or bots.",
       },
       {
-        name: "Proof, then settlement",
+        name: "Atomic, Verifiable",
+        lead: "Proof, then settlement.",
         body: "Every fill produces proof of correct execution — verifiable without revealing the matching path. Settlement is atomic: both legs or neither, no credit in the middle. Critically, the receipt prints the fill against reference mid — effectively setting the on-chain market price for FX.",
       },
     ],
@@ -168,6 +173,11 @@ function CardItem({
                   >
                     <div className="overflow-hidden">
                       <p className="px-4 pb-3.5 pl-12 text-[15px] leading-relaxed text-[var(--muted-foreground)] min-[1400px]:text-base">
+                        {"lead" in item && item.lead ? (
+                          <span className="font-medium text-[var(--foreground)]">
+                            {item.lead}{" "}
+                          </span>
+                        ) : null}
                         {item.body}
                       </p>
                     </div>

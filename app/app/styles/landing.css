@@ -332,6 +332,18 @@
   }
 }
 
+/* Mechanism scene shrinks on the stage so the card fits the fold. */
+@media (width < 1400px) {
+  .lp-content [data-card-slide] .nm-scene {
+    max-width: 200px;
+  }
+}
+@media (width < 640px) {
+  .lp-content [data-card-slide] .nm-scene {
+    max-width: 130px;
+  }
+}
+
 /* Cards play second fiddle to the hero: quieter glass all around. */
 .lp-content [data-card-slide] {
   --glass-edge: rgba(255, 255, 255, 0.06);

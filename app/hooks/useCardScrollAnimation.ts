@@ -124,9 +124,16 @@ export function useCardScrollAnimation(cardIndex: number, totalCards: number) {
         const contentH = content.offsetHeight || 1;
         const fit = Math.max(L.stage.fitFloor, Math.min(1, stageH / contentH));
 
+        // A card taller than the stage lifts toward the hero (trading hole
+        // visibility for content) instead of hanging past the fold.
+        const liftedTop = Math.max(
+          hugTop,
+          Math.min(stageTop, vh - L.stage.bottomInset - contentH * fit)
+        );
+
         gsap.set(content, {
           position: "fixed",
-          top: stageTop,
+          top: liftedTop,
           left: rect.left + (rect.width - cardW) / 2,
           width: cardW,
           x: 0,

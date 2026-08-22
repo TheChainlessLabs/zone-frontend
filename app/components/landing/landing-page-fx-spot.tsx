@@ -6,6 +6,10 @@ import { LandingNav } from "@/components/landing/landing-nav";
 import { landingHero } from "@/components/landing/content";
 import { useCardScrollAnimation } from "@/hooks/useCardScrollAnimation";
 import { BlackholeScene3D } from "@/components/landing/blackhole-scene-3d";
+import { scrollStates } from "@/components/landing/new-mechanism/content";
+import { MidpointScene } from "@/components/landing/new-mechanism/midpoint-singularity-scene";
+import { easeInOut, getSceneState } from "@/components/landing/new-mechanism/scroll-progress";
+import { useReducedMotion } from "@/components/landing/new-mechanism/use-reduced-motion";
 
 const CARDS = [
   {
@@ -53,25 +57,8 @@ const CARDS = [
     answer: "Intent, match, proof",
     subtitle: null,
     badge: "03",
-    // Copy from frontends/new-mechanism/content.ts: labels are the row
-    // tags; each reveal leads with the step title, then the body.
-    items: [
-      {
-        name: "Hidden Intent",
-        lead: "Trade intent enters Omega Markets privately.",
-        body: "A fund, treasury, payment platform, or onchain trader submits a stablecoin FX intent. The market never sees who placed it, how large it is, or where it may route.",
-      },
-      {
-        name: "Internal Execution",
-        lead: "The dark book matches.",
-        body: "Resting liquidity, counterflow, and block-size interest execute inside Omega's private order book — never exposed to public venues, mempools, or bots.",
-      },
-      {
-        name: "Atomic, Verifiable",
-        lead: "Proof, then settlement.",
-        body: "Every fill produces proof of correct execution — verifiable without revealing the matching path. Settlement is atomic: both legs or neither, no credit in the middle. Critically, the receipt prints the fill against reference mid — effectively setting the on-chain market price for FX.",
-      },
-    ],
+    mechanism: true,
+    items: [],
   },
   {
     title: "Ready to Trade?",
@@ -81,6 +68,83 @@ const CARDS = [
     items: [],
   },
 ] as const;
+
+// Progress anchors inside each of the scene's three phases.
+const STEP_ANCHORS = [0.16, 0.55, 0.98] as const;
+
+function MechanismStory() {
+  const reduced = useReducedMotion();
+  const [step, setStep] = React.useState(0);
+  const [progress, setProgress] = React.useState<number>(STEP_ANCHORS[0]);
+  const progressRef = React.useRef<number>(STEP_ANCHORS[0]);
+
+  React.useEffect(() => {
+    const target = STEP_ANCHORS[step];
+    if (reduced) {
+      progressRef.current = target;
+      setProgress(target);
+      return;
+    }
+    const from = progressRef.current;
+    const start = performance.now();
+    const duration = 1200;
+    let frame = 0;
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - start) / duration);
+      const value = from + (target - from) * easeInOut(t);
+      progressRef.current = value;
+      setProgress(value);
+      if (t < 1) frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [step, reduced]);
+
+  const active = scrollStates[step];
+
+  return (
+    <div className="space-y-4">
+      <div className="nm-scene mx-auto w-full max-w-[300px]">
+        <MidpointScene state={getSceneState(progress)} />
+      </div>
+      <div className="flex gap-2">
+        {scrollStates.map((s2, i) => (
+          <div
+            key={s2.id}
+            className="h-0.5 flex-1 rounded-sm transition-colors duration-300"
+            style={{ background: i <= step ? "var(--success)" : "var(--border)" }}
+          />
+        ))}
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {scrollStates.map((s2, i) => (
+          <button
+            key={s2.id}
+            type="button"
+            aria-pressed={i === step}
+            onClick={() => setStep(i)}
+            className={`rounded-[8px] border px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.14em] transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
+              i === step
+                ? "border-[var(--success)] text-[var(--success)]"
+                : "border-[var(--glass-edge)] text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+            }`}
+          >
+            {s2.step}
+            <span className="hidden sm:inline"> · {s2.label}</span>
+          </button>
+        ))}
+      </div>
+      <div key={active.id} className="lp-fade">
+        <h3 className="text-[17px] font-semibold tracking-[-0.01em] text-[var(--foreground)]">
+          {active.title}
+        </h3>
+        <p className="mt-1.5 text-[15px] leading-relaxed min-[1400px]:min-h-[96px] text-[var(--muted-foreground)] min-[1400px]:text-base">
+          {active.body}
+        </p>
+      </div>
+    </div>
+  );
+}
 
 function CardItem({
   card,
@@ -137,6 +201,7 @@ function CardItem({
             </p>
           ) : null}
         </div>
+        {"mechanism" in card && card.mechanism ? <MechanismStory /> : null}
         {card.items.length > 0 ? (
           <ul className="space-y-2.5">
             {card.items.map((item, itemIndex) => {
@@ -173,11 +238,6 @@ function CardItem({
                   >
                     <div className="overflow-hidden">
                       <p className="px-4 pb-3.5 pl-12 text-[15px] leading-relaxed text-[var(--muted-foreground)] min-[1400px]:text-base">
-                        {"lead" in item && item.lead ? (
-                          <span className="font-medium text-[var(--foreground)]">
-                            {item.lead}{" "}
-                          </span>
-                        ) : null}
                         {item.body}
                       </p>
                     </div>

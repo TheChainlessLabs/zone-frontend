@@ -92,10 +92,10 @@ function CardItem({
     >
       <div
         data-card-slide
-        className="glass w-full max-w-[640px] min-[1400px]:min-w-[480px] space-y-5 rounded-[20px] p-6 min-[1400px]:p-8"
+        className="glass w-full max-w-[760px] min-[1400px]:min-w-[460px] space-y-5 rounded-[20px] p-6 min-[1400px]:p-8"
       >
         <div className="space-y-3">
-          <h2 className="text-2xl font-semibold tracking-[-0.01em] text-[var(--foreground)]">
+          <h2 className="text-2xl font-semibold tracking-[-0.01em] text-[var(--foreground)] min-[1400px]:text-[28px]">
             {card.title}
           </h2>
           {card.subtitle ? (
@@ -112,10 +112,10 @@ function CardItem({
                   {String(itemIndex + 1).padStart(2, "0")}
                 </span>
                 <div className="space-y-1">
-                  <p className="text-sm font-medium leading-snug text-[var(--foreground)]">
+                  <p className="text-sm font-medium leading-snug text-[var(--foreground)] min-[1400px]:text-[15px]">
                     {item.name}
                   </p>
-                  <p className="text-[13px] leading-relaxed text-[var(--muted-foreground)]">
+                  <p className="text-[13px] leading-relaxed text-[var(--muted-foreground)] min-[1400px]:text-sm">
                     {item.body}
                   </p>
                 </div>
@@ -201,7 +201,7 @@ export function LandingPageFXSpot() {
       <div className="relative z-10 flex flex-col pt-[96px] min-[1400px]:flex-row">
         {/* Hero — fixed on desktop while the cards scroll past on the right */}
         <div className="w-full max-[1400px]:sticky max-[1400px]:top-[96px] max-[1400px]:z-30 lp-pinned-hero min-[1400px]:fixed min-[1400px]:left-0 min-[1400px]:top-[96px] min-[1400px]:h-[calc(100vh-96px)] min-[1400px]:w-[62%] min-[1400px]:overflow-y-auto min-[1400px]:overflow-x-hidden">
-          <div className="flex w-full flex-col items-center justify-center px-6 py-12 sm:max-[1400px]:px-10 min-[1400px]:min-h-full min-[1400px]:items-end min-[1400px]:pb-[30vh] min-[1400px]:pl-4 min-[1400px]:pr-[min(21vw,calc(62vw-750px))] min-[1400px]:pt-8">
+          <div className="flex w-full flex-col items-center justify-center px-6 py-12 sm:max-[1400px]:px-10 min-[1400px]:min-h-full min-[1400px]:items-end min-[1400px]:pb-[30vh] min-[1400px]:pl-4 min-[1400px]:pr-[min(18vw,calc(62vw-800px))] min-[1400px]:pt-8">
             {/* Right-anchored block: above 1440px its right edge rides at
                 38vw; below, the block freezes at its 1440 size (see the type
                 floors) and the anchor holds at 547px from the left so the
@@ -209,10 +209,10 @@ export function LandingPageFXSpot() {
                 Text inside stays left-aligned. */}
             <div className="w-fit max-w-4xl space-y-8 min-[1400px]:max-w-none">
               <div className="space-y-6">
-                <h1 className="whitespace-nowrap text-[clamp(2rem,10vw,5rem)] font-semibold leading-[1.05] tracking-[-0.02em] min-[1400px]:text-[clamp(5.75rem,5vw,7rem)]">
+                <h1 className="whitespace-nowrap text-[clamp(2rem,10vw,5rem)] font-semibold leading-[1.05] tracking-[-0.02em] min-[1400px]:text-[clamp(6.25rem,5.4vw,7.5rem)]">
                   {landingHero.headline}
                 </h1>
-                <p className="whitespace-nowrap text-[clamp(0.65rem,3.4vw,2.25rem)] leading-snug text-[var(--muted-foreground)] min-[1400px]:text-[clamp(1.8rem,1.6vw,2.5rem)]">
+                <p className="whitespace-nowrap text-[clamp(0.65rem,3.4vw,2.25rem)] leading-snug text-[var(--muted-foreground)] min-[1400px]:text-[clamp(2rem,1.75vw,2.6rem)]">
                   {landingHero.supporting}
                 </p>
               </div>
@@ -221,7 +221,7 @@ export function LandingPageFXSpot() {
                 {landingHero.supportingBullets.map((bullet) => (
                   <li
                     key={bullet}
-                    className="flex items-center gap-3 whitespace-nowrap text-[clamp(0.6rem,2.7vw,1.4rem)] leading-relaxed text-[var(--muted-foreground)] min-[1400px]:text-[clamp(1.45rem,1.3vw,1.75rem)]"
+                    className="flex items-center gap-3 whitespace-nowrap text-[clamp(0.6rem,2.7vw,1.4rem)] leading-relaxed text-[var(--muted-foreground)] min-[1400px]:text-[clamp(1.6rem,1.45vw,1.9rem)]"
                   >
                     <span className="inline-block size-1.5 shrink-0 rounded-full bg-[var(--foreground)]" />
                     {bullet}
@@ -230,8 +230,12 @@ export function LandingPageFXSpot() {
               </ul>
 
               <div className="flex flex-row flex-wrap gap-3 pt-2">
-                <Button asChild className="h-13 px-7 text-[18px]">
-                  <a href="/trade">{landingHero.launchCta}</a>
+                <Button
+                  asChild
+                  variant="secondary"
+                  className="h-13 px-7 text-[18px] max-[1400px]:bg-black/45"
+                >
+                  <a href="/research">{landingHero.researchCta}</a>
                 </Button>
                 <Button
                   asChild
@@ -240,12 +244,8 @@ export function LandingPageFXSpot() {
                 >
                   <a href="/research/design-partners">{landingHero.secondaryCta}</a>
                 </Button>
-                <Button
-                  asChild
-                  variant="secondary"
-                  className="h-13 px-7 text-[18px] max-[1400px]:bg-black/45"
-                >
-                  <a href="/research">{landingHero.researchCta}</a>
+                <Button asChild className="h-13 px-7 text-[18px]">
+                  <a href="/trade">{landingHero.launchCta}</a>
                 </Button>
               </div>
             </div>
@@ -255,7 +255,7 @@ export function LandingPageFXSpot() {
         {/* Feature cards — scroll rail on the right */}
         <div
           ref={railRef}
-          className="w-full space-y-24 px-6 pb-[60vh] pt-10 sm:max-[1400px]:px-10 max-[1400px]:pt-0 max-[1400px]:-mt-[37vh] min-[1400px]:ml-auto min-[1400px]:w-[calc(100%-766px)] min-[1400px]:space-y-0 min-[1400px]:pl-6 min-[1400px]:pr-[6vw] min-[1400px]:pb-[20vh] min-[1400px]:pt-0 min-[1400px]:-mt-[6vh]"
+          className="w-full space-y-24 px-6 pb-[60vh] pt-10 sm:max-[1400px]:px-10 max-[1400px]:pt-0 max-[1400px]:-mt-[37vh] min-[1400px]:ml-auto min-[1400px]:w-[calc(100%-816px)] min-[1400px]:space-y-0 min-[1400px]:pl-6 min-[1400px]:pr-[6vw] min-[1400px]:pb-[20vh] min-[1400px]:pt-0 min-[1400px]:-mt-[6vh]"
         >
           {CARDS.map((card, index) => (
             <CardItem key={card.title} card={card} index={index} totalCards={CARDS.length} />

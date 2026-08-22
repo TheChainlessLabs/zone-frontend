@@ -32,12 +32,8 @@ export function LandingNav({ solid, hideButtons = false }: { solid: boolean; hid
         </a>
         {!hideButtons && (
           <div className="flex items-center gap-2.5 sm:gap-7">
-            <Button
-              asChild
-              variant="secondary"
-              className="h-10 px-3.5 text-[13px] sm:h-11 sm:px-6 sm:text-[16px]"
-            >
-              <a href="/research">{landingHero.researchCta}</a>
+            <Button asChild className="h-10 px-3.5 text-[13px] sm:h-11 sm:px-6 sm:text-[16px]">
+              <a href="/trade">{landingHero.launchCta}</a>
             </Button>
             <Button
               asChild
@@ -46,8 +42,12 @@ export function LandingNav({ solid, hideButtons = false }: { solid: boolean; hid
             >
               <a href="/research/design-partners">{landingHero.secondaryCta}</a>
             </Button>
-            <Button asChild className="h-10 px-3.5 text-[13px] sm:h-11 sm:px-6 sm:text-[16px]">
-              <a href="/trade">{landingHero.launchCta}</a>
+            <Button
+              asChild
+              variant="secondary"
+              className="h-10 px-3.5 text-[13px] sm:h-11 sm:px-6 sm:text-[16px]"
+            >
+              <a href="/research">{landingHero.researchCta}</a>
             </Button>
           </div>
         )}

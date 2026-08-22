@@ -344,3 +344,10 @@
     margin-top: 14px;
   }
 }
+
+/* Cards play second fiddle to the hero: quieter glass all around. */
+.lp-content [data-card-slide] {
+  --glass-edge: rgba(255, 255, 255, 0.06);
+  --glass-fill: color-mix(in oklab, var(--background) 52%, transparent);
+  --glass-highlight: rgba(255, 255, 255, 0.08);
+}

@@ -92,14 +92,14 @@ function CardItem({
     >
       <div
         data-card-slide
-        className="glass w-full max-w-[900px] min-[1400px]:min-w-[550px] space-y-6 rounded-[20px] p-8 min-[1400px]:p-10"
+        className="glass w-full max-w-[640px] min-[1400px]:min-w-[480px] space-y-5 rounded-[20px] p-6 min-[1400px]:p-8"
       >
         <div className="space-y-3">
-          <h2 className="text-3xl font-semibold tracking-[-0.01em] text-[var(--foreground)] min-[1400px]:text-4xl">
+          <h2 className="text-2xl font-semibold tracking-[-0.01em] text-[var(--foreground)]">
             {card.title}
           </h2>
           {card.subtitle ? (
-            <p className="text-base leading-relaxed text-[var(--muted-foreground)] min-[1400px]:text-lg">
+            <p className="text-sm leading-relaxed text-[var(--muted-foreground)] min-[1400px]:text-base">
               {card.subtitle}
             </p>
           ) : null}
@@ -112,10 +112,10 @@ function CardItem({
                   {String(itemIndex + 1).padStart(2, "0")}
                 </span>
                 <div className="space-y-1">
-                  <p className="text-[15px] font-medium leading-snug text-[var(--foreground)] min-[1400px]:text-base">
+                  <p className="text-sm font-medium leading-snug text-[var(--foreground)]">
                     {item.name}
                   </p>
-                  <p className="text-sm leading-relaxed text-[var(--muted-foreground)] min-[1400px]:text-[15px]">
+                  <p className="text-[13px] leading-relaxed text-[var(--muted-foreground)]">
                     {item.body}
                   </p>
                 </div>

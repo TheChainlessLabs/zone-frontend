@@ -6,7 +6,8 @@
       {
         "rule": "design-system-font-size",
         "value": "12px",
-        "createdAt": "2026-08-20T14:30:09.223Z"
+        "createdAt": "2026-08-20T14:30:09.223Z",
+        "reason": "user requested much larger card type"
       },
       {
         "rule": "design-system-font-size",
@@ -48,6 +49,30 @@
         "value": "17px",
         "createdAt": "2026-08-22T14:32:42.975Z",
         "reason": "user requested larger card type in the legibility pass; sizes tuned to the stage fit-scale"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "19px",
+        "createdAt": "2026-08-22T16:44:02.443Z",
+        "reason": "user requested much larger card type"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "21px",
+        "createdAt": "2026-08-22T16:44:02.519Z",
+        "reason": "user requested much larger card type"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "34px",
+        "createdAt": "2026-08-22T16:44:02.595Z",
+        "reason": "user requested much larger card type"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "14px",
+        "createdAt": "2026-08-22T16:44:02.745Z",
+        "reason": "user requested much larger card type"
       }
     ]
   }

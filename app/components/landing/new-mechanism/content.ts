@@ -6,10 +6,10 @@ export const scrollStates = [
   {
     id: "intent",
     step: "01",
-    label: "Hidden Intent",
+    label: "Private Trade Submitted",
     title: "Trade intent enters Omega Markets privately.",
     body:
-      "A fund, treasury, payment platform, or onchain trader submits a stablecoin FX intent. The market never sees who placed it, how large it is, or where it may route.",
+      "A fund, treasury, payment platform, or onchain trader submits a stablecoin FX trade intent. The market never sees who placed it, how large it is, or where it may route.",
   },
   {
     id: "matching",

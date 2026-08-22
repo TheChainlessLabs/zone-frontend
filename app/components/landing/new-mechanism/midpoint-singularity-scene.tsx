@@ -104,9 +104,9 @@ export function MidpointScene({ state, sceneRef }: MidpointSceneProps) {
           <stop offset="100%" stopColor="var(--foreground)" stopOpacity="0" />
         </radialGradient>
         <radialGradient id="nm-halo" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="var(--success)" stopOpacity="0" />
-          <stop offset="78%" stopColor="var(--success)" stopOpacity="0.22" />
-          <stop offset="100%" stopColor="var(--success)" stopOpacity="0" />
+          <stop offset="0%" stopColor="var(--foreground)" stopOpacity="0" />
+          <stop offset="78%" stopColor="var(--foreground)" stopOpacity="0.14" />
+          <stop offset="100%" stopColor="var(--foreground)" stopOpacity="0" />
         </radialGradient>
       </defs>
 
@@ -132,7 +132,7 @@ export function MidpointScene({ state, sceneRef }: MidpointSceneProps) {
         cy={CY}
         r={horizon}
         fill="none"
-        stroke="var(--success)"
+        stroke="var(--muted-foreground)"
         strokeWidth="1.25"
         strokeDasharray="4 6"
         opacity={clamp((p - 0.1) / 0.3, 0, 0.7)}
@@ -145,7 +145,7 @@ export function MidpointScene({ state, sceneRef }: MidpointSceneProps) {
         const x = CX + Math.cos(ang) * r;
         const y = CY + Math.sin(ang) * r;
         const fade = 1 - clamp((pull - 0.6) / 0.4, 0, 1);
-        const col = o.side === "buy" ? "var(--success)" : "var(--destructive)";
+        const col = o.side === "buy" ? "var(--foreground)" : "var(--muted-foreground)";
         return <circle key={i} cx={x} cy={y} r={o.size} fill={col} opacity={0.25 + fade * 0.55} />;
       })}
 
@@ -198,11 +198,11 @@ export function MidpointScene({ state, sceneRef }: MidpointSceneProps) {
       {/* proof capsule (late phase 2 → 3) */}
       {proof > 0 ? (
         <g opacity={proof} transform={`translate(${proofX} ${CY})`}>
-          <rect x={-18} y={-13} width="36" height="26" rx="8" fill="var(--background)" stroke="var(--success)" strokeWidth="1.5" />
+          <rect x={-18} y={-13} width="36" height="26" rx="8" fill="var(--background)" stroke="var(--foreground)" strokeWidth="1.5" />
           <path
             d="M -6 0 L -1 5 L 7 -5"
             fill="none"
-            stroke="var(--success)"
+            stroke="var(--foreground)"
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -224,8 +224,8 @@ export function MidpointScene({ state, sceneRef }: MidpointSceneProps) {
                 width="26"
                 height="26"
                 rx="5"
-                fill={filled ? "color-mix(in oklab, var(--success) 20%, transparent)" : "transparent"}
-                stroke={filled ? "var(--success)" : "var(--border)"}
+                fill={filled ? "color-mix(in oklab, var(--foreground) 14%, transparent)" : "transparent"}
+                stroke={filled ? "var(--foreground)" : "var(--border)"}
                 strokeWidth="1.25"
               />
             );

@@ -122,7 +122,7 @@ function MechanismStory() {
           <div
             key={s2.id}
             className="h-0.5 flex-1 rounded-sm transition-colors duration-300"
-            style={{ background: i <= step ? "var(--success)" : "var(--border)" }}
+            style={{ background: i <= step ? "var(--foreground)" : "var(--border)" }}
           />
         ))}
       </div>
@@ -133,9 +133,9 @@ function MechanismStory() {
             type="button"
             aria-pressed={i === step}
             onClick={() => jumpTo(i)}
-            className={`rounded-[8px] border px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.14em] transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
+            className={`rounded-[8px] border px-3 py-1.5 font-mono text-[12px] uppercase tracking-[0.14em] transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
               i === step
-                ? "border-[var(--success)] text-[var(--success)]"
+                ? "border-[var(--foreground)] text-[var(--foreground)]"
                 : "border-[var(--glass-edge)] text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
             }`}
           >
@@ -145,10 +145,10 @@ function MechanismStory() {
         ))}
       </div>
       <div key={active.id} className="lp-fade">
-        <h3 className="text-[17px] font-semibold tracking-[-0.01em] text-[var(--foreground)]">
+        <h3 className="text-[21px] font-semibold tracking-[-0.01em] text-[var(--foreground)]">
           {active.title}
         </h3>
-        <p className="mt-1.5 text-[15px] leading-relaxed min-[1400px]:min-h-[96px] text-[var(--muted-foreground)] min-[1400px]:text-base">
+        <p className="mt-1.5 text-[17px] leading-relaxed min-[1400px]:min-h-[110px] text-[var(--muted-foreground)] min-[1400px]:text-lg">
           {active.body}
         </p>
       </div>
@@ -197,17 +197,17 @@ function CardItem({
       >
         <div className="space-y-2">
           <div className="flex items-baseline justify-between gap-4">
-            <h2 className="text-[26px] font-semibold tracking-[-0.01em] text-[var(--foreground)] min-[1400px]:text-3xl">
+            <h2 className="text-3xl font-semibold tracking-[-0.01em] text-[var(--foreground)] min-[1400px]:text-[34px]">
               {card.title}
             </h2>
             {card.answer ? (
-              <span className="hidden shrink-0 text-[15px] text-[var(--muted-foreground)] sm:block min-[1400px]:text-base">
+              <span className="hidden shrink-0 text-base text-[var(--muted-foreground)] sm:block min-[1400px]:text-lg">
                 {card.answer}
               </span>
             ) : null}
           </div>
           {card.subtitle ? (
-            <p className="text-base leading-relaxed text-[var(--muted-foreground)] min-[1400px]:text-lg">
+            <p className="text-lg leading-relaxed text-[var(--muted-foreground)] min-[1400px]:text-xl">
               {card.subtitle}
             </p>
           ) : card.answer ? (
@@ -232,10 +232,10 @@ function CardItem({
                     onClick={() => toggle(itemIndex)}
                     className="flex w-full cursor-pointer items-center gap-4 px-4 py-3.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-black"
                   >
-                    <span className="shrink-0 font-mono text-[13px] text-[var(--muted-foreground)]">
+                    <span className="shrink-0 font-mono text-sm text-[var(--muted-foreground)]">
                       {String(itemIndex + 1).padStart(2, "0")}
                     </span>
-                    <span className="flex-1 text-base font-medium leading-snug text-[var(--foreground)] min-[1400px]:text-[17px]">
+                    <span className="flex-1 text-lg font-medium leading-snug text-[var(--foreground)] min-[1400px]:text-[19px]">
                       {item.name}
                     </span>
                     <span
@@ -252,7 +252,7 @@ function CardItem({
                     style={{ gridTemplateRows: isOpen ? "1fr" : "0fr" }}
                   >
                     <div className="overflow-hidden">
-                      <p className="px-4 pb-3.5 pl-12 text-[15px] leading-relaxed text-[var(--muted-foreground)] min-[1400px]:text-base">
+                      <p className="px-4 pb-3.5 pl-12 text-[17px] leading-relaxed text-[var(--muted-foreground)] min-[1400px]:text-lg">
                         {item.body}
                       </p>
                     </div>

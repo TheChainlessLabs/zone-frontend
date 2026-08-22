@@ -10,72 +10,67 @@ import { BlackholeScene3D } from "@/components/landing/blackhole-scene-3d";
 const CARDS = [
   {
     title: "Why swap on Omega",
-    subtitle: "Execution without exposure.",
+    answer: "Execution without exposure",
+    subtitle: null,
     badge: "01",
     items: [
       {
         name: "No opaque pricing",
-        hint: "Price forms in-book",
         body: "The price forms inside the book, with no middleman cost.",
       },
       {
         name: "Positions stay private, spreads tighten",
-        hint: "No visible book",
         body: "No visible book, no mempool; trade details never shared publicly. Makers/takers quotes align with actual trade intent.",
       },
       {
         name: "Fill or Kill quotes",
-        hint: "Improve-only, atomic",
         body: "The rate signed by the user can only be improved on. Both legs clear together, instantly — no credit required to operate the market.",
       },
       {
         name: "Verifiable fills",
-        hint: "Proof per fill",
         body: "Every fill comes with proof of fair execution. The Omega code is the arbiter of price, nothing else.",
       },
     ],
   },
   {
     title: "Who is Omega for",
-    subtitle: "All stablecoin users",
+    answer: "All stablecoin users",
+    subtitle: null,
     badge: "02",
     items: [
       {
         name: "Businesses",
-        hint: "FX at scale",
         body: "Move stablecoin FX at scale without broadcasting size, timing, or position.",
       },
       {
         name: "Individuals",
-        hint: "Institutional rates",
         body: "Swap privately at the same rate as institutions — same book, no tiers.",
       },
     ],
   },
   {
     title: "How Omega works",
+    answer: "Intent, match, proof",
     subtitle: null,
     badge: "03",
     items: [
       {
         name: "Trade intent enters Omega Markets privately",
-        hint: "Hidden intent",
         body: "A fund, treasury, payment platform, or onchain trader submits a stablecoin FX intent. The market never sees who placed it, how large it is, or where it may route.",
       },
       {
         name: "The dark book matches",
-        hint: "Internal execution",
         body: "Resting liquidity, counterflow, and block-size interest execute inside Omega's private order book — never exposed to public venues, mempools, or bots.",
       },
       {
         name: "Proof, then settlement",
-        hint: "Atomic, verifiable",
         body: "Every fill produces proof of correct execution — verifiable without revealing the matching path. Settlement is atomic: both legs or neither, no credit in the middle. Critically, the receipt prints the fill against reference mid — effectively setting the on-chain market price for FX.",
       },
     ],
   },
   {
     title: "Ready to Trade?",
+    answer: null,
     subtitle: "Join design partners and developers building on Omega",
     badge: null,
     items: [],
@@ -117,12 +112,23 @@ function CardItem({
         className="glass w-full max-w-[760px] min-[1400px]:min-w-[460px] space-y-5 rounded-[20px] p-6 min-[1400px]:p-8"
       >
         <div className="space-y-2">
-          <h2 className="text-2xl font-semibold tracking-[-0.01em] text-[var(--foreground)] min-[1400px]:text-[28px]">
-            {card.title}
-          </h2>
+          <div className="flex items-baseline justify-between gap-4">
+            <h2 className="text-2xl font-semibold tracking-[-0.01em] text-[var(--foreground)] min-[1400px]:text-[28px]">
+              {card.title}
+            </h2>
+            {card.answer ? (
+              <span className="hidden shrink-0 text-sm text-[var(--muted-foreground)] sm:block min-[1400px]:text-[15px]">
+                {card.answer}
+              </span>
+            ) : null}
+          </div>
           {card.subtitle ? (
             <p className="text-base leading-relaxed text-[var(--muted-foreground)] min-[1400px]:text-lg">
               {card.subtitle}
+            </p>
+          ) : card.answer ? (
+            <p className="text-sm leading-relaxed text-[var(--muted-foreground)] sm:hidden">
+              {card.answer}
             </p>
           ) : null}
         </div>
@@ -147,11 +153,6 @@ function CardItem({
                     <span className="flex-1 text-[15px] font-medium leading-snug text-[var(--foreground)] min-[1400px]:text-base">
                       {item.name}
                     </span>
-                    {"hint" in item && item.hint ? (
-                      <span className="hidden shrink-0 text-xs text-[var(--muted-foreground)] sm:block min-[1400px]:text-[13px]">
-                        {item.hint}
-                      </span>
-                    ) : null}
                     <span
                       aria-hidden="true"
                       className={`shrink-0 text-base leading-none text-[var(--muted-foreground)] transition-transform duration-300 ${

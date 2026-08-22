@@ -32,7 +32,7 @@ export const LANDING_LAYOUT = {
     anchor: 0.66, // card top as a fraction of viewport height, phoneMax and up
     bottomInset: 16, // breathing room under the card before the fold
     minHeight: 120,
-    cardMaxWidth: 760,
+    cardMaxWidth: 960,
     fitFloor: 0.85, // hardest shrink allowed — legibility beats a perfect fit
     slotCenterTarget: 0.55, // where a slot's center reads as "on stage"
     plateauFull: 1.6, // opacity ramp: o = clamp(plateauFull - |dn| * plateauSlope)

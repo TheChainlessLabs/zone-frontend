@@ -193,7 +193,7 @@ function CardItem({
     >
       <div
         data-card-slide
-        className="glass w-full max-w-[760px] min-[1400px]:min-w-[460px] space-y-5 rounded-[20px] p-6 min-[1400px]:p-8"
+        className="glass w-full max-w-[960px] min-[1400px]:min-w-[460px] space-y-5 rounded-[20px] p-6 min-[1400px]:p-8"
       >
         <div className="space-y-2">
           <div className="flex items-baseline justify-between gap-4">
@@ -394,7 +394,7 @@ export function LandingPageFXSpot() {
         {/* Feature cards — scroll rail on the right */}
         <div
           ref={railRef}
-          className="w-full space-y-24 px-6 pb-[60vh] pt-10 sm:max-[1400px]:px-10 max-[1400px]:pt-0 max-[1400px]:-mt-[37vh] min-[1400px]:ml-auto min-[1400px]:w-[calc(100%-816px)] min-[1400px]:space-y-0 min-[1400px]:pl-6 min-[1400px]:pr-[6vw] min-[1400px]:pb-[20vh] min-[1400px]:pt-0 min-[1400px]:-mt-[30vh]"
+          className="w-full space-y-24 px-6 pb-[60vh] pt-10 sm:max-[1400px]:px-10 max-[1400px]:pt-0 max-[1400px]:-mt-[37vh] min-[1400px]:ml-auto min-[1400px]:w-[calc(100%-816px)] min-[1400px]:space-y-0 min-[1400px]:pl-4 min-[1400px]:pr-8 min-[1400px]:pb-[20vh] min-[1400px]:pt-0 min-[1400px]:-mt-[30vh]"
         >
           {CARDS.map((card, index) => (
             <CardItem key={card.title} card={card} index={index} totalCards={CARDS.length} />

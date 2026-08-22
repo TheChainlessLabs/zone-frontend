@@ -9,7 +9,7 @@ const STEPS_MOBILE = 150;
 const CONFIG = {
   autoRotate: 0.04,
   exposure: 1.3,
-  camera: { distance: 15.5, elevation: 0.4, azimuth: 0.8 },
+  camera: { distance: 19.5, elevation: 0.4, azimuth: 0.8 },
   maxPixelRatio: 1.5,
   // Asteroids spiral from the spawn shell down into the horizon.
   asteroid: {
@@ -633,7 +633,7 @@ void main() {
     <div
       ref={containerRef}
       aria-hidden="true"
-      className="pointer-events-none fixed inset-x-0 bottom-0 top-[96px] z-0 overflow-hidden"
+      className="pointer-events-none fixed inset-x-0 bottom-0 top-[96px] z-0 overflow-hidden opacity-50"
     />
   );
 }

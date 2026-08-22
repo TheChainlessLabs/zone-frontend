@@ -22,7 +22,7 @@ export const scrollStates = [
   {
     id: "execution",
     step: "03",
-    label: "Atomic, Verifiable",
+    label: "Atomic Settlement",
     title: "Proof, then settlement.",
     body:
       "Every fill produces proof of correct execution — verifiable without revealing the matching path. Settlement is atomic: both legs or neither, no credit in the middle. Critically, the receipt prints the fill against reference mid — effectively setting the on-chain market price for FX.",

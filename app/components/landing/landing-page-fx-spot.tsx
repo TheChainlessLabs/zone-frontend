@@ -13,7 +13,7 @@ import { useReducedMotion } from "@/components/landing/new-mechanism/use-reduced
 
 const CARDS = [
   {
-    title: "Why swap on Omega",
+    title: "Why swap on Omega?",
     answer: "Execution without exposure",
     subtitle: null,
     badge: "01",
@@ -27,7 +27,7 @@ const CARDS = [
         body: "No visible book, no mempool; trade details never shared publicly. Makers/takers quotes align with actual trade intent.",
       },
       {
-        name: "Fill or Kill quotes",
+        name: "Fill-or-Kill quotes",
         body: "The rate signed by the user can only be improved on. Both legs clear together, instantly — no credit required to operate the market.",
       },
       {
@@ -37,7 +37,7 @@ const CARDS = [
     ],
   },
   {
-    title: "Who is Omega for",
+    title: "Who is Omega for?",
     answer: "All stablecoin users",
     subtitle: null,
     badge: "02",
@@ -53,7 +53,7 @@ const CARDS = [
     ],
   },
   {
-    title: "How Omega works",
+    title: "How does Omega work?",
     answer: null,
     subtitle: null,
     badge: "03",

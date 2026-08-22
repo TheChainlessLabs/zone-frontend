@@ -121,6 +121,8 @@ export function useCardScrollAnimation(cardIndex: number, totalCards: number) {
           rect.height;
         emitMech(dn);
         const o = mechOpacity(dn, rect.height);
+        // Arrive from below like the other cards; drift up slightly on exit.
+        const mechY = (1 - o) * (dn > 0 ? 70 : -40);
         const cardW = Math.min(L.stage.cardMaxWidth, rect.width);
         const contentH = content.offsetHeight || 1;
         const avail = vhNow - L.navHeight - 48;
@@ -131,7 +133,7 @@ export function useCardScrollAnimation(cardIndex: number, totalCards: number) {
           left: rect.left + (rect.width - cardW),
           width: cardW,
           x: 0,
-          y: 0,
+          y: mechY,
           scale: fit,
           transformOrigin: "top center",
           autoAlpha: o,
@@ -169,6 +171,7 @@ export function useCardScrollAnimation(cardIndex: number, totalCards: number) {
               1,
               Math.max(0, L.stage.plateauFull - Math.abs(dn) * L.stage.plateauSlope)
             );
+        const mechY = isMech ? (1 - o) * (dn > 0 ? 70 : -40) : 0;
 
         const cardW = Math.min(L.stage.cardMaxWidth, rect.width);
         const contentH = content.offsetHeight || 1;
@@ -187,7 +190,7 @@ export function useCardScrollAnimation(cardIndex: number, totalCards: number) {
           left: rect.left + (rect.width - cardW) / 2,
           width: cardW,
           x: 0,
-          y: 0,
+          y: mechY,
           scale: fit * (0.97 + 0.03 * o),
           transformOrigin: "top center",
           autoAlpha: o,

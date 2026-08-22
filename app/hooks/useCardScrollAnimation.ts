@@ -106,6 +106,13 @@ export function useCardScrollAnimation(cardIndex: number, totalCards: number) {
         );
       };
 
+      // The mechanism's fade must not scale with its very long slot: fade
+      // over a fixed ~35vh of scroll at each edge of the visible window.
+      const mechOpacity = (dn: number, slotH: number) => {
+        const edge = (0.5 - Math.abs(dn)) * slotH;
+        return Math.min(1, Math.max(0, edge / (vhNow * 0.35)));
+      };
+
       // Desktop mechanism card: pinned in the rail while its slot passes,
       // scrubbing the scene instead of traveling into the singularity.
       if (mode === "desktop" && isMech) {
@@ -113,10 +120,7 @@ export function useCardScrollAnimation(cardIndex: number, totalCards: number) {
           (rect.top + rect.height / 2 - vhNow * L.stage.slotCenterTarget) /
           rect.height;
         emitMech(dn);
-        const o = Math.min(
-          1,
-          Math.max(0, L.stage.plateauFull - Math.abs(dn) * L.stage.plateauSlope)
-        );
+        const o = mechOpacity(dn, rect.height);
         const cardW = Math.min(L.stage.cardMaxWidth, rect.width);
         const contentH = content.offsetHeight || 1;
         const avail = vhNow - L.navHeight - 48;
@@ -159,10 +163,12 @@ export function useCardScrollAnimation(cardIndex: number, totalCards: number) {
           (rect.top + rect.height / 2 - vh * L.stage.slotCenterTarget) /
           rect.height;
         emitMech(dn);
-        const o = Math.min(
-          1,
-          Math.max(0, L.stage.plateauFull - Math.abs(dn) * L.stage.plateauSlope)
-        );
+        const o = isMech
+          ? mechOpacity(dn, rect.height)
+          : Math.min(
+              1,
+              Math.max(0, L.stage.plateauFull - Math.abs(dn) * L.stage.plateauSlope)
+            );
 
         const cardW = Math.min(L.stage.cardMaxWidth, rect.width);
         const contentH = content.offsetHeight || 1;

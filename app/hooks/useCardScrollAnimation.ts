@@ -207,6 +207,13 @@ export function useCardScrollAnimation(cardIndex: number, totalCards: number) {
 
     window.addEventListener("scroll", requestUpdate, { passive: true });
     window.addEventListener("resize", requestUpdate);
+    // Re-fit the stage card when its content grows or shrinks (e.g. an
+    // item expanding to reveal its subtext).
+    const ro =
+      typeof ResizeObserver !== "undefined"
+        ? new ResizeObserver(requestUpdate)
+        : null;
+    ro?.observe(content);
     desktop.addEventListener("change", onModeChange);
     reduced.addEventListener("change", onModeChange);
     onModeChange();
@@ -214,6 +221,7 @@ export function useCardScrollAnimation(cardIndex: number, totalCards: number) {
     return () => {
       window.removeEventListener("scroll", requestUpdate);
       window.removeEventListener("resize", requestUpdate);
+      ro?.disconnect();
       desktop.removeEventListener("change", onModeChange);
       reduced.removeEventListener("change", onModeChange);
       cancelAnimationFrame(raf);

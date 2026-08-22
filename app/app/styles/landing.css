@@ -330,19 +330,6 @@
   .lp-content [data-card-slide] > div > p {
     font-size: 14px;
   }
-  .lp-content [data-card-slide] li p:first-child {
-    font-size: 14px;
-  }
-  .lp-content [data-card-slide] li p + p {
-    font-size: 13px;
-  }
-  .lp-content [data-card-slide] ul {
-    --tw-space-y-reverse: 0;
-    margin-top: 16px;
-  }
-  .lp-content [data-card-slide] ul li + li {
-    margin-top: 14px;
-  }
 }
 
 /* Cards play second fiddle to the hero: quieter glass all around. */

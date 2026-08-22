@@ -83,6 +83,19 @@ function CardItem({
   totalCards: number;
 }) {
   const cardRef = useCardScrollAnimation(index, totalCards);
+  const [open, setOpen] = React.useState<ReadonlySet<number>>(new Set());
+
+  const toggle = (itemIndex: number) => {
+    setOpen((prev) => {
+      const next = new Set(prev);
+      if (next.has(itemIndex)) {
+        next.delete(itemIndex);
+      } else {
+        next.add(itemIndex);
+      }
+      return next;
+    });
+  };
 
   return (
     <div
@@ -94,7 +107,7 @@ function CardItem({
         data-card-slide
         className="glass w-full max-w-[760px] min-[1400px]:min-w-[460px] space-y-5 rounded-[20px] p-6 min-[1400px]:p-8"
       >
-        <div className="space-y-3">
+        <div className="space-y-2">
           <h2 className="text-2xl font-semibold tracking-[-0.01em] text-[var(--foreground)] min-[1400px]:text-[28px]">
             {card.title}
           </h2>
@@ -105,22 +118,48 @@ function CardItem({
           ) : null}
         </div>
         {card.items.length > 0 ? (
-          <ul className="space-y-5">
-            {card.items.map((item, itemIndex) => (
-              <li key={item.name} className="flex gap-4">
-                <span className="mt-[3px] shrink-0 font-mono text-xs text-[var(--muted-foreground)]">
-                  {String(itemIndex + 1).padStart(2, "0")}
-                </span>
-                <div className="space-y-1">
-                  <p className="text-sm font-medium leading-snug text-[var(--foreground)] min-[1400px]:text-[15px]">
-                    {item.name}
-                  </p>
-                  <p className="text-[13px] leading-relaxed text-[var(--muted-foreground)] min-[1400px]:text-sm">
-                    {item.body}
-                  </p>
-                </div>
-              </li>
-            ))}
+          <ul className="space-y-2.5">
+            {card.items.map((item, itemIndex) => {
+              const isOpen = open.has(itemIndex);
+              return (
+                <li
+                  key={item.name}
+                  className="rounded-[10px] border border-[var(--glass-edge)] bg-white/[0.02] transition-colors duration-200 hover:bg-white/[0.05]"
+                >
+                  <button
+                    type="button"
+                    aria-expanded={isOpen}
+                    onClick={() => toggle(itemIndex)}
+                    className="flex w-full cursor-pointer items-center gap-4 px-4 py-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                  >
+                    <span className="shrink-0 font-mono text-xs text-[var(--muted-foreground)]">
+                      {String(itemIndex + 1).padStart(2, "0")}
+                    </span>
+                    <span className="flex-1 text-sm font-medium leading-snug text-[var(--foreground)] min-[1400px]:text-[15px]">
+                      {item.name}
+                    </span>
+                    <span
+                      aria-hidden="true"
+                      className={`shrink-0 text-base leading-none text-[var(--muted-foreground)] transition-transform duration-300 ${
+                        isOpen ? "rotate-45" : ""
+                      }`}
+                    >
+                      +
+                    </span>
+                  </button>
+                  <div
+                    className="grid transition-[grid-template-rows] duration-300 ease-out"
+                    style={{ gridTemplateRows: isOpen ? "1fr" : "0fr" }}
+                  >
+                    <div className="overflow-hidden">
+                      <p className="px-4 pb-3 pl-12 text-[13px] leading-relaxed text-[var(--muted-foreground)] min-[1400px]:text-sm">
+                        {item.body}
+                      </p>
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         ) : null}
         {card.badge ? null : (

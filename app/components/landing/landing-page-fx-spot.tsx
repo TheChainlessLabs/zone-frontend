@@ -113,11 +113,11 @@ function CardItem({
       >
         <div className="space-y-2">
           <div className="flex items-baseline justify-between gap-4">
-            <h2 className="text-2xl font-semibold tracking-[-0.01em] text-[var(--foreground)] min-[1400px]:text-[28px]">
+            <h2 className="text-[26px] font-semibold tracking-[-0.01em] text-[var(--foreground)] min-[1400px]:text-3xl">
               {card.title}
             </h2>
             {card.answer ? (
-              <span className="hidden shrink-0 text-sm text-[var(--muted-foreground)] sm:block min-[1400px]:text-[15px]">
+              <span className="hidden shrink-0 text-[15px] text-[var(--muted-foreground)] sm:block min-[1400px]:text-base">
                 {card.answer}
               </span>
             ) : null}
@@ -145,12 +145,12 @@ function CardItem({
                     type="button"
                     aria-expanded={isOpen}
                     onClick={() => toggle(itemIndex)}
-                    className="flex w-full cursor-pointer items-center gap-4 px-4 py-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                    className="flex w-full cursor-pointer items-center gap-4 px-4 py-3.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-black"
                   >
-                    <span className="shrink-0 font-mono text-xs text-[var(--muted-foreground)]">
+                    <span className="shrink-0 font-mono text-[13px] text-[var(--muted-foreground)]">
                       {String(itemIndex + 1).padStart(2, "0")}
                     </span>
-                    <span className="flex-1 text-[15px] font-medium leading-snug text-[var(--foreground)] min-[1400px]:text-base">
+                    <span className="flex-1 text-base font-medium leading-snug text-[var(--foreground)] min-[1400px]:text-[17px]">
                       {item.name}
                     </span>
                     <span
@@ -167,7 +167,7 @@ function CardItem({
                     style={{ gridTemplateRows: isOpen ? "1fr" : "0fr" }}
                   >
                     <div className="overflow-hidden">
-                      <p className="px-4 pb-3 pl-12 text-sm leading-relaxed text-[var(--muted-foreground)] min-[1400px]:text-[15px]">
+                      <p className="px-4 pb-3.5 pl-12 text-[15px] leading-relaxed text-[var(--muted-foreground)] min-[1400px]:text-base">
                         {item.body}
                       </p>
                     </div>

@@ -8,7 +8,7 @@ import { useCardScrollAnimation } from "@/hooks/useCardScrollAnimation";
 import { BlackholeScene3D } from "@/components/landing/blackhole-scene-3d";
 import { scrollStates } from "@/components/landing/new-mechanism/content";
 import { MidpointScene } from "@/components/landing/new-mechanism/midpoint-singularity-scene";
-import { easeInOut, getSceneState } from "@/components/landing/new-mechanism/scroll-progress";
+import { getSceneState } from "@/components/landing/new-mechanism/scroll-progress";
 import { useReducedMotion } from "@/components/landing/new-mechanism/use-reduced-motion";
 
 const CARDS = [
@@ -54,7 +54,7 @@ const CARDS = [
   },
   {
     title: "How Omega works",
-    answer: "Intent, match, proof",
+    answer: null,
     subtitle: null,
     badge: "03",
     mechanism: true,
@@ -74,36 +74,46 @@ const STEP_ANCHORS = [0.16, 0.55, 0.98] as const;
 
 function MechanismStory() {
   const reduced = useReducedMotion();
-  const [step, setStep] = React.useState(0);
+  const rootRef = React.useRef<HTMLDivElement>(null);
   const [progress, setProgress] = React.useState<number>(STEP_ANCHORS[0]);
-  const progressRef = React.useRef<number>(STEP_ANCHORS[0]);
 
+  // Scroll drives the scene: the layout hook scrubs this card's long slot
+  // into 0..1 and emits it on the card element, both directions.
   React.useEffect(() => {
-    const target = STEP_ANCHORS[step];
-    if (reduced) {
-      progressRef.current = target;
+    if (reduced) return;
+    const slide = rootRef.current?.closest("[data-card-slide]");
+    if (!slide) return;
+    const onProgress = (e: Event) => {
+      setProgress((e as CustomEvent<number>).detail);
+    };
+    slide.addEventListener("mechprogress", onProgress);
+    return () => slide.removeEventListener("mechprogress", onProgress);
+  }, [reduced]);
+
+  // Chips jump the page to the matching point of the scrub (or set the
+  // scene directly under reduced motion).
+  const jumpTo = (i: number) => {
+    const target = STEP_ANCHORS[i];
+    const wrap = rootRef.current?.closest("[data-card-wrap]");
+    if (reduced || !wrap) {
       setProgress(target);
       return;
     }
-    const from = progressRef.current;
-    const start = performance.now();
-    const duration = 1200;
-    let frame = 0;
-    const tick = (now: number) => {
-      const t = Math.min(1, (now - start) / duration);
-      const value = from + (target - from) * easeInOut(t);
-      progressRef.current = value;
-      setProgress(value);
-      if (t < 1) frame = requestAnimationFrame(tick);
-    };
-    frame = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frame);
-  }, [step, reduced]);
+    const r = wrap.getBoundingClientRect();
+    const wrapTop = r.top + window.scrollY;
+    const vh = window.innerHeight;
+    const centerV = vh * 0.55 + (0.5 - target) * r.height;
+    window.scrollTo({
+      top: Math.round(wrapTop + r.height / 2 - centerV),
+      behavior: "smooth",
+    });
+  };
 
+  const step = getSceneState(progress).index;
   const active = scrollStates[step];
 
   return (
-    <div className="space-y-4">
+    <div ref={rootRef} className="space-y-4">
       <div className="nm-scene mx-auto w-full max-w-[300px]">
         <MidpointScene state={getSceneState(progress)} />
       </div>
@@ -122,7 +132,7 @@ function MechanismStory() {
             key={s2.id}
             type="button"
             aria-pressed={i === step}
-            onClick={() => setStep(i)}
+            onClick={() => jumpTo(i)}
             className={`rounded-[8px] border px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.14em] transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
               i === step
                 ? "border-[var(--success)] text-[var(--success)]"
@@ -174,7 +184,12 @@ function CardItem({
     <div
       ref={cardRef}
       data-card-wrap
-      className="flex w-full items-center justify-center max-[1400px]:h-[70vh] min-[1400px]:h-[85vh] min-[1400px]:justify-end"
+      {...("mechanism" in card && card.mechanism ? { "data-mechanism": "" } : {})}
+      className={`flex w-full items-center justify-center min-[1400px]:justify-end ${
+        "mechanism" in card && card.mechanism
+          ? "h-[240vh]"
+          : "max-[1400px]:h-[70vh] min-[1400px]:h-[85vh]"
+      }`}
     >
       <div
         data-card-slide

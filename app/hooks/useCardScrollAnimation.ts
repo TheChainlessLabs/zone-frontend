@@ -93,6 +93,49 @@ export function useCardScrollAnimation(cardIndex: number, totalCards: number) {
 
       // Measure the untransformed slot; only the inner content animates.
       const rect = card.getBoundingClientRect();
+      const isMech = card.hasAttribute("data-mechanism");
+      const vhNow = window.innerHeight;
+
+      // Scrub progress for the mechanism card: its long slot maps 0..1 onto
+      // the scene, driven by scroll in either direction.
+      const emitMech = (dn: number) => {
+        if (!isMech) return;
+        const p = Math.min(1, Math.max(0, 0.5 - dn));
+        content.dispatchEvent(
+          new CustomEvent("mechprogress", { detail: p })
+        );
+      };
+
+      // Desktop mechanism card: pinned in the rail while its slot passes,
+      // scrubbing the scene instead of traveling into the singularity.
+      if (mode === "desktop" && isMech) {
+        const dn =
+          (rect.top + rect.height / 2 - vhNow * L.stage.slotCenterTarget) /
+          rect.height;
+        emitMech(dn);
+        const o = Math.min(
+          1,
+          Math.max(0, L.stage.plateauFull - Math.abs(dn) * L.stage.plateauSlope)
+        );
+        const cardW = Math.min(L.stage.cardMaxWidth, rect.width);
+        const contentH = content.offsetHeight || 1;
+        const avail = vhNow - L.navHeight - 48;
+        const fit = Math.max(L.stage.fitFloor, Math.min(1, avail / contentH));
+        gsap.set(content, {
+          position: "fixed",
+          top: L.navHeight + 24 + Math.max(0, (avail - contentH * fit) / 2),
+          left: rect.left + (rect.width - cardW),
+          width: cardW,
+          x: 0,
+          y: 0,
+          scale: fit,
+          transformOrigin: "top center",
+          autoAlpha: o,
+          pointerEvents: o > 0.5 ? "auto" : "none",
+          overwrite: "auto",
+        });
+        return;
+      }
 
       if (mode === "pinned") {
         // Fixed-stage crossfade: the card never travels. It renders pinned in
@@ -115,6 +158,7 @@ export function useCardScrollAnimation(cardIndex: number, totalCards: number) {
         const dn =
           (rect.top + rect.height / 2 - vh * L.stage.slotCenterTarget) /
           rect.height;
+        emitMech(dn);
         const o = Math.min(
           1,
           Math.max(0, L.stage.plateauFull - Math.abs(dn) * L.stage.plateauSlope)

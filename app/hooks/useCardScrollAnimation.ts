@@ -20,8 +20,8 @@ import gsap from "gsap";
  *                           a phone viewport has no height to spare.
  *
  * KEEP IN SYNC with the utility classes in landing-page-fx-spot.tsx
- * (min-[1400px]: / max-[1399px]: variants, pt/top-[96px], the 70vh stage
- * slots and 85vh desktop slots) and the media queries in landing.css.
+ * (min-[1400px]: / max-[1400px]: variants, pt/top-[96px], the 120vh stage
+ * slots, 150vh desktop slots, and the 420vh mechanism scrub slot) and the media queries in landing.css.
  */
 export const LANDING_LAYOUT = {
   desktopMin: 1400,
@@ -40,7 +40,7 @@ export const LANDING_LAYOUT = {
   },
   desktop: {
     collapseStart: 0.45, // slot center above this vh fraction: absorption
-    enterStart: 0.52, // slot center below this: arriving from the bottom
+    enterStart: 0.62, // slot center below this: arriving from the bottom
     collapseEnd: 0.04,
     arrivalRise: 90, // px of lift while a card arrives
   },
@@ -226,7 +226,7 @@ export function useCardScrollAnimation(cardIndex: number, totalCards: number) {
         opacity = 1 - c * c;
       } else if (cy > enterStart) {
         // Arrival from the bottom edge.
-        const t = Math.min(1, (cy - enterStart) / (vh * 0.5));
+        const t = Math.min(1, (cy - enterStart) / (vh * 0.62));
         y = t * L.desktop.arrivalRise;
         scale = 1 - 0.04 * t;
         opacity = 1 - t;

@@ -128,7 +128,7 @@ export function useCardScrollAnimation(cardIndex: number, totalCards: number) {
         gsap.set(content, {
           position: "fixed",
           top: L.navHeight + 24 + Math.max(0, (avail - contentH * fit) / 2),
-          left: rect.left,
+          left: rect.left + (rect.width - cardW),
           width: cardW,
           x: 0,
           y: 0,

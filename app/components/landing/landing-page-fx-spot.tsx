@@ -185,7 +185,7 @@ function CardItem({
       ref={cardRef}
       data-card-wrap
       {...("mechanism" in card && card.mechanism ? { "data-mechanism": "" } : {})}
-      className={`flex w-full items-center justify-center min-[1400px]:justify-start ${
+      className={`flex w-full items-center justify-center min-[1400px]:justify-end ${
         "mechanism" in card && card.mechanism
           ? "h-[420vh]"
           : "max-[1400px]:h-[120vh] min-[1400px]:h-[150vh]"

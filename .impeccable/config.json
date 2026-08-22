@@ -36,6 +36,18 @@
         "value": "18px",
         "createdAt": "2026-08-21T20:54:01.381Z",
         "reason": "user requested larger nav logo/button type; nav uses literal px sizes by incumbent convention"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "26px",
+        "createdAt": "2026-08-22T14:32:42.895Z",
+        "reason": "user requested larger card type in the legibility pass; sizes tuned to the stage fit-scale"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "17px",
+        "createdAt": "2026-08-22T14:32:42.975Z",
+        "reason": "user requested larger card type in the legibility pass; sizes tuned to the stage fit-scale"
       }
     ]
   }

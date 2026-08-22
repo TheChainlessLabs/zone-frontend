@@ -15,18 +15,22 @@ const CARDS = [
     items: [
       {
         name: "No opaque pricing",
+        hint: "Price forms in-book",
         body: "The price forms inside the book, with no middleman cost.",
       },
       {
         name: "Positions stay private, spreads tighten",
+        hint: "No visible book",
         body: "No visible book, no mempool; trade details never shared publicly. Makers/takers quotes align with actual trade intent.",
       },
       {
         name: "Fill or Kill quotes",
+        hint: "Improve-only, atomic",
         body: "The rate signed by the user can only be improved on. Both legs clear together, instantly — no credit required to operate the market.",
       },
       {
         name: "Verifiable fills",
+        hint: "Proof per fill",
         body: "Every fill comes with proof of fair execution. The Omega code is the arbiter of price, nothing else.",
       },
     ],
@@ -38,10 +42,12 @@ const CARDS = [
     items: [
       {
         name: "Businesses",
+        hint: "FX at scale",
         body: "Move stablecoin FX at scale without broadcasting size, timing, or position.",
       },
       {
         name: "Individuals",
+        hint: "Institutional rates",
         body: "Swap privately at the same rate as institutions — same book, no tiers.",
       },
     ],
@@ -53,14 +59,17 @@ const CARDS = [
     items: [
       {
         name: "Trade intent enters Omega Markets privately",
+        hint: "Hidden intent",
         body: "A fund, treasury, payment platform, or onchain trader submits a stablecoin FX intent. The market never sees who placed it, how large it is, or where it may route.",
       },
       {
         name: "The dark book matches",
+        hint: "Internal execution",
         body: "Resting liquidity, counterflow, and block-size interest execute inside Omega's private order book — never exposed to public venues, mempools, or bots.",
       },
       {
         name: "Proof, then settlement",
+        hint: "Atomic, verifiable",
         body: "Every fill produces proof of correct execution — verifiable without revealing the matching path. Settlement is atomic: both legs or neither, no credit in the middle. Critically, the receipt prints the fill against reference mid — effectively setting the on-chain market price for FX.",
       },
     ],
@@ -112,7 +121,7 @@ function CardItem({
             {card.title}
           </h2>
           {card.subtitle ? (
-            <p className="text-sm leading-relaxed text-[var(--muted-foreground)] min-[1400px]:text-base">
+            <p className="text-base leading-relaxed text-[var(--muted-foreground)] min-[1400px]:text-lg">
               {card.subtitle}
             </p>
           ) : null}
@@ -135,9 +144,14 @@ function CardItem({
                     <span className="shrink-0 font-mono text-xs text-[var(--muted-foreground)]">
                       {String(itemIndex + 1).padStart(2, "0")}
                     </span>
-                    <span className="flex-1 text-sm font-medium leading-snug text-[var(--foreground)] min-[1400px]:text-[15px]">
+                    <span className="flex-1 text-[15px] font-medium leading-snug text-[var(--foreground)] min-[1400px]:text-base">
                       {item.name}
                     </span>
+                    {"hint" in item && item.hint ? (
+                      <span className="hidden shrink-0 text-xs text-[var(--muted-foreground)] sm:block min-[1400px]:text-[13px]">
+                        {item.hint}
+                      </span>
+                    ) : null}
                     <span
                       aria-hidden="true"
                       className={`shrink-0 text-base leading-none text-[var(--muted-foreground)] transition-transform duration-300 ${
@@ -152,7 +166,7 @@ function CardItem({
                     style={{ gridTemplateRows: isOpen ? "1fr" : "0fr" }}
                   >
                     <div className="overflow-hidden">
-                      <p className="px-4 pb-3 pl-12 text-[13px] leading-relaxed text-[var(--muted-foreground)] min-[1400px]:text-sm">
+                      <p className="px-4 pb-3 pl-12 text-sm leading-relaxed text-[var(--muted-foreground)] min-[1400px]:text-[15px]">
                         {item.body}
                       </p>
                     </div>
